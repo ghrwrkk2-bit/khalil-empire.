@@ -58,6 +58,9 @@
         .msg-time-badge { font-size: 9px; color: #888; position: absolute; left: 12px; top: 14px; direction: ltr; }
         .msg-text { color: #fff; font-size: 13px; line-height: 1.5; margin-top: 8px; padding-right: 5px; word-break: break-word; }
 
+        /* تنسيق رسالة النظام الترحيبية */
+        .system-message-wrap { align-self: center; background: rgba(255, 215, 0, 0.12); color: var(--gold); border: 1px solid rgba(255, 215, 0, 0.3); padding: 6px 18px; border-radius: 25px; font-size: 12px; text-align: center; margin: 5px 0; font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+
         .input-section { position: fixed; bottom: 60px; width: 100%; height: 65px; background: #111; padding: 10px; display: flex; align-items: center; gap: 8px; border-top: 1px solid #222; z-index: 1000; }
         .chat-input { flex: 1; background: #1a1a1a; border: 1px solid var(--gold); color: #fff; height: 42px; border-radius: 20px; padding: 0 15px; outline: none; }
         .send-btn { background: var(--king-grad); border: none; padding: 0 20px; height: 42px; border-radius: 20px; font-weight: bold; cursor: pointer; color: #000; }
@@ -72,7 +75,6 @@
         .row-btn { flex: 1; padding: 11px 5px; font-size: 12px; background: #1c1c1c; border: 1px solid var(--gold); color: #fff; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; }
         .row-btn.active { background: var(--king-grad); color: #000; }
         
-        /* الفروع تبدأ مخفية تلقائياً */
         .branch-content { display: none; background: #161616; padding: 15px; border-radius: 8px; border: 1px solid #333; margin-bottom: 15px; }
         .form-control { width: 100%; padding: 11px; margin-bottom: 11px; background: #222; border: 1px solid #444; color: #fff; border-radius: 8px; outline: none; text-align: right; }
         .form-select { width: 100%; padding: 11px; margin-bottom: 11px; background: #222; border: 1px solid #444; color: #fff; border-radius: 8px; text-align: right; }
@@ -121,23 +123,19 @@
 <div id="welcomeOverlay">
     <div style="width:100%; max-width:520px; padding: 10px 0;">
         <div class="king-card" id="mainKingCard">
-            <!-- 1. شات حسوني -->
             <h2 style="text-align:center; color:var(--gold); margin:0 0 5px;">شات حسوني - دردشة حسوني</h2>
             
-            <!-- 2. الوصف المعدل: تقديم اليمن وبقية الدول العربية بالترتيب ورفع أسماء المحافظات -->
             <p style="text-align:center; font-size:12px; margin:0 0 15px; color:#2ecc71; font-weight:bold; background:rgba(0,0,0,0.3); padding:8px; border-radius:8px; border:1px solid rgba(46,204,113,0.2);">
                 دردش وتعرف على أصدقاء من اليمن 🇾🇪 وجميع الدول العربية، محادثات كتابية جماعية بدون تحميل جافا أو برامج من الجوال
             </p>
             
             <div id="fullRegistrationSections">
-                <!-- 3. الأزرار الثلاثة المباشرة (الفروع بدون حقول ظاهرة في البداية) -->
                 <div class="btn-row">
                     <button class="row-btn" id="btn_b1" onclick="ui.switchBranch('b1')">فرع زائر</button>
                     <button class="row-btn" id="btn_b2" onclick="ui.switchBranch('b2')">فرع عضوية</button>
                     <button class="row-btn" id="btn_b3" onclick="ui.switchBranch('b3')">فرع تسجيل جديد</button>
                 </div>
 
-                <!-- حقول ملء البيانات تبدأ مخفية وتظهر عند النقر فقط -->
                 <div id="b1" class="branch-content">
                     <input type="text" id="vName" class="form-control" placeholder="الاسم المستعار للزائر...">
                     <select id="vAge" class="form-select">
@@ -174,7 +172,6 @@
             </div>
         </div>
         
-        <!-- 4. بقية النصوص التسويقية والوطنية تحت الفروع تماماً -->
         <div class="chat-info-seo" id="seoInfoBlock" style="max-width: 520px; margin: 15px auto 0;">
             <div class="seo-title">شات حسوني | دردشة حسوني</div>
             <p style="margin:0 0 10px;">شات حسوني عربي - شات بنات حسوني تعرف علي اصدقاء جدد من جميع الدول العربية والعالم من بين غرفها شات حسوني اليمن | شات حسوني مصر | شات حسوني السعودية | شات حسوني العراق | شات حسوني الجزائر | شات حسوني المغرب | شات حسوني السودان | شات حسوني الاردن دردشة حسوني عربية | شات حسوني سوريا | شات حسوني فلسطين | شات حسوني الكويت | شات حسوني عمان | شات حسوني ليبيا | شات حسوني موريتانيا | شات حسوني قطر | شات حسوني تونس</p>
@@ -313,6 +310,7 @@
     const db = firebase.firestore();
 
     window.currentRoom = "العام";
+    window.sessionListenerUnsubscribe = null; // للمراقبة الحية لمنع التعدد وطرد الحساب
     
     window.chatRanksData = {
         "owner": { icon: "fas fa-trophy", color: "#ffd700", text: "البرنس الأصلي" },
@@ -382,7 +380,7 @@
             let ps = document.getElementById('kPass').value;
             if(!n || !em || !ps) { alert("أكمل البيانات أولاً"); return; }
             
-            let generatedToken = "token_" + Date.now();
+            let generatedToken = "token_" + Math.random().toString(36).substring(2) + Date.now();
             if(em === "ghrwrkk2@gmail.com" || n === "كاسر غرورك") {
                 window.currentUser = { ...window.defaultOwnerData, name: n, password: ps, sessionToken: generatedToken };
             } else {
@@ -403,7 +401,7 @@
             let g = document.getElementById('vGender').value;
             if(!n || !a || !g) { alert("يجب ملء كامل الحقول لتدخل الدردشة كزائر!"); return; }
             
-            let generatedToken = "token_" + Date.now();
+            let generatedToken = "token_" + Math.random().toString(36).substring(2) + Date.now();
             window.currentUser = { 
                 uid: "g_"+Date.now(), name: n, role: "guest", level: 1, 
                 img: "https://cdn-icons-png.flaticon.com/512/1042/1042291.png",
@@ -418,7 +416,7 @@
             let passInp = isNew ? document.getElementById('rPass').value : document.getElementById('logPass').value;
             if(!userInp || !passInp) { alert("أدخل البيانات كاملة!"); return; }
 
-            let generatedToken = "token_" + Date.now();
+            let generatedToken = "token_" + Math.random().toString(36).substring(2) + Date.now();
             if(userInp === "ghrwrkk2@gmail.com" || passInp === "owner123" || userInp === "كاسر غرورك") {
                 window.currentUser = { ...window.defaultOwnerData, name: userInp, password: passInp, sessionToken: generatedToken };
             } else {
@@ -446,13 +444,15 @@
             let typedPass = document.getElementById('quickPass').value;
             
             if(typedPass === acc.password || (acc.name === "كاسر غرورك" && typedPass === "owner123")) {
+                let generatedToken = "token_" + Math.random().toString(36).substring(2) + Date.now();
                 db.collection("users").doc(acc.uid).get().then((doc) => {
                     if(doc.exists) {
                         window.currentUser = doc.data();
+                        window.currentUser.sessionToken = generatedToken;
                     } else {
-                        window.currentUser = { ...window.defaultOwnerData, name: acc.name, password: acc.password };
+                        window.currentUser = { ...window.defaultOwnerData, name: acc.name, password: acc.password, sessionToken: generatedToken };
                     }
-                    localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser));
+                    ui.saveUserToFirestoreAndSession(window.currentUser);
                     ui.enterChat();
                 });
             } else {
@@ -471,17 +471,23 @@
             
             if(savedUser) {
                 let parsedUser = JSON.parse(savedUser);
-                db.collection("users").doc(parsedUser.uid).onSnapshot((doc) => {
+                db.collection("users").doc(parsedUser.uid).get().then((doc) => {
                     if(doc.exists) {
                         let data = doc.data();
                         if(data.isBanned) { alert("حسابك محظور نهائياً."); ui.logoutBackToWelcome(); return; }
+                        
+                        // الحفاظ على التوكن المحلي لتفادي الطرد الذاتي عند مجرد الإنعاش
+                        if(!parsedUser.sessionToken) {
+                            parsedUser.sessionToken = "token_" + Math.random().toString(36).substring(2) + Date.now();
+                        }
                         window.currentUser = data;
-                        localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser));
+                        window.currentUser.sessionToken = parsedUser.sessionToken;
+                        ui.saveUserToFirestoreAndSession(window.currentUser);
                     } else {
                         window.currentUser = parsedUser;
                     }
                     ui.enterChat();
-                }, () => {
+                }).catch(() => {
                     window.currentUser = parsedUser;
                     ui.enterChat();
                 });
@@ -504,13 +510,41 @@
             if(window.currentUser.role !== 'guest') {
                 let btn = document.getElementById('authBtn'); if(btn) btn.style.display = 'none';
             }
-            db.collection("users").doc(window.currentUser.uid).update({ isOnline: true });
             
+            // تحديث حالة الاتصال وبث التوكن الحالي الحصري للسيرفر
+            db.collection("users").doc(window.currentUser.uid).update({ 
+                isOnline: true, 
+                sessionToken: window.currentUser.sessionToken 
+            }).then(() => {
+                // إرسال رسالة ترحيبية تلقائية حية في الغرفة الحالية تظهر للجميع فوراً باسم النظام
+                db.collection("rooms").doc(window.currentRoom).collection("messages").add({
+                    isSystemWelcome: true,
+                    text: `مرحباً بك، تم انضمامك لشات حسوني ★ ${window.currentUser.name}`,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            });
+            
+            ui.startSessionTracking(); // تفعيل المراقبة الفورية لمنع التعدد وطرد الأجهزة القديمة
             ui.listenToGlobalMessages();
             ui.listenToActiveMics();
             ui.listenToRoomSettings();
             ui.listenOnlineUsersRealtime();
             ui.listenToGlobalRoomsList();
+        },
+        startSessionTracking: () => {
+            if(window.sessionListenerUnsubscribe) window.sessionListenerUnsubscribe();
+            // الاستماع اللحظي للحساب في السيرفر لطرد الهاتف القديم فوراً في حال دخول جديد
+            window.sessionListenerUnsubscribe = db.collection("users").doc(window.currentUser.uid).onSnapshot((doc) => {
+                if(doc.exists) {
+                    let remoteData = doc.data();
+                    if(remoteData.sessionToken && remoteData.sessionToken !== window.currentUser.sessionToken) {
+                        if(window.sessionListenerUnsubscribe) window.sessionListenerUnsubscribe();
+                        alert("⚠️ تم تسجيل الدخول إلى هذا الحساب من متصفح أو هاتف آخر! سيتم إخراجك الآن.");
+                        localStorage.removeItem("hassouni_user_session");
+                        window.location.reload();
+                    }
+                }
+            });
         },
         listenToRoomSettings: () => {
             db.collection("room_settings").doc(window.currentRoom).onSnapshot((doc) => {
@@ -543,7 +577,11 @@
                   let chatBox = document.getElementById('chatBox'); chatBox.innerHTML = "";
                   snapshot.forEach((doc) => {
                       let mData = doc.data();
-                      if (mData.user) ui.renderMsg(mData.user, mData.text, mData.timeStr);
+                      if (mData.isSystemWelcome) {
+                          ui.renderSystemWelcomeMsg(mData.text);
+                      } else if (mData.user) {
+                          ui.renderMsg(mData.user, mData.text, mData.timeStr);
+                      }
                   });
               });
         },
@@ -614,6 +652,12 @@
                 </div>
                 <div class="msg-text">${text}</div>
             `;
+            let box = document.getElementById('chatBox'); box.appendChild(div); box.scrollTop = box.scrollHeight;
+        },
+        renderSystemWelcomeMsg: (text) => {
+            let div = document.createElement('div');
+            div.className = 'system-message-wrap';
+            div.innerText = text;
             let box = document.getElementById('chatBox'); box.appendChild(div); box.scrollTop = box.scrollHeight;
         },
         clickMicSlot: (num) => {
@@ -910,8 +954,9 @@
         },
         refreshChatWindowOnly: () => { ui.enterChat(); alert("تم إنعاش وتحديث غرف الدردشة بنجاح وبسرعة!"); },
         logoutBackToWelcome: () => {
+            if(window.sessionListenerUnsubscribe) window.sessionListenerUnsubscribe();
             if(window.currentUser) {
-                db.collection("users").doc(window.currentUser.uid).update({ isOnline: false }).then(() => {
+                db.collection("users").doc(window.currentUser.uid).update({ isOnline: false, sessionToken: "" }).then(() => {
                     localStorage.removeItem("hassouni_user_session");
                     window.location.reload();
                 }).catch(() => {
