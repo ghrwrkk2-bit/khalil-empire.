@@ -192,7 +192,7 @@
             <p style="margin:0 0 10px;">شات حسوني عربي - شات بنات حسوني تعرف علي اصدقاء جدد من جميع الدول العربية والعالم من بين غرفها شات حسوني اليمن | شات حسوني مصر | شات حسوني السعودية | شات حسوني العراق | شات حسوني الجزائر | شات حسوني المغرب | شات حسوني السودان | شات حسوني الاردن دردشة حسوني عربية | شات حسوني سوريا | شات حسوني فلسطين | شات حسوني الكويت | شات حسوني عمان | شات حسوني ليبيا | شات حسوني موريتانيا | شات حسوني قطر | شات حسوني تونس</p>
             
             <p style="color:var(--gold); font-weight:bold; text-align:center; margin:10px 0; background:rgba(255,215,0,0.05); padding:6px; border:1px solid rgba(255,215,0,0.1); border-radius:5px;">
-                عند البدء في استخدام هذا الموقع انت توافق على سياسة الخصوصية وشروط الاستخدام
+                عند البدء in استخدام هذا الموقع انت توافق على سياسة الخصوصية وشروط الاستخدام
             </p>
             
             <div class="seo-title">المزيد من غرف الدردشة الوطنية</div>
@@ -328,7 +328,8 @@
     window.sessionListenerUnsubscribe = null; 
     window.unsubscribePrivateRoom = null; 
     window.privateNotificationsMap = {}; 
-    window.roomsCountMap = {}; // لحساب عدد الأعضاء في كل غرفة حياً
+    window.roomsCountMap = {}; 
+    window.liveUsersMap = {}; // خارطة حية لحفظ تحديثات بروفايلات الأعضاء فورياً لضمان المزامنة المطلقة بالصفحة
     
     window.chatRanksData = {
         "owner": { icon: "fas fa-trophy", color: "#ffd700", text: "البرنس الأصلي" },
@@ -541,10 +542,10 @@
             });
             
             ui.startSessionTracking(); 
+            ui.listenOnlineUsersRealtime(); // استدعاء قائمة الأعضاء أولاً لبناء الخارطة الحية
             ui.listenToGlobalMessages();
             ui.listenToActiveMics();
             ui.listenToRoomSettings();
-            ui.listenOnlineUsersRealtime();
             ui.listenToGlobalRoomsList();
             ui.listenToPrivateMessagesNotifications(); 
         },
@@ -589,7 +590,6 @@
         },
         listenToGlobalMessages: () => {
             if(window.unsubscribeMessages) window.unsubscribeMessages();
-            // استخدام ترتيب زمني تصاعدي مع سحب آخر 50 رسالة لتظل ثابتة ومستقرة للأعضاء مدى الزمن
             window.unsubscribeMessages = db.collection("rooms").doc(window.currentRoom).collection("messages").orderBy("timestamp", "asc").limitToLast(50).onSnapshot((snapshot) => {
                   let chatBox = document.getElementById('chatBox'); chatBox.innerHTML = "";
                   
@@ -619,10 +619,16 @@
                   }
                   snapshot.forEach((doc) => {
                       let micData = doc.data(); let num = micData.micNum;
+                      
+                      // جلب اسم المايك وصورته حياً من خارطة الأعضاء المزامنة ليتحدث فوراً إذا غير زخرفته
+                      let liveUser = window.liveUsersMap[micData.userId] || {};
+                      let liveName = liveUser.name || micData.userName;
+                      let liveImg = liveUser.img || micData.userImg;
+                      
                       window.currentActiveMicsMap[num] = micData;
                       let slot = document.getElementById(`mic_${num}`); slot.classList.add('occupied');
-                      slot.style.backgroundImage = `url('${micData.userImg}')`;
-                      document.getElementById(`micName_${num}`).innerText = micData.userName;
+                      slot.style.backgroundImage = `url('${liveImg}')`;
+                      document.getElementById(`micName_${num}`).innerText = liveName;
                       document.getElementById(`glow_${num}`).style.display = 'block';
                       document.getElementById(`mBadge_${num}`).style.display = micData.isMuted ? 'block' : 'none';
                   });
@@ -631,13 +637,15 @@
         listenOnlineUsersRealtime: () => {
             db.collection("users").onSnapshot((snap) => {
                 let list = []; 
-                window.roomsCountMap = {}; // إعادة تهيئة عداد غرف المتواجدين حياً
+                window.roomsCountMap = {}; 
                 
                 snap.forEach(doc => { 
                     let u = doc.data(); 
+                    // تخزين بيانات العضو الحالية بالخارطة لربطها بالرسائل والمايكات فورياً
+                    window.liveUsersMap[u.uid] = u;
+                    
                     if(u.isOnline) {
                         list.push(u);
-                        // عد الأعضاء المتواجدين داخل كل غرفة حياً
                         let rName = u.currentRoom || "العام";
                         window.roomsCountMap[rName] = (window.roomsCountMap[rName] || 0) + 1;
                     }
@@ -653,6 +661,11 @@
                         </div>
                     `;
                 }).join('');
+                
+                // إعادة بث وإظهار الرسائل فوراً ليتحدث شكل الاسم والزخرفة بلمح البصر عند الجميع
+                if(document.getElementById('chatBox').childNodes.length > 0) {
+                    ui.listenToGlobalMessages();
+                }
             });
         },
         sendMessage: () => {
@@ -674,15 +687,22 @@
         renderMsg: (user, text, timeStr) => {
             let div = document.createElement('div'); 
             div.className = `msg-wrap ${user.uid === window.currentUser.uid ? 'is-me-style' : ''}`;
-            let r = window.chatRanksData[user.role] || { icon: "fas fa-user", color: "#fff" };
+            
+            // المزامنة الإمبراطورية: قراءة الاسم والرتبة والصورة من البيانات الحية المحدثة فوراً بالخلفية
+            let liveUser = window.liveUsersMap[user.uid] || user;
+            let displayImg = liveUser.img || user.img;
+            let displayName = liveUser.name || user.name;
+            let displayRole = liveUser.role || user.role;
+            
+            let r = window.chatRanksData[displayRole] || { icon: "fas fa-user", color: "#fff" };
             
             div.innerHTML = `
                 <span class="msg-time-badge">${timeStr || ''}</span>
                 <div class="msg-header">
-                    <div class="pfp-main-frame"><img src="${user.img}" class="pfp-main" onclick="ui.viewProfileCard('${user.uid}')"></div>
+                    <div class="pfp-main-frame"><img src="${displayImg}" class="pfp-main" onclick="ui.viewProfileCard('${user.uid}')"></div>
                     <div class="rank-standalone-icon" style="border-color:${r.color};"><i class="${r.icon}" style="color:${r.color};"></i></div>
-                    <div class="king-name-container" style="border-color:${r.color}; background:rgba(0,0,0,0.6);" onclick="document.getElementById('msgInp').value=' ↩️ اقتباس [ ${user.name} ]: '">
-                        <span class="king-name-tag" style="color:${r.color};">${user.name}</span>
+                    <div class="king-name-container" style="border-color:${r.color}; background:rgba(0,0,0,0.6);" onclick="document.getElementById('msgInp').value=' ↩️ اقتباس [ ${displayName} ]: '">
+                        <span class="king-name-tag" style="color:${r.color};">${displayName}</span>
                     </div>
                 </div>
                 <div class="msg-text">${text}</div>
@@ -972,7 +992,6 @@
         openRoomsManager: () => {
             document.getElementById('featureModalTitle').innerText = "🗂️ غرف دردشة حسوني المزامنة حياً";
             
-            // إنشاء كارد عرض الغرف والتحكم بها
             let roomsHtml = `<div style="max-height: 40vh; overflow-y: auto; padding: 2px;">`;
             
             window.roomsList.forEach(r => {
@@ -990,7 +1009,6 @@
             });
             roomsHtml += `</div>`;
             
-            // إضافة زر إنشاء الغرف مخفي تماماً داخل زر الغرف، لا يظهر إلا لملك الموقع الرسمي فقط (owner)
             if(window.currentUser && window.currentUser.role === 'owner') {
                 roomsHtml += `
                     <div style="margin-top:15px; border-top:1.5px dashed var(--gold); padding-top:12px; text-align:right;">
@@ -1010,7 +1028,7 @@
                 window.roomsList.push(rName);
                 db.collection("global_rooms").doc("list").set({ names: window.roomsList }).then(() => {
                     alert(`تم إنشاء الغرفة سحابياً [ ${rName} ] وتثبيتها للجميع!`); 
-                    ui.openRoomsManager(); // إعادة إنعاش القائمة تلقائياً لتظهر فوراً
+                    ui.openRoomsManager(); 
                 });
             } else {
                 alert("هذه الغرفة موجودة بالفعل!");
