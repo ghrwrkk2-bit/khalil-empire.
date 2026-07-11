@@ -46,7 +46,6 @@
         .mic-speaking-glow { position: absolute; inset: 0; border: 2px solid #2ecc71; border-radius: 8px; display: none; }
         .mic-status-badge { position: absolute; top: -2px; left: -2px; background: #e74c3c; font-size: 8px; padding: 1px 3px; border-radius: 4px; display: none; }
 
-        /* منطقة اليوتيوب الحقيقي المرئي المدمج */
         #youtubePlayerSection { position: fixed; top: 125px; width: 100%; height: 110px; background: #000; z-index: 998; border-bottom: 1px solid #ff3333; display: none; }
 
         #chatBox { height: calc(100vh - 190px); overflow-y: auto; padding: 135px 15px 85px; display: flex; flex-direction: column; gap: 12px; background: #0f0f0f url('https://i.ibb.co/6wXbYm2/butterflies.jpg') center center/cover no-repeat; transition: padding 0.3s ease; }
@@ -134,7 +133,6 @@
 </head>
 <body>
 
-<!-- قسم اليوتيوب المرئي الحقيقي والمزامَن -->
 <div id="youtubePlayerSection"></div>
 
 <div id="welcomeOverlay">
@@ -143,14 +141,14 @@
             <h2 style="text-align:center; color:var(--gold); margin:0 0 5px;">شات حسوني - دردشة حسوني</h2>
             
             <p style="text-align:center; font-size:12px; margin:0 0 15px; color:#2ecc71; font-weight:bold; background:rgba(0,0,0,0.3); padding:8px; border-radius:8px; border:1px solid rgba(46,204,113,0.2);">
-                دردش وتعرف على أاصدقاء من اليمن 🇾🇪 وجميع الدول العربية، محادثات كتابية جماعية بدون تحميل جافا أو برامج من الجوال
+                دردش وتعرف على أصدقاء من اليمن 🇾🇪 وجميع الدول العربية، محادثات كتابية جماعية بدون تحميل برامج من الجوال
             </p>
             
             <div id="fullRegistrationSections">
                 <div class="btn-row">
                     <button class="row-btn" id="btn_b1" onclick="ui.switchBranch('b1')">فرع زائر</button>
                     <button class="row-btn" id="btn_b2" onclick="ui.switchBranch('b2')">فرع عضوية</button>
-                    <button class="row-btn" id="btn_b3" onclick="ui.switchBranch('b3')">فرع تسجيل جديد</button>
+                    <button class="row-btn" id="btn_b3" onclick="ui.switchBranch('b3')">تسجيل جديد</button>
                 </div>
 
                 <div id="b1" class="branch-content">
@@ -168,97 +166,73 @@
                 </div>
 
                 <div id="b2" class="branch-content">
-                    <input type="text" id="logUser" class="form-control" placeholder="الاسم المستعار المسجل مسبقاً أو البريد...">
+                    <input type="text" id="logUser" class="form-control" placeholder="الاسم المستعار المسجل أو البريد...">
                     <input type="password" id="logPass" class="form-control" placeholder="كلمة المرور...">
-                    <button class="send-btn" style="width:100%; border-radius:8px;" onclick="ui.loginAsRegistered(false)">تسجيل الدخول الفوري للغرفة</button>
+                    <button class="send-btn" style="width:100%; border-radius:8px;" onclick="ui.loginAsRegistered(false)">تسجيل الدخول الفوري</button>
                 </div>
 
                 <div id="b3" class="branch-content">
                     <input type="text" id="rName" class="form-control" placeholder="الاسم المستعار الجديد...">
-                    <input type="email" id="rEmail" class="form-control" placeholder="البريد الإلكتروني الحقيقي...">
+                    <input type="email" id="rEmail" class="form-control" placeholder="البريد الإلكتروني...">
                     <input type="password" id="rPass" class="form-control" placeholder="كلمة المرور الجديدة...">
-                    <button class="send-btn" style="width:100%; border-radius:8px;" onclick="ui.loginAsRegistered(true)">تأكيد الحساب والدخول السحابي</button>
+                    <button class="send-btn" style="width:100%; border-radius:8px;" onclick="ui.loginAsRegistered(true)">تأكيد الحساب والدخول</button>
                 </div>
             </div>
 
             <div id="quickLoginSection" style="display:none; text-align:center;">
                 <h3 style="color:var(--gold); margin-bottom:15px;" id="quickLoginTitle">مرحباً بعودتك</h3>
-                <input type="password" id="quickPass" class="form-control" placeholder="أدخل كلمة مرور حسابك لتسجيل الدخول السريع...">
+                <input type="password" id="quickPass" class="form-control" placeholder="أدخل كلمة مرور حسابك...">
                 <button class="send-btn" style="width:100%; border-radius:8px; margin-bottom:10px;" onclick="ui.executeQuickLogin()">دخول سريع للروم</button>
                 <button class="row-btn" style="width:100%; background:transparent; border:none; color:#aaa; text-decoration:underline;" onclick="ui.forgetSavedAccountAndShowAll()">تسجيل بحساب آخر أو زائر</button>
             </div>
         </div>
         
         <div class="chat-info-seo" id="seoInfoBlock" style="max-width: 520px; margin: 15px auto 0;">
-            <div class="seo-title">شات حسوني | دردشة حسوني</div>
-            <p style="margin:0 0 10px;">شات حسوني عربي - شات بنات حسوني تعرف علي اصدقاء جدد من جميع الدول العربية والعالم من بين غرفها شات حسوني اليمن | شات حسوني مصر | شات حسوني السعودية | شات حسوني العراق | شات حسوني الجزائر | شات حسوني المغرب | شات حسوني السودان | شات حسوني الاردن دردشة حسوني عربية | شات حسوني سوريا | شات حسوني فلسطين | شات حسوني الكويت | شات حسوني عمان | شات حسوني ليبيا | شات حسوني موريتانيا | شات حسوني قطر | شات حسوني تونس</p>
+            <div class="seo-title">شات حسوني | دردشة حسوني الملوكية</div>
+            <p style="margin:0 0 10px;">شات حسوني عربي - تعرف على أصدقاء جدد من جميع الدول العربية والعالم. غرف محادثات مخصصة: شات اليمن، شات السعودية، شات العراق، شات مصر، وشات المغرب العربي الفاخر.</p>
             
             <p style="color:var(--gold); font-weight:bold; text-align:center; margin:10px 0; background:rgba(255,215,0,0.05); padding:6px; border:1px solid rgba(255,215,0,0.1); border-radius:5px;">
-                عند البدء in استخدام this الموقع انت توافق على سياسة الخصوصية وشروط الاستخدام
+                عند استخدام هذا الموقع، أنت توافق تماماً على سياسة الخصوصية وشروط الاستخدام.
             </p>
             
-            <div class="seo-title">المزيد من غرف الدردشة الوطنية</div>
+            <div class="seo-title">غرف الدردشة الصديقة</div>
             <div class="seo-rooms-grid">
-                <div class="seo-room-item">شتاج</div>
-                <div class="seo-room-item">شات تعب لي</div>
-                <div class="seo-room-item">شات حريس</div>
-                <div class="seo-room-item">شات كاهي</div>
-                <div class="seo-room-item">شات سيفهة الخليج</div>
-                <div class="seo-room-item">شات فرنسا</div>
-                <div class="seo-room-item">شات تونس</div>
-                <div class="seo-room-item">شات القذافي</div>
-                <div class="seo-room-item">شات هـ</div>
-                <div class="seo-room-item">شتات سبان</div>
-                <div class="seo-room-item">شاتدان</div>
-                <div class="seo-room-item">شات دا</div>
-                <div class="seo-room-item">شات عرب فن</div>
-                <div class="seo-room-item">شتات الدين</div>
-                <div class="seo-room-item">شات حكاكو مرسال</div>
-                <div class="seo-room-item">شتات مرسال العرب</div>
-                <div class="seo-room-item">شات 12 بحر</div>
-                <div class="seo-room-item">شات بابيل</div>
-                <div class="seo-room-item">شات زي</div>
-                <div class="seo-room-item">شات الموت</div>
+                <div class="seo-room-item">غرفة العام</div>
+                <div class="seo-room-item">غرفة اليمن السعيد</div>
+                <div class="seo-room-item">غرفة ملوك العرب</div>
+                <div class="seo-room-item">غرفة سهرة الخليج</div>
             </div>
 
             <table class="king-table">
                 <thead>
                     <tr>
-                        <th>الصومات</th>
-                        <th>رياات</th>
-                        <th>كلير</th>
-                        <th>نقطة</th>
+                        <th>المتواجدون حالياً</th>
+                        <th>الغرف المفتوحة</th>
+                        <th>حالة السيرفر</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>8</td>
-                        <td>اليابان 1</td>
-                        <td>2</td>
-                        <td>اليابان 3</td>
-                    </tr>
-                    <tr>
-                        <td>4</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
+                        <td>متفاعل نشط</td>
+                        <td>حرة ومزامنة</td>
+                        <td>مستقر وسحابي 🟢</td>
                     </tr>
                 </tbody>
             </table>
 
             <div style="text-align:center; margin-top:15px; font-size:10px; color:#666; border-top:1px solid #222; padding-top:10px;">
-                © شات عربي حر | دردشة عربي حر وبدون مجانية تسجيل وامنة - عربي هور | https://arby.chat
+                © جميع الحقوق محفوظة لـ شات حسوني | الاستضافة السحابية الآمنة 2026.
             </div>
         </div>
     </div>
 </div>
 
 <div class="header-bar">
-    <div class="header-btn" onclick="alert('لوحة التحكم آمنة')"><i class="fas fa-bell"></i>إشعارات</div>
-    <div class="header-btn" onclick="alert('التقارير فارغة')"><i class="fas fa-flag"></i>بلاغات</div>
+    <div class="header-btn" onclick="alert('لوحة التحكم آمنة ومستقرة')"><i class="fas fa-bell"></i>إشعارات</div>
+    <div class="header-btn" onclick="alert('التقارير والبلاغات فارغة')"><i class="fas fa-flag"></i>بلاغات</div>
     <div class="header-btn" id="topPrivateIcon" onclick="ui.clickTopPrivateButton()"><i class="fas fa-comments"></i>الخاص</div>
-    <div class="header-btn" onclick="alert('قائمة الأثرياء')"><i class="fas fa-gem"></i>الأثرياء</div>
-    <div class="header-btn" onclick="alert('قائمة الكبار السحابية')"><i class="fas fa-crown"></i>الكبار</div>
+    <div class="header-btn" onclick="alert('قائمة الأثرياء والداعمين')"><i class="fas fa-gem"></i>الأثرياء</div>
+    <div class="header-btn" onclick="alert('قائمة الملوك وكبار السيرفر')"><i class="fas fa-crown"></i>الكبار</div>
 </div>
 
 <div class="mics-container" id="micsContainer">
@@ -279,7 +253,7 @@
 <div id="chatBox"></div>
 
 <div class="input-section">
-    <i class="fas fa-image" style="color:var(--gold); font-size:24px; cursor:pointer;" onclick="alert('المعرض آمن وجاهز للرفع السحابي والمزامنة')"></i>
+    <i class="fas fa-image" style="color:var(--gold); font-size:24px; cursor:pointer;" onclick="alert('معرض الصور جاهز للمزامنة الفورية للجميع')"></i>
     <input type="text" id="msgInp" class="chat-input" placeholder="اكتب رسالتك العامة هنا لتظهر للجميع فوراً...">
     <button class="send-btn" onclick="ui.sendMessage()">إرسال</button>
 </div>
@@ -332,6 +306,7 @@
     window.privateNotificationsMap = {}; 
     window.roomsCountMap = {}; 
     window.liveUsersMap = {}; 
+    window.roomsList = ["العام"];
     
     window.chatRanksData = {
         "owner": { icon: "fas fa-trophy", color: "#ffd700", text: "البرنس الأصلي" },
@@ -611,7 +586,7 @@
                     let chatBox = document.getElementById('chatBox');
                     if(data.activeAudioId) {
                         ytSection.style.display = "block";
-                        chatBox.style.paddingTop = "245px"; // إزاحة صندوق الرسائل لمنع تغطيته بالمشغل المباشر
+                        chatBox.style.paddingTop = "245px"; 
                         ytSection.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${data.activeAudioId}?autoplay=1&controls=1&rel=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
                     } else {
                         ytSection.style.display = "none";
@@ -629,10 +604,9 @@
                     window.roomsList = ["العام"];
                     db.collection("global_rooms").doc("list").set({ names: ["العام"] });
                 }
-                // تحديث قائمة الغرف تلقائياً في حال كانت الواجهة مفتوحة لدى أي مشرف أو عضو
                 let modalTitle = document.getElementById('featureModalTitle');
-                if (modalTitle && modalTitle.innerText.includes("غرف دردشة")) {
-                    ui.openRoomsManager();
+                if (modalTitle && modalTitle.innerText.includes("غرف دردشة") && document.getElementById('featureModal').style.display === 'flex') {
+                    ui.updateRoomsManagerUI();
                 }
             });
         },
@@ -708,10 +682,9 @@
                     `;
                 }).join('');
                 
-                // تحديث عدادات واجهة الغرف الحية فوراً عند تغير المتواجدين لضمان دقة الروم لكل شاشات الزوار والأعضاء
                 let modalTitle = document.getElementById('featureModalTitle');
-                if (modalTitle && modalTitle.innerText.includes("غرف دردشة")) {
-                    ui.openRoomsManager();
+                if (modalTitle && modalTitle.innerText.includes("غرف دردشة") && document.getElementById('featureModal').style.display === 'flex') {
+                    ui.updateRoomsManagerUI();
                 }
             });
         },
@@ -738,7 +711,7 @@
                 }
                 if (currentCount === 50) {
                     currentLevel += 1;
-                    alert("👑 رائع جداً! تم ترقية مستواك السحابي إلى ليفل أحدث لإرسالك 50 رسالة!");
+                    alert("👑 رائع جداً! تم ترقية مستواك السحابي لإرسالك 50 رسالة!");
                 }
 
                 let updatedUserData = {
@@ -774,13 +747,20 @@
                 <div class="msg-header">
                     <div class="pfp-main-frame"><img src="${displayImg}" class="pfp-main" onclick="ui.viewProfileCard('${user.uid}')"></div>
                     <div class="rank-standalone-icon" style="border-color:${r.color};"><i class="${r.icon}" style="color:${r.color};"></i></div>
-                    <div class="king-name-container" style="border-color:${r.color}; background:rgba(0,0,0,0.6);" onclick="document.getElementById('msgInp').value=' ↩️ اقتباس [ ${displayName} ]: '">
+                    <div class="king-name-container" style="border-color:${r.color}; background:rgba(0,0,0,0.6);" onclick="ui.quoteUser('${displayName}')">
                         <span class="king-name-tag" style="color:${r.color};">${displayName}</span>
                     </div>
                 </div>
                 <div class="msg-text">${text}</div>
             `;
             let box = document.getElementById('chatBox'); box.appendChild(div); box.scrollTop = box.scrollHeight;
+        },
+        quoteUser: (name) => {
+            let inp = document.getElementById('msgInp');
+            if(inp) {
+                inp.value = ` ↩️ اقتباس [ ${name} ]: `;
+                inp.focus();
+            }
         },
         renderSystemWelcomeMsg: (text) => {
             let div = document.createElement('div');
@@ -811,7 +791,7 @@
                     let nextFree = 0;
                     for(let i=1; i<=4; i++) { if(!window.currentActiveMicsMap[i]) { nextFree = i; break; } }
                     if(nextFree > 0) {
-                        alert(`لا يمكنك الصعود للمايك الحالي، فهو محجوز! جاري توجيهك وصعودك على مايك آخر شاغر رقم [ ${nextFree} ]`);
+                        alert(`لا يمكنك الصعود للمايك الحالي، فهو محجوز! جاري توجيهك وصعودك على مايك شاغر رقم [ ${nextFree} ]`);
                         window.selectedMicNum = nextFree; ui.confirmMicGoingUp(true);
                     } else {
                         alert("لا يمكنك الصعود، المايك الحالي محجوز وكافة المايكات ممتلئة بالكامل!");
@@ -863,7 +843,7 @@
                         <i class="fab fa-youtube yt-preview-icon"></i>
                         <div style="flex:1; text-align:right;">
                             <span style="color:#fff; font-size:13px; font-weight:bold; display:block;">🎵 تم العثور على المسار بنجاح</span>
-                            <span style="color:var(--gold); font-size:11px;">اضغط هنا الآن لإطلاق البث الصوتي للمزامنة والمحاذاة الحية للجميع 🚀</span>
+                            <span style="color:var(--gold); font-size:11px;">اضغط هنا الآن لإطلاق البث الصوتي المباشر للجميع 🚀</span>
                         </div>
                     </div>
                 `;
@@ -925,7 +905,7 @@
                         </div>
                         ${editBtnHtml}
                         <div class="profile-details-grid">
-                            <div class="profile-grid-row"><span>العمر المستعار:</span><span>${u.age || 'غير مححدد'}</span></div>
+                            <div class="profile-grid-row"><span>العمر المستعار:</span><span>${u.age || 'غير محدد'}</span></div>
                             <div class="profile-grid-row"><span>الجنس الحالي:</span><span>${u.gender || 'غير محدد'}</span></div>
                             <div class="profile-grid-row"><span>البلد أو الإقامة:</span><span>${u.country || 'اليمن'}</span></div>
                         </div>
@@ -995,7 +975,6 @@
                 if(window.currentUser.uid === uid) { 
                     window.currentUser = { ...window.currentUser, ...updated }; 
                     localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser)); 
-                    // إعادة تشغيل المراقبة لتثبيت ظهور التحديث فوراً في قائمة liveUsersMap الموحدة
                     ui.listenOnlineUsersRealtime();
                 }
                 document.getElementById('featureModal').style.display = 'none';
@@ -1058,7 +1037,7 @@
             db.collection("room_settings").doc(window.currentRoom).set({ roomBg: window.tempUploadedRoomBg }, { merge: true }).then(() => { alert("تم تغيير وتثبيت الخلفية لجميع الأعضاء حياً!"); document.getElementById('featureModal').style.display = 'none'; });
         },
         cleanCurrentRoomMessages: () => {
-            if(confirm("هل تود مسح وتنظيف الروم ومحو الرسائل فوراً من شاشات الجميع Bars؟")) {
+            if(confirm("هل تود مسح وتنظيف الروم ومحو الرسائل فوراً من شاشات الجميع؟")) {
                 db.collection("rooms").doc(window.currentRoom).collection("messages").get().then((snap) => {
                     let batch = db.batch();
                     snap.forEach(doc => batch.delete(doc.ref));
@@ -1070,7 +1049,10 @@
         },
         openRoomsManager: () => {
             document.getElementById('featureModalTitle').innerText = "🗂️ غرف دردشة حسوني المزامنة حياً";
-            
+            ui.updateRoomsManagerUI();
+            document.getElementById('featureModal').style.display = 'flex';
+        },
+        updateRoomsManagerUI: () => {
             let roomsHtml = `<div style="max-height: 40vh; overflow-y: auto; padding: 2px;">`;
             
             window.roomsList.forEach(r => {
@@ -1097,9 +1079,7 @@
                     </div>
                 `;
             }
-            
             document.getElementById('featureModalBody').innerHTML = roomsHtml;
-            document.getElementById('featureModal').style.display = 'flex';
         },
         createNewRoomCloud: () => {
             let rName = document.getElementById('newRoomNameInp').value.trim(); if(!rName) return;
@@ -1107,12 +1087,13 @@
                 names: firebase.firestore.FieldValue.arrayUnion(rName)
             }).then(() => {
                 alert(`تم إنشاء الغرفة سحابياً [ ${rName} ] وتثبيتها للجميع بنجاح!`); 
-                ui.openRoomsManager(); 
+                ui.updateRoomsManagerUI(); 
             }).catch(() => {
                 db.collection("global_rooms").doc("list").set({ names: [rName] }, {merge: true});
             });
         },
         changeActiveRoom: (r) => { 
+            if(window.currentRoom === r) return;
             window.currentRoom = r; 
             document.getElementById('chatBox').innerHTML = ""; 
             document.getElementById('featureModal').style.display = 'none'; 
