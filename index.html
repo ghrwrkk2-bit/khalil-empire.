@@ -192,7 +192,7 @@
             <p style="margin:0 0 10px;">شات حسوني عربي - شات بنات حسوني تعرف علي اصدقاء جدد من جميع الدول العربية والعالم من بين غرفها شات حسوني اليمن | شات حسوني مصر | شات حسوني السعودية | شات حسوني العراق | شات حسوني الجزائر | شات حسوني المغرب | شات حسوني السودان | شات حسوني الاردن دردشة حسوني عربية | شات حسوني سوريا | شات حسوني فلسطين | شات حسوني الكويت | شات حسوني عمان | شات حسوني ليبيا | شات حسوني موريتانيا | شات حسوني قطر | شات حسوني تونس</p>
             
             <p style="color:var(--gold); font-weight:bold; text-align:center; margin:10px 0; background:rgba(255,215,0,0.05); padding:6px; border:1px solid rgba(255,215,0,0.1); border-radius:5px;">
-                عند البدء in استخدام هذا الموقع انت توافق على سياسة الخصوصية وشروط الاستخدام
+                عند البدء in استخدام this الموقع انت توافق على سياسة الخصوصية وشروط الاستخدام
             </p>
             
             <div class="seo-title">المزيد من غرف الدردشة الوطنية</div>
@@ -329,7 +329,7 @@
     window.unsubscribePrivateRoom = null; 
     window.privateNotificationsMap = {}; 
     window.roomsCountMap = {}; 
-    window.liveUsersMap = {}; // خارطة حية لحفظ تحديثات بروفايلات الأعضاء فورياً لضمان المزامنة المطلقة بالصفحة
+    window.liveUsersMap = {}; 
     
     window.chatRanksData = {
         "owner": { icon: "fas fa-trophy", color: "#ffd700", text: "البرنس الأصلي" },
@@ -352,7 +352,7 @@
         uid: "owner_hassouni", name: "Hassouni_King", role: "owner", level: 100, 
         img: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=150", 
         cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400",
-        likes: 1000, age: 19, gender: "ذكر", country: "اليمن", status: "المالك الأصلي للموقع 🏆", isMuted: false, isBanned: false
+        likes: 1000, age: 19, gender: "ذكر", country: "اليمن", status: "المالك الأصلي للموقع 🏆", isMuted: false, isBanned: false, msgCount: 0, gold: 0, gems: 0
     };
 
     window.currentUser = null;
@@ -407,7 +407,7 @@
                     uid: "u_"+Date.now(), name: n, password: ps, role: "diamond", level: 50, 
                     img: "https://cdn-icons-png.flaticon.com/512/1042/1042291.png",
                     cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=400",
-                    likes: 0, age: 20, gender: "ذكر", country: "اليمن", status: "عضو ماسي ملكي", isMuted: false, isBanned: false, sessionToken: generatedToken
+                    likes: 0, age: 20, gender: "ذكر", country: "اليمن", status: "عضو ماسي ملكي", isMuted: false, isBanned: false, sessionToken: generatedToken, msgCount: 0, gold: 0, gems: 0
                 };
             }
             ui.saveUserToFirestoreAndSession(window.currentUser);
@@ -425,7 +425,7 @@
                 uid: "g_"+Date.now(), name: n, role: "guest", level: 1, 
                 img: "https://cdn-icons-png.flaticon.com/512/1042/1042291.png",
                 cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=400",
-                likes: 0, age: a, gender: g, country: "اليمن", status: "زائر مؤقت بالدردشة", isMuted: false, isBanned: false, sessionToken: generatedToken
+                likes: 0, age: a, gender: g, country: "اليمن", status: "زائر مؤقت بالدردشة", isMuted: false, isBanned: false, sessionToken: generatedToken, msgCount: 0, gold: 0, gems: 0
             };
             ui.saveUserToFirestoreAndSession(window.currentUser);
             ui.enterChat();
@@ -443,7 +443,7 @@
                     uid: "u_"+Date.now(), name: userInp, password: passInp, role: "new", level: 5, 
                     img: "https://cdn-icons-png.flaticon.com/512/1042/1042291.png",
                     cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=400",
-                    likes: 1, age: 22, gender: "ذكر", country: "العالم العربي", status: "عضو جديد متفاعل", isMuted: false, isBanned: false, sessionToken: generatedToken
+                    likes: 1, age: 22, gender: "ذكر", country: "العالم العربي", status: "عضو جديد متفاعل", isMuted: false, isBanned: false, sessionToken: generatedToken, msgCount: 0, gold: 0, gems: 0
                 };
             }
             ui.saveUserToFirestoreAndSession(window.currentUser);
@@ -533,16 +533,15 @@
                 isOnline: true, 
                 sessionToken: window.currentUser.sessionToken,
                 currentRoom: window.currentRoom
-            }).then(() => {
-                db.collection("rooms").doc(window.currentRoom).collection("messages").add({
-                    isSystemWelcome: true,
-                    text: `مرحباً بك، تم انضمامك لشات حسوني ★ ${window.currentUser.name}`,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
             });
+
+            // جعل ترحيب النظام محلياً يظهر للمستخدم نفسه فقط بدلاً من تلويث السيرفر وتخريب الرسائل الأخيرة
+            setTimeout(() => {
+                ui.renderSystemWelcomeMsg(`مرحباً بك، تم انضمامك لشات حسوني ★ ${window.currentUser.name}`);
+            }, 1000);
             
             ui.startSessionTracking(); 
-            ui.listenOnlineUsersRealtime(); // استدعاء قائمة الأعضاء أولاً لبناء الخارطة الحية
+            ui.listenOnlineUsersRealtime(); 
             ui.listenToGlobalMessages();
             ui.listenToActiveMics();
             ui.listenToRoomSettings();
@@ -590,7 +589,8 @@
         },
         listenToGlobalMessages: () => {
             if(window.unsubscribeMessages) window.unsubscribeMessages();
-            window.unsubscribeMessages = db.collection("rooms").doc(window.currentRoom).collection("messages").orderBy("timestamp", "asc").limitToLast(50).onSnapshot((snapshot) => {
+            // جلب آخر 20 رسالة فقط عند الدخول للشات بدقة تامة
+            window.unsubscribeMessages = db.collection("rooms").doc(window.currentRoom).collection("messages").orderBy("timestamp", "asc").limitToLast(20).onSnapshot((snapshot) => {
                   let chatBox = document.getElementById('chatBox'); chatBox.innerHTML = "";
                   
                   if(snapshot.empty) {
@@ -620,7 +620,6 @@
                   snapshot.forEach((doc) => {
                       let micData = doc.data(); let num = micData.micNum;
                       
-                      // جلب اسم المايك وصورته حياً من خارطة الأعضاء المزامنة ليتحدث فوراً إذا غير زخرفته
                       let liveUser = window.liveUsersMap[micData.userId] || {};
                       let liveName = liveUser.name || micData.userName;
                       let liveImg = liveUser.img || micData.userImg;
@@ -641,7 +640,6 @@
                 
                 snap.forEach(doc => { 
                     let u = doc.data(); 
-                    // تخزين بيانات العضو الحالية بالخارطة لربطها بالرسائل والمايكات فورياً
                     window.liveUsersMap[u.uid] = u;
                     
                     if(u.isOnline) {
@@ -661,11 +659,6 @@
                         </div>
                     `;
                 }).join('');
-                
-                // إعادة بث وإظهار الرسائل فوراً ليتحدث شكل الاسم والزخرفة بلمح البصر عند الجميع
-                if(document.getElementById('chatBox').childNodes.length > 0) {
-                    ui.listenToGlobalMessages();
-                }
             });
         },
         sendMessage: () => {
@@ -678,6 +671,34 @@
 
             db.collection("users").doc(window.currentUser.uid).get().then((doc) => {
                 let freshUser = doc.exists ? doc.data() : window.currentUser;
+                
+                // حساب عدد الرسائل العامة للمكافآت والترقيات بذكاء
+                let currentCount = (freshUser.msgCount || 0) + 1;
+                let currentGold = freshUser.gold || 0;
+                let currentGems = freshUser.gems || 0;
+                let currentLevel = freshUser.level || 1;
+
+                if (currentCount === 20) {
+                    currentGold += 1;
+                    currentGems += 1;
+                    alert("🎁 تهانينا! حصلت على 1 ذهب و 1 جواهر لإرسالك 20 رسالة عامة!");
+                }
+                if (currentCount === 50) {
+                    currentLevel += 1;
+                    alert("👑 رائع جداً! تم ترقية مستواك السحابي إلى ليفل أحدث لإرسالك 50 رسالة!");
+                }
+
+                let updatedUserData = {
+                    msgCount: currentCount,
+                    gold: currentGold,
+                    gems: currentGems,
+                    level: currentLevel
+                };
+
+                db.collection("users").doc(window.currentUser.uid).update(updatedUserData);
+                window.currentUser = { ...window.currentUser, ...updatedUserData };
+                localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser));
+
                 db.collection("rooms").doc(window.currentRoom).collection("messages").add({
                     user: { uid: freshUser.uid, name: freshUser.name, role: freshUser.role, img: freshUser.img },
                     text: t, timeStr: timeStr, timestamp: firebase.firestore.FieldValue.serverTimestamp()
@@ -688,7 +709,6 @@
             let div = document.createElement('div'); 
             div.className = `msg-wrap ${user.uid === window.currentUser.uid ? 'is-me-style' : ''}`;
             
-            // المزامنة الإمبراطورية: قراءة الاسم والرتبة والصورة من البيانات الحية المحدثة فوراً بالخلفية
             let liveUser = window.liveUsersMap[user.uid] || user;
             let displayImg = liveUser.img || user.img;
             let displayName = liveUser.name || user.name;
@@ -845,6 +865,9 @@
                             <div class="profile-bar-btn" onclick="ui.likeProfile('${uid}')"><i class="fas fa-heart"></i> <span id="likeCountText">${u.likes || 0}</span> إعجاب</div>
                             <div class="profile-bar-btn" onclick="ui.startPrivateChatWithUser('${u.uid}', '${u.name}')"><i class="fas fa-paper-plane"></i> الخاص</div>
                             <div class="profile-bar-btn"><i class="fas fa-chart-line"></i> ليفل ${u.level || 1}</div>
+                        </div>
+                        <div style="background:rgba(255,215,0,0.1); border:1px solid var(--gold); border-radius:8px; padding:6px; margin-bottom:10px; font-size:11px; color:var(--gold);">
+                            🪙 الذهب: ${u.gold || 0} | 💎 الجواهر: ${u.gems || 0} | ✉️ الرسائل: ${u.msgCount || 0}
                         </div>
                         ${editBtnHtml}
                         <div class="profile-details-grid">
@@ -1024,15 +1047,15 @@
         },
         createNewRoomCloud: () => {
             let rName = document.getElementById('newRoomNameInp').value.trim(); if(!rName) return;
-            if(!window.roomsList.includes(rName)) { 
-                window.roomsList.push(rName);
-                db.collection("global_rooms").doc("list").set({ names: window.roomsList }).then(() => {
-                    alert(`تم إنشاء الغرفة سحابياً [ ${rName} ] وتثبيتها للجميع!`); 
-                    ui.openRoomsManager(); 
-                });
-            } else {
-                alert("هذه الغرفة موجودة بالفعل!");
-            }
+            // استخدام ميزة التحديث المصفوفي arrayUnion لمنع حدوث مشاكل وتعارض الصفحات بين الأجهزة
+            db.collection("global_rooms").doc("list").update({
+                names: firebase.firestore.FieldValue.arrayUnion(rName)
+            }).then(() => {
+                alert(`تم إنشاء الغرفة سحابياً [ ${rName} ] وتثبيتها للجميع بنجاح!`); 
+                ui.openRoomsManager(); 
+            }).catch(() => {
+                db.collection("global_rooms").doc("list").set({ names: [rName] }, {merge: true});
+            });
         },
         changeActiveRoom: (r) => { 
             window.currentRoom = r; 
