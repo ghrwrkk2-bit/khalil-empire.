@@ -132,7 +132,7 @@
     </style>
 </head>
 <body>
-
+<!-- المحتوى كما هو في طلبك الأصلي بالضبط -->
 <div id="youtubePlayerSection"></div>
 
 <div id="welcomeOverlay">
