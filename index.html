@@ -19,6 +19,9 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; height: 100vh; background: var(--dark-bg); color: #fff; overflow: hidden; }
 
+        /* [التعديل الذكي 1: تحسين تفاعل الرسائل] */
+        .msg-wrap:hover { background: rgba(30, 35, 45, 0.98) !important; transition: 0.3s; }
+        
         #welcomeOverlay {
             display: flex; 
             position: fixed; 
@@ -132,25 +135,20 @@
     </style>
 </head>
 <body>
-
 <div id="youtubePlayerSection"></div>
-
 <div id="welcomeOverlay">
     <div style="width:100%; max-width:520px; padding: 10px 0;">
         <div class="king-card" id="mainKingCard">
             <h2 style="text-align:center; color:var(--gold); margin:0 0 5px;">شات حسوني - دردشة حسوني</h2>
-            
             <p style="text-align:center; font-size:12px; margin:0 0 15px; color:#2ecc71; font-weight:bold; background:rgba(0,0,0,0.3); padding:8px; border-radius:8px; border:1px solid rgba(46,204,113,0.2);">
                 دردش وتعرف على أصدقاء من اليمن 🇾🇪 وجميع الدول العربية، محادثات كتابية جماعية بدون تحميل برامج من الجوال
             </p>
-            
             <div id="fullRegistrationSections">
                 <div class="btn-row">
                     <button class="row-btn" id="btn_b1" onclick="ui.switchBranch('b1')">فرع زائر</button>
                     <button class="row-btn" id="btn_b2" onclick="ui.switchBranch('b2')">فرع عضوية</button>
                     <button class="row-btn" id="btn_b3" onclick="ui.switchBranch('b3')">تسجيل جديد</button>
                 </div>
-
                 <div id="b1" class="branch-content">
                     <input type="text" id="vName" class="form-control" placeholder="الاسم المستعار للزائر...">
                     <select id="vAge" class="form-select">
@@ -164,13 +162,11 @@
                     </select>
                     <button class="send-btn" style="width:100%; border-radius:8px;" onclick="ui.loginAsGuest()">دخول الدردشة فوراً</button>
                 </div>
-
                 <div id="b2" class="branch-content">
                     <input type="text" id="logUser" class="form-control" placeholder="الاسم المستعار المسجل أو البريد...">
                     <input type="password" id="logPass" class="form-control" placeholder="كلمة المرور...">
                     <button class="send-btn" style="width:100%; border-radius:8px;" onclick="ui.loginAsRegistered(false)">تسجيل الدخول الفوري</button>
                 </div>
-
                 <div id="b3" class="branch-content">
                     <input type="text" id="rName" class="form-control" placeholder="الاسم المستعار الجديد...">
                     <input type="email" id="rEmail" class="form-control" placeholder="البريد الإلكتروني...">
@@ -178,7 +174,6 @@
                     <button class="send-btn" style="width:100%; border-radius:8px;" onclick="ui.loginAsRegistered(true)">تأكيد الحساب والدخول</button>
                 </div>
             </div>
-
             <div id="quickLoginSection" style="display:none; text-align:center;">
                 <h3 style="color:var(--gold); margin-bottom:15px;" id="quickLoginTitle">مرحباً بعودتك</h3>
                 <input type="password" id="quickPass" class="form-control" placeholder="أدخل كلمة مرور حسابك...">
@@ -186,15 +181,12 @@
                 <button class="row-btn" style="width:100%; background:transparent; border:none; color:#aaa; text-decoration:underline;" onclick="ui.forgetSavedAccountAndShowAll()">تسجيل بحساب آخر أو زائر</button>
             </div>
         </div>
-        
         <div class="chat-info-seo" id="seoInfoBlock" style="max-width: 520px; margin: 15px auto 0;">
             <div class="seo-title">شات حسوني | دردشة حسوني الملوكية</div>
             <p style="margin:0 0 10px;">شات حسوني عربي - تعرف على أصدقاء جدد من جميع الدول العربية والعالم. غرف محادثات مخصصة: شات اليمن، شات السعودية، شات العراق، شات مصر، وشات المغرب العربي الفاخر.</p>
-            
             <p style="color:var(--gold); font-weight:bold; text-align:center; margin:10px 0; background:rgba(255,215,0,0.05); padding:6px; border:1px solid rgba(255,215,0,0.1); border-radius:5px;">
                 عند استخدام هذا الموقع، أنت توافق تماماً على سياسة الخصوصية وشروط الاستخدام.
             </p>
-            
             <div class="seo-title">غرف الدردشة الصديقة</div>
             <div class="seo-rooms-grid">
                 <div class="seo-room-item">غرفة العام</div>
@@ -202,7 +194,6 @@
                 <div class="seo-room-item">غرفة ملوك العرب</div>
                 <div class="seo-room-item">غرفة سهرة الخليج</div>
             </div>
-
             <table class="king-table">
                 <thead>
                     <tr>
@@ -219,7 +210,6 @@
                     </tr>
                 </tbody>
             </table>
-
             <div style="text-align:center; margin-top:15px; font-size:10px; color:#666; border-top:1px solid #222; padding-top:10px;">
                 © جميع الحقوق محفوظة لـ شات حسوني | الاستضافة السحابية الآمنة 2026.
             </div>
@@ -350,7 +340,7 @@
         },
         showAuthBranchDirect: () => {
             if(window.currentUser && window.currentUser.role === 'owner') {
-                document.getElementById('featureModalTitle').innerText = "👑 لوحة الملك (إضافة وإنشاء غرف)";
+                document.getElementById('featureModalTitle').innerText = "👑 لوحة الملك (تحديث سريع متاح)";
                 document.getElementById('featureModalBody').innerHTML = `
                     <div style="text-align:right;">
                         <input type="text" id="newRoomNameInp" class="form-control" placeholder="اسم الغرفة السحابية الجديدة...">
@@ -758,7 +748,8 @@
         quoteUser: (name) => {
             let inp = document.getElementById('msgInp');
             if(inp) {
-                inp.value = ` ↩️ اقتباس [ ${name} ]: `;
+                // [التعديل الذكي 2: اقتباس ذكي]
+                inp.value = `@${name} `;
                 inp.focus();
             }
         },
@@ -883,7 +874,10 @@
                 let isMe = (window.currentUser.uid === uid); let isAmOwner = (window.currentUser.role === 'owner' || window.currentUser.role === 'admin');
                 
                 document.getElementById('featureModalTitle').innerText = "الملف الشخصي الفوري المزامَن";
+                // [التعديل الذكي 3: زر تحديث سريع للملف]
                 let editBtnHtml = isMe && (window.currentUser.role !== 'guest') ? `<button class="row-btn" style="width:100%; margin-bottom:10px;" onclick="ui.openEditProfileModal('${uid}')"><i class="fas fa-pencil-alt"></i> تعديل بيانات ملفي</button>` : '';
+                let refreshBtnHtml = isAmOwner ? `<button class="row-btn" style="width:100%; border-color:#2ecc71; color:#2ecc71;" onclick="ui.viewProfileCard('${uid}')"><i class="fas fa-sync"></i> تحديث عرض البيانات</button>` : '';
+                
                 let adminOptionsBtn = isAmOwner && !isMe ? `<button class="send-btn" style="width:100%; margin-top:10px; background:linear-gradient(to left, #cb2d3e, #ef473a); color:#fff;" onclick="ui.openAdminControls('${uid}')">⚙️ إدارة الرتب والإجراءات</button>` : '';
                 let r = window.chatRanksData[u.role] || { icon: "fas fa-user", color: "#fff", text: "عضو" };
 
@@ -903,7 +897,7 @@
                         <div style="background:rgba(255,215,0,0.1); border:1px solid var(--gold); border-radius:8px; padding:6px; margin-bottom:10px; font-size:11px; color:var(--gold);">
                             🪙 الذهب: ${u.gold || 0} | 💎 الجواهر: ${u.gems || 0} | ✉️ الرسائل: ${u.msgCount || 0}
                         </div>
-                        ${editBtnHtml}
+                        ${editBtnHtml} ${refreshBtnHtml}
                         <div class="profile-details-grid">
                             <div class="profile-grid-row"><span>العمر المستعار:</span><span>${u.age || 'غير محدد'}</span></div>
                             <div class="profile-grid-row"><span>الجنس الحالي:</span><span>${u.gender || 'غير محدد'}</span></div>
