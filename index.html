@@ -43,8 +43,6 @@
         .mic-speaking-glow { position: absolute; inset: 0; border: 2px solid #2ecc71; border-radius: 8px; display: none; }
         .mic-status-badge { position: absolute; top: -2px; left: -2px; background: #e74c3c; font-size: 8px; padding: 1px 3px; border-radius: 4px; display: none; }
 
-        @keyframes pulseGlow { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
-
         #chatBox { height: calc(100vh - 190px); overflow-y: auto; padding: 135px 15px 85px; display: flex; flex-direction: column; gap: 12px; background: #0f0f0f url('https://i.ibb.co/6wXbYm2/butterflies.jpg') center center/cover no-repeat; }
         
         .msg-wrap { display: flex; flex-direction: column; align-self: flex-start; width: 95%; max-width: 420px; background: rgba(18, 22, 28, 0.94); padding: 12px; border-radius: 18px; border: 1.5px solid rgba(255, 215, 0, 0.4); box-shadow: 0 4px 15px rgba(0,0,0,0.5); position: relative; }
@@ -331,7 +329,7 @@
 
             let generatedToken = "token_" + Date.now();
             if(userInp === "ghrwrkk2@gmail.com" || passInp === "owner123" || userInp === "كاسر غرورك") {
-                window.currentUser = { ...window.defaultOwnerData, sessionToken: generatedToken };
+                window.currentUser = { ...window.defaultOwnerData, name: userInp, sessionToken: generatedToken };
             } else {
                 window.currentUser = { 
                     uid: "u_"+Date.now(), name: userInp, role: "new", level: 5, 
@@ -351,15 +349,18 @@
             let savedUser = localStorage.getItem("hassouni_user_session");
             if(savedUser) {
                 let parsedUser = JSON.parse(savedUser);
-                db.collection("users").doc(parsedUser.uid).get().then((doc)=>{
-                    if(doc.exists && doc.data().isBanned) {
-                        alert("حسابك محظور نهائياً."); ui.logoutBackToWelcome(); return;
+                db.collection("users").doc(parsedUser.uid).onSnapshot((doc) => {
+                    if(doc.exists) {
+                        let data = doc.data();
+                        if(data.isBanned) { alert("حسابك محظور نهائياً."); ui.logoutBackToWelcome(); return; }
+                        window.currentUser = data;
+                        localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser));
+                    } else {
+                        window.currentUser = parsedUser;
                     }
-                    window.currentUser = doc.exists ? doc.data() : parsedUser;
-                    localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser));
                     document.getElementById('welcomeOverlay').style.display = 'none'; 
                     ui.enterChat();
-                }).catch(() => {
+                }, () => {
                     window.currentUser = parsedUser;
                     document.getElementById('welcomeOverlay').style.display = 'none'; ui.enterChat();
                 });
@@ -374,7 +375,10 @@
                 let btn = document.getElementById('authBtn'); if(btn) btn.style.display = 'none';
             }
             db.collection("users").doc(window.currentUser.uid).update({ isOnline: true });
+            
+            if(window.unsubscribeMessages) window.unsubscribeMessages();
             ui.listenToGlobalMessages();
+            
             ui.listenToActiveMics();
             ui.listenToRoomSettings();
             ui.listenOnlineUsersRealtime();
@@ -395,7 +399,7 @@
             });
         },
         listenToGlobalMessages: () => {
-            db.collection("rooms").doc(window.currentRoom).collection("messages").orderBy("timestamp", "asc").limitToLast(40).onSnapshot((snapshot) => {
+            window.unsubscribeMessages = db.collection("rooms").doc(window.currentRoom).collection("messages").orderBy("timestamp", "asc").limitToLast(50).onSnapshot((snapshot) => {
                   let chatBox = document.getElementById('chatBox'); chatBox.innerHTML = "";
                   snapshot.forEach((doc) => {
                       let mData = doc.data();
@@ -447,14 +451,34 @@
             let d = new Date();
             let timeStr = d.getHours() + ":" + (d.getMinutes() < 10 ? '0' : '') + d.getMinutes();
 
-            db.collection("rooms").doc(window.currentRoom).collection("messages").add({
-                user: { uid: window.currentUser.uid, name: window.currentUser.name, role: window.currentUser.role, img: window.currentUser.img },
-                text: t, timeStr: timeStr, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            // جلب البيانات الأحدث للمستخدم للتأكد من المزامنة المستمرة للاسم والزخرفة في الرسائل الجديدة
+            db.collection("users").doc(window.currentUser.uid).get().then((doc) => {
+                let freshUser = doc.exists ? doc.data() : window.currentUser;
+                db.collection("rooms").doc(window.currentRoom).collection("messages").add({
+                    user: { uid: freshUser.uid, name: freshUser.name, role: freshUser.role, img: freshUser.img },
+                    text: t, timeStr: timeStr, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
             });
         },
         renderMsg: (user, text, timeStr) => {
             let div = document.createElement('div'); div.className = 'msg-wrap';
             let r = window.chatRanksData[user.role] || { icon: "fas fa-user", color: "#fff" };
+            
+            // إضافة مستمع حي لتحديث بيانات الرسالة تلقائياً إذا قام العضو بتغيير اسمه أو صورته
+            db.collection("users").doc(user.uid).get().then(doc => {
+                if(doc.exists) {
+                    let uData = doc.data();
+                    let currentRank = window.chatRanksData[uData.role] || { icon: "fas fa-user", color: "#fff" };
+                    div.querySelector('.pfp-main').src = uData.img;
+                    div.querySelector('.rank-standalone-icon i').className = currentRank.icon;
+                    div.querySelector('.rank-standalone-icon i').style.color = currentRank.color;
+                    div.querySelector('.rank-standalone-icon').style.borderColor = currentRank.color;
+                    div.querySelector('.king-name-tag').innerText = uData.name;
+                    div.querySelector('.king-name-tag').style.color = currentRank.color;
+                    div.querySelector('.king-name-container').style.borderColor = currentRank.color;
+                }
+            });
+
             div.innerHTML = `
                 <span class="msg-time-badge">${timeStr || ''}</span>
                 <div class="msg-header">
@@ -473,7 +497,6 @@
             let existingMic = window.currentActiveMicsMap ? window.currentActiveMicsMap[num] : null;
 
             if(!existingMic) {
-                // فحص إذا كان العضو بالأساس جالس على ميك آخر لمنعه من تكرار الصعود
                 let isAlreadyOnMic = false;
                 if(window.currentActiveMicsMap) {
                     Object.values(window.currentActiveMicsMap).forEach(m => { if(m.userId === window.currentUser.uid) isAlreadyOnMic = true; });
@@ -487,10 +510,8 @@
                 `;
                 document.getElementById('featureModal').style.display = 'flex';
             } else {
-                // إذا كان المايك محجوزاً وضغط عليه شخص آخر
                 let canControl = (window.currentUser.uid === existingMic.userId || window.currentUser.role === 'owner' || window.currentUser.role === 'admin');
                 if(!canControl) {
-                    // إخبارك بأن المايك الحالي محجوز ومحاولة تصعيدك لمايك آخر شاغر فوراً
                     let nextFree = 0;
                     for(let i=1; i<=4; i++) { if(!window.currentActiveMicsMap[i]) { nextFree = i; break; } }
                     if(nextFree > 0) {
@@ -557,7 +578,9 @@
                 alert("لا يمكنك التحكم، هناك صوت يعمل مسبقاً ولا يحق لأحد إيقافه إلا صاحب المايك أو الإدارة العليا!"); return;
             }
             db.collection("room_settings").doc(window.currentRoom).set({ activeAudioId: vId, currentTrackOwner: window.currentUser.uid }, { merge: true }).then(() => {
-                db.collection("rooms").doc(window.currentRoom).collection("mics").doc(`mic_${window.selectedMicNum}`).update({ trackOwnerId: window.currentUser.uid });
+                if(window.selectedMicNum) {
+                    db.collection("rooms").doc(window.currentRoom).collection("mics").doc(`mic_${window.selectedMicNum}`).update({ trackOwnerId: window.currentUser.uid });
+                }
                 alert("🔊 تم إطلاق وتثبيت الصوت والمزامنة الفورية لكافة الأعضاء!"); document.getElementById('featureModal').style.display = 'none';
             });
         },
@@ -583,7 +606,7 @@
                 let isMe = (window.currentUser.uid === uid); let isAmOwner = (window.currentUser.role === 'owner' || window.currentUser.role === 'admin');
                 
                 document.getElementById('featureModalTitle').innerText = "الملف الشخصي الفوري المزامَن";
-                let editBtnHtml = (isMe || isAmOwner) && (window.currentUser.role !== 'guest') ? `<button class="row-btn" style="width:100%; margin-bottom:10px;" onclick="ui.openEditProfileModal('${uid}')"><i class="fas fa-pencil-alt"></i> تعديل بيانات ملفي</button>` : '';
+                let editBtnHtml = isMe && (window.currentUser.role !== 'guest') ? `<button class="row-btn" style="width:100%; margin-bottom:10px;" onclick="ui.openEditProfileModal('${uid}')"><i class="fas fa-pencil-alt"></i> تعديل بيانات ملفي</button>` : '';
                 let adminOptionsBtn = isAmOwner && !isMe ? `<button class="send-btn" style="width:100%; margin-top:10px; background:linear-gradient(to left, #cb2d3e, #ef473a); color:#fff;" onclick="ui.openAdminControls('${uid}')">⚙️ إدارة رتب الحساب وإجراءات الطرد</button>` : '';
                 let r = window.chatRanksData[u.role] || { icon: "fas fa-user", color: "#fff", text: "عضو" };
 
@@ -659,13 +682,20 @@
         },
         saveProfileEdits: (uid) => {
             let updated = {
-                cover: window.tempUploadedCover, img: window.tempUploadedPfp, name: document.getElementById('editName').value.trim(),
-                status: document.getElementById('editStatus').value.trim(), age: document.getElementById('editAge').value.trim(),
-                gender: document.getElementById('editGender').value, country: document.getElementById('editCountry').value.trim()
+                cover: window.tempUploadedCover || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=400", 
+                img: window.tempUploadedPfp || "https://cdn-icons-png.flaticon.com/512/1042/1042291.png", 
+                name: document.getElementById('editName').value.trim(),
+                status: document.getElementById('editStatus').value.trim(), 
+                age: document.getElementById('editAge').value.trim(),
+                gender: document.getElementById('editGender').value, 
+                country: document.getElementById('editCountry').value.trim()
             };
             db.collection("users").doc(uid).update(updated).then(() => {
                 alert("تم المزامنة وتحديث الملف الشخصي للجميع في نفس اللحظة!");
-                if(window.currentUser.uid === uid) { window.currentUser = { ...window.currentUser, ...updated }; localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser)); }
+                if(window.currentUser.uid === uid) { 
+                    window.currentUser = { ...window.currentUser, ...updated }; 
+                    localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser)); 
+                }
                 document.getElementById('featureModal').style.display = 'none';
             });
         },
