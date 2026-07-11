@@ -35,6 +35,10 @@
         .header-btn { color: #fff; font-size: 11px; text-align: center; cursor: pointer; flex: 1; }
         .header-btn i { display: block; font-size: 18px; color: var(--gold); margin-bottom: 2px; }
 
+        /* إضافة وميض ملوكي لأيقونة الخاص العلوي */
+        .header-btn.has-new-private { animation: privateFlash 1s infinite alternate; }
+        .header-btn.has-new-private i { color: #ff3366 !important; }
+
         .mics-container { position: fixed; top: 65px; width: 100%; height: 60px; background: rgba(20, 20, 20, 0.95); border-bottom: 1px solid #222; display: flex; align-items: center; justify-content: space-around; z-index: 999; padding: 5px; }
         .mic-slot { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 22%; height: 100%; cursor: pointer; border-radius: 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,215,0,0.1); background-size: cover; background-position: center; position: relative; }
         .mic-slot i.fa-microphone { font-size: 16px; color: var(--gold); }
@@ -46,6 +50,7 @@
         #chatBox { height: calc(100vh - 190px); overflow-y: auto; padding: 135px 15px 85px; display: flex; flex-direction: column; gap: 12px; background: #0f0f0f url('https://i.ibb.co/6wXbYm2/butterflies.jpg') center center/cover no-repeat; }
         
         .msg-wrap { display: flex; flex-direction: column; align-self: flex-start; width: 95%; max-width: 420px; background: rgba(18, 22, 28, 0.94); padding: 12px; border-radius: 18px; border: 1.5px solid rgba(255, 215, 0, 0.4); box-shadow: 0 4px 15px rgba(0,0,0,0.5); position: relative; }
+        .msg-wrap.is-me-style { align-self: flex-end; border-color: #00ffcc; background: rgba(10, 25, 30, 0.94); }
         .msg-header { display: flex; align-items: center; gap: 8px; width: 100%; }
         
         .pfp-main-frame { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; background: #000; flex-shrink: 0; }
@@ -114,6 +119,16 @@
         .king-table th, .king-table td { padding: 8px; border: 1px solid #333; }
         .king-table th { background: #1a1a1a; color: var(--gold); }
         .king-table tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+
+        /* ستايل نافذة المحادثة الخاصة الملوكية */
+        .private-room-container { display: flex; flex-direction: column; height: 320px; background: #0c0c0c; border: 1px solid var(--gold); border-radius: 10px; overflow: hidden; margin-top: 10px; }
+        .private-messages-area { flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background: #111; }
+        .private-input-row { display: flex; gap: 5px; padding: 8px; background: #181818; border-top: 1px solid #222; }
+
+        @keyframes privateFlash {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.08); opacity: 1; box-shadow: 0 0 10px rgba(255,51,102,0.3); }
+        }
     </style>
 </head>
 <body>
@@ -239,7 +254,8 @@
 <div class="header-bar">
     <div class="header-btn" onclick="alert('لوحة التحكم آمنة')"><i class="fas fa-bell"></i>إشعارات</div>
     <div class="header-btn" onclick="alert('التقارير فارغة')"><i class="fas fa-flag"></i>بلاغات</div>
-    <div class="header-btn" onclick="alert('شات مشفر ومحمي تلقائياً')"><i class="fas fa-comments"></i>الخاص</div>
+    <!-- ربط أيقونة الخاص العلوي بدالة فتح التنبيهات وإضافة معرف id للمراقبة -->
+    <div class="header-btn" id="topPrivateIcon" onclick="ui.clickTopPrivateButton()"><i class="fas fa-comments"></i>الخاص</div>
     <div class="header-btn" onclick="alert('قائمة الأثرياء')"><i class="fas fa-gem"></i>الأثرياء</div>
     <div class="header-btn" onclick="alert('قائمة الكبار السحابية')"><i class="fas fa-crown"></i>الكبار</div>
 </div>
@@ -288,7 +304,7 @@
     <div class="feature-card">
         <h3 id="featureModalTitle" style="color:var(--gold); text-align:center; margin-top:0;"></h3>
         <div id="featureModalBody"></div>
-        <button onclick="document.getElementById('featureModal').style.display='none'" class="send-btn" style="background:#c0392b; color:white; width:100%; margin-top:15px; border-radius:8px;">إغلاق النافذة</button>
+        <button onclick="document.getElementById('featureModal').style.display='none'; if(window.unsubscribePrivateRoom) window.unsubscribePrivateRoom();" class="send-btn" style="background:#c0392b; color:white; width:100%; margin-top:15px; border-radius:8px;">إغلاق النافذة</button>
     </div>
 </div>
 
@@ -311,6 +327,8 @@
 
     window.currentRoom = "العام";
     window.sessionListenerUnsubscribe = null; // للمراقبة الحية لمنع التعدد وطرد الحساب
+    window.unsubscribePrivateRoom = null; // تفريغ مستمع الخاص عند الإغلاق
+    window.privateNotificationsMap = {}; // لمراقبة من أرسل لك خاص
     
     window.chatRanksData = {
         "owner": { icon: "fas fa-trophy", color: "#ffd700", text: "البرنس الأصلي" },
@@ -530,6 +548,7 @@
             ui.listenToRoomSettings();
             ui.listenOnlineUsersRealtime();
             ui.listenToGlobalRoomsList();
+            ui.listenToPrivateMessagesNotifications(); // بدء المراقبة المستمرة لإشعارات الخاص بالشريط العلوي
         },
         startSessionTracking: () => {
             if(window.sessionListenerUnsubscribe) window.sessionListenerUnsubscribe();
@@ -575,6 +594,13 @@
             if(window.unsubscribeMessages) window.unsubscribeMessages();
             window.unsubscribeMessages = db.collection("rooms").doc(window.currentRoom).collection("messages").orderBy("timestamp", "asc").limitToLast(50).onSnapshot((snapshot) => {
                   let chatBox = document.getElementById('chatBox'); chatBox.innerHTML = "";
+                  
+                  // الكشف الفوري إذا كانت الغرفة فارغة تماماً لمزامنة الحذف عند كافة المتصفحات والهواتف حياً
+                  if(snapshot.empty) {
+                      chatBox.innerHTML = `<div class="system-message-wrap">✨ تم تنظيف الروم فوراً بواسطة الإدارة 👋</div>`;
+                      return;
+                  }
+
                   snapshot.forEach((doc) => {
                       let mData = doc.data();
                       if (mData.isSystemWelcome) {
@@ -638,7 +664,9 @@
             });
         },
         renderMsg: (user, text, timeStr) => {
-            let div = document.createElement('div'); div.className = 'msg-wrap';
+            let div = document.createElement('div'); 
+            // تمييز رسائلي بتنسيق ملوكي خاص تلقائي
+            div.className = `msg-wrap ${user.uid === window.currentUser.uid ? 'is-me-style' : ''}`;
             let r = window.chatRanksData[user.role] || { icon: "fas fa-user", color: "#fff" };
             
             div.innerHTML = `
@@ -778,6 +806,7 @@
                 let adminOptionsBtn = isAmOwner && !isMe ? `<button class="send-btn" style="width:100%; margin-top:10px; background:linear-gradient(to left, #cb2d3e, #ef473a); color:#fff;" onclick="ui.openAdminControls('${uid}')">⚙️ إدارة الرتب والإجراءات</button>` : '';
                 let r = window.chatRanksData[u.role] || { icon: "fas fa-user", color: "#fff", text: "عضو" };
 
+                // ربط أيقونة فتح المحدثة الخاصة بنافذة الـ Modal لتعمل بشكل فوري وحي
                 document.getElementById('featureModalBody').innerHTML = `
                     <div class="profile-card-wrapper">
                         <img src="${u.cover || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400'}" class="profile-card-cover">
@@ -788,7 +817,7 @@
                         
                         <div class="profile-action-bar">
                             <div class="profile-bar-btn" onclick="ui.likeProfile('${uid}')"><i class="fas fa-heart"></i> <span id="likeCountText">${u.likes || 0}</span> إعجاب</div>
-                            <div class="profile-bar-btn" onclick="alert('فتح الخاص آمن ومحمي')"><i class="fas fa-paper-plane"></i> الخاص</div>
+                            <div class="profile-bar-btn" onclick="ui.startPrivateChatWithUser('${u.uid}', '${u.name}')"><i class="fas fa-paper-plane"></i> الخاص</div>
                             <div class="profile-bar-btn"><i class="fas fa-chart-line"></i> ليفل ${u.level || 1}</div>
                         </div>
                         ${editBtnHtml}
@@ -967,6 +996,130 @@
                 localStorage.removeItem("hassouni_user_session");
                 window.location.reload();
             }
+        },
+
+        // =======================================================
+        // 🛠️ دوال إضافية خاصة بنظام المراسلة الخاصة المزامنة الفورية
+        // =======================================================
+        startPrivateChatWithUser: (targetUid, targetName) => {
+            if(targetUid === window.currentUser.uid) { alert("لا يمكنك مراسلة نفسك خاص!"); return; }
+            
+            document.getElementById('topPrivateIcon').classList.remove('has-new-private');
+            delete window.privateNotificationsMap[targetUid];
+
+            document.getElementById('featureModalTitle').innerText = `💬 الخاص الإمبراطوري مع: ${targetName}`;
+            
+            // هيكلة محتوى الخاص المتجاوب ديناميكياً داخل الكارد الصغير
+            document.getElementById('featureModalBody').innerHTML = `
+                <div class="private-room-container">
+                    <div class="private-messages-area" id="privateMessagesArea"></div>
+                    <div class="private-input-row">
+                        <input type="text" id="pMsgInp" class="chat-input" placeholder="اكتب رسالة خاصة وسرية..." style="height:36px;">
+                        <button class="send-btn" style="height:36px; padding:0 12px; font-size:12px;" onclick="ui.sendPrivateMessageCloud('${targetUid}')">إرسال</button>
+                    </div>
+                </div>
+            `;
+
+            // توليد الـ Room ID الفريد والموحد بين العضوين أبجديّاً
+            const privateRoomId = [window.currentUser.uid, targetUid].sort().join('_');
+            
+            if(window.unsubscribePrivateRoom) window.unsubscribePrivateRoom();
+
+            // الاستماع اللحظي المتزامن للرسائل الخاصة المتبادلة
+            window.unsubscribePrivateRoom = db.collection("private_chats").doc(privateRoomId).collection("messages").orderBy("timestamp", "asc").onSnapshot((snap) => {
+                let area = document.getElementById('privateMessagesArea');
+                if(!area) return;
+                area.innerHTML = "";
+                snap.forEach((doc) => {
+                    let m = doc.data();
+                    let bubble = document.createElement('div');
+                    bubble.style.padding = "6px 10px";
+                    bubble.style.borderRadius = "10px";
+                    bubble.style.fontSize = "12px";
+                    bubble.style.maxWidth = "80%";
+                    bubble.style.wordBreak = "break-word";
+                    
+                    if(m.senderId === window.currentUser.uid) {
+                        bubble.style.alignSelf = "flex-end";
+                        bubble.style.background = "var(--king-grad)";
+                        bubble.style.color = "#000";
+                        bubble.innerHTML = `<b>أنا:</b> ${m.text}`;
+                    } else {
+                        bubble.style.alignSelf = "flex-start";
+                        bubble.style.background = "#222";
+                        bubble.style.color = "#fff";
+                        bubble.style.border = "1px solid #333";
+                        bubble.innerHTML = `<b>${m.senderName}:</b> ${m.text}`;
+                    }
+                    area.appendChild(bubble);
+                });
+                area.scrollTop = area.scrollHeight;
+            });
+        },
+        sendPrivateMessageCloud: (targetUid) => {
+            let inp = document.getElementById('pMsgInp');
+            if(!inp) return;
+            let txt = inp.value.trim();
+            if(!txt) return;
+            inp.value = "";
+
+            const privateRoomId = [window.currentUser.uid, targetUid].sort().join('_');
+            
+            // رفع الرسالة للـ Firestore لتظهر عند الطرفين حياً بلمحة بصر
+            db.collection("private_chats").doc(privateRoomId).collection("messages").add({
+                senderId: window.currentUser.uid,
+                senderName: window.currentUser.name,
+                receiverId: targetUid,
+                text: txt,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            // تحديث آخر إشعار في الحقل الرئيسي ليعمل التنبيه للشريط العلوي للطرف الآخر
+            db.collection("private_chats").doc(privateRoomId).set({
+                lastSenderId: window.currentUser.uid,
+                lastSenderName: window.currentUser.name,
+                receiverId: targetUid,
+                lastMessageText: txt,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+        },
+        listenToPrivateMessagesNotifications: () => {
+            // مراقبة الخلفية بشكل مستمر لاستقبال أي تنبيه وميض في شريط الخاص العلوي
+            db.collection("private_chats").where("receiverId", "==", window.currentUser.uid).onSnapshot((snap) => {
+                let hasUnread = false;
+                snap.forEach((doc) => {
+                    let data = doc.data();
+                    if(data.lastSenderId !== window.currentUser.uid) {
+                        window.privateNotificationsMap[data.lastSenderId] = data.lastSenderName;
+                        hasUnread = true;
+                    }
+                });
+                let topBarBtn = document.getElementById('topPrivateIcon');
+                if(topBarBtn) {
+                    if(hasUnread && Object.keys(window.privateNotificationsMap).length > 0) {
+                        topBarBtn.classList.add('has-new-private');
+                    } else {
+                        topBarBtn.classList.remove('has-new-private');
+                    }
+                }
+            });
+        },
+        clickTopPrivateButton: () => {
+            let activeKeys = Object.keys(window.privateNotificationsMap);
+            if(activeKeys.length === 0) {
+                alert("📭 صندوق الرسائل الخاصة فارغ حالياً، لا توجد إشعارات جديدة.");
+                return;
+            }
+            
+            // إظهار قائمة من أرسلوا لك رسائل خاصة عبر الكارد الرئيسي
+            document.getElementById('featureModalTitle').innerText = "📬 إشعارات الخاص الجديدة";
+            document.getElementById('featureModalBody').innerHTML = activeKeys.map(k => `
+                <div class="menu-item" onclick="ui.startPrivateChatWithUser('${k}', '${window.privateNotificationsMap[k]}')">
+                    <span style="color:var(--gold); font-weight:bold;"><i class="fas fa-comment-dots"></i> رسالة جديدة من: ${window.privateNotificationsMap[k]}</span>
+                    <button class="send-btn" style="height:28px; padding:0 10px; font-size:11px; border-radius:5px;">فتح</button>
+                </div>
+            `).join('');
+            document.getElementById('featureModal').style.display = 'flex';
         }
     };
 
