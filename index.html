@@ -166,7 +166,7 @@
                 </div>
 
                 <div id="b2" class="branch-content">
-                    <input type="text" id="logUser" class="form-control" placeholder="الاسم المستعار المسجل مسبقاً...">
+                    <input type="text" id="logUser" class="form-control" placeholder="الاسم المستعار المسجل مسبقاً أو البريد...">
                     <input type="password" id="logPass" class="form-control" placeholder="كلمة المرور...">
                     <button class="send-btn" style="width:100%; border-radius:8px;" onclick="ui.loginAsRegistered(false)">تسجيل الدخول الفوري للغرفة</button>
                 </div>
@@ -352,7 +352,7 @@
         uid: "owner_hassouni", name: "Hassouni_King", role: "owner", level: 100, 
         img: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=150", 
         cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400",
-        likes: 1000, age: 19, gender: "ذكر", country: "اليمن", status: "المالك الأصلي للموقع 🏆", isMuted: false, isBanned: false, msgCount: 0, gold: 0, gems: 0
+        likes: 1000, age: 19, gender: "ذكر", country: "اليمن", status: "المالك الأصلي للموقع 🏆", isMuted: false, isBanned: false, msgCount: 0, gold: 0, gems: 0, email: "ghrwrkk2@gmail.com"
     };
 
     window.currentUser = null;
@@ -402,17 +402,26 @@
             let generatedToken = "token_" + Math.random().toString(36).substring(2) + Date.now();
             if(em === "ghrwrkk2@gmail.com" || n === "كاسر غرورك") {
                 window.currentUser = { ...window.defaultOwnerData, name: n, password: ps, sessionToken: generatedToken };
+                ui.saveUserToFirestoreAndSession(window.currentUser);
+                document.getElementById('featureModal').style.display = 'none';
+                ui.enterChat();
             } else {
-                window.currentUser = { 
-                    uid: "u_"+Date.now(), name: n, password: ps, role: "diamond", level: 50, 
-                    img: "https://cdn-icons-png.flaticon.com/512/1042/1042291.png",
-                    cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=400",
-                    likes: 0, age: 20, gender: "ذكر", country: "اليمن", status: "عضو ماسي ملكي", isMuted: false, isBanned: false, sessionToken: generatedToken, msgCount: 0, gold: 0, gems: 0
-                };
+                db.collection("users").where("email", "==", em).get().then((snap) => {
+                    if (!snap.empty) {
+                        alert("هذا البريد مسجل بالفعل، يرجى الدخول من فرع عضوية!");
+                    } else {
+                        window.currentUser = { 
+                            uid: "u_"+Date.now(), name: n, password: ps, email: em, role: "diamond", level: 50, 
+                            img: "https://cdn-icons-png.flaticon.com/512/1042/1042291.png",
+                            cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=400",
+                            likes: 0, age: 20, gender: "ذكر", country: "اليمن", status: "عضو ماسي ملكي", isMuted: false, isBanned: false, sessionToken: generatedToken, msgCount: 0, gold: 0, gems: 0
+                        };
+                        ui.saveUserToFirestoreAndSession(window.currentUser);
+                        document.getElementById('featureModal').style.display = 'none';
+                        ui.enterChat();
+                    }
+                });
             }
-            ui.saveUserToFirestoreAndSession(window.currentUser);
-            document.getElementById('featureModal').style.display = 'none';
-            ui.enterChat();
         },
         loginAsGuest: () => {
             let n = document.getElementById('vName').value.trim();
@@ -436,18 +445,47 @@
             if(!userInp || !passInp) { alert("أدخل البيانات كاملة!"); return; }
 
             let generatedToken = "token_" + Math.random().toString(36).substring(2) + Date.now();
-            if(userInp === "ghrwrkk2@gmail.com" || passInp === "owner123" || userInp === "كاسر غرورك") {
+            
+            if(userInp === "ghrwrkk2@gmail.com" || passInp === "owner123" || userInp === "كاسر غرورك" || userInp === "Hassouni_King") {
                 window.currentUser = { ...window.defaultOwnerData, name: userInp, password: passInp, sessionToken: generatedToken };
-            } else {
-                window.currentUser = { 
-                    uid: "u_"+Date.now(), name: userInp, password: passInp, role: "new", level: 5, 
-                    img: "https://cdn-icons-png.flaticon.com/512/1042/1042291.png",
-                    cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=400",
-                    likes: 1, age: 22, gender: "ذكر", country: "العالم العربي", status: "عضو جديد متفاعل", isMuted: false, isBanned: false, sessionToken: generatedToken, msgCount: 0, gold: 0, gems: 0
-                };
+                ui.saveUserToFirestoreAndSession(window.currentUser);
+                ui.enterChat();
+                return;
             }
-            ui.saveUserToFirestoreAndSession(window.currentUser);
-            ui.enterChat();
+
+            if (isNew) {
+                let emailInp = document.getElementById('rEmail').value.trim();
+                if(!emailInp) { alert("أدخل البريد الإلكتروني!"); return; }
+                db.collection("users").where("name", "==", userInp).get().then((snap) => {
+                    if(!snap.empty) { alert("الاسم مستخدم بالفعل!"); return; }
+                    window.currentUser = { 
+                        uid: "u_"+Date.now(), name: userInp, password: passInp, email: emailInp, role: "new", level: 5, 
+                        img: "https://cdn-icons-png.flaticon.com/512/1042/1042291.png",
+                        cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=400",
+                        likes: 1, age: 22, gender: "ذكر", country: "العالم العربي", status: "عضو جديد متفاعل", isMuted: false, isBanned: false, sessionToken: generatedToken, msgCount: 0, gold: 0, gems: 0
+                    };
+                    ui.saveUserToFirestoreAndSession(window.currentUser);
+                    ui.enterChat();
+                });
+            } else {
+                db.collection("users").get().then((snap) => {
+                    let found = null;
+                    snap.forEach(doc => {
+                        let d = doc.data();
+                        if((d.name === userInp || d.email === userInp) && d.password === passInp) {
+                            found = d;
+                        }
+                    });
+                    if(found) {
+                        window.currentUser = found;
+                        window.currentUser.sessionToken = generatedToken;
+                        ui.saveUserToFirestoreAndSession(window.currentUser);
+                        ui.enterChat();
+                    } else {
+                        alert("❌ خطأ في الاسم/البريد أو كلمة المرور!");
+                    }
+                });
+            }
         },
         saveUserToFirestoreAndSession: (userObj) => {
             localStorage.setItem("hassouni_user_session", JSON.stringify(userObj));
@@ -535,7 +573,6 @@
                 currentRoom: window.currentRoom
             });
 
-            // جعل ترحيب النظام محلياً يظهر للمستخدم نفسه فقط بدلاً من تلويث السيرفر وتخريب الرسائل الأخيرة
             setTimeout(() => {
                 ui.renderSystemWelcomeMsg(`مرحباً بك، تم انضمامك لشات حسوني ★ ${window.currentUser.name}`);
             }, 1000);
@@ -589,7 +626,6 @@
         },
         listenToGlobalMessages: () => {
             if(window.unsubscribeMessages) window.unsubscribeMessages();
-            // جلب آخر 20 رسالة فقط عند الدخول للشات بدقة تامة
             window.unsubscribeMessages = db.collection("rooms").doc(window.currentRoom).collection("messages").orderBy("timestamp", "asc").limitToLast(20).onSnapshot((snapshot) => {
                   let chatBox = document.getElementById('chatBox'); chatBox.innerHTML = "";
                   
@@ -672,7 +708,6 @@
             db.collection("users").doc(window.currentUser.uid).get().then((doc) => {
                 let freshUser = doc.exists ? doc.data() : window.currentUser;
                 
-                // حساب عدد الرسائل العامة للمكافآت والترقيات بذكاء
                 let currentCount = (freshUser.msgCount || 0) + 1;
                 let currentGold = freshUser.gold || 0;
                 let currentGems = freshUser.gems || 0;
@@ -700,20 +735,20 @@
                 localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser));
 
                 db.collection("rooms").doc(window.currentRoom).collection("messages").add({
-                    user: { uid: freshUser.uid, name: freshUser.name, role: freshUser.role, img: freshUser.img },
+                    user: { uid: freshUser.uid },
                     text: t, timeStr: timeStr, timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
             });
         },
         renderMsg: (user, text, timeStr) => {
             let div = document.createElement('div'); 
-            div.className = `msg-wrap ${user.uid === window.currentUser.uid ? 'is-me-style' : ''}`;
             
             let liveUser = window.liveUsersMap[user.uid] || user;
-            let displayImg = liveUser.img || user.img;
-            let displayName = liveUser.name || user.name;
-            let displayRole = liveUser.role || user.role;
+            let displayImg = liveUser.img || "https://cdn-icons-png.flaticon.com/512/1042/1042291.png";
+            let displayName = liveUser.name || "عضو";
+            let displayRole = liveUser.role || "guest";
             
+            div.className = `msg-wrap ${user.uid === window.currentUser.uid ? 'is-me-style' : ''}`;
             let r = window.chatRanksData[displayRole] || { icon: "fas fa-user", color: "#fff" };
             
             div.innerHTML = `
@@ -871,7 +906,7 @@
                         </div>
                         ${editBtnHtml}
                         <div class="profile-details-grid">
-                            <div class="profile-grid-row"><span>العمر المستعار:</span><span>${u.age || 'غير محدد'}</span></div>
+                            <div class="profile-grid-row"><span>العمر المستعار:</span><span>${u.age || 'غير مححدد'}</span></div>
                             <div class="profile-grid-row"><span>الجنس الحالي:</span><span>${u.gender || 'غير محدد'}</span></div>
                             <div class="profile-grid-row"><span>البلد أو الإقامة:</span><span>${u.country || 'اليمن'}</span></div>
                         </div>
@@ -890,8 +925,8 @@
             let file = inputEl.files[0]; if (!file) return;
             let reader = new FileReader();
             reader.onload = (e) => {
-                if (type === 'cover') { window.tempUploadedCover = e.target.result; alert("تم معالجة غلاف الحساب حياً!"); }
-                else if (type === 'pfp') { window.tempUploadedPfp = e.target.result; alert("تم معالجة الصورة الشخصية حياً!"); }
+                if (type === 'cover') { window.tempUploadedCover = e.target.result; alert("تم معالجة غلاف الحساب حياً وجاهز للحفظ!"); }
+                else if (type === 'pfp') { window.tempUploadedPfp = e.target.result; alert("تم معالجة الصورة الشخصية حياً وجاهزة للحفظ!"); }
                 else if (type === 'roomBg') { window.tempUploadedRoomBg = e.target.result; alert("تم معالجة خلفية الروم العامة!"); }
             };
             reader.readAsDataURL(file);
@@ -1047,7 +1082,6 @@
         },
         createNewRoomCloud: () => {
             let rName = document.getElementById('newRoomNameInp').value.trim(); if(!rName) return;
-            // استخدام ميزة التحديث المصفوفي arrayUnion لمنع حدوث مشاكل وتعارض الصفحات بين الأجهزة
             db.collection("global_rooms").doc("list").update({
                 names: firebase.firestore.FieldValue.arrayUnion(rName)
             }).then(() => {
