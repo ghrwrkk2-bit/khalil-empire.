@@ -46,7 +46,10 @@
         .mic-speaking-glow { position: absolute; inset: 0; border: 2px solid #2ecc71; border-radius: 8px; display: none; }
         .mic-status-badge { position: absolute; top: -2px; left: -2px; background: #e74c3c; font-size: 8px; padding: 1px 3px; border-radius: 4px; display: none; }
 
-        #chatBox { height: calc(100vh - 190px); overflow-y: auto; padding: 135px 15px 85px; display: flex; flex-direction: column; gap: 12px; background: #0f0f0f url('https://i.ibb.co/6wXbYm2/butterflies.jpg') center center/cover no-repeat; }
+        /* منطقة اليوتيوب الحقيقي المرئي المدمج */
+        #youtubePlayerSection { position: fixed; top: 125px; width: 100%; height: 110px; background: #000; z-index: 998; border-bottom: 1px solid #ff3333; display: none; }
+
+        #chatBox { height: calc(100vh - 190px); overflow-y: auto; padding: 135px 15px 85px; display: flex; flex-direction: column; gap: 12px; background: #0f0f0f url('https://i.ibb.co/6wXbYm2/butterflies.jpg') center center/cover no-repeat; transition: padding 0.3s ease; }
         
         .msg-wrap { display: flex; flex-direction: column; align-self: flex-start; width: 95%; max-width: 420px; background: rgba(18, 22, 28, 0.94); padding: 12px; border-radius: 18px; border: 1.5px solid rgba(255, 215, 0, 0.4); box-shadow: 0 4px 15px rgba(0,0,0,0.5); position: relative; }
         .msg-wrap.is-me-style { align-self: flex-end; border-color: #00ffcc; background: rgba(10, 25, 30, 0.94); }
@@ -109,8 +112,6 @@
         .profile-grid-row span:first-child { color: #aaa; }
         .profile-grid-row span:last-child { color: var(--gold); font-weight: bold; }
 
-        #youtubeVideoFrameContainer { position: fixed; top: -9999px; left: -9999px; width: 1px; height: 1px; overflow: hidden; opacity: 0; }
-        
         .chat-info-seo { text-align: right; background: rgba(0,0,0,0.4); padding: 15px; border-radius: 10px; border: 1px solid #222; font-size: 12px; line-height: 1.8; color: #ccc; }
         .seo-title { color: var(--gold); font-size: 15px; font-weight: bold; margin-bottom: 8px; text-align: center; }
         .seo-rooms-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; margin-top: 10px; }
@@ -133,7 +134,8 @@
 </head>
 <body>
 
-<div id="youtubeVideoFrameContainer"></div>
+<!-- قسم اليوتيوب المرئي الحقيقي والمزامَن -->
+<div id="youtubePlayerSection"></div>
 
 <div id="welcomeOverlay">
     <div style="width:100%; max-width:520px; padding: 10px 0;">
@@ -605,11 +607,16 @@
                     let data = doc.data();
                     if(data.roomBg) document.getElementById('chatBox').style.backgroundImage = `url('${data.roomBg}')`;
                     
-                    let ytContainer = document.getElementById('youtubeVideoFrameContainer');
+                    let ytSection = document.getElementById('youtubePlayerSection');
+                    let chatBox = document.getElementById('chatBox');
                     if(data.activeAudioId) {
-                        ytContainer.innerHTML = `<iframe width="1" height="1" src="https://www.youtube.com/embed/${data.activeAudioId}?autoplay=1&loop=1&playlist=${data.activeAudioId}" allow="autoplay"></iframe>`;
+                        ytSection.style.display = "block";
+                        chatBox.style.paddingTop = "245px"; // إزاحة صندوق الرسائل لمنع تغطيته بالمشغل المباشر
+                        ytSection.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${data.activeAudioId}?autoplay=1&controls=1&rel=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
                     } else {
-                        ytContainer.innerHTML = "";
+                        ytSection.style.display = "none";
+                        chatBox.style.paddingTop = "135px";
+                        ytSection.innerHTML = "";
                     }
                 }
             });
@@ -621,6 +628,11 @@
                 } else {
                     window.roomsList = ["العام"];
                     db.collection("global_rooms").doc("list").set({ names: ["العام"] });
+                }
+                // تحديث قائمة الغرف تلقائياً في حال كانت الواجهة مفتوحة لدى أي مشرف أو عضو
+                let modalTitle = document.getElementById('featureModalTitle');
+                if (modalTitle && modalTitle.innerText.includes("غرف دردشة")) {
+                    ui.openRoomsManager();
                 }
             });
         },
@@ -695,6 +707,12 @@
                         </div>
                     `;
                 }).join('');
+                
+                // تحديث عدادات واجهة الغرف الحية فوراً عند تغير المتواجدين لضمان دقة الروم لكل شاشات الزوار والأعضاء
+                let modalTitle = document.getElementById('featureModalTitle');
+                if (modalTitle && modalTitle.innerText.includes("غرف دردشة")) {
+                    ui.openRoomsManager();
+                }
             });
         },
         sendMessage: () => {
@@ -834,6 +852,7 @@
                     <div id="ytSearchPreviewContainer"></div>
                 </div>
             `;
+            document.getElementById('featureModal').style.display = 'flex';
         },
         previewYoutubeTrack: () => {
             let link = document.getElementById('ytLinkInput').value.trim(); let videoId = extractYouTubeVideoId(link);
@@ -976,6 +995,8 @@
                 if(window.currentUser.uid === uid) { 
                     window.currentUser = { ...window.currentUser, ...updated }; 
                     localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser)); 
+                    // إعادة تشغيل المراقبة لتثبيت ظهور التحديث فوراً في قائمة liveUsersMap الموحدة
+                    ui.listenOnlineUsersRealtime();
                 }
                 document.getElementById('featureModal').style.display = 'none';
             });
@@ -1220,12 +1241,16 @@
             }
             
             document.getElementById('featureModalTitle').innerText = "📬 إشعارات الخاص الجديدة";
-            document.getElementById('featureModalBody').innerHTML = activeKeys.map(k => `
-                <div class="menu-item" onclick="ui.startPrivateChatWithUser('${k}', '${window.privateNotificationsMap[k]}')">
-                    <span style="color:var(--gold); font-weight:bold;"><i class="fas fa-comment-dots"></i> رسالة جديدة من: ${window.privateNotificationsMap[k]}</span>
-                    <button class="send-btn" style="height:28px; padding:0 10px; font-size:11px; border-radius:5px;">فتح</button>
+            document.getElementById('featureModalBody').innerHTML = `
+                <div style="max-height: 40vh; overflow-y: auto;">
+                    ${activeKeys.map(k => `
+                        <div class="menu-item" onclick="ui.startPrivateChatWithUser('${k}', '${window.privateNotificationsMap[k]}')">
+                            <span style="color:var(--gold); font-weight:bold;"><i class="fas fa-comment-dots"></i> رسالة جديدة من: ${window.privateNotificationsMap[k]}</span>
+                            <button class="send-btn" style="height:28px; padding:0 10px; font-size:11px; border-radius:5px;">فتح</button>
+                        </div>
+                    `).join('')}
                 </div>
-            `).join('');
+            `;
             document.getElementById('featureModal').style.display = 'flex';
         }
     };
