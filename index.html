@@ -333,6 +333,7 @@
     window.liveUsersMap = {}; 
     window.roomsList = ["العام"];
     window.savedPrivateChatsList = []; 
+    window.lastMessageTime = 0; // حماية ضد السبام
     
     window.chatRanksData = {
         "owner": { icon: "fas fa-trophy", color: "#ffd700", text: "البرنس الأصلي" },
@@ -365,6 +366,21 @@
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
         const match = url.match(regExp);
         return (match && match[2].length === 11) ? match[2] : null;
+    }
+
+    // وظيفة لإرسال نغمة تنبيه عند وصول رسالة خاصة
+    function playNotificationSound() {
+        try {
+            let context = new (window.AudioContext || window.webkitAudioContext)();
+            let osc = context.createOscillator();
+            let gain = context.createGain();
+            osc.connect(gain);
+            gain.connect(context.destination);
+            osc.frequency.setValueAtTime(587.33, context.currentTime); // نغمة مرتفعة مريحة
+            gain.gain.setValueAtTime(0.08, context.currentTime);
+            osc.start();
+            osc.stop(context.currentTime + 0.12);
+        } catch(e) {}
     }
 
     window.ui = {
@@ -652,7 +668,7 @@
                         tickerSection.style.display = "flex";
                         chatBox.style.paddingTop = "160px"; 
                         document.getElementById('tickerSpace').innerText = `🔊 يتم الآن بث المسار الصوتي للجميع حياً: [ رابط سحابي مزامن نشط ] 🚀`;
-                        ytSection.innerHTML = `<iframe width="0" height="0" src="https://www.youtube.com/embed/${data.activeAudioId}?autoplay=1&controls=0&rel=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+                        ytSection.innerHTML = `<iframe width="0" height="0" src="https://www.youtube.com/embed/${data.activeAudioId}?autoplay=1&controls=0&rel=0&mute=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
                     } else {
                         tickerSection.style.display = "none";
                         chatBox.style.paddingTop = "135px";
@@ -752,6 +768,12 @@
         },
         sendMessage: () => {
             if(window.currentUser.isMuted) { alert("أنت مكتوم من الإدارة حالياً لا يمكنك النشر!"); return; }
+            
+            // حماية ضد السبام (نصف ثانية بين الرسائل)
+            let now = Date.now();
+            if(now - window.lastMessageTime < 500) { return; }
+            window.lastMessageTime = now;
+
             let inp = document.getElementById('msgInp'); let t = inp.value.trim(); if(!t) return;
             inp.value = '';
 
@@ -1415,6 +1437,10 @@
                 snap.forEach((doc) => {
                     let data = doc.data();
                     if(data.lastSenderId !== window.currentUser.uid) {
+                        // تفعيل التنبيه الصوتي عند وجود رسالة جديدة لم تكن مسجلة من قبل
+                        if(!window.privateNotificationsMap[data.lastSenderId]) {
+                            playNotificationSound();
+                        }
                         window.privateNotificationsMap[data.lastSenderId] = data.lastSenderName;
                         hasUnread = true;
                         if(!window.savedPrivateChatsList.some(c => c.uid === data.lastSenderId)) {
@@ -1436,11 +1462,14 @@
             } else {
                 let html = `<div style="max-height:45vh; overflow-y:auto; display:flex; flex-direction:column; gap:6px;">`;
                 window.savedPrivateChatsList.forEach(c => {
-                    let isNewBadge = window.privateNotificationsMap[c.uid] ? `<span style="background:red; color:white; font-size:10px; padding:2px 6px; border-radius:10px; font-weight:bold;">جديد 🔔</span>` : '';
+                    let isNewBadge = window.privateNotificationsMap[c.uid] ? `<span style="background:red; color:white; font-size:9px; padding:2px 6px; border-radius:10px; font-weight:bold; animation: privateFlash 0.5s infinite alternate;">رسالة جديدة</span>` : '';
                     html += `
-                        <div class="menu-item" onclick="ui.startPrivateChatWithUser('${c.uid}', '${c.name}')" style="border:1px solid #222; border-radius:10px; background:rgba(255,255,255,0.01);">
-                            <span><i class="fas fa-user-circle" style="color:var(--gold);"></i> ${c.name}</span>
-                            ${isNewBadge}
+                        <div class="menu-item" onclick="ui.startPrivateChatWithUser('${c.uid}', '${c.name}')" style="border: 1px solid rgba(255,215,0,0.1); background: rgba(255,255,255,0.01); border-radius:8px;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <i class="fas fa-user-circle" style="font-size:20px; color:var(--gold);"></i>
+                                <strong>${c.name}</strong>
+                            </div>
+                            <div>${isNewBadge}</div>
                         </div>
                     `;
                 });
