@@ -479,7 +479,6 @@
                     ui.enterChat();
                 });
             } else {
-                // تعديل صارم: التحقق من البريد وكلمة المرور الصحيحة معاً لمنع الدخول العشوائي
                 db.collection("users").where("email", "==", userInp).get().then((snap) => {
                     let found = null;
                     snap.forEach(doc => {
@@ -596,9 +595,8 @@
             ui.listenToGlobalRoomsList();
             ui.listenToPrivateMessagesNotifications(); 
             ui.buildEmojiPanel();
-            ui.startMicSystemAutoCleaner(); // تشغيل فاحص النزول التلقائي من المايك
+            ui.startMicSystemAutoCleaner();
         },
-        // ميزة إنزال العضو التلقائي من المايك عند انقطاع الاتصال أو الخروج المفاجئ
         startMicSystemAutoCleaner: () => {
             setInterval(() => {
                 db.collection("rooms").doc(window.currentRoom).collection("mics").get().then((snap) => {
@@ -607,7 +605,6 @@
                         db.collection("users").doc(mData.userId).get().then((uDoc) => {
                             if (uDoc.exists) {
                                 let uData = uDoc.data();
-                                // إذا سجل النظام أن المستخدم غير متصل أو غيّر الروم، يتم حذفه من المايك فوراً
                                 if (!uData.isOnline || uData.currentRoom !== window.currentRoom) {
                                     doc.ref.delete();
                                 }
@@ -1090,7 +1087,6 @@
                 document.getElementById('featureModalTitle').innerText = "تعديل الملف الشامل (11 خياراً مطوراً)";
                 document.getElementById('featureModalBody').innerHTML = `
                     <div style="text-align:right; max-height:60vh; overflow-y:auto; padding:5px;">
-                        <!-- تعديل ملوكي: ربط الـ label بـ id الـ input لفتح الاستوديو مباشرة عند النقر -->
                         <label for="coverFileInput" class="file-input-label">🖼️ 1- اختيار غلاف جديد من الملفات</label>
                         <input type="file" id="coverFileInput" class="file-input-hidden" accept="image/*" onchange="ui.handleLocalFileProcessing(this, 'cover')">
                         
@@ -1292,7 +1288,7 @@
             db.collection("room_settings").doc(window.currentRoom).set({ roomBg: window.tempUploadedRoomBg }, { merge: true }).then(() => { alert("تم تغيير وتثبيت الخلفية لجميع الأعضاء حياً!"); document.getElementById('featureModal').style.display = 'none'; });
         },
         cleanCurrentRoomMessages: () => {
-            if(confirm("هل تود مسح وتنظيف الروم ومحو الرسائل فوراً من شاشات الجميع Bars؟")) {
+            if(confirm("هل تود مسح وتنظيف الروم ومحو الرسائل فوراً من شاشات الجميع Bars?")) {
                 db.collection("rooms").doc(window.currentRoom).collection("messages").get().then((snap) => {
                     let batch = db.batch(); snap.forEach(doc => batch.delete(doc.ref));
                     batch.commit().then(() => { document.getElementById('featureModal').style.display = 'none'; });
@@ -1434,30 +1430,30 @@
             });
         },
         clickTopPrivateButton: () => {
-            document.getElementById('featureModalTitle').innerText = "📬 صندوق الرسائل الخاصة والمحفوظة";
-            let activeKeys = Object.keys(window.privateNotificationsMap);
-            
-            let listHtml = `<div style="max-height: 40vh; overflow-y: auto;">`;
+            document.getElementById('featureModalTitle').innerText = "✉️ صندوق المحادثات الخاصة النشطة";
             if(window.savedPrivateChatsList.length === 0) {
-                listHtml += `<p style="text-align:center; color:#aaa; padding:10px;">لا توجد محادثات خاصة في الأرشيف حالياً.</p>`;
+                document.getElementById('featureModalBody').innerHTML = `<p style="text-align:center; color:#666;">لا توجد محادثات خاصة في جلستك الحالية حالياً.</p>`;
             } else {
-                window.savedPrivateChatsList.forEach(chat => {
-                    let alertBadge = activeKeys.includes(chat.uid) ? `<span style="background:red; color:#fff; padding:2px 5px; border-radius:5px; font-size:10px; margin-right:5px;">جديد</span>` : '';
-                    listHtml += `
-                        <div class="menu-item" onclick="ui.startPrivateChatWithUser('${chat.uid}', '${chat.name}')">
-                            <span style="color:var(--gold); font-weight:bold;"><i class="fas fa-comment-dots"></i> محادثة: ${chat.name} ${alertBadge}</span>
-                            <button class="send-btn" style="height:28px; padding:0 10px; font-size:11px; border-radius:5px;">فتح الغرفة</button>
+                let html = `<div style="max-height:45vh; overflow-y:auto; display:flex; flex-direction:column; gap:6px;">`;
+                window.savedPrivateChatsList.forEach(c => {
+                    let isNewBadge = window.privateNotificationsMap[c.uid] ? `<span style="background:#ff3366; color:#fff; font-size:9px; padding:2px 6px; border-radius:10px; font-weight:bold; animation:privateFlash 0.5s infinite alternate;">رسالة جديدة</span>` : '';
+                    html += `
+                        <div class="menu-item" onclick="ui.startPrivateChatWithUser('${c.uid}', '${c.name}')" style="background:rgba(255,255,255,0.02); border-radius:10px; border:1px solid #222;">
+                            <span><i class="fas fa-user-circle" style="color:var(--gold);"></i> ${c.name}</span>
+                            ${isNewBadge}
                         </div>
                     `;
                 });
+                html += `</div>`;
+                document.getElementById('featureModalBody').innerHTML = html;
             }
-            listHtml += `</div>`;
-            document.getElementById('featureModalBody').innerHTML = listHtml;
             document.getElementById('featureModal').style.display = 'flex';
         }
     };
 
-    window.onload = () => { ui.checkSavedSessionOnLoad(); };
+    window.onload = () => {
+        ui.checkSavedSessionOnLoad();
+    };
 </script>
 </body>
 </html>
