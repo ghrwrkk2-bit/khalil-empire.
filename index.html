@@ -49,7 +49,6 @@
         .mic-speaking-glow { position: absolute; inset: 0; border: 2px solid #2ecc71; border-radius: 8px; display: none; }
         .mic-status-badge { position: absolute; top: -2px; left: -2px; background: #e74c3c; font-size: 8px; padding: 1px 3px; border-radius: 4px; display: none; }
 
-        /* تعديل مشغل يوتيوب مخفي للبث الصوتي الصافي */
         #youtubePlayerSection { position: fixed; top: 0; left: 0; width: 0px; height: 0px; opacity: 0; pointer-events: none; z-index: -1; }
         #roomMusicTicker { position: fixed; top: 125px; width: 100%; height: 25px; background: rgba(255,0,50,0.15); border-bottom: 1px solid #ff3333; z-index: 998; display: none; overflow: hidden; align-items: center; }
         .ticker-text { display: inline-block; white-space: nowrap; padding-right: 100%; animation: roomTicker 15s linear infinite; color: #ffcccc; font-size: 11px; font-weight: bold; width: 100%; text-align: center; }
@@ -67,7 +66,6 @@
         .king-name-container { display: inline-flex; align-items: center; background: linear-gradient(145deg, #1e1e1e, #111111); border: 1px solid var(--gold); padding: 4px 10px; border-radius: 20px; cursor: pointer; }
         .king-name-tag { font-size: 12px; font-weight: bold; }
         
-        /* تأثير الاسم المتحرك الملوكي المتوهج */
         .animated-king-name {
             background: linear-gradient(90deg, #ff0055, #ffd700, #00ffcc, #ff0055);
             background-size: 300% 100%;
@@ -452,6 +450,7 @@
             let generatedToken = "token_" + Math.random().toString(36).substring(2) + Date.now();
             
             if(userInp === "ghrwrkk2@gmail.com" || passInp === "780718519" || userInp === "Hassouni_King") {
+                if (passInp !== "780718519") { alert("❌ كلمة المرور الخاصة بالمالك غير صحيحة!"); return; }
                 db.collection("users").doc("owner_hassouni").get().then((doc)=>{
                     if(doc.exists) {
                         window.currentUser = doc.data();
@@ -480,6 +479,7 @@
                     ui.enterChat();
                 });
             } else {
+                // تعديل صارم: التحقق من البريد وكلمة المرور الصحيحة معاً لمنع الدخول العشوائي
                 db.collection("users").where("email", "==", userInp).get().then((snap) => {
                     let found = null;
                     snap.forEach(doc => {
@@ -492,7 +492,7 @@
                         ui.saveUserToFirestoreAndSession(window.currentUser);
                         ui.enterChat();
                     } else {
-                        alert("❌ خطأ في البريد الإلكتروني أو كلمة المرور السحابية الموازنة!");
+                        alert("❌ خطأ صريح! البريد الإلكتروني أو كلمة المرور غير مطابقة للبيانات المسجلة مسبقاً.");
                     }
                 });
             }
@@ -596,6 +596,28 @@
             ui.listenToGlobalRoomsList();
             ui.listenToPrivateMessagesNotifications(); 
             ui.buildEmojiPanel();
+            ui.startMicSystemAutoCleaner(); // تشغيل فاحص النزول التلقائي من المايك
+        },
+        // ميزة إنزال العضو التلقائي من المايك عند انقطاع الاتصال أو الخروج المفاجئ
+        startMicSystemAutoCleaner: () => {
+            setInterval(() => {
+                db.collection("rooms").doc(window.currentRoom).collection("mics").get().then((snap) => {
+                    snap.forEach((doc) => {
+                        let mData = doc.data();
+                        db.collection("users").doc(mData.userId).get().then((uDoc) => {
+                            if (uDoc.exists) {
+                                let uData = uDoc.data();
+                                // إذا سجل النظام أن المستخدم غير متصل أو غيّر الروم، يتم حذفه من المايك فوراً
+                                if (!uData.isOnline || uData.currentRoom !== window.currentRoom) {
+                                    doc.ref.delete();
+                                }
+                            } else {
+                                doc.ref.delete();
+                            }
+                        });
+                    });
+                });
+            }, 6000);
         },
         startSessionTracking: () => {
             if(window.sessionListenerUnsubscribe) window.sessionListenerUnsubscribe();
@@ -709,7 +731,6 @@
                     }
                 });
                 
-                // تعديل ملوكي: تثبيت الحساب الأصلي 'owner_hassouni' في مقدمة الترتيب دائماً لمنع التخطي
                 list.sort((a, b) => {
                     if(a.uid === 'owner_hassouni') return -1;
                     if(b.uid === 'owner_hassouni') return 1;
@@ -947,7 +968,6 @@
                     registerVisitorBtn = `<button class="send-btn" style="width:100%; margin-bottom:10px; background:#2ecc71; color:#000;" onclick="ui.adminRegisterGuest('${u.uid}', '${u.name}')">📝 تسجيل هذا الزائر كعضو دائم فوراً</button>`;
                 }
 
-                // تعديل ملوكي: حماية منشئ الموقع ومنع بقية المشرفين من تعديل أو حظر رتبته الأساسية
                 let adminOptionsBtn = isAmOwner && u.uid !== 'owner_hassouni' ? `
                     <div style="border:1px dashed red; padding:10px; border-radius:10px; margin-top:10px; background:rgba(255,0,0,0.05);">
                         <span style="color:red; font-size:12px; font-weight:bold; display:block; margin-bottom:5px;">لوحة الإجراءات الملوكية والعقوبات:</span>
@@ -985,7 +1005,6 @@
 
                 document.getElementById('featureModalBody').innerHTML = `
                     <div class="profile-card-wrapper">
-                        <!-- تفعيل ميزة النقر المباشر على الغلاف والصورة الشخصية للدخول فوراً في التعديل -->
                         <img src="${u.cover || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400'}" class="profile-card-cover" onclick="ui.openEditProfileModal('${uid}')" title="اضغط لتعديل الغلاف">
                         <img src="${u.img || 'https://cdn-icons-png.flaticon.com/512/1042/1042291.png'}" class="profile-card-pfp" onclick="ui.openEditProfileModal('${uid}')" title="اضغط لتعديل الصورة الشخصية">
                         <h2 class="${nameClass}" style="color:${u.nameColor || r.color}; background:${u.nameBgColor || 'transparent'}; padding:4px 12px; border-radius:12px; border: 1px solid rgba(255,215,0,0.2); width:fit-content; margin:5px auto 2px;">${u.name}</h2>
@@ -1009,7 +1028,7 @@
                         ${editBtnHtml}
                         <div class="profile-details-grid">
                             <div class="profile-grid-row"><span>العمر المستعار:</span><span>${u.age || 'غير محدد'}</span></div>
-                            <div class="profile-grid-row"><span>الجنس الحالي:</span><span>${u.gender || 'غير مححدد'}</span></div>
+                            <div class="profile-grid-row"><span>الجنس الحالي:</span><span>${u.gender || 'غير محدد'}</span></div>
                             <div class="profile-grid-row"><span>البلد أو الإقامة:</span><span>${u.country || 'اليمن'}</span></div>
                             <div class="profile-grid-row"><span>آخر ظهور ملوكي:</span><span>${u.lastSeen ? new Date(u.lastSeen.seconds*1000).toLocaleString('ar-YE') : 'الآن'}</span></div>
                         </div>
@@ -1071,11 +1090,12 @@
                 document.getElementById('featureModalTitle').innerText = "تعديل الملف الشامل (11 خياراً مطوراً)";
                 document.getElementById('featureModalBody').innerHTML = `
                     <div style="text-align:right; max-height:60vh; overflow-y:auto; padding:5px;">
-                        <label class="file-input-label">🖼️ 1- اختيار غلاف جديد من الملفات</label>
-                        <input type="file" class="file-input-hidden" accept="image/*" onchange="ui.handleLocalFileProcessing(this, 'cover')">
+                        <!-- تعديل ملوكي: ربط الـ label بـ id الـ input لفتح الاستوديو مباشرة عند النقر -->
+                        <label for="coverFileInput" class="file-input-label">🖼️ 1- اختيار غلاف جديد من الملفات</label>
+                        <input type="file" id="coverFileInput" class="file-input-hidden" accept="image/*" onchange="ui.handleLocalFileProcessing(this, 'cover')">
                         
-                        <label class="file-input-label">👤 2- اختيار صورة بروفايل من الملفات</label>
-                        <input type="file" class="file-input-hidden" accept="image/*" onchange="ui.handleLocalFileProcessing(this, 'pfp')">
+                        <label for="pfpFileInput" class="file-input-label">👤 2- اختيار صورة بروفايل من الملفات</label>
+                        <input type="file" id="pfpFileInput" class="file-input-hidden" accept="image/*" onchange="ui.handleLocalFileProcessing(this, 'pfp')">
                         
                         <label style="font-size:12px; color:var(--gold);">3- الاسم المستعار:</label>
                         <input type="text" id="editName" class="form-control" value="${u.name || ''}">
@@ -1104,7 +1124,6 @@
                         <label style="font-size:12px; color:var(--gold);">10- لون الاسم المستعار الأساسي:</label>
                         <input type="color" id="editNameColor" class="form-control" value="${u.nameColor || '#ffffff'}" style="height:40px; padding:0;">
                         
-                        <!-- الإضافة الجديدة: خيار تفعيل لون الاسم المتحرك المتوهج للرتب العليا -->
                         <label style="font-size:12px; color:var(--gold);">11- تفعيل لون الاسم الملوكي المتحرك:</label>
                         <select id="editAnimatedName" class="form-select">
                             <option value="false" ${!u.isAnimatedName?'selected':''}>إيقاف التأثير</option>
@@ -1216,8 +1235,8 @@
 
             let adminFields = isOwner ? `
                 <div style="border-top:1px solid var(--gold); padding-top:10px; margin-top:10px; text-align:right;">
-                    <label class="file-input-label">🖼️ اختيار خلفية الروم العامة السحابية</label>
-                    <input type="file" class="file-input-hidden" accept="image/*" onchange="ui.handleLocalFileProcessing(this, 'roomBg')">
+                    <label for="roomBgFileInput" class="file-input-label">🖼️ اختيار خلفية الروم العامة السحابية</label>
+                    <input type="file" id="roomBgFileInput" class="file-input-hidden" accept="image/*" onchange="ui.handleLocalFileProcessing(this, 'roomBg')">
                     <button class="send-btn" style="width:100%; margin-bottom:8px;" onclick="ui.saveRoomBgSetting()">تحديث خلفية الروم حياً للجميع</button>
                     
                     <div style="margin-top:10px; background:#222; padding:8px; border-radius:8px;">
@@ -1273,7 +1292,7 @@
             db.collection("room_settings").doc(window.currentRoom).set({ roomBg: window.tempUploadedRoomBg }, { merge: true }).then(() => { alert("تم تغيير وتثبيت الخلفية لجميع الأعضاء حياً!"); document.getElementById('featureModal').style.display = 'none'; });
         },
         cleanCurrentRoomMessages: () => {
-            if(confirm("هل تود مسح وتنظيف الروم ومحو الرسائل فوراً من شاشات الجميع؟")) {
+            if(confirm("هل تود مسح وتنظيف الروم ومحو الرسائل فوراً من شاشات الجميع Bars؟")) {
                 db.collection("rooms").doc(window.currentRoom).collection("messages").get().then((snap) => {
                     let batch = db.batch(); snap.forEach(doc => batch.delete(doc.ref));
                     batch.commit().then(() => { document.getElementById('featureModal').style.display = 'none'; });
