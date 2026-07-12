@@ -49,7 +49,10 @@
         .mic-speaking-glow { position: absolute; inset: 0; border: 2px solid #2ecc71; border-radius: 8px; display: none; }
         .mic-status-badge { position: absolute; top: -2px; left: -2px; background: #e74c3c; font-size: 8px; padding: 1px 3px; border-radius: 4px; display: none; }
 
-        #youtubePlayerSection { position: fixed; top: 125px; width: 100%; height: 110px; background: #000; z-index: 998; border-bottom: 1px solid #ff3333; display: none; }
+        /* تعديل مشغل يوتيوب مخفي للبث الصوتي الصافي */
+        #youtubePlayerSection { position: fixed; top: 0; left: 0; width: 0px; height: 0px; opacity: 0; pointer-events: none; z-index: -1; }
+        #roomMusicTicker { position: fixed; top: 125px; width: 100%; height: 25px; background: rgba(255,0,50,0.15); border-bottom: 1px solid #ff3333; z-index: 998; display: none; overflow: hidden; align-items: center; }
+        .ticker-text { display: inline-block; white-space: nowrap; padding-right: 100%; animation: roomTicker 15s linear infinite; color: #ffcccc; font-size: 11px; font-weight: bold; width: 100%; text-align: center; }
 
         #chatBox { height: calc(100vh - 190px); overflow-y: auto; padding: 135px 15px 85px; display: flex; flex-direction: column; gap: 12px; background: #0f0f0f url('https://i.ibb.co/6wXbYm2/butterflies.jpg') center center/cover no-repeat; transition: padding 0.3s ease; }
         
@@ -64,6 +67,16 @@
         .king-name-container { display: inline-flex; align-items: center; background: linear-gradient(145deg, #1e1e1e, #111111); border: 1px solid var(--gold); padding: 4px 10px; border-radius: 20px; cursor: pointer; }
         .king-name-tag { font-size: 12px; font-weight: bold; }
         
+        /* تأثير الاسم المتحرك الملوكي المتوهج */
+        .animated-king-name {
+            background: linear-gradient(90deg, #ff0055, #ffd700, #00ffcc, #ff0055);
+            background-size: 300% 100%;
+            animation: neonWave 4s linear infinite;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 8px rgba(255,215,0,0.4);
+        }
+
         .msg-time-badge { font-size: 9px; color: #888; position: absolute; left: 12px; top: 14px; direction: ltr; }
         .msg-text { color: #fff; font-size: 13px; line-height: 1.5; margin-top: 8px; padding-right: 5px; word-break: break-word; }
 
@@ -103,8 +116,8 @@
         .yt-preview-icon { font-size: 28px; color: #ff3333; }
 
         .profile-card-wrapper { text-align: center; color: #fff; position: relative; }
-        .profile-card-cover { width: 100%; height: 140px; border-radius: 10px; object-fit: cover; border: 1px solid #333; }
-        .profile-card-pfp { width: 90px; height: 90px; border-radius: 50%; border: 3px solid var(--gold); margin-top: -45px; object-fit: cover; background: #111; position: relative; z-index: 2; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .profile-card-cover { width: 100%; height: 140px; border-radius: 10px; object-fit: cover; border: 1px solid #333; cursor: pointer; }
+        .profile-card-pfp { width: 90px; height: 90px; border-radius: 50%; border: 3px solid var(--gold); margin-top: -45px; object-fit: cover; background: #111; position: relative; z-index: 2; box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; }
         .profile-action-bar { display: flex; background: rgba(255,255,255,0.04); border: 1px solid #333; padding: 10px; border-radius: 8px; justify-content: space-around; margin: 15px 0; align-items: center; }
         .profile-bar-btn { text-align: center; color: #fff; cursor: pointer; font-size: 12px; flex: 1; }
         .profile-bar-btn i { display: block; font-size: 16px; color: var(--gold); margin-bottom: 3px; }
@@ -136,10 +149,19 @@
             0% { transform: scale(1); opacity: 0.8; }
             100% { transform: scale(1.08); opacity: 1; box-shadow: 0 0 10px rgba(255,51,102,0.3); }
         }
+        @keyframes neonWave {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 300% 50%; }
+        }
+        @keyframes roomTicker {
+            0% { transform: translate3d(100%, 0, 0); }
+            100% { transform: translate3d(-100%, 0, 0); }
+        }
     </style>
 </head>
 <body>
 <div id="youtubePlayerSection"></div>
+<div id="roomMusicTicker"><div class="ticker-text" id="tickerSpace">🎵 جاري مزامنة البث الصوتي المخفي للروم...</div></div>
 
 <div id="banOverlay">
     <div>
@@ -335,7 +357,7 @@
         uid: "owner_hassouni", name: "Hassouni_King", role: "owner", level: 100, 
         img: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=150", 
         cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400",
-        likes: 1000, age: 19, gender: "ذكر", country: "اليمن", status: "المالك الأصلي للموقع 🏆", isMuted: false, isBanned: false, isKicked: false, isIpBanned: false, msgCount: 0, gold: 500, gems: 500, scorePoints: 5000, email: "ghrwrkk2@gmail.com", nameColor: "#ffd700", nameBgColor: "#000000"
+        likes: 1000, age: 19, gender: "ذكر", country: "اليمن", status: "المالك الأصلي للموقع 🏆", isMuted: false, isBanned: false, isKicked: false, isIpBanned: false, msgCount: 0, gold: 500, gems: 500, scorePoints: 5000, email: "ghrwrkk2@gmail.com", nameColor: "#ffd700", nameBgColor: "#000000", isAnimatedName: true
     };
 
     window.currentUser = null;
@@ -397,7 +419,7 @@
                             uid: "u_"+Date.now(), name: n, password: ps, email: em, role: "diamond", level: 50, 
                             img: "https://cdn-icons-png.flaticon.com/512/1042/1042291.png",
                             cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=400",
-                            likes: 0, age: 20, gender: "ذكر", country: "اليمن", status: "عضو ماسي ملكي", isMuted: false, isBanned: false, isKicked: false, isIpBanned: false, sessionToken: generatedToken, msgCount: 0, gold: 10, gems: 10, scorePoints: 100, nameColor: "#ffffff", nameBgColor: "#111111"
+                            likes: 0, age: 20, gender: "ذكر", country: "اليمن", status: "عضو ماسي ملكي", isMuted: false, isBanned: false, isKicked: false, isIpBanned: false, sessionToken: generatedToken, msgCount: 0, gold: 10, gems: 10, scorePoints: 100, nameColor: "#ffffff", nameBgColor: "#111111", isAnimatedName: false
                         };
                         ui.saveUserToFirestoreAndSession(window.currentUser);
                         document.getElementById('featureModal').style.display = 'none';
@@ -417,7 +439,7 @@
                 uid: "g_"+Date.now(), name: n, role: "guest", level: 1, 
                 img: "https://cdn-icons-png.flaticon.com/512/1042/1042291.png",
                 cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=400",
-                likes: 0, age: a, gender: g, country: "اليمن", status: "زائر مؤقت بالدردشة", isMuted: false, isBanned: false, isKicked: false, isIpBanned: false, sessionToken: generatedToken, msgCount: 0, gold: 0, gems: 0, scorePoints: 0, nameColor: "#ffffff", nameBgColor: "#111111"
+                likes: 0, age: a, gender: g, country: "اليمن", status: "زائر مؤقت بالدردشة", isMuted: false, isBanned: false, isKicked: false, isIpBanned: false, sessionToken: generatedToken, msgCount: 0, gold: 0, gems: 0, scorePoints: 0, nameColor: "#ffffff", nameBgColor: "#111111", isAnimatedName: false
             };
             ui.saveUserToFirestoreAndSession(window.currentUser);
             ui.enterChat();
@@ -452,7 +474,7 @@
                         uid: "u_"+Date.now(), name: userInp, password: passInp, email: emailInp, role: "new", level: 5, 
                         img: "https://cdn-icons-png.flaticon.com/512/1042/1042291.png",
                         cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=400",
-                        likes: 1, age: 22, gender: "ذكر", country: "العالم العربي", status: "عضو جديد متفاعل", isMuted: false, isBanned: false, isKicked: false, isIpBanned: false, sessionToken: generatedToken, msgCount: 0, gold: 5, gems: 5, scorePoints: 10, nameColor: "#ffffff", nameBgColor: "#111111"
+                        likes: 1, age: 22, gender: "ذكر", country: "العالم العربي", status: "عضو جديد متفاعل", isMuted: false, isBanned: false, isKicked: false, isIpBanned: false, sessionToken: generatedToken, msgCount: 0, gold: 5, gems: 5, scorePoints: 10, nameColor: "#ffffff", nameBgColor: "#111111", isAnimatedName: false
                     };
                     ui.saveUserToFirestoreAndSession(window.currentUser);
                     ui.enterChat();
@@ -604,13 +626,16 @@
                     }
                     
                     let ytSection = document.getElementById('youtubePlayerSection');
+                    let tickerSection = document.getElementById('roomMusicTicker');
                     let chatBox = document.getElementById('chatBox');
+                    
                     if(data.activeAudioId) {
-                        ytSection.style.display = "block";
-                        chatBox.style.paddingTop = "245px"; 
-                        ytSection.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${data.activeAudioId}?autoplay=1&controls=1&rel=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+                        tickerSection.style.display = "flex";
+                        chatBox.style.paddingTop = "160px"; 
+                        document.getElementById('tickerSpace').innerText = `🔊 يتم الآن بث المسار الصوتي للجميع حياً: [ رابط سحابي مزامن نشط ] 🚀`;
+                        ytSection.innerHTML = `<iframe width="0" height="0" src="https://www.youtube.com/embed/${data.activeAudioId}?autoplay=1&controls=0&rel=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
                     } else {
-                        ytSection.style.display = "none";
+                        tickerSection.style.display = "none";
                         chatBox.style.paddingTop = "135px";
                         ytSection.innerHTML = "";
                     }
@@ -683,18 +708,25 @@
                         if(rName === window.currentRoom) { list.push(u); }
                     }
                 });
-                list.sort((a, b) => (window.rolesOrder[a.role] || 99) - (window.rolesOrder[b.role] || 99));
+                
+                // تعديل ملوكي: تثبيت الحساب الأصلي 'owner_hassouni' في مقدمة الترتيب دائماً لمنع التخطي
+                list.sort((a, b) => {
+                    if(a.uid === 'owner_hassouni') return -1;
+                    if(b.uid === 'owner_hassouni') return 1;
+                    return (window.rolesOrder[a.role] || 99) - (window.rolesOrder[b.role] || 99);
+                });
 
                 document.getElementById('onlineUsersListBody').innerHTML = list.map(u => {
                     let r = window.chatRanksData[u.role] || { icon: "fas fa-user", color: "#fff", text: "عضو" };
-                    let borderStyle = `border: 2px solid ${r.color};`;
+                    let borderStyle = `border: 2px solid ${r.color}; box-shadow: 0 0 5px ${r.color};`;
+                    let nameClass = u.isAnimatedName ? 'animated-king-name' : '';
                     return `
-                        <div class="menu-item" onclick="ui.viewProfileCard('${u.uid}')" style="background:${u.nameBgColor || 'transparent'}; margin-bottom:4px; border-radius:8px;">
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <img src="${u.img}" style="width:30px; height:30px; border-radius:50%; ${borderStyle}">
-                                <span style="color:${u.nameColor || r.color}; font-weight: bold;"><i class="${r.icon}"></i> ${u.name}</span>
+                        <div class="menu-item" onclick="ui.viewProfileCard('${u.uid}')" style="background:${u.nameBgColor || 'rgba(255,255,255,0.02)'}; margin-bottom:6px; border-radius:12px; border: 1px solid rgba(255,215,0,0.15);">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <img src="${u.img}" style="width:34px; height:34px; border-radius:50%; ${borderStyle}">
+                                <span class="${nameClass}" style="color:${u.nameColor || r.color}; font-weight: bold;"><i class="${r.icon}"></i> ${u.name}</span>
                             </div>
-                            <span style="font-size:10px; color:${r.color}; border: 1px solid ${r.color}; padding: 2px 6px; border-radius: 10px;">${r.text}</span>
+                            <span style="font-size:10px; color:${r.color}; border: 1px solid ${r.color}; padding: 2px 8px; border-radius: 12px; font-weight: bold; background: rgba(0,0,0,0.4);">${r.text}</span>
                         </div>
                     `;
                 }).join('');
@@ -722,7 +754,7 @@
             window.currentUser = { ...window.currentUser, ...updatedUserData };
             localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser));
 
-            let styleObj = { nColor: window.currentUser.nameColor || "#fff", bColor: window.currentUser.nameBgColor || "transparent" };
+            let styleObj = { nColor: window.currentUser.nameColor || "#fff", bColor: window.currentUser.nameBgColor || "transparent", isAnim: window.currentUser.isAnimatedName || false };
 
             db.collection("rooms").doc(window.currentRoom).collection("messages").add({
                 user: { uid: window.currentUser.uid },
@@ -742,6 +774,7 @@
             
             let nC = (cStyle && cStyle.nColor) ? cStyle.nColor : r.color;
             let bC = (cStyle && cStyle.bColor) ? cStyle.bColor : "rgba(0,0,0,0.6)";
+            let isAnimClass = (cStyle && cStyle.isAnim) ? 'animated-king-name' : '';
 
             let msgContentHtml = `<div class="msg-text">${text}</div>`;
             let ytId = extractYouTubeVideoId(text);
@@ -760,7 +793,7 @@
                     <div class="pfp-main-frame" style="border-color:${r.color};"><img src="${displayImg}" class="pfp-main" onclick="ui.viewProfileCard('${user.uid}')"></div>
                     <div class="rank-standalone-icon" style="border-color:${r.color};"><i class="${r.icon}" style="color:${r.color};"></i></div>
                     <div class="king-name-container" style="border-color:${r.color}; background:${bC};" onclick="ui.quoteUser('${displayName}')">
-                        <span class="king-name-tag" style="color:${nC};">${displayName}</span>
+                        <span class="king-name-tag ${isAnimClass}" style="color:${nC};">${displayName}</span>
                     </div>
                 </div>
                 ${msgContentHtml}
@@ -904,8 +937,8 @@
                 document.getElementById('featureModalTitle').innerText = "الملف الشخصي الفوري المزامَن";
                 let editBtnHtml = '';
                 if(isMe && window.currentUser.role !== 'guest') {
-                    editBtnHtml = `<button class="row-btn" style="width:100%; margin-bottom:10px;" onclick="ui.openEditProfileModal('${uid}')"><i class="fas fa-pencil-alt"></i> تعديل بيانات ملفي (الشامل 10 خيارات)</button>`;
-                } else if(isAmOwner && u.role !== 'owner') {
+                    editBtnHtml = `<button class="row-btn" style="width:100%; margin-bottom:10px;" onclick="ui.openEditProfileModal('${uid}')"><i class="fas fa-pencil-alt"></i> تعديل بيانات ملفي (الشامل 11 خياراً)</button>`;
+                } else if(isAmOwner && (u.uid !== 'owner_hassouni' || window.currentUser.uid === 'owner_hassouni')) {
                     editBtnHtml = `<button class="row-btn" style="width:100%; margin-bottom:10px; border-color:var(--gold);" onclick="ui.openEditProfileModal('${uid}')"><i class="fas fa-shield-alt"></i> تعديل بروفايل هذا العضو قسرياً</button>`;
                 }
                 
@@ -914,7 +947,8 @@
                     registerVisitorBtn = `<button class="send-btn" style="width:100%; margin-bottom:10px; background:#2ecc71; color:#000;" onclick="ui.adminRegisterGuest('${u.uid}', '${u.name}')">📝 تسجيل هذا الزائر كعضو دائم فوراً</button>`;
                 }
 
-                let adminOptionsBtn = isAmOwner && u.role !== 'owner' ? `
+                // تعديل ملوكي: حماية منشئ الموقع ومنع بقية المشرفين من تعديل أو حظر رتبته الأساسية
+                let adminOptionsBtn = isAmOwner && u.uid !== 'owner_hassouni' ? `
                     <div style="border:1px dashed red; padding:10px; border-radius:10px; margin-top:10px; background:rgba(255,0,0,0.05);">
                         <span style="color:red; font-size:12px; font-weight:bold; display:block; margin-bottom:5px;">لوحة الإجراءات الملوكية والعقوبات:</span>
                         <select id="changeRoleSelect" class="form-select" onchange="ui.changeUserRole('${uid}', this.value)">
@@ -947,12 +981,14 @@
 
                 let r = window.chatRanksData[u.role] || { icon: "fas fa-user", color: "#fff", text: "عضو" };
                 let statusIcon = u.isOnline ? `<span style="color:#2ecc71;"><i class="fas fa-circle"></i> متصل حالياً</span>` : `<span style="color:#e74c3c;"><i class="fas fa-circle"></i> غير متصل</span>`;
+                let nameClass = u.isAnimatedName ? 'animated-king-name' : '';
 
                 document.getElementById('featureModalBody').innerHTML = `
                     <div class="profile-card-wrapper">
-                        <img src="${u.cover || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400'}" class="profile-card-cover">
-                        <img src="${u.img || 'https://cdn-icons-png.flaticon.com/512/1042/1042291.png'}" class="profile-card-pfp">
-                        <h2 style="color:${u.nameColor || r.color}; background:${u.nameBgColor || 'transparent'}; padding:2px 8px; border-radius:10px; width:fit-content; margin:5px auto 2px;">${u.name}</h2>
+                        <!-- تفعيل ميزة النقر المباشر على الغلاف والصورة الشخصية للدخول فوراً في التعديل -->
+                        <img src="${u.cover || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400'}" class="profile-card-cover" onclick="ui.openEditProfileModal('${uid}')" title="اضغط لتعديل الغلاف">
+                        <img src="${u.img || 'https://cdn-icons-png.flaticon.com/512/1042/1042291.png'}" class="profile-card-pfp" onclick="ui.openEditProfileModal('${uid}')" title="اضغط لتعديل الصورة الشخصية">
+                        <h2 class="${nameClass}" style="color:${u.nameColor || r.color}; background:${u.nameBgColor || 'transparent'}; padding:4px 12px; border-radius:12px; border: 1px solid rgba(255,215,0,0.2); width:fit-content; margin:5px auto 2px;">${u.name}</h2>
                         <p style="margin:0 0 10px; font-size:12px; color:${r.color}; font-weight:bold;"><i class="${r.icon}"></i> ${r.text}</p>
                         <p style="margin:0 0 10px; font-size:12px; color:#aaa; font-style: italic;">"${u.status || 'لا توجد حالة إمبراطورية بعد'}"</p>
                         
@@ -972,8 +1008,8 @@
                         ${registerVisitorBtn}
                         ${editBtnHtml}
                         <div class="profile-details-grid">
-                            <div class="profile-grid-row"><span>العمر المستعار:</span><span>${u.age || 'غير مححدد'}</span></div>
-                            <div class="profile-grid-row"><span>الجنس الحالي:</span><span>${u.gender || 'غير محدد'}</span></div>
+                            <div class="profile-grid-row"><span>العمر المستعار:</span><span>${u.age || 'غير محدد'}</span></div>
+                            <div class="profile-grid-row"><span>الجنس الحالي:</span><span>${u.gender || 'غير مححدد'}</span></div>
                             <div class="profile-grid-row"><span>البلد أو الإقامة:</span><span>${u.country || 'اليمن'}</span></div>
                             <div class="profile-grid-row"><span>آخر ظهور ملوكي:</span><span>${u.lastSeen ? new Date(u.lastSeen.seconds*1000).toLocaleString('ar-YE') : 'الآن'}</span></div>
                         </div>
@@ -1032,7 +1068,7 @@
         openEditProfileModal: (uid) => {
             db.collection("users").doc(uid).get().then((doc) => {
                 let u = doc.data(); window.tempUploadedCover = u.cover || ""; window.tempUploadedPfp = u.img || "";
-                document.getElementById('featureModalTitle').innerText = "تعديل الملف الشامل (10 خيارات مطورة)";
+                document.getElementById('featureModalTitle').innerText = "تعديل الملف الشامل (11 خياراً مطوراً)";
                 document.getElementById('featureModalBody').innerHTML = `
                     <div style="text-align:right; max-height:60vh; overflow-y:auto; padding:5px;">
                         <label class="file-input-label">🖼️ 1- اختيار غلاف جديد من الملفات</label>
@@ -1068,6 +1104,13 @@
                         <label style="font-size:12px; color:var(--gold);">10- لون الاسم المستعار الأساسي:</label>
                         <input type="color" id="editNameColor" class="form-control" value="${u.nameColor || '#ffffff'}" style="height:40px; padding:0;">
                         
+                        <!-- الإضافة الجديدة: خيار تفعيل لون الاسم المتحرك المتوهج للرتب العليا -->
+                        <label style="font-size:12px; color:var(--gold);">11- تفعيل لون الاسم الملوكي المتحرك:</label>
+                        <select id="editAnimatedName" class="form-select">
+                            <option value="false" ${!u.isAnimatedName?'selected':''}>إيقاف التأثير</option>
+                            <option value="true" ${u.isAnimatedName?'selected':''}>تشغيل التوهج المتحرك 🌈</option>
+                        </select>
+
                         <label style="font-size:12px; color:var(--gold);">حالة البروفايل النصية:</label>
                         <input type="text" id="editStatus" class="form-control" value="${u.status || ''}">
 
@@ -1088,6 +1131,7 @@
                 password: document.getElementById('editPass').value.trim(),
                 nameBgColor: document.getElementById('editNameBg').value,
                 nameColor: document.getElementById('editNameColor').value,
+                isAnimatedName: (document.getElementById('editAnimatedName').value === 'true'),
                 status: document.getElementById('editStatus').value.trim()
             };
             db.collection("users").doc(uid).update(updated).then(() => {
@@ -1101,22 +1145,36 @@
         },
         changeUserRole: (uid, newRole) => {
             if(!newRole) return;
+            if(uid === 'owner_hassouni') { alert("لا يمكنك تعديل أو إنقاص رتبة منشئ السيرفر الأصلي!"); return; }
             db.collection("users").doc(uid).update({ role: newRole }).then(() => { alert("تم تعيين وتثبيت الرتبة بنجاح!"); document.getElementById('featureModal').style.display = 'none'; });
         },
         toggleUserMute: (uid, state) => {
+            if(uid === 'owner_hassouni') return;
             db.collection("users").doc(uid).update({ isMuted: state }).then(() => { alert("تم تعديل حالة كتم العضو بنجاح"); document.getElementById('featureModal').style.display = 'none'; });
         },
         toggleUserBan: (uid, fieldName, state) => {
+            if(uid === 'owner_hassouni') return;
             db.collection("users").doc(uid).update({ [fieldName]: state }).then(() => { alert("تم تحديث حالة العقوبة/العزل بنجاح تام"); document.getElementById('featureModal').style.display = 'none'; });
         },
         showWealthList: () => {
             db.collection("users").orderBy("gold", "desc").limit(10).get().then((snap)=>{
-                let html = `<ol style="padding-right:20px; color:#fff;">`;
-                snap.forEach(doc => {
+                let html = `<div style="max-height:40vh; overflow-y:auto; display:flex; flex-direction:column; gap:6px;">`;
+                snap.forEach((doc, index) => {
                     let u = doc.data();
-                    html += `<li style="margin-bottom:8px; color:var(--gold);"><b>${u.name}</b> - 🪙 ذهب: ${u.gold || 0}</li>`;
+                    let r = window.chatRanksData[u.role] || { icon: "fas fa-user", color: "#fff" };
+                    let borderStyle = `border: 1.5px solid ${r.color};`;
+                    let nameClass = u.isAnimatedName ? 'animated-king-name' : '';
+                    html += `
+                        <div style="display:flex; align-items:center; justify-content:space-between; background:${u.nameBgColor || 'rgba(255,255,255,0.02)'}; padding:8px 12px; border-radius:10px; border:1px solid rgba(255,215,0,0.1);">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="color:var(--gold); font-weight:bold; font-size:13px;">#${index+1}</span>
+                                <img src="${u.img}" style="width:28px; height:28px; border-radius:50%; ${borderStyle}">
+                                <b class="${nameClass}" style="color:${u.nameColor || r.color}; font-size:13px;"><i class="${r.icon}"></i> ${u.name}</b>
+                            </div>
+                            <span style="color:var(--gold); font-size:12px; font-weight:bold;">🪙 ذهب: ${u.gold || 0}</span>
+                        </div>`;
                 });
-                html += `</ol>`;
+                html += `</div>`;
                 document.getElementById('featureModalTitle').innerText = "🏆 قائمة الأثرياء (أعلى 10 أعضاء بالذهب)";
                 document.getElementById('featureModalBody').innerHTML = html;
                 document.getElementById('featureModal').style.display = 'flex';
@@ -1124,12 +1182,23 @@
         },
         showVipSeniorsList: () => {
             db.collection("users").orderBy("scorePoints", "desc").limit(10).get().then((snap)=>{
-                let html = `<ol style="padding-right:20px; color:#fff;">`;
-                snap.forEach(doc => {
+                let html = `<div style="max-height:40vh; overflow-y:auto; display:flex; flex-direction:column; gap:6px;">`;
+                snap.forEach((doc, index) => {
                     let u = doc.data();
-                    html += `<li style="margin-bottom:8px; color:#3498db;"><b>${u.name}</b> - ⭐ نقاط: ${u.scorePoints || 0}</li>`;
+                    let r = window.chatRanksData[u.role] || { icon: "fas fa-user", color: "#fff" };
+                    let borderStyle = `border: 1.5px solid ${r.color};`;
+                    let nameClass = u.isAnimatedName ? 'animated-king-name' : '';
+                    html += `
+                        <div style="display:flex; align-items:center; justify-content:space-between; background:${u.nameBgColor || 'rgba(255,255,255,0.02)'}; padding:8px 12px; border-radius:10px; border:1px solid rgba(52,152,219,0.2);">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="color:#3498db; font-weight:bold; font-size:13px;">#${index+1}</span>
+                                <img src="${u.img}" style="width:28px; height:28px; border-radius:50%; ${borderStyle}">
+                                <b class="${nameClass}" style="color:${u.nameColor || r.color}; font-size:13px;"><i class="${r.icon}"></i> ${u.name}</b>
+                            </div>
+                            <span style="color:#3498db; font-size:12px; font-weight:bold;">⭐ نقاط: ${u.scorePoints || 0}</span>
+                        </div>`;
                 });
-                html += `</ol>`;
+                html += `</div>`;
                 document.getElementById('featureModalTitle').innerText = "👑 قائمة كبار السيرفر (أعلى 10 أعضاء بالنقاط)";
                 document.getElementById('featureModalBody').innerHTML = html;
                 document.getElementById('featureModal').style.display = 'flex';
@@ -1139,7 +1208,7 @@
             document.getElementById('featureModalTitle').innerText = "إعدادات الروم والإدارة العليا";
             let isOwner = (window.currentUser.role === 'owner' || window.currentUser.role === 'admin'); window.tempUploadedRoomBg = "";
             
-            let superOwnerField = (window.currentUser.email === "ghrwrkk2@gmail.com") ? `
+            let superOwnerField = (window.currentUser.email === "ghrwrkk2@gmail.com" || window.currentUser.uid === 'owner_hassouni') ? `
                 <div style="border-top:2px solid red; padding-top:10px; margin-top:10px;">
                     <button class="send-btn" style="width:100%; background:purple; color:#fff;" onclick="ui.verifyAndOpenSpyConsole()">👁️ لوحة مراقبة رسائل الخاص السرية</button>
                 </div>
