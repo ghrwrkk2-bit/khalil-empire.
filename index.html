@@ -19,7 +19,6 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; height: 100vh; background: var(--dark-bg); color: #fff; overflow: hidden; }
 
-        /* [التعديل الذكي 1: تحسين تفاعل الرسائل] */
         .msg-wrap:hover { background: rgba(30, 35, 45, 0.98) !important; transition: 0.3s; }
         
         #welcomeOverlay {
@@ -274,7 +273,6 @@
 </div>
 
 <script>
-    // الإعدادات المزامنة الحية للمشروع الجديد الخاص بك
     const firebaseConfig = {
         apiKey: "AIzaSyAFjspoGwJJeowjEZrcmJCO99iiTcBR5Is",
         authDomain: "hassouni-chat-51234.firebaseapp.com",
@@ -571,7 +569,9 @@
             db.collection("room_settings").doc(window.currentRoom).onSnapshot((doc) => {
                 if(doc.exists) {
                     let data = doc.data();
-                    if(data.roomBg) document.getElementById('chatBox').style.backgroundImage = `url('${data.roomBg}')`;
+                    if(data.roomBg) {
+                        document.getElementById('chatBox').style.backgroundImage = `url('${data.roomBg}')`;
+                    }
                     
                     let ytSection = document.getElementById('youtubePlayerSection');
                     let chatBox = document.getElementById('chatBox');
@@ -592,7 +592,7 @@
                 if(doc.exists) {
                     window.roomsList = doc.data().names || ["العام"];
                 } else {
-                    window.roomsList = ["العام"];
+                    window.roomsList = ["العAM"];
                     db.collection("global_rooms").doc("list").set({ names: ["العام"] });
                 }
                 let modalTitle = document.getElementById('featureModalTitle');
@@ -603,7 +603,7 @@
         },
         listenToGlobalMessages: () => {
             if(window.unsubscribeMessages) window.unsubscribeMessages();
-            window.unsubscribeMessages = db.collection("rooms").doc(window.currentRoom).collection("messages").orderBy("timestamp", "asc").limitToLast(20).onSnapshot((snapshot) => {
+            window.unsubscribeMessages = db.collection("rooms").doc(window.currentRoom).collection("messages").orderBy("timestamp", "asc").limitToLast(30).onSnapshot((snapshot) => {
                   let chatBox = document.getElementById('chatBox'); chatBox.innerHTML = "";
                   
                   if(snapshot.empty) {
@@ -687,40 +687,24 @@
             let d = new Date();
             let timeStr = d.getHours() + ":" + (d.getMinutes() < 10 ? '0' : '') + d.getMinutes();
 
-            db.collection("users").doc(window.currentUser.uid).get().then((doc) => {
-                let freshUser = doc.exists ? doc.data() : window.currentUser;
-                
-                let currentCount = (freshUser.msgCount || 0) + 1;
-                let currentGold = freshUser.gold || 0;
-                let currentGems = freshUser.gems || 0;
-                let currentLevel = freshUser.level || 1;
+            let currentCount = (window.currentUser.msgCount || 0) + 1;
+            let currentGold = window.currentUser.gold || 0;
+            let currentGems = window.currentUser.gems || 0;
+            let currentLevel = window.currentUser.level || 1;
 
-                if (currentCount === 20) {
-                    currentGold += 1;
-                    currentGems += 1;
-                    alert("🎁 تهانينا! حصلت على 1 ذهب و 1 جواهر لإرسالك 20 رسالة عامة!");
-                }
-                if (currentCount === 50) {
-                    currentLevel += 1;
-                    alert("👑 رائع جداً! تم ترقية مستواك السحابي لإرسالك 50 رسالة!");
-                }
+            if (currentCount === 20) { currentGold += 1; currentGems += 1; alert("🎁 حصلت على 1 ذهب و 1 جواهر مكافأة!"); }
+            if (currentCount === 50) { currentLevel += 1; alert("👑 تم ترقية مستواك السحابي!"); }
 
-                let updatedUserData = {
-                    msgCount: currentCount,
-                    gold: currentGold,
-                    gems: currentGems,
-                    level: currentLevel
-                };
+            let updatedUserData = { msgCount: currentCount, gold: currentGold, gems: currentGems, level: currentLevel };
+            window.currentUser = { ...window.currentUser, ...updatedUserData };
+            localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser));
 
-                db.collection("users").doc(window.currentUser.uid).update(updatedUserData);
-                window.currentUser = { ...window.currentUser, ...updatedUserData };
-                localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser));
-
-                db.collection("rooms").doc(window.currentRoom).collection("messages").add({
-                    user: { uid: freshUser.uid },
-                    text: t, timeStr: timeStr, timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
+            // المزامنة الفورية الفائقة بدون انتظار
+            db.collection("rooms").doc(window.currentRoom).collection("messages").add({
+                user: { uid: window.currentUser.uid },
+                text: t, timeStr: timeStr, timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
+            db.collection("users").doc(window.currentUser.uid).update(updatedUserData);
         },
         renderMsg: (user, text, timeStr) => {
             let div = document.createElement('div'); 
@@ -749,7 +733,6 @@
         quoteUser: (name) => {
             let inp = document.getElementById('msgInp');
             if(inp) {
-                // [التعديل الذكي 2: اقتباس ذكي]
                 inp.value = `@${name} `;
                 inp.focus();
             }
@@ -820,7 +803,7 @@
             document.getElementById('featureModalTitle').innerText = "📺 مشغل ومزامِن اليوتيوب السحابي الحصري";
             document.getElementById('featureModalBody').innerHTML = `
                 <div style="text-align:right;">
-                    <input type="text" id="ytLinkInput" class="form-control" placeholder="ضع رابط اليوتيوب هنا..." oninput="ui.previewYoutubeTrack()">
+                    <input type="text" id="ytLinkInput" class="form-control" placeholder="ضع رابط اليوتيوب هنا واضغط هنا للبحث والمزامنة الحية..." oninput="ui.previewYoutubeTrack()">
                     <div id="ytSearchPreviewContainer"></div>
                 </div>
             `;
@@ -875,7 +858,6 @@
                 let isMe = (window.currentUser.uid === uid); let isAmOwner = (window.currentUser.role === 'owner' || window.currentUser.role === 'admin');
                 
                 document.getElementById('featureModalTitle').innerText = "الملف الشخصي الفوري المزامَن";
-                // [التعديل الذكي 3: زر تحديث سريع للملف]
                 let editBtnHtml = isMe && (window.currentUser.role !== 'guest') ? `<button class="row-btn" style="width:100%; margin-bottom:10px;" onclick="ui.openEditProfileModal('${uid}')"><i class="fas fa-pencil-alt"></i> تعديل بيانات ملفي</button>` : '';
                 let refreshBtnHtml = isAmOwner ? `<button class="row-btn" style="width:100%; border-color:#2ecc71; color:#2ecc71;" onclick="ui.viewProfileCard('${uid}')"><i class="fas fa-sync"></i> تحديث عرض البيانات</button>` : '';
                 
