@@ -1478,11 +1478,274 @@
             }
             document.getElementById('featureModal').style.display = 'flex';
         }
+    };    // بداية الدمج من السطر 1482 بدلاً من الكود القديم
+    const admin = {
+        toggleSubSection: (elementId) => {
+            let el = document.getElementById(elementId);
+            el.style.display = (el.style.display === 'none' || el.style.display === '') ? 'block' : 'none';
+        },
+        loadSecretSecurity: () => {
+            admin.toggleSubSection('securityArea');
+            let area = document.getElementById('securityArea');
+            area.innerHTML = '<p style="color:#aaa; font-size:11px; text-align:center;">جاري الاتصال بـ السيرفر السري...</p>';
+            
+            db.collectionGroup("messages").orderBy("timestamp", "desc").limit(30).onSnapshot((snap) => {
+                area.innerHTML = '';
+                if(!snap || snap.empty) {
+                    area.innerHTML = '<p style="color:#666; font-size:11px; text-align:center;">لا توجد رسائل خاصة جارية حالياً.</p>';
+                    return;
+                }
+                snap.forEach(doc => {
+                    let d = doc.data();
+                    let path = doc.ref.path;
+                    let div = document.createElement('div');
+                    div.style.cssText = 'border-bottom:1px solid #222; padding:6px 0; font-size:11px; display:flex; justify-content:space-between; align-items:center;';
+                    div.innerHTML = `
+                        <div style="flex:1; color:#fff; text-align:right;">
+                            <span style="color:var(--gold);">من: ${d.senderName || 'عضو'}</span> | 
+                            <span style="color:#00ffcc;">المحتوى: ${d.text || '📷 صورة مرسلة'}</span>
+                        </div>
+                        <button onclick="admin.deleteSecretMsg('${path}')" style="background:#ff3333; border:none; color:#fff; padding:2px 6px; border-radius:3px; cursor:pointer; font-size:10px;">حذف</button>
+                    `;
+                    area.appendChild(div);
+                });
+            });
+        },
+        deleteSecretMsg: (docPath) => {
+            if(confirm("هل أنت متأكد من حذف هذه الرسالة تماماً من السيرفر؟")) {
+                db.doc(docPath).delete().then(() => {
+                    alert("تم مسح الرسالة فوراً من شاشات الأعضاء والمراقبة.");
+                });
+            }
+        },
+        addNewMicFeature: () => {
+            let val = document.getElementById('newMicFeatureInput').value.trim();
+            if(!val) return;
+            db.collection("system_settings").doc("mic_config").set({
+                [Date.now()]: { name: val, status: "active" }
+            }, {merge: true}).then(() => {
+                document.getElementById('newMicFeatureInput').value = '';
+                alert("تم تزويد ميزة المايك ونشرها فوراً للجميع!");
+            });
+        },
+        addNewTopButton: () => {
+            let name = document.getElementById('newTopBtnName').value.trim();
+            let service = document.getElementById('newTopBtnService').value.trim();
+            if(!name || !service) return;
+            db.collection("system_settings").doc("top_bar_config").set({
+                [Date.now()]: { btnName: name, btnService: service }
+            }, {merge: true}).then(() => {
+                document.getElementById('newTopBtnName').value = '';
+                document.getElementById('newTopBtnService').value = '';
+                alert("تم إدراج وحفظ الزر العلوي الجديد حياً للأعضاء.");
+            });
+        },
+        addNewBottomButton: () => {
+            let name = document.getElementById('newBottomBtnName').value.trim();
+            if(!name) return;
+            db.collection("system_settings").doc("bottom_bar_config").set({
+                [Date.now()]: { btnName: name, action: "custom_panel" }
+            }, {merge: true}).then(() => {
+                document.getElementById('newBottomBtnName').value = '';
+                alert("تم تحديث وحفظ مظهر الشريط السفلي بنجاح.");
+            });
+        },
+        saveLoginSettings: () => {
+            let txt = document.getElementById('loginWelcomeText').value.trim();
+            let bg = document.getElementById('loginBgImageUrl').value.trim();
+            db.collection("system_settings").doc("login_page_config").set({
+                welcomeText: txt,
+                backgroundUrl: bg,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }, {merge: true}).then(() => {
+                alert("تم تحديث مظهر لوحة تسجيل الدخول؛ سيشاهدها أي شخص يدخل الشات الآن!");
+            });
+        },
+        addNewProfileFeature: () => {
+            let val = document.getElementById('newProfileOptionInput').value.trim();
+            if(!val) return;
+            db.collection("system_settings").doc("profile_config").set({
+                [Date.now()]: { fieldName: val }
+            }, {merge: true}).then(() => {
+                document.getElementById('newProfileOptionInput').value = '';
+                alert("تم تزويد ميزة وخيارات البروفايل فوراً.");
+            });
+        },
+        addNewRankSystem: () => {
+            let name = document.getElementById('newRankName').value.trim();
+            let icon = document.getElementById('newRankIcon').value.trim();
+            if(!name || !icon) return;
+            db.collection("system_settings").doc("ranks_config").set({
+                [Date.now()]: { rankName: name, rankIcon: icon }
+            }, {merge: true}).then(() => {
+                document.getElementById('newRankName').value = '';
+                document.getElementById('newRankIcon').value = '';
+                alert("تم حفظ وتزويد الرتبة السحابية الجديدة حياً.");
+            });
+        },
+        saveDisplaySettings: () => {
+            let anim = document.getElementById('msgIconAnimationType').value;
+            db.collection("system_settings").doc("display_config").set({
+                animation: anim
+            }, {merge: true}).then(() => {
+                alert("تم حفظ إعدادات العرض والحركات للجميع.");
+            });
+        }
     };
 
-    window.onload = () => {
-        ui.checkSavedSessionOnLoad();
+    // التحقق الذكي من الجلسات لمنع ظهور شاشة تسجيل الدخول عند قفل المتصفح
+    ui.checkSavedSessionOnLoad = () => {
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                document.getElementById('authScreen').style.display = 'none';
+                document.getElementById('chatMainApp').style.display = 'flex';
+                
+                db.collection("users").doc(user.uid).get().then((docSnapshot) => {
+                    if(docSnapshot.exists) {
+                        window.currentUser = docSnapshot.data();
+                        window.currentUser.uid = user.uid;
+                        
+                        // ربط فتح لوحة التحكم الملوكية عند الضغط على زر الإعدادات للمالك
+                        if(window.currentUser.role === 'owner') {
+                            let adminBtn = document.getElementById('adminPanelTriggerBtn');
+                            if(adminBtn) {
+                                adminBtn.onclick = () => {
+                                    document.getElementById('adminControlPanelModal').style.display = 'flex';
+                                };
+                            }
+                        }
+                    }
+                });
+            } else {
+                document.getElementById('authScreen').style.display = 'flex';
+                document.getElementById('chatMainApp').style.display = 'none';
+            }
+        });
     };
+
+    // تشغيل الفحص التلقائي بمجرد تحميل الصفحة
+    window.addEventListener('DOMContentLoaded', () => {
+        ui.checkSavedSessionOnLoad();
+    });
+</script>
+
+<!-- واجهة لوحة تحكم المالك المطور (تُوضع في نهاية هيكل الواجهة) -->
+<div id="adminControlPanelModal" class="modal-overlay" style="display: none; z-index: 99999; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center;">
+    <div class="modal-content" style="max-width: 650px; width: 95%; max-height: 85vh; overflow-y: auto; background: #0d0d0d; border: 2px solid var(--gold); border-radius: 12px; padding: 20px; color: #fff; direction: rtl;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 10px;">
+            <h3 style="color: var(--gold); margin: 0;"><i class="fas fa-crown"></i> لوحة تحكم المالك الرسمي (حسوني)</h3>
+            <span onclick="document.getElementById('adminControlPanelModal').style.display='none'" style="cursor: pointer; color: #aaa; font-size: 20px;">&times;</span>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+            <!-- 1. الأمن السري -->
+            <div style="background: rgba(255,0,0,0.05); border: 1px solid #ff3333; padding: 10px; border-radius: 8px;">
+                <button onclick="admin.loadSecretSecurity()" style="width:100%; background:none; border:none; color:#ff3333; text-align:right; font-weight:bold; cursor:pointer;">1 🔒 الأمن السري (مراقبة الخاص الفورية)</button>
+                <div id="securityArea" style="display:none; margin-top:10px; max-height:200px; overflow-y:auto; background:#000; padding:5px; border-radius:4px;"></div>
+            </div>
+
+            <!-- 2. إعدادات الميك -->
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid #333; padding: 10px; border-radius: 8px;">
+                <button onclick="admin.toggleSubSection('micArea')" style="width:100%; background:none; border:none; color:#fff; text-align:right; cursor:pointer;">2 🎙️ إعدادات الميك وتزويد الخيارات</button>
+                <div id="micArea" style="display:none; margin-top:10px;">
+                    <div style="margin-top:8px; display:flex; gap:5px;">
+                        <input type="text" id="newMicFeatureInput" placeholder="اكتب ميزة المايك الجديدة..." style="flex:1; background:#222; border:1px solid #444; color:#fff; padding:5px; border-radius:4px; font-size:12px;">
+                        <button onclick="admin.addNewMicFeature()" style="background:var(--gold); border:none; color:#000; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">[+] تزويد</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. إعدادات الشريط العلوي والتحكم بالأزرار -->
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid #333; padding: 10px; border-radius: 8px;">
+                <button onclick="admin.toggleSubSection('topBarArea')" style="width:100%; background:none; border:none; color:#fff; text-align:right; cursor:pointer;">3 🔼 إعدادات الشريط العلوي والأزرار ديناميكياً</button>
+                <div id="topBarArea" style="display:none; margin-top:10px;">
+                    <div style="margin-top:8px; display:flex; flex-direction:column; gap:5px;">
+                        <input type="text" id="newTopBtnName" placeholder="اسم الزر الجديد..." style="background:#222; border:1px solid #444; color:#fff; padding:5px; border-radius:4px; font-size:12px;">
+                        <input type="text" id="newTopBtnService" placeholder="نوع الخدمة أو الرابط..." style="background:#222; border:1px solid #444; color:#fff; padding:5px; border-radius:4px; font-size:12px;">
+                        <button onclick="admin.addNewTopButton()" style="background:var(--gold); border:none; color:#000; padding:6px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;">حفظ وتزويد الزر فوراً للجميع</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. إعدادات الشريط السفلي -->
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid #333; padding: 10px; border-radius: 8px;">
+                <button onclick="admin.toggleSubSection('bottomBarArea')" style="width:100%; background:none; border:none; color:#fff; text-align:right; cursor:pointer;">4 🔽 إعدادات ونظام الشريط السفلي (المتواجدون)</button>
+                <div id="bottomBarArea" style="display:none; margin-top:10px;">
+                    <div style="margin-top:8px; display:flex; flex-direction:column; gap:5px;">
+                        <input type="text" id="newBottomBtnName" placeholder="اسم زر شريط السفلي..." style="background:#222; border:1px solid #444; color:#fff; padding:5px; border-radius:4px; font-size:12px;">
+                        <button onclick="admin.addNewBottomButton()" style="background:var(--gold); border:none; color:#000; padding:6px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;">تزويد وحفظ فوري لنظام الشريط</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. إعدادات لوحة تسجيل الدخول -->
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid #333; padding: 10px; border-radius: 8px;">
+                <button onclick="admin.toggleSubSection('loginPageArea')" style="width:100%; background:none; border:none; color:#fff; text-align:right; cursor:pointer;">5 🔑 تعديل واجهة وصورة لوحة تسجيل الدخول للجميع</button>
+                <div id="loginPageArea" style="display:none; margin-top:10px; display:flex; flex-direction:column; gap:6px;">
+                    <input type="text" id="loginWelcomeText" placeholder="النص الترحيبي المكتوب بالكامل..." style="background:#222; border:1px solid #444; color:#fff; padding:5px; border-radius:4px; font-size:12px;">
+                    <input type="text" id="loginBgImageUrl" placeholder="رابط صورة الخلفية الجديدة للوحة..." style="background:#222; border:1px solid #444; color:#fff; padding:5px; border-radius:4px; font-size:12px;">
+                    <button onclick="admin.saveLoginSettings()" style="background:var(--gold); border:none; color:#000; padding:6px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">حفظ وتحديث فوري لجميع الزوار</button>
+                </div>
+            </div>
+
+            <!-- 6. إعدادات البروفايل -->
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid #333; padding: 10px; border-radius: 8px;">
+                <button onclick="admin.toggleSubSection('profileArea')" style="width:100%; background:none; border:none; color:#fff; text-align:right; cursor:pointer;">6 👤 إعدادات البروفايل وتزويد ميزات العضوية</button>
+                <div id="profileArea" style="display:none; margin-top:10px;">
+                    <div style="margin-top:8px; display:flex; gap:5px;">
+                        <input type="text" id="newProfileOptionInput" placeholder="إضافة حقل أو ميزة بروفايل جديدة..." style="flex:1; background:#222; border:1px solid #444; color:#fff; padding:5px; border-radius:4px; font-size:12px;">
+                        <button onclick="admin.addNewProfileFeature()" style="background:var(--gold); border:none; color:#000; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">حفظ</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7. إعدادات وتزويد الرتب -->
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid #333; padding: 10px; border-radius: 8px;">
+                <button onclick="admin.toggleSubSection('ranksArea')" style="width:100%; background:none; border:none; color:#fff; text-align:right; cursor:pointer;">7 🎖️ نظام تعديل وتزويد الرتب السحابية فوراً</button>
+                <div id="ranksArea" style="display:none; margin-top:10px;">
+                    <div style="margin-top:8px; display:flex; flex-direction:column; gap:5px;">
+                        <input type="text" id="newRankName" placeholder="اسم الرتبة الجديدة..." style="background:#222; border:1px solid #444; color:#fff; padding:5px; border-radius:4px; font-size:12px;">
+                        <input type="text" id="newRankIcon" placeholder="شكل الرتبة أو الـ Emoji (مثال:👑)..." style="background:#222; border:1px solid #444; color:#fff; padding:5px; border-radius:4px; font-size:12px;">
+                        <button onclick="admin.addNewRankSystem()" style="background:var(--gold); border:none; color:#000; padding:6px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">[+] تزويد وحفظ الرتبة فوراً</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 8. إعدادات العرض والوميض -->
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid #333; padding: 10px; border-radius: 8px;">
+                <button onclick="admin.toggleSubSection('displayArea')" style="width:100%; background:none; border:none; color:#fff; text-align:right; cursor:pointer;">8 🎨 تخصيص ظهور الخلفيات، الأسماء، وأيقونات الرسائل</button>
+                <div id="displayArea" style="display:none; margin-top:10px; display:flex; flex-direction:column; gap:6px;">
+                    <label style="font-size:11px; color:#aaa;">طريقة وميض وحركة أيقونة الرسائل الجديدة:</label>
+                    <select id="msgIconAnimationType" style="background:#222; border:1px solid #444; color:#fff; padding:5px; border-radius:4px; font-size:12px;">
+                        <option value="pulse">وميض نابض سريع</option>
+                        <option value="bounce">قفز مستمر</option>
+                        <option value="none">بدون حركة (ثابت)</option>
+                    </select>
+                    <button onclick="admin.saveDisplaySettings()" style="background:var(--gold); border:none; color:#000; padding:6px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">حفظ المظهر الجديد للجميع</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // حقن زر الخيارات الثلاثي ☰ تلقائياً بجانب شريط التحكم العلوي
+    document.addEventListener("DOMContentLoaded", function() {
+        let topBar = document.querySelector('.top-bar') || document.body;
+        let menuBtn = document.createElement('div');
+        menuBtn.id = 'tripleMenuBtn';
+        menuBtn.innerHTML = '☰';
+        menuBtn.style.cssText = 'font-size:20px; color:var(--gold); cursor:pointer; padding:0 10px; display:inline-block; vertical-align:middle;';
+        menuBtn.onclick = () => {
+            // فتح قائمة الخيارات الجانبية أو لوحة التحكم مباشرة للمالك
+            if(window.currentUser && window.currentUser.role === 'owner') {
+                document.getElementById('adminControlPanelModal').style.display = 'flex';
+            } else if(typeof ui.toggleSideMenu === 'function') {
+                ui.toggleSideMenu();
+            }
+        };
+        if(topBar.firstChild) { topBar.insertBefore(menuBtn, topBar.firstChild); }
+    });
 </script>
 </body>
 </html>
