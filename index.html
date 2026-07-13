@@ -1727,24 +1727,47 @@
         </div>
     </div>
 </div>
-
 <script>
-    // حقن زر الخيارات الثلاثي ☰ تلقائياً بجانب شريط التحكم العلوي
-    document.addEventListener("DOMContentLoaded", function() {
-        let topBar = document.querySelector('.top-bar') || document.body;
-        let menuBtn = document.createElement('div');
+    // 1. فحص الجلسة وإجبار العضو على تسجيل الدخول فور فتح الصفحة
+    firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+            window.currentUser = user;
+            if (typeof ui !== 'undefined' && typeof ui.showChatRoom === 'function') {
+                ui.showChatRoom(); 
+            }
+        } else {
+            if (typeof ui !== 'undefined' && typeof ui.showAuthScreen === 'function') {
+                ui.showAuthScreen(); 
+            }
+        }
+    });
+
+    // 2. الكود الحالي الخاص بك لشريط التحكم العلوي الثلاثي
+    document.addEventListener("DOMContentLoaded", () => {
+        let topBar = document.querySelector('.top-bar'); // تأكد من اسم الكلاس الخاص بالشريط لديك
+        if (!topBar) return;
+        
+        let menuBtn = document.createElement('button');
         menuBtn.id = 'tripleMenuBtn';
         menuBtn.innerHTML = '☰';
-        menuBtn.style.cssText = 'font-size:20px; color:var(--gold); cursor:pointer; padding:0 10px; display:inline-block; vertical-align:middle;';
+        menuBtn.style.cssText = 'font-size: 20px; background: none; border: none; color: white; cursor: pointer; margin-right: 10px;';
+        
         menuBtn.onclick = () => {
-            // فتح قائمة الخيارات الجانبية أو لوحة التحكم مباشرة للمالك
-            if(window.currentUser && window.currentUser.role === 'owner') {
-                document.getElementById('adminControlPanelModal').style.display = 'flex';
-            } else if(typeof ui.toggleSideMenu === 'function') {
+            if(window.currentUser && typeof ui !== 'undefined') {
+                // اختصار لوحة التحكم مباشرة للمالك
+                if (typeof ui.toggleSideMenu === 'function') {
+                    ui.toggleSideMenu();
+                }
+            } else if(typeof ui !== 'undefined' && typeof ui.toggleSideMenu === 'function') {
                 ui.toggleSideMenu();
             }
         };
-        if(topBar.firstChild) { topBar.insertBefore(menuBtn, topBar.firstChild); }
+
+        if(topBar.firstChild) {
+            topBar.insertBefore(menuBtn, topBar.firstChild);
+        } else {
+            topBar.appendChild(menuBtn);
+        }
     });
 </script>
 </body>
