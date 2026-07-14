@@ -2528,6 +2528,1185 @@
         80% { border-color: #00ffff; box-shadow: 0 0 12px #00ffff; }
         100% { border-color: #ff00ff; box-shadow: 0 0 12px #ff00ff; }
     }
+<!-- ================================================================= -->
+<!-- ملحق إمبراطورية حسوني: نظام الجلسات، الزر (☰)، ولوحة تحكم المالك الشاملة -->
+<!-- ================================================================= -->
+
+<!-- تعديل واجهة المودال لعرض لوحة تحكم المالك والزر الثلاثي -->
+<style>
+    /* زر القائمة الثلاثية العلوي */
+    .menu-trigger-btn {
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 22px;
+        cursor: pointer;
+        padding: 5px 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.3s;
+    }
+    .menu-trigger-btn:hover {
+        color: #ffd700;
+        transform: scale(1.1);
+    }
+    
+    /* ستايل لوحة التحكم الفائقة للمالك */
+    .admin-tab-btn {
+        background: #151515;
+        color: #ccc;
+        border: 1px solid #222;
+        padding: 10px;
+        text-align: right;
+        font-size: 13px;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: 0.3s;
+    }
+    .admin-tab-btn:hover, .admin-tab-btn.active {
+        background: linear-gradient(135deg, #a855f7, #6366f1);
+        color: #fff;
+        border-color: #ffd700;
+    }
+    .admin-panel-content {
+        background: #0f0f0f;
+        border: 1px solid #222;
+        border-radius: 8px;
+        padding: 15px;
+        min-height: 250px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    .custom-input-group {
+        display: flex;
+        gap: 5px;
+        margin-top: 10px;
+    }
+    .custom-input-group input {
+        flex: 1;
+        background: #1a1a1a;
+        border: 1px solid #333;
+        color: #fff;
+        padding: 8px;
+        border-radius: 5px;
+        font-size: 12px;
+    }
+    .custom-input-group button {
+        background: #2ecc71;
+        border: none;
+        color: #fff;
+        padding: 0 15px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
 </style>
+
+<!-- مودال لوحة تحكم المالك الرسمي (حسوني) -->
+<div id="ownerAdminModal" class="modal-overlay" style="display: none; z-index: 9999999; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center;">
+    <div class="modal-content" style="max-width: 800px; width: 95%; background: #070707; border: 2px solid #ffd700; border-radius: 15px; padding: 20px; color: #fff; direction: rtl;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1a1a1a; padding-bottom: 10px; margin-bottom: 15px;">
+            <h3 style="color: #ffd700; margin: 0; font-size: 16px;"><i class="fas fa-crown"></i> لوحة التحكم الإمبراطورية للمالك الرسمي (حسوني)</h3>
+            <span onclick="document.getElementById('ownerAdminModal').style.display='none'" style="cursor: pointer; color: #aaa; font-size: 24px;">&times;</span>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 200px 1fr; gap: 15px;">
+            <!-- القائمة الجانبية للتبويبات الثمانية -->
+            <div style="display: flex; flex-direction: column; gap: 8px;" id="adminTabsList">
+                <button class="admin-tab-btn active" onclick="HassouniOwnerPanel.switchTab(1)"><i class="fas fa-user-shield"></i> 1. الأمن السري</button>
+                <button class="admin-tab-btn" onclick="HassouniOwnerPanel.switchTab(2)"><i class="fas fa-microphone"></i> 2. إعدادات المايك</button>
+                <button class="admin-tab-btn" onclick="HassouniOwnerPanel.switchTab(3)"><i class="fas fa-window-maximize"></i> 3. الشريط العلوي</button>
+                <button class="admin-tab-btn" onclick="HassouniOwnerPanel.switchTab(4)"><i class="fas fa-window-restore"></i> 4. الشريط السفلي</button>
+                <button class="admin-tab-btn" onclick="HassouniOwnerPanel.switchTab(5)"><i class="fas fa-sign-in-alt"></i> 5. لوحة تسجيل الدخول</button>
+                <button class="admin-tab-btn" onclick="HassouniOwnerPanel.switchTab(6)"><i class="fas fa-address-card"></i> 6. إعدادات البروفايل</button>
+                <button class="admin-tab-btn" onclick="HassouniOwnerPanel.switchTab(7)"><i class="fas fa-medal"></i> 7. إعدادات الرتب</button>
+                <button class="admin-tab-btn" onclick="HassouniOwnerPanel.switchTab(8)"><i class="fas fa-magic"></i> 8. حركات العرض والوميض</button>
+            </div>
+            
+            <!-- محتوى التبويب النشط -->
+            <div class="admin-panel-content" id="adminActiveTabContent">
+                <!-- المحتوى سيولد تلقائياً بواسطة الجافا سكريبت -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const HassouniOwnerPanel = {
+        activeTab: 1,
+        spyListener: null,
+
+        init: () => {
+            HassouniOwnerPanel.injectMenuButton();
+            HassouniOwnerPanel.setupAutologinAndSession();
+            HassouniOwnerPanel.replaceSpyButtonWithAdmin();
+            HassouniOwnerPanel.listenToNotificationsFix();
+        },
+
+        // 1. حقن زر الخيارات الثلاثي (☰) بجانب زر الكبار في الشريط العلوي
+        injectMenuButton: () => {
+            let header = document.querySelector('.header-container') || document.querySelector('header') || document.querySelector('.top-bar');
+            if (header && !document.getElementById('hassouniMenuBtn')) {
+                let menuBtn = document.createElement('button');
+                menuBtn.id = 'hassouniMenuBtn';
+                menuBtn.className = 'menu-trigger-btn';
+                menuBtn.innerHTML = '☰';
+                menuBtn.title = 'الخيارات الإمبراطورية';
+                
+                // حقنه في أقصى يمين أو يسار الترويسة حسب التنسيق
+                header.insertBefore(menuBtn, header.firstChild);
+                
+                // ربطه بفتح القائمة الجانبية لكودك القديم تلقائياً
+                menuBtn.onclick = () => {
+                    let sideBar = document.getElementById('sidebar') || document.querySelector('.sidebar');
+                    if (sideBar) {
+                        sideBar.style.display = (sideBar.style.display === 'none' || sideBar.style.display === '') ? 'block' : 'none';
+                    }
+                };
+            } else {
+                setTimeout(HassouniOwnerPanel.injectMenuButton, 1000);
+            }
+        },
+
+        // 2. التحقق الذكي من الجلسة لمنع شاشة تسجيل الدخول
+        setupAutologinAndSession: () => {
+            firebase.auth().onAuthStateChanged((user) => {
+                if (user) {
+                    window.currentUser = {
+                        uid: user.uid,
+                        name: user.displayName || "عضو إمبراطوري",
+                        email: user.email
+                    };
+                    
+                    // إخفاء شاشة تسجيل الدخول فوراً وعرض الشات
+                    let loginBox = document.getElementById('loginArea') || document.getElementById('authContainer') || document.querySelector('.login-container');
+                    let chatBox = document.getElementById('chatArea') || document.getElementById('mainContainer') || document.querySelector('.chat-container');
+                    if (loginBox) loginBox.style.display = 'none';
+                    if (chatBox) chatBox.style.display = 'flex';
+                } else {
+                    // إذا لم يسجل دخول تظهر شاشة الدخول
+                    let loginBox = document.getElementById('loginArea') || document.getElementById('authContainer') || document.querySelector('.login-container');
+                    let chatBox = document.getElementById('chatArea') || document.getElementById('mainContainer') || document.querySelector('.chat-container');
+                    if (loginBox) loginBox.style.display = 'flex';
+                    if (chatBox) chatBox.style.display = 'none';
+                }
+            });
+        },
+
+        // 3. استبدال زر مراقبة الخاص القديم بزر لوحة التحكم للمالك الرسمي حسوني
+        replaceSpyButtonWithAdmin: () => {
+            // نتحقق إن كان المستخدم الحالي هو المالك "حسوني"
+            setTimeout(() => {
+                if(window.currentUser) {
+                    db.collection("users").doc(window.currentUser.uid).get().then(doc => {
+                        if(doc.exists && doc.data().role === 'owner') {
+                            // إخفاء زر مراقبة الخاص القديم وعرض زر لوحة التحكم
+                            let oldSpyBtn = document.getElementById('spyConsoleBtn') || document.querySelector('.spy-btn');
+                            if(oldSpyBtn) oldSpyBtn.style.display = 'none';
+                            
+                            // إظهار زر لوحة التحكم في القائمة الجانبية أو الإعدادات
+                            let settingsMenu = document.getElementById('settingsPanel') || document.querySelector('.settings-content');
+                            if(settingsMenu && !document.getElementById('hassouniAdminOpenBtn')) {
+                                let adminBtn = document.createElement('button');
+                                adminBtn.id = 'hassouniAdminOpenBtn';
+                                adminBtn.className = 'send-btn';
+                                adminBtn.style.cssText = 'width: 100%; margin-top: 10px; background: linear-gradient(135deg, #ffd700, #ff9f43); color:#000; font-weight:bold;';
+                                adminBtn.innerHTML = '👑 لوحة تحكم حسوني';
+                                adminBtn.onclick = () => {
+                                    document.getElementById('ownerAdminModal').style.display = 'flex';
+                                    HassouniOwnerPanel.switchTab(1);
+                                };
+                                settingsMenu.appendChild(adminBtn);
+                            }
+                        }
+                    });
+                }
+            }, 3000);
+        },
+
+        // 4. التبديل الفوري بين التبويبات الثمانية
+        switchTab: (tabNum) => {
+            HassouniOwnerPanel.activeTab = tabNum;
+            document.querySelectorAll('.admin-tab-btn').forEach((btn, idx) => {
+                btn.classList.toggle('active', (idx + 1) === tabNum);
+            });
+            
+            let contentDiv = document.getElementById('adminActiveTabContent');
+            contentDiv.innerHTML = `<div style="color:#aaa; text-align:center; padding-top:50px;"><i class="fas fa-spinner fa-spin"></i> جاري تحميل الإعدادات...</div>`;
+            
+            if (HassouniOwnerPanel.spyListener) {
+                HassouniOwnerPanel.spyListener(); // إيقاف مراقبة الخاص عند تغيير التبويب
+                HassouniOwnerPanel.spyListener = null;
+            }
+
+            switch(tabNum) {
+                case 1: // الأمن السري
+                    HassouniOwnerPanel.loadSecurityTab(contentDiv);
+                    break;
+                case 2: // إعدادات المايك
+                    HassouniOwnerPanel.loadGenericDatabaseSettings(contentDiv, "mic_settings", "المايكات", ["تشغيل أغنية", "كتم", "حظر"]);
+                    break;
+                case 3: // الشريط العلوي
+                    HassouniOwnerPanel.loadGenericDatabaseSettings(contentDiv, "top_bar_settings", "الأزرار العلوية", ["زر الرئيسية", "زر المتجر", "زر كبار السيرفر"]);
+                    break;
+                case 4: // الشريط السفلي
+                    HassouniOwnerPanel.loadGenericDatabaseSettings(contentDiv, "bottom_bar_settings", "الأزرار السفلية", ["زر المتواجدين", "زر الملف الشخصي", "إرسال سريع"]);
+                    break;
+                case 5: // لوحة تسجيل الدخول
+                    HassouniOwnerPanel.loadLoginDesignTab(contentDiv);
+                    break;
+                case 6: // إعدادات البروفايل
+                    HassouniOwnerPanel.loadGenericDatabaseSettings(contentDiv, "profile_settings", "حقول البروفايل", ["الحالة الشخصية", "رابط الصورة", "العمر"]);
+                    break;
+                case 7: // إعدادات الرتب
+                    HassouniOwnerPanel.loadGenericDatabaseSettings(contentDiv, "role_settings", "الرتب الإمبراطورية", ["مالك 👑", "مشرف 🛡️", "عضو مميز ✨"]);
+                    break;
+                case 8: // حركات العرض والوميض
+                    HassouniOwnerPanel.loadGenericDatabaseSettings(contentDiv, "view_settings", "مظهر العرض والوميض", ["وميض الرسائل الجديدة", "حركة ظهور الخلفية", "توهج اسم العضو"]);
+                    break;
+            }
+        },
+
+        // تبويب 1: الأمن السري (مراقبة وحذف رسائل الخاص حياً)
+        loadSecurityTab: (container) => {
+            container.innerHTML = `
+                <h4 style="color:#e74c3c; margin:0 0 10px 0;"><i class="fas fa-eye"></i> الأمن السري: مراقبة محادثات الخاص حياً</h4>
+                <div id="spyMessagesList" style="display:flex; flex-direction:column; gap:8px;"></div>
+            `;
+            let listDiv = document.getElementById('spyMessagesList');
+
+            // جلب المحادثات الخاصة من قاعدة البيانات الخاصة بك
+            HassouniOwnerPanel.spyListener = db.collection("private_chats")
+                .orderBy("timestamp", "desc")
+                .limit(50)
+                .onSnapshot((snap) => {
+                    listDiv.innerHTML = '';
+                    if (snap.empty) {
+                        listDiv.innerHTML = `<div style="text-align:center; color:#555; padding:20px;">لا توجد رسائل خاصة حالياً.</div>`;
+                        return;
+                    }
+                    snap.forEach(doc => {
+                        let data = doc.data();
+                        let row = document.createElement('div');
+                        row.style.cssText = `background:#141414; border:1px solid #222; padding:10px; border-radius:5px; display:flex; justify-content:space-between; align-items:center;`;
+                        
+                        let messageContent = data.imageUrl ? `<img src="${data.imageUrl}" style="max-width:100px; border-radius:5px; border:1px solid #333;">` : `<span style="color:#fff;">${data.message || ""}</span>`;
+
+                        row.innerHTML = `
+                            <div style="text-align:right; font-size:12px; flex:1;">
+                                <span style="color:#ffd700; font-weight:bold;">${data.senderName || "مرسل"}</span> 
+                                <span style="color:#aaa;">إلى</span> 
+                                <span style="color:#3498db; font-weight:bold;">${data.receiverName || "مستلم"}</span>:
+                                <div style="margin-top:5px; font-size:13px;">${messageContent}</div>
+                            </div>
+                            <button onclick="HassouniOwnerPanel.deleteSpyMessage('${doc.id}')" style="background:#e74c3c; border:none; color:#fff; padding:5px 10px; border-radius:3px; cursor:pointer; font-size:11px;"><i class="fas fa-trash"></i> حذف</button>
+                        `;
+                        listDiv.appendChild(row);
+                    });
+                });
+        },
+
+        deleteSpyMessage: (docId) => {
+            if(confirm("🚨 هل أنت متأكد من رغبتك في حذف هذه الرسالة الخاصة نهائياً من قاعدة البيانات بعد المراجعة؟")) {
+                db.collection("private_chats").doc(docId).delete().then(() => {
+                    alert("🗑️ تم حذف الرسالة بنجاح وبشكل فوري عند الطرفين!");
+                });
+            }
+        },
+
+        // التبويبات العامة (تزويد، حذف، تعديل الأزرار والخصائص بمزامنة حية)
+        loadGenericDatabaseSettings: (container, collectionName, displayName, defaultOptions) => {
+            container.innerHTML = `
+                <h4 style="color:#ffd700; margin:0 0 10px 0;"><i class="fas fa-cog"></i> إدارة ${displayName} حياً</h4>
+                <div id="genericItemsList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:15px;"></div>
+                <div class="custom-input-group">
+                    <input type="text" id="newGenericItemVal" placeholder="اكتب الخدمة أو الميزة الجديدة التي تود تزويدها...">
+                    <button onclick="HassouniOwnerPanel.addGenericItem('${collectionName}', '${displayName}')">⚡ تزويد وإضافة فورية</button>
+                </div>
+            `;
+            
+            let listDiv = document.getElementById('genericItemsList');
+            db.collection(collectionName).onSnapshot((snap) => {
+                listDiv.innerHTML = '';
+                if(snap.empty) {
+                    // حقن الخيارات الافتراضية إذا كانت قاعدة البيانات فارغة لأول مرة
+                    defaultOptions.forEach(opt => {
+                        db.collection(collectionName).add({ name: opt, status: "نشط" });
+                    });
+                    return;
+                }
+                snap.forEach(doc => {
+                    let data = doc.data();
+                    let row = document.createElement('div');
+                    row.style.cssText = `background:#141414; border:1px solid #222; padding:10px; border-radius:5px; display:flex; justify-content:space-between; align-items:center;`;
+                    row.innerHTML = `
+                        <input type="text" value="${data.name}" id="input_${doc.id}" style="background:none; border:none; color:#fff; font-size:13px; font-weight:bold; width:70%;" onchange="HassouniOwnerPanel.updateGenericItem('${collectionName}', '${doc.id}', this.value)">
+                        <div style="display:flex; gap:5px;">
+                            <button onclick="HassouniOwnerPanel.toggleGenericStatus('${collectionName}', '${doc.id}', '${data.status}')" style="background:${data.status === 'نشط' ? '#2ecc71' : '#e74c3c'}; border:none; color:#fff; padding:4px 8px; border-radius:3px; font-size:11px; cursor:pointer;">${data.status || 'نشط'}</button>
+                            <button onclick="HassouniOwnerPanel.deleteGenericItem('${collectionName}', '${doc.id}')" style="background:#e74c3c; border:none; color:#fff; padding:4px 8px; border-radius:3px; font-size:11px; cursor:pointer;">&times; حذف</button>
+                        </div>
+                    `;
+                    listDiv.appendChild(row);
+                });
+            });
+        },
+
+        addGenericItem: (collectionName, displayName) => {
+            let val = document.getElementById('newGenericItemVal').value.trim();
+            if(!val) return alert("الرجاء كتابة اسم الميزة أولاً!");
+            db.collection(collectionName).add({
+                name: val,
+                status: "نشط",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                alert(`🎉 تم تزويد ميزة جديدة في [ ${displayName} ] وتعميمها بنجاح!`);
+                document.getElementById('newGenericItemVal').value = "";
+            });
+        },
+
+        updateGenericItem: (collectionName, docId, newVal) => {
+            db.collection(collectionName).doc(docId).update({ name: newVal });
+        },
+
+        toggleGenericStatus: (collectionName, docId, currentStatus) => {
+            let next = currentStatus === 'نشط' ? 'معطل' : 'نشط';
+            db.collection(collectionName).doc(docId).update({ status: next });
+        },
+
+        deleteGenericItem: (collectionName, docId) => {
+            if(confirm("هل أنت متأكد من الحذف؟")) {
+                db.collection(collectionName).doc(docId).delete();
+            }
+        },
+
+        // تبويب 5: تخصيص وتحديث لوحة تسجيل الدخول حياً
+        loadLoginDesignTab: (container) => {
+            db.collection("login_design").doc("current").get().then(doc => {
+                let data = doc.exists ? doc.data() : { welcomeText: "مرحباً بك في شات حسوني!", bgUrl: "" };
+                container.innerHTML = `
+                    <h4 style="color:#ffd700; margin:0 0 10px 0;"><i class="fas fa-paint-brush"></i> تعديل تصميم ومظهر لوحة تسجيل الدخول</h4>
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <div>
+                            <label style="font-size:12px; color:#aaa; display:block; margin-bottom:4px;">النص الترحيبي العريض للوحة:</label>
+                            <input type="text" id="loginWelcomeTextInput" value="${data.welcomeText}" style="width:100%; background:#141414; border:1px solid #333; color:#fff; padding:8px; border-radius:5px;">
+                        </div>
+                        <div>
+                            <label style="font-size:12px; color:#aaa; display:block; margin-bottom:4px;">رابط الصورة الخلفية للوحة الدخول:</label>
+                            <input type="text" id="loginBgUrlInput" value="${data.bgUrl}" placeholder="ضع رابط الصورة المباشر هنا..." style="width:100%; background:#141414; border:1px solid #333; color:#fff; padding:8px; border-radius:5px;">
+                        </div>
+                        <button onclick="HassouniOwnerPanel.saveLoginDesign()" style="width:100%; padding:10px; background:#2ecc71; border:none; color:#fff; font-weight:bold; border-radius:5px; cursor:pointer;">💾 حفظ التعديلات فوراً لجميع الأعضاء</button>
+                    </div>
+                `;
+            });
+        },
+
+        saveLoginDesign: () => {
+            let welcome = document.getElementById('loginWelcomeTextInput').value;
+            let bg = document.getElementById('loginBgUrlInput').value;
+            db.collection("login_design").doc("current").set({
+                welcomeText: welcome,
+                bgUrl: bg
+            }).then(() => {
+                alert("✨ تم تحديث تصميم لوحة تسجيل الدخول حياً لجميع الأعضاء والزوار!");
+            });
+        },
+
+        // 5. حل مشكلة تكرار إشعارات الوميض والرسائل (الظهور مرة واحدة فقط عند الفتح)
+        listenToNotificationsFix: () => {
+            let myUid = window.currentUser ? window.currentUser.uid : null;
+            if(!myUid) { setTimeout(HassouniOwnerPanel.listenToNotificationsFix, 1500); return; }
+
+            // الاستماع للرسائل الخاصة غير المقروءة ومسح وميضها فور فتح المحادثة
+            db.collection("private_chats")
+              .where("receiverId", "==", myUid)
+              .where("read", "==", false)
+              .onSnapshot(snap => {
+                  if(!snap.empty) {
+                      // وميض التنبيه يعمل فقط طالما هناك رسائل غير مقروءة
+                      document.querySelectorAll('.private-bell-icon').forEach(bell => {
+                          bell.classList.add('bell-ring-active');
+                      });
+                  } else {
+                      document.querySelectorAll('.private-bell-icon').forEach(bell => {
+                          bell.classList.remove('bell-ring-active');
+                      });
+                  }
+              });
+        }
+    };
+
+    // إطلاق التهيئة الكاملة للوحة التحكم
+    window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(HassouniOwnerPanel.init, 3500);
+    });
+<!-- ================================================================= -->
+<!-- ملحق مركز الألعاب والحالة الصوتية (لا يغير الكود السابق) -->
+<!-- ================================================================= -->
+
+<!-- واجهة مركز الألعاب المصغرة -->
+<div id="hassouniGamesModal" class="modal-overlay" style="display: none; z-index: 9999999; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center;">
+    <div class="modal-content" style="max-width: 500px; width: 92%; background: #0b0b0f; border: 2px solid #00ffcc; border-radius: 15px; padding: 25px; color: #fff; text-align: center; direction: rtl; box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 20px;">
+            <h3 style="color: #00ffcc; margin: 0; font-size: 16px;"><i class="fas fa-gamepad"></i> مركز الألعاب الإمبراطوري المتكامل</h3>
+            <span onclick="document.getElementById('hassouniGamesModal').style.display='none'" style="cursor: pointer; color: #aaa; font-size: 24px;">&times;</span>
+        </div>
+        
+        <!-- لعبة عجلة الحظ -->
+        <div style="background: #12121a; padding: 15px; border-radius: 10px; border: 1px solid #222; margin-bottom: 15px;">
+            <h4 style="color: #ffd700; margin: 0 0 5px 0; font-size: 14px;">🎡 عجلة الحظ السريعة</h4>
+            <p style="font-size: 11px; color: #aaa; margin-bottom: 10px;">جرب حظك وضاعف ذهبك! التكلفة: <span style="color:#ffd700;">50 ذهبة 🪙</span></p>
+            <button onclick="HassouniEntertainment.spinWheel()" id="spinBtn" style="background: linear-gradient(135deg, #00ffcc, #0099ff); border: none; color: #000; padding: 8px 20px; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 12px;">تدوير العجلة 🚀</button>
+            <div id="spinResult" style="margin-top: 10px; font-weight: bold; font-size: 13px; min-height: 20px;"></div>
+        </div>
+
+        <!-- لعبة تخمين الرقم -->
+        <div style="background: #12121a; padding: 15px; border-radius: 10px; border: 1px solid #222;">
+            <h4 style="color: #a855f7; margin: 0 0 5px 0; font-size: 14px;">🔮 معركة تخمين الرقم (من 1 إلى 5)</h4>
+            <p style="font-size: 11px; color: #aaa; margin-bottom: 10px;">إذا خمنت الرقم الصحيح ستفوز بـ <span style="color:#ffd700;">200 ذهبة!</span> التكلفة: 50 ذهبة</p>
+            <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 10px;">
+                <input type="number" id="guessInput" min="1" max="5" placeholder="1-5" style="width: 70px; background: #1a1a24; border: 1px solid #333; color: #fff; text-align: center; border-radius: 5px; font-size: 14px;">
+                <button onclick="HassouniEntertainment.guessNumber()" style="background: linear-gradient(135deg, #a855f7, #6366f1); border: none; color: #fff; padding: 8px 15px; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 12px;">إرسال التخمين 🛡️</button>
+            </div>
+            <div id="guessResult" style="margin-top: 5px; font-weight: bold; font-size: 13px; min-height: 20px;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- زر عائم إضافي لفتح مركز الألعاب -->
+<div id="gamesFloatingBtn" onclick="document.getElementById('hassouniGamesModal').style.display='flex'" style="position: fixed; bottom: 195px; left: 20px; width: 45px; height: 45px; background: linear-gradient(135deg, #00ffcc, #00a8ff); border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 99999; cursor: pointer; box-shadow: 0 4px 12px rgba(0,255,204,0.3); border: 2px solid #fff; animation: gamesPulse 3s infinite;">
+    <span style="font-size: 20px;">🎮</span>
+</div>
+
+<script>
+    const HassouniEntertainment = {
+        // 1. تشغيل لعبة عجلة الحظ
+        spinWheel: () => {
+            let myUid = window.currentUser ? window.currentUser.uid : null;
+            if(!myUid) return alert("يجب تسجيل الدخول أولاً!");
+            
+            let btn = document.getElementById('spinBtn');
+            let resultDiv = document.getElementById('spinResult');
+            btn.disabled = true;
+            resultDiv.innerHTML = "🌀 العجلة تدور الآن الحظ يقترب...";
+            
+            let userDocRef = db.collection("users").doc(myUid);
+            
+            db.runTransaction((transaction) => {
+                return transaction.get(userDocRef).then((sfDoc) => {
+                    if (!sfDoc.exists) throw "الحساب غير موجود!";
+                    let gold = sfDoc.data().gold || 0;
+                    if (gold < 50) throw "🪙 رصيدك لا يكفي، تحتاج 50 ذهبة للعب!";
+                    
+                    // حساب النتيجة عشوائياً
+                    let prizes = [0, 20, 50, 100, 150, 200];
+                    let randomPrize = prizes[Math.floor(Math.random() * prizes.length)];
+                    let newGold = gold - 50 + randomPrize;
+                    
+                    transaction.update(userDocRef, { gold: newGold });
+                    return { randomPrize, newGold };
+                });
+            }).then((res) => {
+                setTimeout(() => {
+                    btn.disabled = false;
+                    if(res.randomPrize > 50) {
+                        resultDiv.style.color = "#00ffcc";
+                        resultDiv.innerHTML = `🎉 مبروك! فزت بـ ${res.randomPrize} ذهبة! رصيدك الحالي: 🪙${res.newGold}`;
+                    } else if(res.randomPrize == 50) {
+                        resultDiv.style.color = "#ffd700";
+                        resultDiv.innerHTML = `⚖️ تعادل! استعدت الـ 50 ذهبة الخاصة بك بالكامل.`;
+                    } else {
+                        resultDiv.style.color = "#ff3333";
+                        resultDiv.innerHTML = `😢 حظاً أوفر! فزت بـ ${res.randomPrize} ذهبة فقط هذه المرة.`;
+                    }
+                }, 1500);
+            }).catch(err => {
+                btn.disabled = false;
+                resultDiv.style.color = "#ff3333";
+                resultDiv.innerHTML = err;
+            });
+        },
+
+        // 2. تشغيل لعبة تخمين الرقم
+        guessNumber: () => {
+            let myUid = window.currentUser ? window.currentUser.uid : null;
+            if(!myUid) return;
+            
+            let inputVal = parseInt(document.getElementById('guessInput').value);
+            let resultDiv = document.getElementById('guessResult');
+            
+            if(isNaN(inputVal) || inputVal < 1 || inputVal > 5) {
+                return alert("الرجاء إدخال رقم صحيح بين 1 و 5!");
+            }
+            
+            resultDiv.innerHTML = "🔮 جاري فحص كرات التخمين السحرية...";
+            let userDocRef = db.collection("users").doc(myUid);
+            
+            db.runTransaction((transaction) => {
+                return transaction.get(userDocRef).then((sfDoc) => {
+                    if (!sfDoc.exists) throw "الحساب غير موجود!";
+                    let gold = sfDoc.data().gold || 0;
+                    if (gold < 50) throw "🪙 رصيدك لا يكفي، تحتاج 50 ذهبة للعب!";
+                    
+                    let targetNumber = Math.floor(Math.random() * 5) + 1;
+                    let won = (inputVal === targetNumber);
+                    let prize = won ? 200 : 0;
+                    let newGold = gold - 50 + prize;
+                    
+                    transaction.update(userDocRef, { gold: newGold });
+                    return { won, targetNumber, newGold };
+                });
+            }).then((res) => {
+                if(res.won) {
+                    resultDiv.style.color = "#00ffcc";
+                    resultDiv.innerHTML = `🔥 عبقري! التخمين صحيح الرقم كان [ ${res.targetNumber} ] وفزت بـ 200 ذهبة!`;
+                } else {
+                    resultDiv.style.color = "#ff3333";
+                    resultDiv.innerHTML = `❌ التخمين خاطئ! الرقم الصحيح هو [ ${res.targetNumber} ]. حاول مرة أخرى!`;
+                }
+            }).catch(err => {
+                resultDiv.style.color = "#ff3333";
+                resultDiv.innerHTML = err;
+            });
+        },
+
+        // 3. إدارة شارة الحالة الصوتية للبروفايل حياً في غرف الدردشة والخاص
+        initVoiceStatusEngine: () => {
+            let voiceStatusMap = {};
+            db.collection("users").where("voiceStatus", "!=", "").onSnapshot((snap) => {
+                snap.forEach(doc => {
+                    voiceStatusMap[doc.id] = doc.data().voiceStatus;
+                });
+                HassouniEntertainment.injectStatusBadges(voiceStatusMap);
+            });
+
+            const observer = new MutationObserver(() => {
+                HassouniEntertainment.injectStatusBadges(voiceStatusMap);
+            });
+            let chatBox = document.getElementById('chatMessages') || document.body;
+            observer.observe(chatBox, { childList: true, subtree: true });
+        },
+
+        injectStatusBadges: (statusMap) => {
+            Object.keys(statusMap).forEach(uid => {
+                let statusText = statusMap[uid];
+                let styleId = `style_voice_${uid}`;
+                
+                if(!document.getElementById(styleId)) {
+                    let styleTag = document.createElement('style');
+                    styleTag.id = styleId;
+                    
+                    // تحديد شكل الشارات والأيقونات بناءً على الحالة
+                    let badgeHTML = '';
+                    if(statusText === 'listen') badgeHTML = " 🎧 يستمع";
+                    if(statusText === 'busy') badgeHTML = " 🔇 مشغول";
+                    if(statusText === 'mic') badgeHTML = " 🎙️ مايك حار";
+                    
+                    styleTag.innerHTML = `
+                        .username-uid-${uid}::after, [data-uid="${uid}"] .user-name-element::after {
+                            content: "${badgeHTML}";
+                            font-size: 10px;
+                            background: rgba(0, 255, 204, 0.15);
+                            color: #00ffcc;
+                            padding: 2px 6px;
+                            border-radius: 10px;
+                            margin-right: 5px;
+                            display: inline-block;
+                            border: 1px solid rgba(0, 255, 204, 0.3);
+                            animation: badgePulse 1.5s infinite alternate;
+                        }
+                    `;
+                    document.head.appendChild(styleTag);
+                }
+            });
+        }
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            HassouniEntertainment.initVoiceStatusEngine();
+        }, 4000);
+    });
+</script>
+
+<style>
+    /* أنيميشن نبض زر الألعاب */
+    @keyframes gamesPulse {
+        0% { transform: scale(1); box-shadow: 0 4px 12px rgba(0, 255, 204, 0.3); }
+        50% { transform: scale(1.08); box-shadow: 0 4px 22px rgba(0, 255, 204, 0.7), 0 0 12px rgba(0, 168, 255, 0.5); }
+        100% { transform: scale(1); box-shadow: 0 4px 12px rgba(0, 255, 204, 0.3); }
+    }
+    /* أنيميشن نبض شارة الحالة في الاسم */
+    @keyframes badgePulse {
+        0% { opacity: 0.7; transform: scale(0.96); }
+        100% { opacity: 1; transform: scale(1.02); box-shadow: 0 0 8px rgba(0, 255, 204, 0.4); }
+    }
+<!-- ================================================================= -->
+<!-- ملحق نظام الريبورتات والإشارات الذكية (لا يغير الكود السابق) -->
+<!-- ================================================================= -->
+
+<!-- واجهة تقديم بلاغ (ريبورت) -->
+<div id="reportUserModal" class="modal-overlay" style="display: none; z-index: 99999999; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center;">
+    <div class="modal-content" style="max-width: 400px; width: 90%; background: #0d0d11; border: 2px solid #ff3333; border-radius: 12px; padding: 20px; color: #fff; direction: rtl; text-align: right;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 8px; margin-bottom: 15px;">
+            <h3 style="color: #ff3333; margin: 0; font-size: 15px;"><i class="fas fa-exclamation-triangle"></i> تقديم بلاغ عن مخالفة</h3>
+            <span onclick="document.getElementById('reportUserModal').style.display='none'" style="cursor: pointer; color: #aaa; font-size: 22px;">&times;</span>
+        </div>
+        
+        <input type="hidden" id="reportedUserId">
+        <input type="hidden" id="reportedUserName">
+        <input type="hidden" id="reportedMessageContent">
+
+        <p style="font-size: 12px; color: #ccc; margin-bottom: 10px;">أنت تقوم بالإبلاغ عن العضو: <span id="reportedUserLabel" style="color:#ff3333; font-weight:bold;"></span></p>
+        
+        <label style="font-size: 11px; color: #aaa; display: block; margin-bottom: 5px;">سبب البلاغ:</label>
+        <select id="reportReasonSelect" style="width: 100%; background: #15151c; border: 1px solid #333; color: #fff; padding: 8px; border-radius: 5px; font-size: 12px; margin-bottom: 15px;">
+            <option value="سب وشتم">سب وشتم / ألفاظ غير لائقة</option>
+            <option value="سبام وإعلانات">إرسال إعلانات أو روابط مزعجة</option>
+            <option value="إزعاج في الخاص">إزعاج ومضايقة مستمرة</option>
+            <option value="انتحال شخصية">انتحال شخصية عضو أو إدارة</option>
+            <option value="أخرى">سبب آخر (اكتبه في الملاحظات)</option>
+        </select>
+
+        <label style="font-size: 11px; color: #aaa; display: block; margin-bottom: 5px;">تفاصيل إضافية (اختياري):</label>
+        <textarea id="reportDetailsInput" placeholder="اكتب تفاصيل المخالفة هنا..." style="width: 100%; height: 60px; background: #15151c; border: 1px solid #333; color: #fff; padding: 8px; border-radius: 5px; font-size: 12px; resize: none; margin-bottom: 15px;"></textarea>
+
+        <button onclick="HassouniReportsSystem.submitReport()" style="width: 100%; background: linear-gradient(135deg, #ff3333, #b30000); border: none; color: #fff; padding: 10px; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 13px;">إرسال البلاغ للإدارة ⚡</button>
+    </div>
+</div>
+
+<script>
+    const HassouniReportsSystem = {
+        init: () => {
+            HassouniReportsSystem.injectReportButtonsToChat();
+            HassouniReportsSystem.listenToMentions();
+            HassouniReportsSystem.addReportTabToAdminPanel();
+        },
+
+        // 1. فتح مودال البلاغات وتعبئة بيانات المخالف تلقائياً
+        openReportModal: (uid, username, messageText = "") => {
+            document.getElementById('reportedUserId').value = uid;
+            document.getElementById('reportedUserName').value = username;
+            document.getElementById('reportedUserLabel').innerText = username;
+            document.getElementById('reportedMessageContent').value = messageText;
+            document.getElementById('reportUserModal').style.display = 'flex';
+        },
+
+        // 2. إرسال البلاغ وحفظه في الـ Firestore
+        submitReport: () => {
+            let myUid = window.currentUser ? window.currentUser.uid : null;
+            let myName = window.currentUser ? window.currentUser.name : "عضو مجهول";
+            if(!myUid) return alert("يجب تسجيل الدخول أولاً!");
+
+            let reportedUid = document.getElementById('reportedUserId').value;
+            let reportedName = document.getElementById('reportedUserName').value;
+            let messageContent = document.getElementById('reportedMessageContent').value;
+            let reason = document.getElementById('reportReasonSelect').value;
+            let details = document.getElementById('reportDetailsInput').value.trim();
+
+            db.collection("user_reports").add({
+                reporterId: myUid,
+                reporterName: myName,
+                reportedId: reportedUid,
+                reportedName: reportedName,
+                message: messageContent,
+                reason: reason,
+                details: details,
+                status: "معلق", // معلق، تم الإجراء، تم الرفض
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                alert("🚨 تم إرسال بلاغك بنجاح. ستقوم إدارة حسوني بمراجعة المخالفة واتخاذ الإجراء اللازم فوراً!");
+                document.getElementById('reportUserModal').style.display = 'none';
+                document.getElementById('reportDetailsInput').value = "";
+            }).catch(err => alert("حدث خطأ أثناء إرسال البلاغ: " + err));
+        },
+
+        // 3. حقن زر "إبلاغ 🚨" بجانب رسائل الأعضاء في الشات تلقائياً
+        injectReportButtonsToChat: () => {
+            const observer = new MutationObserver(() => {
+                let messages = document.querySelectorAll('.message-item, .chat-msg'); // ابحث عن عناصر الرسائل بكودك
+                messages.forEach(msg => {
+                    if (msg.querySelector('.report-action-btn')) return; // تم الحقن مسبقاً
+
+                    let uid = msg.getAttribute('data-uid');
+                    let username = msg.getAttribute('data-username') || msg.querySelector('.user-name')?.innerText || "عضو";
+                    let text = msg.querySelector('.msg-text')?.innerText || "";
+
+                    if (uid && uid !== window.currentUser?.uid) {
+                        let btn = document.createElement('span');
+                        btn.className = 'report-action-btn';
+                        btn.innerHTML = ' 🚨';
+                        btn.title = 'الإبلاغ عن هذا العضو';
+                        btn.style.cssText = 'cursor:pointer; font-size:11px; margin-left:6px; transition:0.3s;';
+                        btn.onmouseover = () => btn.style.transform = 'scale(1.2)';
+                        btn.onmouseout = () => btn.style.transform = 'scale(1)';
+                        btn.onclick = () => HassouniReportsSystem.openReportModal(uid, username, text);
+
+                        let nameElem = msg.querySelector('.user-name') || msg.querySelector('.sender-name') || msg;
+                        nameElem.appendChild(btn);
+                    }
+                });
+            });
+
+            let chatBox = document.getElementById('chatMessages') || document.body;
+            observer.observe(chatBox, { childList: true, subtree: true });
+        },
+
+        // 4. نظام الإشارات والتنبيهات بالمنشن (@Mentions)
+        listenToMentions: () => {
+            let myName = window.currentUser ? window.currentUser.name : "";
+            if (!myName) return;
+
+            db.collection("messages").orderBy("timestamp", "desc").limit(1).onSnapshot(snap => {
+                snap.forEach(doc => {
+                    let data = doc.data();
+                    if (data.senderId !== window.currentUser.uid && data.message && data.message.includes(`@${myName}`)) {
+                        // إشعار واهتزاز خفيف للمتصفح
+                        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                        
+                        // وميض الشاشة أو تشغيل تنبيه صوتي بسيط
+                        let notifySound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-84.wav');
+                        notifySound.play().catch(() => {});
+                    }
+                });
+            });
+        },
+
+        // 5. ربط تبويب "إدارة البلاغات" بلوحة تحكم حسوني تلقائياً
+        addReportTabToAdminPanel: () => {
+            let tabsList = document.getElementById('adminTabsList');
+            if (tabsList && !document.getElementById('tab_reports_btn')) {
+                let btn = document.createElement('button');
+                btn.id = 'tab_reports_btn';
+                btn.className = 'admin-tab-btn';
+                btn.innerHTML = '<i class="fas fa-gavel"></i> 9. إدارة البلاغات';
+                btn.onclick = () => HassouniOwnerPanel.switchTab(9);
+                tabsList.appendChild(btn);
+            }
+        }
+    };
+
+    // إضافة التبويب التاسع (إدارة البلاغات) لمحرك لوحة التحكم الخاص بك
+    setTimeout(() => {
+        if (typeof HassouniOwnerPanel !== 'undefined') {
+            let originalSwitchTab = HassouniOwnerPanel.switchTab;
+            HassouniOwnerPanel.switchTab = (tabNum) => {
+                if (tabNum === 9) {
+                    let contentDiv = document.getElementById('adminActiveTabContent');
+                    contentDiv.innerHTML = `
+                        <h4 style="color:#ff3333; margin:0 0 10px 0;"><i class="fas fa-gavel"></i> قائمة البلاغات النشطة من الأعضاء</h4>
+                        <div id="adminReportsList" style="display:flex; flex-direction:column; gap:8px;"></div>
+                    `;
+                    let listDiv = document.getElementById('adminReportsList');
+
+                    db.collection("user_reports").orderBy("timestamp", "desc").onSnapshot(snap => {
+                        listDiv.innerHTML = '';
+                        if (snap.empty) {
+                            listDiv.innerHTML = `<div style="text-align:center; color:#555; padding:20px;">لا توجد بلاغات حالياً. السيرفر سليم ومية مية! ✅</div>`;
+                            return;
+                        }
+                        snap.forEach(doc => {
+                            let data = doc.data();
+                            let row = document.createElement('div');
+                            row.style.cssText = `background:#141419; border:1px solid #ff333333; padding:12px; border-radius:8px; text-align:right; font-size:12px;`;
+                            row.innerHTML = `
+                                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                                    <span style="color:#aaa;">المُبلِغ: <b style="color:#fff;">${data.reporterName}</b></span>
+                                    <span style="color:#ff3333;">المخالف: <b style="color:#fff;">${data.reportedName}</b></span>
+                                </div>
+                                <div style="background:#070709; padding:8px; border-radius:4px; margin-bottom:8px; border-right:3px solid #ff3333;">
+                                    <b>السبب الرئيسي:</b> ${data.reason}<br>
+                                    ${data.message ? `<b>الرسالة المعنية:</b> <span style="color:#e0e0e0;">"${data.message}"</span><br>` : ''}
+                                    ${data.details ? `<b>ملاحظات إضافية:</b> ${data.details}` : ''}
+                                </div>
+                                <div style="display:flex; gap:5px; justify-content:flex-end;">
+                                    <button onclick="HassouniReportsSystem.takeAction('${doc.id}', '${data.reportedId}', 'mute')" style="background:#e67e22; border:none; color:#fff; padding:4px 10px; border-radius:3px; cursor:pointer;">🔇 كتم</button>
+                                    <button onclick="HassouniReportsSystem.takeAction('${doc.id}', '${data.reportedId}', 'ban')" style="background:#c0392b; border:none; color:#fff; padding:4px 10px; border-radius:3px; cursor:pointer;">🚫 حظر</button>
+                                    <button onclick="HassouniReportsSystem.takeAction('${doc.id}', '${data.reportedId}', 'dismiss')" style="background:#2ecc71; border:none; color:#fff; padding:4px 10px; border-radius:3px; cursor:pointer;">✅ حفظ وتبرئة</button>
+                                </div>
+                            `;
+                            listDiv.appendChild(row);
+                        });
+                    });
+                } else {
+                    originalSwitchTab(tabNum);
+                }
+            };
+            
+            // تنفيذ الإجراءات على البلاغات
+            HassouniReportsSystem.takeAction = (reportId, targetUid, action) => {
+                if (action === 'dismiss') {
+                    db.collection("user_reports").doc(reportId).delete().then(() => alert("تم حفظ البلاغ وتبرئة العضو بنجاح!"));
+                } else if (action === 'mute') {
+                    db.collection("users").doc(targetUid).update({ isMuted: true }).then(() => {
+                        db.collection("user_reports").doc(reportId).delete();
+                        alert("تم كتم العضو فوراً وحذف البلاغ المعالج!");
+                    });
+                } else if (action === 'ban') {
+                    db.collection("users").doc(targetUid).update({ isBanned: true }).then(() => {
+                        db.collection("user_reports").doc(reportId).delete();
+                        alert("تم حظر العضو كلياً وطردة من السيرفر بنجاح!");
+                    });
+                }
+            };
+        }
+    }, 4500);
+
+    window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(HassouniReportsSystem.init, 5000);
+    });
+<!-- ================================================================= -->
+<!-- ملحق نظام الهدايا التفاعلية والمستويات (لا يغير الكود السابق) -->
+<!-- ================================================================= -->
+
+<!-- واجهة متجر إرسال الهدايا -->
+<div id="giftSenderModal" class="modal-overlay" style="display: none; z-index: 999999999; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center;">
+    <div class="modal-content" style="max-width: 450px; width: 90%; background: #0c0c12; border: 2px solid #ff007f; border-radius: 15px; padding: 25px; color: #fff; text-align: center; direction: rtl; box-shadow: 0 0 25px rgba(255, 0, 127, 0.4);">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 20px;">
+            <h3 style="color: #ff007f; margin: 0; font-size: 16px;"><i class="fas fa-gift"></i> إرسال هدية إمبراطورية تفاعلية</h3>
+            <span onclick="document.getElementById('giftSenderModal').style.display='none'" style="cursor: pointer; color: #aaa; font-size: 24px;">&times;</span>
+        </div>
+        
+        <input type="hidden" id="giftTargetUid">
+        <p style="font-size: 13px; color: #ccc; margin-bottom: 15px;">اختر الهدية التي تود إرسالها للعضو: <span id="giftTargetName" style="color:#ff007f; font-weight:bold;"></span></p>
+        
+        <!-- شبكة الهدايا المتاحة -->
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;" id="giftsGridContainer">
+            <!-- سيتم توليد الهدايا ديناميكياً -->
+        </div>
+    </div>
+</div>
+
+<!-- حاوية تأثيرات الهدايا العائمة على الشاشة -->
+<div id="fullscreenGiftOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:9999999999; justify-content:center; align-items:center; flex-direction:column; background:rgba(0,0,0,0.3);">
+    <div id="giftAnimationEmoji" style="font-size: 120px; filter: drop-shadow(0 0 20px rgba(255,215,0,0.8)); transform: scale(0); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">🎁</div>
+    <div id="giftAnnouncementText" style="color: #fff; font-size: 22px; font-weight: bold; text-shadow: 0 0 15px #ffd700; text-align: center; margin-top: 20px; direction: rtl; font-family: sans-serif;"></div>
+</div>
+
+<script>
+    const HassouniGiftsAndLevels = {
+        gifts: [
+            { id: 'rose', name: 'وردة حمراء 🌹', cost: 30, emoji: '🌹', xpBonus: 10 },
+            { id: 'heart', name: 'قلب دافئ 💖', cost: 100, emoji: '💖', xpBonus: 35 },
+            { id: 'crown', name: 'تاج الملك 👑', cost: 500, emoji: '👑', xpBonus: 180 },
+            { id: 'supercar', name: 'سيارة خارقة 🏎️', cost: 1500, emoji: '🏎️', xpBonus: 500 }
+        ],
+
+        init: () => {
+            HassouniGiftsAndLevels.renderGiftsMenu();
+            HassouniGiftsAndLevels.injectGiftButtonsToChat();
+            HassouniGiftsAndLevels.listenToIncomingGifts();
+            HassouniGiftsAndLevels.listenToXPSystem();
+            HassouniGiftsAndLevels.addGiftsTabToAdminPanel();
+        },
+
+        // 1. توليد قائمة الهدايا في نافذة الإرسال
+        renderGiftsMenu: () => {
+            let container = document.getElementById('giftsGridContainer');
+            if(!container) return;
+            container.innerHTML = '';
+
+            HassouniGiftsAndLevels.gifts.forEach(gift => {
+                let box = document.createElement('div');
+                box.style.cssText = `
+                    background: #111118; border: 1px solid #222; padding: 15px; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.3s;
+                `;
+                box.onmouseover = () => box.style.borderColor = '#ff007f';
+                box.onmouseout = () => box.style.borderColor = '#222';
+                box.onclick = () => HassouniGiftsAndLevels.sendGiftToUser(gift);
+
+                box.innerHTML = `
+                    <div style="font-size: 36px; margin-bottom: 8px;">${gift.emoji}</div>
+                    <div style="font-size: 13px; font-weight: bold; color: #fff;">${gift.name}</div>
+                    <div style="font-size: 11px; color: #ffd700; margin-top: 5px;">🪙 ${gift.cost} ذهب</div>
+                    <div style="font-size: 10px; color: #00ffcc; margin-top: 2px;">⚡ +${gift.xpBonus} XP للمستلم</div>
+                `;
+                container.appendChild(box);
+            });
+        },
+
+        // 2. حقن زر الهدية "🎁" بجانب أسماء الأعضاء في الشات
+        injectGiftButtonsToChat: () => {
+            const observer = new MutationObserver(() => {
+                let messages = document.querySelectorAll('.message-item, .chat-msg');
+                messages.forEach(msg => {
+                    if (msg.querySelector('.gift-action-btn')) return; // تم الحقن مسبقاً
+
+                    let uid = msg.getAttribute('data-uid');
+                    let username = msg.getAttribute('data-username') || msg.querySelector('.user-name')?.innerText || "عضو";
+
+                    if (uid && uid !== window.currentUser?.uid) {
+                        let btn = document.createElement('span');
+                        btn.className = 'gift-action-btn';
+                        btn.innerHTML = ' 🎁';
+                        btn.title = 'إرسال هدية سريعة';
+                        btn.style.cssText = 'cursor:pointer; font-size:11px; margin-left:6px; transition:0.3s;';
+                        btn.onmouseover = () => btn.style.transform = 'scale(1.2)';
+                        btn.onmouseout = () => btn.style.transform = 'scale(1)';
+                        btn.onclick = () => {
+                            document.getElementById('giftTargetUid').value = uid;
+                            document.getElementById('giftTargetName').innerText = username;
+                            document.getElementById('giftSenderModal').style.display = 'flex';
+                        };
+
+                        let nameElem = msg.querySelector('.user-name') || msg.querySelector('.sender-name') || msg;
+                        nameElem.appendChild(btn);
+                    }
+                });
+            });
+
+            let chatBox = document.getElementById('chatMessages') || document.body;
+            observer.observe(chatBox, { childList: true, subtree: true });
+        },
+
+        // 3. إرسال الهدية وتطبيق المزامنة المالية وإضافة الـ XP
+        sendGiftToUser: (gift) => {
+            let myUid = window.currentUser ? window.currentUser.uid : null;
+            let myName = window.currentUser ? window.currentUser.name : "فاعل خير";
+            let targetUid = document.getElementById('giftTargetUid').value;
+            let targetName = document.getElementById('giftTargetName').innerText;
+
+            if(!myUid) return alert("يجب تسجيل الدخول لإرسال الهدايا!");
+            if(myUid === targetUid) return alert("لا يمكنك إرسال هدية لنفسك!");
+
+            let myDocRef = db.collection("users").doc(myUid);
+            let targetDocRef = db.collection("users").doc(targetUid);
+
+            db.runTransaction((transaction) => {
+                return transaction.get(myDocRef).then((myDoc) => {
+                    if (!myDoc.exists) throw "حسابك غير موجود!";
+                    let myGold = myDoc.data().gold || 0;
+                    if(myGold < gift.cost) throw "🪙 عذراً! رصيدك من الذهب غير كافي لشراء هذه الهدية.";
+
+                    transaction.update(myDocRef, { gold: myGold - gift.cost });
+                    
+                    return transaction.get(targetDocRef).then((targetDoc) => {
+                        let targetXp = targetDoc.exists ? (targetDoc.data().xp || 0) : 0;
+                        transaction.update(targetDocRef, { xp: targetXp + gift.xpBonus });
+                    });
+                });
+            }).then(() => {
+                // حفظ حدث الهدية في السيرفر للبث العام
+                db.collection("global_gifts").add({
+                    senderName: myName,
+                    receiverName: targetName,
+                    receiverId: targetUid,
+                    emoji: gift.emoji,
+                    giftName: gift.name,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    document.getElementById('giftSenderModal').style.display = 'none';
+                });
+            }).catch(err => alert(err));
+        },
+
+        // 4. الاستماع اللحظي للهدايا الواردة وتفعيل الأنيميشن الخارق لجميع الأعضاء
+        listenToIncomingGifts: () => {
+            db.collection("global_gifts")
+              .orderBy("timestamp", "desc")
+              .limit(1)
+              .onSnapshot(snap => {
+                  snap.forEach(doc => {
+                      let data = doc.data();
+                      if (data.timestamp) {
+                          let giftAge = Date.now() - data.timestamp.toMillis();
+                          if (giftAge < 10000) { // تشغيل الأنيميشن فقط إذا تم إرسال الهدية الآن (خلال آخر 10 ثواني)
+                              HassouniGiftsAndLevels.triggerGiftAnimation(data);
+                          }
+                      }
+                  });
+              });
+        },
+
+        triggerGiftAnimation: (data) => {
+            let overlay = document.getElementById('fullscreenGiftOverlay');
+            let emojiElem = document.getElementById('giftAnimationEmoji');
+            let textElem = document.getElementById('giftAnnouncementText');
+
+            textElem.innerHTML = `🎉 مـهـرجـان الـهـدايا! 🎉<br><span style="color:#ffd700;">${data.senderName}</span> أرسل <span style="color:#ff007f;">${data.giftName}</span> إلى <span style="color:#00ffcc;">${data.receiverName}</span>!`;
+            emojiElem.innerText = data.emoji;
+            overlay.style.display = 'flex';
+
+            // اهتزاز خفيف وأصوات حماسية
+            let giftSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-84.wav');
+            giftSound.play().catch(() => {});
+
+            setTimeout(() => { emojiElem.style.transform = 'scale(1)'; }, 100);
+            
+            setTimeout(() => {
+                emojiElem.style.transform = 'scale(0)';
+                setTimeout(() => { overlay.style.display = 'none'; }, 500);
+            }, 4500);
+        },
+
+        // 5. محرك الـ XP والمستويات الحية (Level System Engine)
+        listenToXPSystem: () => {
+            // كسب نقاط خبرة عند إرسال رسائل جديدة في الشات
+            let messageInput = document.getElementById('messageInput') || document.getElementById('chatInput');
+            if (messageInput) {
+                messageInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && messageInput.value.trim() !== '') {
+                        HassouniGiftsAndLevels.rewardXP(5); // منح العضو 5 XP لكل رسالة يرسلها
+                    }
+                });
+            }
+
+            // تحديث الرتبة والمستوى ديناميكياً بجوار أسماء الأعضاء
+            let userLevelsMap = {};
+            db.collection("users").onSnapshot((snap) => {
+                snap.forEach(doc => {
+                    let xp = doc.data().xp || 0;
+                    let calculatedLevel = Math.floor(xp / 100) + 1; // كل 100 XP تساوي مستوى واحد
+                    userLevelsMap[doc.id] = calculatedLevel;
+                });
+                HassouniGiftsAndLevels.injectLevelBadges(userLevelsMap);
+            });
+
+            const observer = new MutationObserver(() => {
+                HassouniGiftsAndLevels.injectLevelBadges(userLevelsMap);
+            });
+            let chatBox = document.getElementById('chatMessages') || document.body;
+            observer.observe(chatBox, { childList: true, subtree: true });
+        },
+
+        rewardXP: (amount) => {
+            let myUid = window.currentUser ? window.currentUser.uid : null;
+            if(!myUid) return;
+
+            let userDocRef = db.collection("users").doc(myUid);
+            db.runTransaction((transaction) => {
+                return transaction.get(userDocRef).then((sfDoc) => {
+                    if (!sfDoc.exists) return;
+                    let currentXp = sfDoc.data().xp || 0;
+                    let currentGold = sfDoc.data().gold || 0;
+                    let oldLevel = Math.floor(currentXp / 100) + 1;
+                    let newXp = currentXp + amount;
+                    let newLevel = Math.floor(newXp / 100) + 1;
+
+                    let updateData = { xp: newXp };
+
+                    // إذا ترقى العضو لمستوى جديد، يمنح 100 ذهبة كمكافأة ترقية!
+                    if (newLevel > oldLevel) {
+                        updateData.gold = currentGold + 100;
+                        setTimeout(() => {
+                            alert(`🌟 ترقية أسطورية! لقد ارتفع مستواك إلى [ Level ${newLevel} ] وحصلت على مكافأة 100 ذهبة! 🪙`);
+                        }, 500);
+                    }
+
+                    transaction.update(userDocRef, updateData);
+                });
+            });
+        },
+
+        injectLevelBadges: (levelsMap) => {
+            Object.keys(levelsMap).forEach(uid => {
+                let lvl = levelsMap[uid];
+                let styleId = `style_level_${uid}`;
+
+                if(!document.getElementById(styleId)) {
+                    let styleTag = document.createElement('style');
+                    styleTag.id = styleId;
+                    styleTag.innerHTML = `
+                        .username-uid-${uid}::before, [data-uid="${uid}"] .user-name-element::before {
+                            content: "⭐ Lv.${lvl} ";
+                            font-size: 10px;
+                            font-weight: bold;
+                            color: #ffd700;
+                            background: rgba(255, 215, 0, 0.15);
+                            padding: 1px 5px;
+                            border-radius: 4px;
+                            margin-left: 5px;
+                            display: inline-block;
+                            border: 1px solid rgba(255, 215, 0, 0.3);
+                        }
+                    `;
+                    document.head.appendChild(styleTag);
+                }
+            });
+        },
+
+        // 6. ربط تبويب "إدارة الهدايا والمستويات" بلوحة تحكم حسوني تلقائياً
+        addGiftsTabToAdminPanel: () => {
+            let tabsList = document.getElementById('adminTabsList');
+            if (tabsList && !document.getElementById('tab_gifts_btn')) {
+                let btn = document.createElement('button');
+                btn.id = 'tab_gifts_btn';
+                btn.className = 'admin-tab-btn';
+                btn.innerHTML = '<i class="fas fa-gift"></i> 10. الهدايا والمستويات';
+                btn.onclick = () => HassouniOwnerPanel.switchTab(10);
+                tabsList.appendChild(btn);
+            }
+        }
+    };
+
+    // حقن التبويب العاشر (إدارة الهدايا والمستويات) ليعمل مع لوحة التحكم السابقة بكفاءة
+    setTimeout(() => {
+        if (typeof HassouniOwnerPanel !== 'undefined') {
+            let originalSwitchTab = HassouniOwnerPanel.switchTab;
+            HassouniOwnerPanel.switchTab = (tabNum) => {
+                if (tabNum === 10) {
+                    let contentDiv = document.getElementById('adminActiveTabContent');
+                    contentDiv.innerHTML = `
+                        <h4 style="color:#ff007f; margin:0 0 10px 0;"><i class="fas fa-gift"></i> إدارة الهدايا والـ XP حياً</h4>
+                        <div id="adminGiftsSettingsList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:15px;"></div>
+                        <div class="custom-input-group">
+                            <input type="text" id="newGiftNameVal" placeholder="اسم الهدية الجديدة (أضف إيموجي)...">
+                            <input type="number" id="newGiftCostVal" placeholder="التكلفة بالذهب..." style="width:120px;">
+                            <button onclick="HassouniGiftsAndLevels.addGiftAdmin()">⚡ تزويد هدية فوراً</button>
+                        </div>
+                    `;
+                    let listDiv = document.getElementById('adminGiftsSettingsList');
+
+                    db.collection("custom_gifts_config").onSnapshot((snap) => {
+                        listDiv.innerHTML = '';
+                        if(snap.empty) {
+                            // حقن الإعداد الافتراضي الأول في السحابة
+                            HassouniGiftsAndLevels.gifts.forEach(g => {
+                                db.collection("custom_gifts_config").add({ name: g.name, cost: g.cost });
+                            });
+                            return;
+                        }
+                        snap.forEach(doc => {
+                            let data = doc.data();
+                            let row = document.createElement('div');
+                            row.style.cssText = `background:#141419; border:1px solid #ff007f33; padding:10px; border-radius:5px; display:flex; justify-content:space-between; align-items:center;`;
+                            row.innerHTML = `
+                                <span style="color:#fff; font-weight:bold; font-size:13px;">${data.name}</span>
+                                <div style="display:flex; gap:10px; align-items:center;">
+                                    <span style="color:#ffd700; font-size:12px;">🪙 ${data.cost} ذهبة</span>
+                                    <button onclick="HassouniGiftsAndLevels.deleteGiftAdmin('${doc.id}')" style="background:#e74c3c; border:none; color:#fff; padding:3px 8px; border-radius:3px; font-size:11px; cursor:pointer;">&times; حذف</button>
+                                </div>
+                            `;
+                            listDiv.appendChild(row);
+                        });
+                    });
+                } else {
+                    originalSwitchTab(tabNum);
+                }
+            };
+
+            HassouniGiftsAndLevels.addGiftAdmin = () => {
+                let name = document.getElementById('newGiftNameVal').value.trim();
+                let cost = parseInt(document.getElementById('newGiftCostVal').value);
+                if(!name || isNaN(cost)) return alert("الرجاء كتابة اسم الهدية وتكلفتها!");
+
+                db.collection("custom_gifts_config").add({ name, cost }).then(() => {
+                    alert("🎁 تم إضافة الهدية الجديدة وتعميمها للجميع بنجاح!");
+                    document.getElementById('newGiftNameVal').value = "";
+                    document.getElementById('newGiftCostVal').value = "";
+                });
+            };
+
+            HassouniGiftsAndLevels.deleteGiftAdmin = (docId) => {
+                if(confirm("هل تريد حذف هذه الهدية من السيرفر نهائياً؟")) {
+                    db.collection("custom_gifts_config").doc(docId).delete();
+                }
+            };
+        }
+    }, 4500);
+
+    window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(HassouniGiftsAndLevels.init, 5500);
+    });
+</script>
 </body>
 </html>
