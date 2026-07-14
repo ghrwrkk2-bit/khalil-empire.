@@ -2024,6 +2024,510 @@
         0% { opacity: 0; transform: translate(-50%, -30%) scale(0.7); }
         100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
     }
+<!-- ================================================================= -->
+<!-- ملحق ألعاب حسوني الإمبراطورية: لعبة XO وعجلة الحظ (لا يغير الكود السابق) -->
+<!-- ================================================================= -->
+
+<!-- واجهة لعبة XO التفاعلية -->
+<div id="xoGameModal" class="modal-overlay" style="display: none; z-index: 9999999; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center;">
+    <div class="modal-content" style="max-width: 400px; width: 90%; background: #0e0e0e; border: 2px solid #3498db; border-radius: 15px; padding: 20px; color: #fff; text-align: center; direction: rtl;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 15px;">
+            <h3 style="color: #3498db; margin: 0; font-size: 16px;"><i class="fas fa-gamepad"></i> تحدي XO الإمبراطوري حياً</h3>
+            <span onclick="HassouniGamesFeature.closeXOGame()" style="cursor: pointer; color: #aaa; font-size: 24px;">&times;</span>
+        </div>
+        <div id="xoStatusText" style="margin-bottom: 15px; font-size: 13px; color: #ffd700;">جاري تحميل التحدي...</div>
+        
+        <!-- شبكة اللعبة -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 260px; margin: 0 auto 15px;" id="xoGridBody">
+            <div class="xo-cell" onclick="HassouniGamesFeature.makeXOMove(0)" style="height:75px; background:#1c1c1c; border-radius:10px; font-size:32px; font-weight:bold; display:flex; align-items:center; justify-content:center; cursor:pointer;"></div>
+            <div class="xo-cell" onclick="HassouniGamesFeature.makeXOMove(1)" style="height:75px; background:#1c1c1c; border-radius:10px; font-size:32px; font-weight:bold; display:flex; align-items:center; justify-content:center; cursor:pointer;"></div>
+            <div class="xo-cell" onclick="HassouniGamesFeature.makeXOMove(2)" style="height:75px; background:#1c1c1c; border-radius:10px; font-size:32px; font-weight:bold; display:flex; align-items:center; justify-content:center; cursor:pointer;"></div>
+            <div class="xo-cell" onclick="HassouniGamesFeature.makeXOMove(3)" style="height:75px; background:#1c1c1c; border-radius:10px; font-size:32px; font-weight:bold; display:flex; align-items:center; justify-content:center; cursor:pointer;"></div>
+            <div class="xo-cell" onclick="HassouniGamesFeature.makeXOMove(4)" style="height:75px; background:#1c1c1c; border-radius:10px; font-size:32px; font-weight:bold; display:flex; align-items:center; justify-content:center; cursor:pointer;"></div>
+            <div class="xo-cell" onclick="HassouniGamesFeature.makeXOMove(5)" style="height:75px; background:#1c1c1c; border-radius:10px; font-size:32px; font-weight:bold; display:flex; align-items:center; justify-content:center; cursor:pointer;"></div>
+            <div class="xo-cell" onclick="HassouniGamesFeature.makeXOMove(6)" style="height:75px; background:#1c1c1c; border-radius:10px; font-size:32px; font-weight:bold; display:flex; align-items:center; justify-content:center; cursor:pointer;"></div>
+            <div class="xo-cell" onclick="HassouniGamesFeature.makeXOMove(7)" style="height:75px; background:#1c1c1c; border-radius:10px; font-size:32px; font-weight:bold; display:flex; align-items:center; justify-content:center; cursor:pointer;"></div>
+            <div class="xo-cell" onclick="HassouniGamesFeature.makeXOMove(8)" style="height:75px; background:#1c1c1c; border-radius:10px; font-size:32px; font-weight:bold; display:flex; align-items:center; justify-content:center; cursor:pointer;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- زر عائم لعجلة الحظ اليومية -->
+<div id="luckyWheelFloatingBtn" onclick="HassouniGamesFeature.openLuckyWheel()" style="position: fixed; bottom: 80px; left: 20px; width: 45px; height: 45px; background: linear-gradient(135deg, #ffd700, #ff9f43); border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 99999; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 2px solid #fff; animation: floatingPulse 2s infinite;">
+    <span style="font-size: 20px;">🎡</span>
+</div>
+
+<!-- مودال واجهة عجلة الحظ -->
+<div id="luckyWheelModal" class="modal-overlay" style="display: none; z-index: 9999999; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center;">
+    <div class="modal-content" style="max-width: 400px; width: 90%; background: #0f0f0f; border: 2px solid #ffd700; border-radius: 15px; padding: 25px; color: #fff; text-align: center; direction: rtl;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 20px;">
+            <h3 style="color: #ffd700; margin: 0; font-size: 16px;"><i class="fas fa-star"></i> عجلة الحظ اليومية للأعضاء</h3>
+            <span onclick="document.getElementById('luckyWheelModal').style.display='none'" style="cursor: pointer; color: #aaa; font-size: 24px;">&times;</span>
+        </div>
+        
+        <!-- العجلة الرسومية CSS -->
+        <div style="position: relative; width: 200px; height: 200px; margin: 0 auto 25px;">
+            <div id="wheelGraphic" style="width: 100%; height: 100%; border-radius: 50%; border: 5px solid #333; background: conic-gradient(#e74c3c 0deg 60deg, #3498db 60deg 120deg, #2ecc71 120deg 180deg, #f1c40f 180deg 240deg, #9b59b6 240deg 300deg, #e67e22 300deg 360deg); transition: transform 4s cubic-bezier(0.15, 0.85, 0.45, 1);"></div>
+            <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 20px solid #ffd700; z-index: 10;"></div>
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: #fff; border-radius: 50%; border: 3px solid #ffd700; z-index: 10;"></div>
+        </div>
+        
+        <button id="spinWheelBtn" onclick="HassouniGamesFeature.spinTheWheel()" style="width: 100%; padding: 10px; background: linear-gradient(135deg, #ffd700, #e67e22); border: none; color: #000; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 14px;">اضغط لتدوير العجلة مجاناً 🎡</button>
+        <p id="wheelStatusMessage" style="font-size: 12px; color: #aaa; margin-top: 10px;"></p>
+    </div>
+</div>
+
+<script>
+    const HassouniGamesFeature = {
+        currentXORoomId: null,
+        xoListener: null,
+        mySymbol: 'X',
+        isMyTurn: false,
+        wheelRewards: [
+            { text: "🪙 50 ذهب", type: "gold", val: 50 },
+            { text: "⭐ 10 نقاط", type: "scorePoints", val: 10 },
+            { text: "🪙 100 ذهب", type: "gold", val: 100 },
+            { text: "⭐ 20 نقطة", type: "scorePoints", val: 20 },
+            { text: "🪙 200 ذهب", type: "gold", val: 200 },
+            { text: "حظاً أوفر المرة القادمة!", type: "none", val: 0 }
+        ],
+
+        init: () => {
+            HassouniGamesFeature.hookIntoPrivateChatForXO();
+            HassouniGamesFeature.listenForIncomingXORooms();
+        },
+
+        // 1. حقن زر التحدي داخل شاشة الخاص تلقائياً دون لمس الكود القديم
+        hookIntoPrivateChatForXO: () => {
+            const observer = new MutationObserver(() => {
+                let pInputRow = document.querySelector('.private-input-row');
+                if (pInputRow && !document.getElementById('privateXOBtn')) {
+                    let xoBtn = document.createElement('button');
+                    xoBtn.id = 'privateXOBtn';
+                    xoBtn.className = 'send-btn';
+                    xoBtn.style.cssText = 'height:36px; padding:0 10px; font-size:12px; background: linear-gradient(135deg, #3498db, #2ecc71); color:#fff; border:none; margin-left: 5px;';
+                    xoBtn.innerHTML = '🎮 تحدي XO';
+                    
+                    let sendBtn = pInputRow.querySelector('button');
+                    if(sendBtn) {
+                        let onclickStr = sendBtn.getAttribute('onclick') || '';
+                        let matches = onclickStr.match(/'([^']+)'/);
+                        if(matches && matches[1]) {
+                            let targetUid = matches[1];
+                            xoBtn.onclick = () => HassouniGamesFeature.createXOMatch(targetUid);
+                        }
+                    }
+                    pInputRow.insertBefore(xoBtn, pInputRow.firstChild);
+                }
+            });
+
+            let modalBody = document.getElementById('featureModalBody');
+            if(modalBody) {
+                observer.observe(modalBody, { childList: true, subtree: true });
+            }
+        },
+
+        // 2. إنشاء غرفة اللعبة في Firestore والبدء كلاعب X
+        createXOMatch: (targetUid) => {
+            let myUid = window.currentUser.uid;
+            let roomId = [myUid, targetUid].sort().join('_xo_');
+            HassouniGamesFeature.currentXORoomId = roomId;
+            HassouniGamesFeature.mySymbol = 'X';
+
+            db.collection("xo_games").doc(roomId).set({
+                playerX: myUid,
+                playerO: targetUid,
+                board: Array(9).fill(""),
+                turn: myUid,
+                status: "waiting",
+                winner: ""
+            }).then(() => {
+                document.getElementById('xoGameModal').style.display = 'flex';
+                HassouniGamesFeature.startXOListener(roomId);
+            });
+        },
+
+        // 3. الاستماع للدعوات الواردة للطرف الآخر
+        listenForIncomingXORooms: () => {
+            let myUid = window.currentUser ? window.currentUser.uid : null;
+            if(!myUid) { setTimeout(HassouniGamesFeature.listenForIncomingXORooms, 1000); return; }
+
+            db.collection("xo_games").where("playerO", "==", myUid).where("status", "==", "waiting").onSnapshot((snap) => {
+                snap.forEach(doc => {
+                    let data = doc.data();
+                    if(confirm("🎮 وصلك تحدي XO جديد! هل تقبل اللعب وجهاً لوجه؟")) {
+                        db.collection("xo_games").doc(doc.id).update({ status: "playing" });
+                        HassouniGamesFeature.currentXORoomId = doc.id;
+                        HassouniGamesFeature.mySymbol = 'O';
+                        document.getElementById('xoGameModal').style.display = 'flex';
+                        HassouniGamesFeature.startXOListener(doc.id);
+                    } else {
+                        db.collection("xo_games").doc(doc.id).delete();
+                    }
+                });
+            });
+        },
+
+        // 4. محرك مزامنة مجريات اللعبة حياً
+        startXOListener: (roomId) => {
+            if(HassouniGamesFeature.xoListener) HassouniGamesFeature.xoListener();
+            
+            HassouniGamesFeature.xoListener = db.collection("xo_games").doc(roomId).onSnapshot((doc) => {
+                if(!doc.exists) return;
+                let data = doc.data();
+                let myUid = window.currentUser.uid;
+                let statusText = document.getElementById('xoStatusText');
+                
+                // تحديث واجهة المربعات التسعة
+                let cells = document.querySelectorAll('.xo-cell');
+                data.board.forEach((val, i) => {
+                    cells[i].innerText = val;
+                    cells[i].style.color = val === 'X' ? '#e74c3c' : '#3498db';
+                });
+
+                if(data.status === 'waiting') {
+                    statusText.innerText = "⏳ في انتظار قبول الطرف الآخر للتحدي...";
+                } else if(data.status === 'playing') {
+                    HassouniGamesFeature.isMyTurn = (data.turn === myUid);
+                    statusText.innerText = HassouniGamesFeature.isMyTurn ? "🟢 دورك الآن! العب بحكمة" : "🔴 دور خصمك حالياً...";
+                } else if(data.status === 'finished') {
+                    if(data.winner === 'draw') {
+                        statusText.innerText = "🤝 تعادل إمبراطوري رائع!";
+                    } else {
+                        statusText.innerText = data.winner === myUid ? "🏆 مبروك! لقد فزت بالتحدي!" : "❌ هارد لك، فاز الخصم.";
+                    }
+                    if(HassouniGamesFeature.xoListener) HassouniGamesFeature.xoListener();
+                }
+            });
+        },
+
+        // 5. تسجيل حركة اللاعب والتحقق الفوري من الفوز
+        makeXOMove: (index) => {
+            if(!HassouniGamesFeature.isMyTurn || !HassouniGamesFeature.currentXORoomId) return;
+            
+            let docRef = db.collection("xo_games").doc(HassouniGamesFeature.currentXORoomId);
+            docRef.get().then((doc) => {
+                let data = doc.data();
+                if(data.board[index] !== "" || data.status !== "playing") return;
+
+                let newBoard = [...data.board];
+                newBoard[index] = HassouniGamesFeature.mySymbol;
+
+                let nextPlayer = window.currentUser.uid === data.playerX ? data.playerO : data.playerX;
+                let winPatterns = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+                let hasWon = winPatterns.some(p => p.every(i => newBoard[i] === HassouniGamesFeature.mySymbol));
+                
+                let updateData = { board: newBoard, turn: nextPlayer };
+                if(hasWon) {
+                    updateData.status = "finished";
+                    updateData.winner = window.currentUser.uid;
+                } else if(newBoard.every(c => c !== "")) {
+                    updateData.status = "finished";
+                    updateData.winner = "draw";
+                }
+
+                docRef.update(updateData);
+            });
+        },
+
+        closeXOGame: () => {
+            document.getElementById('xoGameModal').style.display = 'none';
+            if(HassouniGamesFeature.currentXORoomId) {
+                db.collection("xo_games").doc(HassouniGamesFeature.currentXORoomId).delete();
+            }
+            if(HassouniGamesFeature.xoListener) HassouniGamesFeature.xoListener();
+        },
+
+        // ================= عجلة الحظ اليومية =================
+        openLuckyWheel: () => {
+            document.getElementById('wheelStatusMessage').innerText = "";
+            document.getElementById('luckyWheelModal').style.display = 'flex';
+        },
+
+        spinTheWheel: () => {
+            let myUid = window.currentUser.uid;
+            let now = Date.now();
+            let lastSpin = localStorage.getItem(`last_spin_${myUid}`) || 0;
+            
+            // تحقق مرور 24 ساعة (24 * 60 * 60 * 1000)
+            if (now - lastSpin < 86400000) {
+                let hoursLeft = Math.ceil((86400000 - (now - lastSpin)) / (1000 * 60 * 60));
+                document.getElementById('wheelStatusMessage').innerText = `⏳ لقد قمت بالتدوير اليوم! عد بعد ${hoursLeft} ساعة.`;
+                return;
+            }
+
+            document.getElementById('spinWheelBtn').disabled = true;
+            let randomIdx = Math.floor(Math.random() * HassouniGamesFeature.wheelRewards.length);
+            let targetReward = HassouniGamesFeature.wheelRewards[randomIdx];
+            
+            // زاوية التدوير الرسومية
+            let degrees = 1800 + (randomIdx * 60) + 30; 
+            document.getElementById('wheelGraphic').style.transform = `rotate(${degrees}deg)`;
+
+            setTimeout(() => {
+                localStorage.setItem(`last_spin_${myUid}`, now);
+                document.getElementById('spinWheelBtn').disabled = false;
+                
+                if(targetReward.val > 0) {
+                    db.collection("users").doc(myUid).update({
+                        [targetReward.type]: firebase.firestore.FieldValue.increment(targetReward.val)
+                    }).then(() => {
+                        document.getElementById('wheelStatusMessage').innerText = `🎉 مبروك! فزت بـ ${targetReward.text}`;
+                    });
+                } else {
+                    document.getElementById('wheelStatusMessage').innerText = `💥 ${targetReward.text}`;
+                }
+            }, 4000);
+        }
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(HassouniGamesFeature.init, 2500);
+    });
+</script>
+
+<style>
+    @keyframes floatingPulse {
+        0% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        50% { transform: scale(1.08); box-shadow: 0 4px 20px rgba(255,215,0,0.6); }
+        100% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    }
+    .xo-cell:hover { background: #252525 !important; }
+    <!-- ================================================================= -->
+<!-- ملحق متجر الهالات والإعلانات الإمبراطورية (لا يغير الكود السابق) -->
+<!-- ================================================================= -->
+
+<!-- شريط الخبر العاجل العلوي -->
+<div id="globalUrgentBanner" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 32px; background: linear-gradient(90deg, #b30000, #ff0000); color: #fff; z-index: 99999; font-family: sans-serif; overflow: hidden; border-bottom: 2px solid #ffd700; box-shadow: 0 3px 10px rgba(255,0,0,0.5); direction: rtl; align-items: center;">
+    <div style="background: #ffd700; color: #000; padding: 0 15px; height: 100%; display: flex; align-items: center; font-weight: bold; font-size: 12px; z-index: 2; box-shadow: 3px 0 10px rgba(0,0,0,0.3);">⚡ خبر عاجل:</div>
+    <div style="flex: 1; white-space: nowrap; box-sizing: border-box; overflow: hidden; display: flex; align-items: center;">
+        <span id="urgentBannerText" style="display: inline-block; padding-left: 100%; animation: scrollMarquee 25s linear infinite; font-size: 13px; font-weight: bold;">جاري تحميل الإعلانات الإمبراطورية...</span>
+    </div>
+</div>
+
+<!-- واجهة متجر الهالات والإطارات -->
+<div id="auraStoreModal" class="modal-overlay" style="display: none; z-index: 9999999; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center;">
+    <div class="modal-content" style="max-width: 480px; width: 90%; background: #0a0a0a; border: 2px solid #a855f7; border-radius: 15px; padding: 25px; color: #fff; text-align: center; direction: rtl;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 20px;">
+            <h3 style="color: #a855f7; margin: 0; font-size: 16px;"><i class="fas fa-crown"></i> متجر الهالات والنيون الإمبراطوري</h3>
+            <span onclick="document.getElementById('auraStoreModal').style.display='none'" style="cursor: pointer; color: #aaa; font-size: 24px;">&times;</span>
+        </div>
+        <p style="font-size: 12px; color: #aaa; margin-bottom: 15px;">اجعل حسابك يشع بالهيبة والجمال أمام الجميع في الشات والخاص!</p>
+        
+        <!-- تبويبات المتجر -->
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px;" id="auraItemsContainer">
+            <!-- سيتم توليد العناصر ديناميكياً -->
+        </div>
+
+        <!-- قسم شراء إعلان عاجل بالذهب -->
+        <div style="border-top: 1px solid #222; padding-top: 15px; margin-top: 15px; text-align: right;">
+            <h4 style="color: #ffd700; font-size: 13px; margin: 0 0 8px 0;"><i class="fas fa-bullhorn"></i> أعلن في شريط الخبر العاجل</h4>
+            <p style="font-size: 11px; color: #999; margin-bottom: 10px;">انشر كلمتك أو تهنئتك لتظهر لجميع المتواجدين في أعلى الموقع! التكلفة: <span style="color:#ffd700;">500 ذهبة 🪙</span></p>
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="newUrgentText" placeholder="اكتب خبرك العاجل هنا..." style="flex: 1; background: #151515; border: 1px solid #333; border-radius: 5px; color: #fff; padding: 8px; font-size: 12px;">
+                <button onclick="HassouniImperialShop.buyUrgentAnnouncement()" style="background: linear-gradient(135deg, #ff0000, #b30000); border: none; color: #fff; padding: 0 15px; font-size: 12px; border-radius: 5px; font-weight: bold; cursor: pointer;">بث الخبر ⚡</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- زر عائم إضافي لفتح متجر الهالات -->
+<div id="auraStoreFloatingBtn" onclick="document.getElementById('auraStoreModal').style.display='flex'" style="position: fixed; bottom: 135px; left: 20px; width: 45px; height: 45px; background: linear-gradient(135deg, #a855f7, #6366f1); border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 99999; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 2px solid #fff; animation: auraPulse 2.5s infinite;">
+    <span style="font-size: 20px;">👑</span>
+</div>
+
+<script>
+    const HassouniImperialShop = {
+        // قائمة الهالات والنيون المتاحة للشراء
+        auras: [
+            { id: 'neon_red', name: 'اللهب الأحمر', cost: 300, color: '#ff3333', style: 'box-shadow: 0 0 12px #ff3333; border: 2px solid #ff3333;' },
+            { id: 'neon_cyan', name: 'الجليد الأزرق', cost: 300, color: '#33ffff', style: 'box-shadow: 0 0 12px #33ffff; border: 2px solid #33ffff;' },
+            { id: 'gold_royal', name: 'التاج الملوكي المضيء', cost: 600, color: '#ffd700', style: 'box-shadow: 0 0 15px #ffd700; border: 2px solid #ffd700; animation: royalGlowPulse 1.5s infinite alternate;' },
+            { id: 'neon_rainbow', name: 'الوميض الخارق', cost: 1000, color: '#ff007f', style: 'border: 2px solid #fff; animation: rainbowGlow 3s linear infinite;' }
+        ],
+
+        init: () => {
+            HassouniImperialShop.renderAuraStore();
+            HassouniImperialShop.listenToUrgentBanner();
+            HassouniImperialShop.startAuraDynamicEngine();
+        },
+
+        // 1. توليد قائمة المعروضات في المتجر
+        renderAuraStore: () => {
+            let container = document.getElementById('auraItemsContainer');
+            if(!container) return;
+            container.innerHTML = '';
+
+            HassouniImperialShop.auras.forEach(aura => {
+                let box = document.createElement('div');
+                box.style.cssText = `
+                    background: #111; border: 1px solid #222; padding: 15px; border-radius: 10px; text-align: center; cursor: pointer; transition: 0.3s;
+                `;
+                box.onmouseover = () => box.style.borderColor = aura.color;
+                box.onmouseout = () => box.style.borderColor = '#222';
+                box.onclick = () => HassouniImperialShop.purchaseAura(aura);
+
+                box.innerHTML = `
+                    <div style="width: 50px; height: 50px; border-radius: 50%; margin: 0 auto 10px; ${aura.style}">
+                        <img src="https://api.dicebear.com/7.x/bottts/svg?seed=preview" style="width:100%; height:100%; border-radius:50%;">
+                    </div>
+                    <div style="font-size: 12px; font-weight: bold; color: #fff;">${aura.name}</div>
+                    <div style="font-size: 11px; color: #ffd700; margin-top: 5px;">🪙 ${aura.cost} ذهب</div>
+                `;
+                container.appendChild(box);
+            });
+        },
+
+        // 2. معالجة عملية شراء الهالة وحفظها في Firestore
+        purchaseAura: (aura) => {
+            let myUid = window.currentUser.uid;
+            let userDocRef = db.collection("users").doc(myUid);
+
+            db.runTransaction((transaction) => {
+                return transaction.get(userDocRef).then((sfDoc) => {
+                    if (!sfDoc.exists) throw "العضو غير موجود!";
+                    let gold = sfDoc.data().gold || 0;
+                    if(gold < aura.cost) {
+                        throw "عذراً! لا تملك رصيد ذهب كافي لشراء هذه الهالة 🪙";
+                    }
+                    transaction.update(userDocRef, { 
+                        gold: gold - aura.cost,
+                        activeAura: aura.id 
+                    });
+                    return gold - aura.cost;
+                });
+            }).then(() => {
+                alert(`🎉 مبروك! قمت بتفعيل هالة [ ${aura.name} ] بنجاح، ستظهر على صورتك في الشات والخاص أمام الجميع فوراً!`);
+                document.getElementById('auraStoreModal').style.display = 'none';
+            }).catch(err => alert(err));
+        },
+
+        // 3. شراء وبث خبر عاجل على الشريط العلوي
+        buyUrgentAnnouncement: () => {
+            let text = document.getElementById('newUrgentText').value.trim();
+            if(!text) return alert("الرجاء كتابة نص الخبر أولاً!");
+
+            let myUid = window.currentUser.uid;
+            let myName = window.currentUser.name;
+            let userDocRef = db.collection("users").doc(myUid);
+
+            db.runTransaction((transaction) => {
+                return transaction.get(userDocRef).then((sfDoc) => {
+                    if (!sfDoc.exists) throw "العضو غير موجود!";
+                    let gold = sfDoc.data().gold || 0;
+                    if(gold < 500) {
+                        throw "🪙 رصيد ذهبك غير كافي، بث الإعلان يتطلب 500 ذهبة.";
+                    }
+                    transaction.update(userDocRef, { gold: gold - 500 });
+                });
+            }).then(() => {
+                // حفظ الإعلان في Firestore
+                db.collection("global_announcements").doc("current").set({
+                    text: `📢 إعلان من [ ${myName} ]: ${text}`,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    alert("⚡ تم بث خبرك العاجل بنجاح في أعلى المنصة لجميع الأعضاء!");
+                    document.getElementById('newUrgentText').value = "";
+                });
+            }).catch(err => alert(err));
+        },
+
+        // 4. الاستماع اللحظي للخبر العاجل وتحديث الشريط
+        listenToUrgentBanner: () => {
+            db.collection("global_announcements").doc("current").onSnapshot((doc) => {
+                let banner = document.getElementById('globalUrgentBanner');
+                let textSpan = document.getElementById('urgentBannerText');
+                if(doc.exists) {
+                    let data = doc.data();
+                    textSpan.innerText = data.text;
+                    banner.style.display = 'flex';
+                    // إضافة تباعد علوي لجسم التطبيق تلقائياً لمنع تغطية المحتوى
+                    document.body.style.paddingTop = '32px';
+                } else {
+                    banner.style.display = 'none';
+                    document.body.style.paddingTop = '0px';
+                }
+            });
+        },
+
+        // 5. محرك الحقن الديناميكي (Dynamic Injection Engine) للهالات النيونية
+        // يقوم بقراءة المستخدمين النشطين ورسائل الشات ويطبق الهالة على صورهم الشخصية حياً
+        startAuraDynamicEngine: () => {
+            // إنشاء مستمع لقاعدة بيانات الهالات النشطة للأعضاء
+            let userAurasMap = {};
+            db.collection("users").where("activeAura", "!=", "").onSnapshot((snap) => {
+                snap.forEach(doc => {
+                    userAurasMap[doc.id] = doc.data().activeAura;
+                });
+                HassouniImperialShop.applyAurasToDOM(userAurasMap);
+            });
+
+            // تحديث مستمر للهالات عند كتابة رسائل جديدة (باستخدام MutationObserver)
+            const observer = new MutationObserver(() => {
+                HassouniImperialShop.applyAurasToDOM(userAurasMap);
+            });
+            let chatBox = document.getElementById('chatMessages') || document.body;
+            observer.observe(chatBox, { childList: true, subtree: true });
+        },
+
+        // تطبيق الهالة على صور المستخدمين في الشات والقوائم الجانبية
+        applyAurasToDOM: (aurasMap) => {
+            // البحث عن الصور الشخصية للأعضاء
+            // نبحث عن أي عنصر صورة داخل المحادثة يحتوي على معرف مستخدم (إذا كان كودك القديم يضع الـ UID في الـ dataset أو class)
+            // وللأمان المطبق: سنستهدف الصور التي بجوار أسماء الأعضاء الذين يحملون الهالة
+            Object.keys(aurasMap).forEach(uid => {
+                let auraId = aurasMap[uid];
+                let auraObj = HassouniImperialShop.auras.find(a => a.id === auraId);
+                if(!auraObj) return;
+
+                // حقن كود الـ CSS المخصص للهالة في رأس الصفحة لمنع التكرار
+                let styleId = `style_aura_${uid}`;
+                if(!document.getElementById(styleId)) {
+                    let styleTag = document.createElement('style');
+                    styleTag.id = styleId;
+                    styleTag.innerHTML = `
+                        /* استهداف الكلاسات أو الصور المرتبطة بـ UID الخاص بالعضو */
+                        .avatar-uid-${uid}, [data-uid="${uid}"] img, img[data-uid="${uid}"] {
+                            ${auraObj.style}
+                        }
+                    `;
+                    document.head.appendChild(styleTag);
+                }
+            });
+        }
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(HassouniImperialShop.init, 3000);
+    });
+</script>
+
+<style>
+    /* أنيميشن تحريك شريط الإعلانات العاجلة */
+    @keyframes scrollMarquee {
+        0% { transform: translate3d(0, 0, 0); }
+        100% { transform: translate3d(-100%, 0, 0); }
+    }
+    /* تأثير نبض زر متجر الهالات */
+    @keyframes auraPulse {
+        0% { transform: scale(1); box-shadow: 0 4px 10px rgba(168, 85, 247, 0.4); }
+        50% { transform: scale(1.08); box-shadow: 0 4px 20px rgba(168, 85, 247, 0.8), 0 0 15px rgba(99, 102, 241, 0.6); }
+        100% { transform: scale(1); box-shadow: 0 4px 10px rgba(168, 85, 247, 0.4); }
+    }
+    /* نبض الهالة الملكية الذهبية */
+    @keyframes royalGlowPulse {
+        0% { box-shadow: 0 0 10px #ffd700; }
+        100% { box-shadow: 0 0 22px #ffd700, 0 0 8px #fff; }
+    }
+    /* أنيميشن ألوان طيف قوس قزح للهالة الخارقة */
+    @keyframes rainbowGlow {
+        0% { border-color: #ff0000; box-shadow: 0 0 12px #ff0000; }
+        20% { border-color: #00ff00; box-shadow: 0 0 12px #00ff00; }
+        40% { border-color: #0000ff; box-shadow: 0 0 12px #0000ff; }
+        60% { border-color: #ffff00; box-shadow: 0 0 12px #ffff00; }
+        80% { border-color: #00ffff; box-shadow: 0 0 12px #00ffff; }
+        100% { border-color: #ff00ff; box-shadow: 0 0 12px #ff00ff; }
+    }
 </style>
 </body>
 </html>
