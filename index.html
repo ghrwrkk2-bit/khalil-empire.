@@ -1587,6 +1587,242 @@
     window.onload = () => {
         ui.checkSavedSessionOnLoad();
     };
+<!-- ================================================================= -->
+<!-- شات حسوني الملوكي - كود الإضافات والمميزات الاحترافية المدمجة -->
+<!-- ================================================================= -->
+
+<style>
+/* 1. تنسيقات الرتب والألقاب الملوكية المتحركة (CSS VIP & Badges) */
+.badge-owner {
+    background: linear-gradient(45deg, #ffd700, #ffa500);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.8);
+    animation: glow 1.5s infinite alternate;
+}
+.badge-vip {
+    background: linear-gradient(45deg, #00f2fe, #4facfe);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: bold;
+}
+.user-name-glow {
+    font-weight: bold;
+    background: linear-gradient(to right, #ff3366, #ff00cc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: textShine 3s ease-in-out infinite;
+}
+
+/* 2. أنيميشن التأثيرات البصرية للهدايا */
+.gift-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+.gift-animation {
+    font-size: 80px;
+    animation: popAndSpin 2s ease-out forwards;
+}
+.gift-text {
+    font-size: 24px;
+    color: #fff;
+    text-shadow: 0 0 10px #ff00cc;
+    font-weight: bold;
+    margin-top: 20px;
+}
+
+/* حركة التوهج واللمعان */
+@keyframes glow {
+    from { box-shadow: 0 0 5px #ffd700; }
+    to { box-shadow: 0 0 20px #ff8c00; }
+}
+@keyframes textShine {
+    0%, 100% { filter: hue-rotate(0deg); }
+    50% { filter: hue-rotate(360deg); }
+}
+@keyframes popAndSpin {
+    0% { transform: scale(0) rotate(0deg); opacity: 0; }
+    50% { transform: scale(1.5) rotate(360deg); opacity: 1; }
+    100% { transform: scale(1) rotate(720deg); opacity: 0; }
+}
+
+/* واجهة الألعاب والمتجر المصغر */
+.game-box, .store-box {
+    background: rgba(20, 20, 30, 0.9);
+    border: 1px solid #ff00cc;
+    border-radius: 10px;
+    padding: 15px;
+    margin: 10px 0;
+    color: #fff;
+}
+</style>
+
+<!-- واجهة عرض الهدايا السحابية المؤقتة -->
+<div id="giftOverlay" class="gift-overlay">
+    <div id="giftEmoji" class="gift-animation">🎁</div>
+    <div id="giftMessage" class="gift-text">حسوني أرسل تاجاً ملوكياً!</div>
+</div>
+
+<script>
+// تهيئة متغيرات المستخدم الافتراضية
+let currentUser = {
+    uid: "current-user-id",
+    name: "Hassouni", // اسمك الملكي يا غالي
+    role: "owner", // صلاحية المالك المطلق
+    points: 100, // نقاط متجر الألعاب والتفاعل
+    fontColor: "#ffffff",
+    bgProfile: ""
+};
+
+// قائمة الكلمات المحظورة (المشرف الآلي)
+const forbiddenWords = ["كلمة_بذيئة1", "كلمة_بذيئة2", "رابط_موقع_مشبوه"];
+let lastMessageTime = 0;
+let spamCounter = 0;
+
+/* ================================================================= */
+/* 1. نظام المشرف الآلي والذكاء الاصطناعي (Auto-Mod & Anti-Spam) */
+/* ================================================================= */
+function filterAndValidateMessage(text) {
+    const now = Date.now();
+    
+    // منع السبام (أكثر من 3 رسائل في ثانيتين)
+    if (now - lastMessageTime < 2000) {
+        spamCounter++;
+        if (spamCounter >= 3) {
+            alert("⚠️ تنبيه ملوكي: تم كتمك مؤقتاً لمدة 30 ثانية بسبب الإرسال السريع!");
+            return null; 
+        }
+    } else {
+        spamCounter = 0;
+    }
+    lastMessageTime = now;
+
+    // فلترة الكلمات البذيئة والإعلانات
+    let cleanText = text;
+    forbiddenWords.forEach(word => {
+        const regex = new RegExp(word, "gi");
+        cleanText = cleanText.replace(regex, "***");
+    });
+
+    // منع الروابط الخارجية تلقائياً لحماية الروم
+    const urlPattern = /(https?:\/\/[^\s]+)/g;
+    if (urlPattern.test(cleanText) && currentUser.role !== 'owner') {
+        alert("🛡️ عذراً، لا يُسمح بنشر الروابط في الشات لغير الإدارة!");
+        return null;
+    }
+
+    return cleanText;
+}
+
+/* ================================================================= */
+/* 2. نظام الهدايا والتأثيرات البصرية الحية (Gifts System) */
+/* ================================================================= */
+const giftsList = {
+    crown: { emoji: "👑", name: "التاج الملوكي", price: 50 },
+    castle: { emoji: "🏰", name: "القلعة الأسطورية", price: 100 },
+    rose: { emoji: "🌹", name: "وردة جورية", price: 10 },
+    coffee: { emoji: "☕", name: "قهوة يمنية فاخرة", price: 15 }
+};
+
+function sendGift(giftKey, receiverName) {
+    const gift = giftsList[giftKey];
+    if (!gift) return;
+
+    if (currentUser.points < gift.price) {
+        alert("🪙 عذراً، ليس لديك نقاط كافية لشراء هذه الهدية!");
+        return;
+    }
+
+    // خصم النقاط وإطلاق التأثير البصري فوراً لجميع المتواجدين بالروم
+    currentUser.points -= gift.price;
+    triggerGiftAnimation(gift.emoji, `${currentUser.name} أهدى ${receiverName} [${gift.name}] 🔥`);
+    
+    // تحديث واجهة النقاط
+    updatePointsDisplay();
+}
+
+function triggerGiftAnimation(emoji, message) {
+    const overlay = document.getElementById("giftOverlay");
+    const emojiDiv = document.getElementById("giftEmoji");
+    const msgDiv = document.getElementById("giftMessage");
+
+    emojiDiv.innerText = emoji;
+    msgDiv.innerText = message;
+    overlay.style.display = "flex";
+
+    // إخفاء تأثير الهدية بعد ثانيتين تلقائياً
+    setTimeout(() => {
+        overlay.style.display = "none";
+    }, 2500);
+}
+
+/* ================================================================= */
+/* 3. لعبة الأسئلة والأجوبة المصغرة (Mini-Games Hub) */
+/* ================================================================= */
+const chatTrivia = [
+    { question: "ما هي عاصمة اليمن؟", answer: "صنعاء" },
+    { question: "من هو بطل دوري أبطال أوروبا 2015؟", answer: "برشلونة" },
+    { question: "ما هو لقب مالك هذا الشات؟", answer: "حسوني" }
+];
+let currentQuestionIndex = 0;
+
+function startTriviaGame() {
+    currentQuestionIndex = Math.floor(Math.random() * chatTrivia.length);
+    appendSystemMessage(`🎮 [مسابقة الغرفة]: ${chatTrivia[currentQuestionIndex].question}`);
+}
+
+function checkTriviaAnswer(userAnswer, userName) {
+    const correctAnswer = chatTrivia[currentQuestionIndex].answer;
+    if (userAnswer.trim() === correctAnswer) {
+        appendSystemMessage(`🎉 مبروك للفائز ${userName}! الإجابة الصحيحة هي: [${correctAnswer}] وتم منحه 20 نقطة! 🪙`);
+        if (userName === currentUser.name) {
+            currentUser.points += 20;
+            updatePointsDisplay();
+        }
+        // بدء سؤال جديد بعد 10 ثواني
+        setTimeout(startTriviaGame, 10000);
+    }
+}
+
+/* ================================================================= */
+/* 4. متجر الأعضاء لشراء الميزات (Store System) */
+/* ================================================================= */
+function buySpecialFont(color) {
+    if (currentUser.points >= 40) {
+        currentUser.points -= 40;
+        currentUser.fontColor = color;
+        alert(`🎨 تم شراء لون الخط بنجاح! ستكتب الآن باللون: ${color}`);
+        updatePointsDisplay();
+    } else {
+        alert("🪙 النقاط غير كافية! تفاعل أكثر في الشات لتجميع النقاط.");
+    }
+}
+
+/* ================================================================= */
+/* 5. دوال مساعدة ومحاكاة الشات */
+/* ================================================================= */
+function updatePointsDisplay() {
+    console.log(`رصيدك الحالي من النقاط الملوكية: 🪙 ${currentUser.points}`);
+}
+
+function appendSystemMessage(msg) {
+    console.log(`%c[نظام الشات الملوكي]: ${msg}`, "color: #ff00cc; font-weight: bold;");
+}
+
+// محاكاة سريعة لبدء الألعاب والأنظمة فور التحميل
+window.onload = function() {
+    updatePointsDisplay();
+    startTriviaGame(); // تشغيل بوت المسابقات الآلي
+};
 </script>
 </body>
 </html>
