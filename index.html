@@ -1592,6 +1592,102 @@
     window.onload = () => {
         ui.checkSavedSessionOnLoad();
     };
+<script>
+    window.ui = {
+        // --- 1. الأساسيات ---
+        checkSavedSessionOnLoad: () => {
+            let s = localStorage.getItem("hassouni_user_session");
+            if(s) { window.currentUser = JSON.parse(s); }
+        },
+
+        // --- 2. نظام الرسائل واليوتيوب المدمج ---
+        sendMessage: (t) => {
+            if(!t.trim()) return;
+            let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            let styleObj = { nColor: window.currentUser.nameColor || "#fff", bColor: window.currentUser.nameBgColor || "transparent", isAnim: window.currentUser.isAnimatedName || false };
+            db.collection("rooms").doc(window.currentRoom).collection("messages").add({
+                user: { uid: window.currentUser.uid },
+                text: t, timeStr: timeStr, customStyle: styleObj, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            db.collection("users").doc(window.currentUser.uid).update({ lastActive: firebase.firestore.FieldValue.serverTimestamp() });
+        },
+
+        renderMsg: (user, text, timeStr, cStyle) => {
+            let div = document.createElement('div'); 
+            let liveUser = window.liveUsersMap[user.uid] || user;
+            let displayImg = liveUser.img || "https://cdn-icons-png.flaticon.com/512/1042/1042291.png";
+            let displayName = liveUser.name || "عضو";
+            let displayRole = liveUser.role || "guest";
+            
+            div.className = `msg-wrap ${user.uid === window.currentUser.uid ? 'is-me-style' : ''}`;
+            let r = window.chatRanksData[displayRole] || { icon: "fas fa-user", color: "#fff" };
+            let nC = (cStyle && cStyle.nColor) ? cStyle.nColor : r.color;
+            let bC = (cStyle && cStyle.bColor) ? cStyle.bColor : "rgba(0,0,0,0.6)";
+            let isAnimClass = (cStyle && cStyle.isAnim) ? 'animated-king-name' : '';
+
+            let msgContentHtml = `<div class="msg-text">${text}</div>`;
+            let ytId = typeof extractYouTubeVideoId === 'function' ? extractYouTubeVideoId(text) : null;
+            if(ytId) {
+                msgContentHtml = `<div class="msg-text">${text}</div><div style="margin-top:8px; width:100%; height:180px;"><iframe width="100%" height="100%" src="https://www.youtube.com/embed/${ytId}" frameborder="0" allowfullscreen></iframe></div>`;
+            }
+            
+            div.innerHTML = `<span class="msg-time-badge">${timeStr || ''}</span><div class="msg-header"><div class="pfp-main-frame" style="border-color:${r.color};"><img src="${displayImg}" class="pfp-main" onclick="ui.viewProfileCard('${user.uid}')"></div><div class="rank-standalone-icon" style="border-color:${r.color};"><i class="${r.icon}" style="color:${r.color};"></i></div><div class="king-name-container" style="border-color:${r.color}; background:${bC};" onclick="ui.quoteUser('${displayName}')"><span class="king-name-tag ${isAnimClass}" style="color:${nC};">${displayName}</span></div></div>${msgContentHtml}`;
+            let box = document.getElementById('chatBox'); if(box) { box.appendChild(div); box.scrollTop = box.scrollHeight; }
+        },
+
+        // --- 3. نظام الخلفية الديناميكية (الجديد) ---
+        ownerSaveRoomBg: () => {
+            let bgUrl = document.getElementById("owner_room_bg").value.trim();
+            db.collection("room_settings").doc(window.currentRoom).set({ roomBg: bgUrl }, { merge: true }).then(() => {
+                alert("🖼️ تم تحديث خلفية الروم بنجاح للجميع!");
+            });
+        },
+        
+        // أضف هذا داخل دالة listenToRoomSettings لديك
+        applyRoomBackground: (url) => {
+            let chatBox = document.getElementById('chatBox');
+            if(chatBox && url) {
+                chatBox.style.backgroundImage = `url('${url}')`;
+                chatBox.style.backgroundSize = "cover";
+                chatBox.style.backgroundPosition = "center";
+            }
+        },
+
+        // --- 4. أدوات المايكات والتحكم ---
+        confirmMicGoingUp: (status) => {
+            document.getElementById('featureModal').style.display = 'none';
+            if(!status) return;
+            db.collection("rooms").doc(window.currentRoom).collection("mics").doc(`mic_${window.selectedMicNum}`).set({
+                micNum: window.selectedMicNum, userId: window.currentUser.uid, userName: window.currentUser.name, userImg: window.currentUser.img, isMuted: false, trackOwnerId: window.currentUser.uid
+            });
+        },
+
+        // --- 5. لوحة التحكم الملوكية (المدمجة) ---
+        openOwnerMegaPanel: () => {
+            document.getElementById('featureModalTitle').innerText = "👑 لوحة التحكم الملوكية";
+            document.getElementById('featureModalBody').innerHTML = `
+                <div style="text-align:right;">
+                    <label>رابط خلفية الروم:</label>
+                    <input type="text" id="owner_room_bg" class="form-control" placeholder="ضع رابط الصورة هنا...">
+                    <button class="send-btn" style="width:100%; margin-top:5px;" onclick="ui.ownerSaveRoomBg()">تطبيق الخلفية 🖼️</button>
+                    <hr>
+                    <button class="send-btn" style="background:#e74c3c; width:100%;" onclick="ui.clearCurrentRoomMessagesCloud()">🧹 مسح رسائل الروم</button>
+                </div>
+            `;
+            document.getElementById('featureModal').style.display = 'flex';
+        },
+
+        // --- 6. دوال مساعدة ---
+        quoteUser: (name) => { let inp = document.getElementById('msgInp'); if(inp) { inp.value = `@${name} `; inp.focus(); } },
+        
+        logoutBackToWelcome: () => {
+            localStorage.removeItem("hassouni_user_session");
+            window.location.reload();
+        }
+    };
+
+    // التشغيل عند التحميل
+    window.onload = () => { ui.checkSavedSessionOnLoad(); };
 </script>
 </body>
 </html>
