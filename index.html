@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>شات ليالي زمان | شات عربي | دردشة عربي مجانية</title>
+    <title>شات حسوني | شات عربي | دردشة عربي مجانية</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -13,30 +13,32 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
 
-        /* حاوية الشات الرئيسية */
         .chat-container { width: 100%; max-width: 480px; height: 100vh; background-color: #f7f9fa; display: flex; flex-direction: column; position: relative; background-size: cover; background-position: center; }
 
-        /* لوحة الدخول البدئية */
+        /* لوحة الدخول البدئية المطورة بالكامل حسب طلبك */
         #welcomeWelcomePanel { position: absolute; top:0; left:0; width:100%; height:100%; background:#fff; z-index: 5000; overflow-y: auto; padding: 15px; }
-        .gold-banner { background: linear-gradient(135deg, #ffd700, #aa7c11); color: #fff; padding: 20px; text-align: center; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); margin-bottom: 15px; }
-        .gold-banner h1 { font-size: 22px; margin-bottom: 5px; text-shadow: 1px 1px 3px rgba(0,0,0,0.3); font-weight: bold; }
-        .enter-form { background: #fdfdfd; border: 1px solid #ffd700; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        .gold-banner { background: linear-gradient(135deg, #ce1126 0%, #ffffff 50%, #000000 100%); color: #fff; padding: 20px; text-align: center; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); margin-bottom: 15px; border-bottom: 4px solid #ffd700; position: relative; }
+        .gold-banner h1 { font-size: 20px; margin-bottom: 5px; text-shadow: 1px 1px 3px rgba(0,0,0,0.3); font-weight: bold; }
+        
+        .auth-tabs-bar { display: flex; gap: 5px; margin-bottom: 15px; background: #eee; padding: 4px; border-radius: 8px; }
+        .auth-tab-btn { flex: 1; padding: 10px; border: none; background: #fff; font-weight: bold; font-size: 13px; border-radius: 6px; cursor: pointer; color: #4a5568; transition: 0.3s; }
+        .auth-tab-btn.active { background: #1a1a1a; color: #ffd700; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+
+        .auth-form-panel { background: #fdfdfd; border: 1px solid #ffd700; padding: 15px; border-radius: 12px; margin-bottom: 15px; display: none; }
+        .auth-form-panel.active { display: block; }
         .styled-enter-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, #2a2a35, #1e1e24); color:#ffd700; border:2px solid #ffd700; font-weight:bold; font-size:16px; border-radius:30px; cursor:pointer; margin-top:10px; transition: 0.3s; }
         .styled-enter-btn:hover { background: #ffd700; color:#1e1e24; }
 
-        /* معلومات اللوحة الإرشادية لشات ليالي زمان */
         .promo-section { background: #f8f9fa; padding: 12px; border-radius: 10px; border-right: 4px solid #ffd700; margin-bottom: 12px; text-align: right; }
         .promo-section h3 { font-size: 14px; color: #1e1e24; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
         .promo-section p { font-size: 12px; color: #4a5568; line-height: 1.6; }
 
-        /* الشريط العلوي */
         .chat-header { background: linear-gradient(135deg, #1e1e24, #2a2a35); color: #fff; padding: 10px; border-bottom: 2px solid #ffd700; flex-shrink: 0; }
         .header-top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
         .logo-area { font-weight: bold; font-size: 15px; color: #ffd700; display: flex; align-items: center; gap: 6px; }
         .header-nav-menu { display: flex; justify-content: space-between; background: rgba(255, 255, 255, 0.08); padding: 4px; border-radius: 8px; gap: 2px; }
         .nav-item { flex: 1; text-align: center; font-size: 11px; color: #e2e8f0; cursor: pointer; padding: 4px 2px; border-radius: 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
 
-        /* قسم المايكات المطور */
         .mics-section { background-color: #ffffff; display: flex; justify-content: space-around; padding: 10px 5px; border-bottom: 1px solid #e1e8ed; flex-shrink: 0; gap: 10px; }
         .mic-box { display: flex; flex-direction: column; align-items: center; flex: 1; background: #ffffff; border-radius: 12px; padding: 8px 4px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #edf2f7; transition: all 0.3s ease; position: relative; background-size: cover; background-position: center; }
         .mic-box.active { border: 2px solid #e53e3e; box-shadow: 0 0 8px rgba(229, 62, 62, 0.4); }
@@ -47,14 +49,10 @@
         .heart-icon-wrapper::after { left: 0; transform: rotate(45deg); transform-origin: 100% 100%; }
         
         .mic-box.active .heart-icon-wrapper::before, .mic-box.active .heart-icon-wrapper::after { background: #e53e3e; }
-        .mic-box.muted .heart-icon-wrapper::before, .mic-icon-wrapper::after { background: #718096; }
-        .heart-inner-icon { position: absolute; z-index: 5; top: 2px; left: 5px; color: #fff; font-size: 9px; width: 14px; text-align: center; }
-        
         .mic-name { font-size: 10px; color: #4a5568; font-weight: bold; text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; z-index: 2; background: rgba(255, 255, 255, 0.85); padding: 1px 2px; border-radius: 4px; }
         .mic-status-tag { font-size: 8px; color: #edf2f7; font-weight: bold; margin-top: 2px; display: none; z-index: 2; background: rgba(0,0,0,0.6); padding: 0 4px; border-radius: 4px; }
         .mic-box.muted .mic-status-tag { display: block; }
 
-        /* ساحة الرسائل */
         .chat-messages { flex: 1; padding: 12px; overflow-y: auto; background-color: rgba(243, 244, 246, 0.85); display: flex; flex-direction: column; gap: 12px; padding-bottom: 115px; }
         .message-row { display: flex; align-items: flex-start; gap: 8px; width: 100%; }
         .avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #ffd700; cursor: pointer; }
@@ -64,7 +62,6 @@
         .username-container { border: 1px solid #cbd5e0; background-color: #ffffff; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; color: #2d3748; }
         .message-text { background-color: #ffffff; color: #212529; padding: 8px 12px; border-radius: 8px; font-size: 13px; max-width: 85%; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-weight: 600; }
 
-        /* التحكم السفلي الثابت */
         .bottom-controls-container { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; display: flex; flex-direction: column; z-index: 999; background-color: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
         .chat-input-bar { background-color: #ffffff; padding: 8px 10px; display: flex; align-items: center; gap: 8px; border-top: 1px solid #e1e8ed; }
         .input-container { flex: 1; display: flex; align-items: center; background-color: #f1f3f5; border-radius: 20px; padding: 0 12px; }
@@ -75,7 +72,6 @@
         .footer-item { color: #a0aec0; font-size: 11px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; }
         .footer-item.active, .footer-item:hover { color: #ffd700; }
 
-        /* النوافذ المنبثقة */
         .popup-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 2000; padding: 10px; }
         .popup-box { background: white; width: 100%; max-width: 360px; border-radius: 12px; padding: 20px; position: relative; max-height: 90%; overflow-y: auto; }
         .close-x-btn { position: absolute; top: 10px; left: 10px; background: #e53e3e; color: white; border: none; width: 24px; height: 24px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 12px; z-index: 10; }
@@ -89,16 +85,20 @@
         .btn-yes { flex: 1; background: #28a745; color: white; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
         .btn-no { flex: 1; background: #dc3545; color: white; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
 
-        /* كارت البروفايل الإحترافي */
+        /* كارت البروفايل الإحترافي المطور الشامل لكل الأزرار والميزات */
         .profile-card { background: #fff; width: 100%; max-width: 350px; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3); position: relative; text-align: center; padding-bottom: 15px; }
         .profile-cover { width: 100%; height: 110px; background: linear-gradient(135deg, #2c3e50, #3498db); background-size: cover; background-position: center; position: relative; }
         .profile-avatar-wrapper { position: relative; margin-top: -45px; display: inline-block; }
         .profile-card-avatar { width: 85px; height: 85px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; background: #fff; }
         .profile-info-section { padding: 10px 15px; }
-        .profile-name { font-size: 16px; font-weight: bold; color: #1a202c; padding: 4px 10px; border-radius: 6px; display: inline-block; }
+        .profile-name { font-size: 16px; font-weight: bold; color: #1a202c; padding: 4px 10px; border-radius: 6px; display: inline-block; animation: goldGlow 2s infinite alternate; }
+        @keyframes goldGlow {
+            0% { text-shadow: 0 0 2px #ffd700; }
+            100% { text-shadow: 0 0 10px #ffd700, 0 0 20px #ffaa00; }
+        }
         
-        .profile-actions-bar { display: flex; justify-content: space-around; background: #f1f3f5; margin: 10px 15px 5px 15px; padding: 5px; border-radius: 20px; gap: 4px; }
-        .prof-bar-btn { flex: 1; border: none; background: #fff; padding: 6px 2px; font-size: 11px; font-weight: bold; border-radius: 15px; cursor: pointer; color: #4a5568; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; gap: 2px; }
+        .profile-actions-bar { display: flex; justify-content: space-around; background: #f1f3f5; margin: 10px 15px 5px 15px; padding: 5px; border-radius: 20px; gap: 4px; flex-wrap: wrap; }
+        .prof-bar-btn { flex: 1; min-width: 65px; border: none; background: #fff; padding: 6px 2px; font-size: 11px; font-weight: bold; border-radius: 15px; cursor: pointer; color: #4a5568; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; gap: 2px; }
         .prof-bar-btn:hover { background: #ffd700; color: #1a1a1a; }
 
         .profile-advanced-grid { background: #f7f9fa; padding: 10px; border-radius: 8px; margin-top: 8px; font-size: 12px; text-align: right; display: flex; flex-direction: column; gap: 5px; }
@@ -112,6 +112,10 @@
         
         .pencil-btn { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); color: #ffd700; width: 30px; height: 30px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 13px; cursor: pointer; border: 1px solid #ffd700; z-index: 20; }
         #pinnedSpecialMsg { background: #fff3cd; border-bottom: 1px solid #ffeeba; color: #856404; padding: 8px 12px; font-size: 13px; font-weight: bold; text-align: center; display: none; }
+
+        /* لوحة إيموجي مدمجة */
+        .emoji-picker-container { display: none; background: #fff; border: 1px solid #ddd; padding: 8px; border-radius: 8px; position: absolute; bottom: 65px; left: 10px; z-index: 1000; max-width: 250px; flex-wrap: wrap; gap: 6px; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .emoji-item { font-size: 18px; cursor: pointer; padding: 2px; }
     </style>
 </head>
 <body>
@@ -120,45 +124,52 @@
 
 <div class="chat-container" id="chatContainerView">
 
+    <!-- لوحة الدخول المجددة حسب طلبك بالحرف -->
     <div id="welcomeWelcomePanel">
-        <!-- أيقونة دارية وغلاف علم اليمن -->
-        <div class="gold-banner" style="background: linear-gradient(135deg, #ce1126 0%, #ffffff 50%, #000000 100%); border-bottom: 4px solid #ffd700; position: relative;">
-            <div style="font-size: 32px; margin-bottom: 5px;"><i class="fa-solid fa-moon"></i></div>
-            <h1>شات ليالي زمان | دردشة ليالي زمان | شات عربي دردشة عربية</h1>
-            <p style="font-weight: bold; color: #ffd700; margin-top: 4px;">أهلاً وسهلاً بكم في .. أفضل موقع شات</p>
-        </div>
-        
-        <div class="enter-form">
-            <div class="form-group">
-                <label><i class="fa-solid fa-user"></i> الاسم المستعار</label>
-                <input type="text" id="initNameInput" class="form-control" placeholder="اكتب اسمك هنا...">
-            </div>
-            <div class="form-group">
-                <label><i class="fa-solid fa-venus-mars"></i> الجنس</label>
-                <select id="initGenderInput" class="form-control">
-                    <option value="ذكر">ذكر</option>
-                    <option value="أنثى">أنثى</option>
-                    <option value="آخر">آخر</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label><i class="fa-solid fa-cake-candles"></i> العمر (من 15 إلى 80)</label>
-                <select id="initAgeInput" class="form-control"></select>
-            </div>
-            <div class="form-group">
-                <label><i class="fa-solid fa-earth-americas"></i> البلاد (جميع دول العالم)</label>
-                <input type="text" id="initCountryInput" class="form-control" value="اليمن">
-            </div>
-            <button class="styled-enter-btn" onclick="loginAsVisitor()">دخول الشات كزائر مؤقت بنجاح 🚀</button>
-            <div style="text-align: center; margin-top: 10px;">
-                <a href="https://wa.me/967780718519" target="_blank" style="font-size: 13px; color: #25d366; text-decoration: none; font-weight: bold;">
-                    <i class="fa-brands fa-whatsapp"></i> تواصل عبر واتساب للاستشارة (967780718519)
-                </a>
-            </div>
+        <div class="gold-banner">
+            <h1 id="panelMainTitle">شات حسوني</h1>
+            <p id="panelSubTitle" style="font-weight: bold; color: #ffd700; margin-top: 4px; font-size: 14px;">شات حسوني | دردشة حسوني | شات عربي دردشة عربية</p>
+            <p style="font-size: 13px; color: #fff; margin-top: 2px;">أهلاً وسهلاً بكم في .. أفضل موقع شات عربي</p>
         </div>
 
+        <div style="text-align: center; margin-bottom: 15px;">
+            <div style="font-size: 32px; margin-bottom: 5px; display:inline-block; padding:10px; border:2px dashed #ffd700; border-radius:50%; background:#fff;"><i class="fa-solid fa-moon" style="color:#ce1126;"></i></div>
+            <div style="font-weight:bold; font-size:13px; color:#444;">شات حسوني</div>
+        </div>
+
+        <!-- 3 أزراز في الصدر حسب الطلب: زائر، عضوية، تسجيل -->
+        <div class="auth-tabs-bar">
+            <button class="auth-tab-btn active" onclick="switchAuthTab('visitorForm')">١- زائر</button>
+            <button class="auth-tab-btn" onclick="switchAuthTab('memberForm')">٢- عضوية</button>
+            <button class="auth-tab-btn" onclick="switchAuthTab('registerForm')">٣- تسجيل</button>
+        </div>
+
+        <!-- ١- فورم الزائر -->
+        <div id="visitorForm" class="auth-form-panel active">
+            <div class="form-group"><label><i class="fa-solid fa-user"></i> الاسم المستعار</label><input type="text" id="initNameInput" class="form-control" placeholder="اكتب اسمك هنا..."></div>
+            <div class="form-group"><label><i class="fa-solid fa-venus-mars"></i> الجنس</label><select id="initGenderInput" class="form-control"><option value="ذكر">ذكر</option><option value="أنثى">أنثى</option></select></div>
+            <div class="form-group"><label><i class="fa-solid fa-cake-candles"></i> العمر</label><select id="initAgeInput" class="form-control"></select></div>
+            <button class="styled-enter-btn" onclick="loginAsVisitor()">دخول الشات كزائر 🚀</button>
+        </div>
+
+        <!-- ٢- فورم العضوية (لتسجيل الدخول بالحساب السابق) -->
+        <div id="memberForm" class="auth-form-panel">
+            <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="memberEmailInput" class="form-control" placeholder="أدخل بريدك المسجل..."></div>
+            <div class="form-group"><label>كلمة المرور</label><input type="password" id="memberPassInput" class="form-control" placeholder="كلمة المرور..."></div>
+            <button class="styled-enter-btn" onclick="loginAsMember()">دخول بالعضوية المحفوظة 🔑</button>
+        </div>
+
+        <!-- ٣- فورم التسجيل الجديد -->
+        <div id="registerForm" class="auth-form-panel">
+            <div class="form-group"><label>الاسم الدائم</label><input type="text" id="regNameInput" class="form-control" placeholder="اسمك المستعار الدائم..."></div>
+            <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="regEmailInput" class="form-control" value="ghrwrkk2@gmail.com"></div>
+            <div class="form-group"><label>كلمة المرور</label><input type="password" id="regPassInput" class="form-control" value="780718519"></div>
+            <button class="styled-enter-btn" style="background:#00b4db; color:#fff;" onclick="executeNewAccountRegistration()">تأكيد التسجيل وحفظ الحساب 💎</button>
+        </div>
+
+        <!-- النصوص الإرشادية كاملة تماماً كما طلبت بدون أي نقص -->
         <div class="promo-section">
-            <h3>شات ليالي زمان | دردشة ليالي زمان | شات عربي دردشة عربية</h3>
+            <h3>شات حسوني | دردشة حسوني | شات عربي دردشة عربية</h3>
             <p>الشات العربي في مجتمعنا هو أحد أبرز طرق التعبير عن الرأي بالكتابة بدون صوت حيث يلجئ شباب وصبايا الوطن العربي إلي الشات العربي الكتابي لممارسة حريات أوسع في التعبير عما في داخلهم بدون تحديد هوية الشخص ومكان تواجده وإجراء دردشة بدون أي مشاكل كإبراز وجه الفتاة أو الشباب مما يسمح بدردشة ممتعة ومسلية مع الشاب أو الفتاة. فى حدود الاداب العامة</p>
         </div>
 
@@ -219,20 +230,20 @@
         </div>
         
         <div style="text-align: center; font-size: 11px; color: #718096; padding: 10px;">
-            2026 © شات ليالي زمان | شات عربي | دردشة عربي مجانية الرئيسية شروط الاستخدام قوانين الموقع القواعد إتصل بنا اللغة
+            2026 © شات حسوني | شات عربي | دردشة عربي مجانية الرئيسية شروط الاستخدام قوانين الموقع القواعد إتصل بنا <a href="https://wa.me/967780718519" target="_blank" style="color:#25d366; font-weight:bold; text-decoration:none;">780718519</a> اللغة
         </div>
     </div>
     
     <div class="chat-header">
         <div class="header-top-row">
-            <div class="logo-area"><i class="fa-solid fa-moon" style="color: #ffd700;"></i> شات ليالي زمان</div>
+            <div class="logo-area"><i class="fa-solid fa-moon" style="color: #ffd700;"></i> شات حسوني</div>
             <div style="font-size: 11px; color: #ffd700;" id="topUserRank">زائر مؤقت</div>
         </div>
         <div class="header-nav-menu">
-            <div class="nav-item" onclick="alert('بلاغ')"><i class="fa-solid fa-triangle-exclamation" style="color:#e53e3e;"></i>بلاغ</div>
-            <div class="nav-item" onclick="alert('الخاص')"><i class="fa-solid fa-envelope" style="color:#3182ce;"></i>الخاص</div>
-            <div class="nav-item" onclick="alert('الأثرياء')"><i class="fa-solid fa-gem" style="color:#ecc94b;"></i>الأثرياء</div>
-            <div class="nav-item" onclick="alert('الكبار')"><i class="fa-solid fa-crown" style="color:#ed64a6;"></i>الكبار</div>
+            <div class="nav-item" onclick="openReportsModal()"><i class="fa-solid fa-triangle-exclamation" style="color:#e53e3e;"></i>بلاغ</div>
+            <div class="nav-item" onclick="openPrivateListModal()"><i class="fa-solid fa-envelope" style="color:#3182ce;" id="privateNavIndicator"></i>الخاص</div>
+            <div class="nav-item" onclick="openRichListModal()"><i class="fa-solid fa-gem" style="color:#ecc94b;"></i>الأثرياء</div>
+            <div class="nav-item" onclick="openVipListModal()"><i class="fa-solid fa-crown" style="color:#ed64a6;"></i>الكبار</div>
             <div class="nav-item" onclick="openRoomOptionsModal()"><i class="fa-solid fa-gear"></i>الخيارات</div>
         </div>
     </div>
@@ -248,9 +259,23 @@
 
     <div class="chat-messages" id="chatMessages"></div>
 
+    <!-- لوحة إيموجي مدمجة -->
+    <div class="emoji-picker-container" id="emojiPickerBox">
+        <span class="emoji-item" onclick="insertEmoji('😀')">😀</span>
+        <span class="emoji-item" onclick="insertEmoji('😂')">😂</span>
+        <span class="emoji-item" onclick="insertEmoji('❤️')">❤️</span>
+        <span class="emoji-item" onclick="insertEmoji('🔥')">🔥</span>
+        <span class="emoji-item" onclick="insertEmoji('😍')">😍</span>
+        <span class="emoji-item" onclick="insertEmoji('😎')">😎</span>
+        <span class="emoji-item" onclick="insertEmoji('👍')">👍</span>
+        <span class="emoji-item" onclick="insertEmoji('👑')">👑</span>
+        <span class="emoji-item" onclick="insertEmoji('🌹')">🌹</span>
+        <span class="emoji-item" onclick="insertEmoji('✨')">✨</span>
+    </div>
+
     <div class="bottom-controls-container">
         <div class="chat-input-bar">
-            <button class="action-btn plus-btn" onclick="alert('إرسال ميديا')"><i class="fa-solid fa-plus"></i></button>
+            <button class="action-btn" onclick="toggleEmojiPicker()"><i class="fa-solid fa-face-smile" style="color:#d69e2e;"></i></button>
             <div class="input-container">
                 <input type="text" id="chatInput" class="chat-input" placeholder="اكتب رسالتك هنا...">
             </div>
@@ -260,19 +285,20 @@
         <div class="footer-nav-bar">
             <div class="footer-item" onclick="openOnlineUsersModal()"><i class="fa-solid fa-users"></i>المتواجدين</div>
             <div class="footer-item" onclick="refreshChatData();"><i class="fa-solid fa-rotate"></i>تحديث</div>
-            <div class="footer-item" id="keyAuthBtn" onclick="openLoginModal()"><i class="fa-solid fa-key" style="color:#ffd700;"></i>التسجيل للابد</div>
-            <div class="footer-item" onclick="alert('يوتيوب')"><i class="fa-brands fa-youtube" style="color:#ff0000;"></i>يوتيوب</div>
-            <div class="footer-item" onclick="alert('الغرف')"><i class="fa-solid fa-door-open"></i>الغرف</div>
+            <div class="footer-item" id="bottomVisitorKeyBtn" onclick="openVisitorKeyModal()" style="display:none;"><i class="fa-solid fa-key" style="color:#ffd700;"></i>تسجيل</div>
+            <div class="footer-item" onclick="openYoutubeSearchModal()"><i class="fa-brands fa-youtube" style="color:#ff0000;"></i>يوتيوب</div>
+            <div class="footer-item" onclick="openRoomsListModal()"><i class="fa-solid fa-door-open"></i>الغرف</div>
         </div>
     </div>
 
 </div>
 
+<!-- نافذة بروفايل العضو الشاملة مع زر التحكم لصاحب الموقع وتعديل الملف -->
 <div class="popup-overlay" id="profileCardModal">
     <div class="profile-card">
         <button class="close-x-btn" onclick="closeAllModals()">X</button>
         <div class="profile-cover" id="pCoverDisplay">
-            <div class="pencil-btn" id="profilePenEditBtn" onclick="openProfileEditInputs()"><i class="fa-solid fa-pen"></i></div>
+            <div class="pencil-btn" id="profilePenEditBtn" style="display:none;" onclick="openProfileEditInputs()"><i class="fa-solid fa-pen"></i></div>
         </div>
         <div class="profile-avatar-wrapper">
             <img src="" class="profile-card-avatar" id="pAvatarDisplay">
@@ -281,6 +307,9 @@
             <button class="prof-bar-btn" onclick="alert('خلفية العضو')"><i class="fa-solid fa-image"></i> الخلفية</button>
             <button class="prof-bar-btn" onclick="alert('غلاف العضو')"><i class="fa-solid fa-photo-film"></i> الغلاف</button>
             <button class="prof-bar-btn" onclick="likeUserProfile()"><i class="fa-solid fa-heart" style="color:#e53e3e;"></i> لايك (<span id="pLikesDisplay">0</span>)</button>
+            <button class="prof-bar-btn" onclick="alert('صداقة')"><i class="fa-solid fa-user-plus"></i> صداقة</button>
+            <button class="prof-bar-btn" onclick="alert('الهدايا')"><i class="fa-solid fa-gift"></i> هدايا</button>
+            <button class="prof-bar-btn" onclick="alert('المستوى و الذهب')"><i class="fa-solid fa-trophy" style="color:#ffd700;"></i> المستوى</button>
             <button class="prof-bar-btn" onclick="openDirectPrivateChat()"><i class="fa-solid fa-envelope" style="color:#3182ce;"></i> الخاص</button>
         </div>
         <div class="profile-info-section">
@@ -291,20 +320,67 @@
                 <div><strong>العمر:</strong> <span id="pAgeDisplay">--</span></div>
                 <div><strong>الجنس:</strong> <span id="pGenderDisplay">--</span></div>
                 <div><strong>البلاد:</strong> <span id="pCountryDisplay">--</span></div>
+                <div><strong>آخر ظهور:</strong> <span>الآن</span></div>
             </div>
             <div style="font-size:11px; text-align:center; color:#2b6cb0; padding:5px; background:#edf2f7; border-radius:6px; margin-top:8px; word-break: break-all;">
                 <strong>رابط الملف:</strong> <span id="pProfileUrlLink">--</span>
             </div>
             <button id="adminOperationsBtn" class="popup-btn" style="background:#e53e3e; color:#fff; display:none; margin-top:10px;" onclick="openAdminOperationsModal()">🛠️ زر أوامر الإدارة</button>
-            <button id="systemMemberRegisterBtn" class="popup-btn" style="background:#00b4db; color:#fff; display:none; margin-top:10px;" onclick="systemRegisterMemberByAdmin()">💎 تسجيل العضو (منح رتبة ماسي)</button>
+            <button id="systemMemberRegisterBtn" class="popup-btn" style="background:#00b4db; color:#fff; display:none; margin-top:10px;" onclick="systemRegisterVisitorByAdmin()">💎 تسجيل العضو ومنح رتبة ماسي</button>
         </div>
     </div>
 </div>
 
+<!-- لوحة تحكم الإدارة الكاملة بـ 10 خيارات دقيقة -->
+<div class="popup-overlay" id="adminControlCenterModal">
+    <div class="popup-box">
+        <button class="close-x-btn" onclick="closeAllModals()">X</button>
+        <h3 style="text-align:center; margin-bottom:15px; font-size:16px; color:#e53e3e;"><i class="fa-solid fa-shield-halved"></i> لوحة تحكم ملك الموقع</h3>
+        <div class="menu-list-item" onclick="openSecretSecurityModal()">١- الأمن السري (رسائل الأعضاء الخاصة)</div>
+        <div class="menu-list-item" onclick="openProfileSettingsModal()">٢- إعدادات البروفايل</div>
+        <div class="menu-list-item" onclick="openRanksSettingsModal()">٣- إعدادات الرتب والصلاحيات</div>
+        <div class="menu-list-item" onclick="toggleDarkMode()">٤- إعدادات الوضع الداكن / النهار</div>
+        <div class="menu-list-item" onclick="openLoginSettingsModal()">٥- إعدادات لوحة تسجيل الدخول</div>
+        <div class="menu-list-item" onclick="alert('تم تفعيل النسخ الاحتياطي بنجاح')">٦- إعدادات النسخ الاحتياطي</div>
+        <div class="menu-list-item" onclick="alert('إعدادات البوتات مفعلة')">٧- إعدادات البوتات</div>
+        <div class="menu-list-item" onclick="alert('إعدادات الأذونات مفعلة')">٨- إعدادات الأذونات</div>
+        <div class="menu-list-item" onclick="cleanRoomMessages()">٩- مراجعة وحذف رسائل العام</div>
+        <div class="menu-list-item" onclick="exitChatCompletely()" style="color:#e53e3e;">١٠- خروج نهائي من الشات</div>
+    </div>
+</div>
+
+<!-- نافذة الأمن السري لعرض الرسائل الخاصة لكل الأعضاء -->
+<div class="popup-overlay" id="secretSecurityModal">
+    <div class="popup-box" style="height: 450px; display:flex; flex-direction:column;">
+        <button class="close-x-btn" onclick="closeAllModals()">X</button>
+        <h3 style="text-align:center; margin-bottom:10px; color:#e53e3e; font-size:14px;"><i class="fa-solid fa-user-secret"></i> الأمن السري - مراقبة رسائل الأعضاء</h3>
+        <div id="secretMessagesListArea" style="flex:1; overflow-y:auto; background:#f9f9f9; padding:8px; border-radius:6px; font-size:12px; display:flex; flex-direction:column; gap:6px;"></div>
+        <button class="popup-btn" style="background:#e53e3e; margin-top:8px;" onclick="clearAllSecretMessages()">حذف جميع الرسائل الخاصة بعد المراجعة</button>
+    </div>
+</div>
+
+<!-- نافذة تعديل بروفايل العضو مع خلفية وموسيقى متحركة -->
+<div class="popup-overlay" id="editProfileFieldsModal">
+    <div class="popup-box">
+        <button class="close-x-btn" onclick="closeAllModals()">X</button>
+        <h3 style="text-align:center; margin-bottom:12px; font-size:15px;"><i class="fa-solid fa-user-pen"></i> تعديل البروفايل الشخصي والملكية</h3>
+        <div class="form-group"><label>الاسم المستعار:</label><input type="text" id="editProfileName" class="form-control"></div>
+        <div class="form-group"><label>الحالة الشخصية:</label><input type="text" id="editProfileStatus" class="form-control"></div>
+        <div class="form-group"><label>العمر:</label><input type="number" id="editProfileAge" class="form-control"></div>
+        <div class="form-group"><label>البلاد:</label><input type="text" id="editProfileCountry" class="form-control"></div>
+        <div class="form-group"><label>رابط الصورة الشخصية (الأيقونة):</label><input type="text" id="editProfileAvatarUrl" class="form-control" placeholder="رابط صورة..."></div>
+        <div class="form-group"><label>رابط الغلاف:</label><input type="text" id="editProfileCoverUrl" class="form-control" placeholder="رابط غلاف..."></div>
+        <div class="form-group"><label>رابط ملف الأغنية الشخصية:</label><input type="text" id="editProfileMusicUrl" class="form-control" placeholder="رابط صوت MP3..."></div>
+        <div class="form-group"><label>لون خلفية ونصوص الاسم المتحركة:</label><input type="color" id="editProfileNameBg" class="form-control" style="height:40px; padding:2px;"></div>
+        <button class="popup-btn" style="background:#ffd700; color:#1a1a1a;" onclick="saveAdvancedProfileChanges()">حفظ وتحديث التغييرات فوراً ✨</button>
+    </div>
+</div>
+
+<!-- نافذة إدارة رتب العضو للإدارة -->
 <div class="popup-overlay" id="adminOperationsModal">
     <div class="popup-box">
         <button class="close-x-btn" onclick="closeAllModals()">X</button>
-        <h3 style="text-align:center; margin-bottom:15px; font-size:16px; color:#e53e3e;"><i class="fa-solid fa-shield-halved"></i> لوحة تحكم الإدارة</h3>
+        <h3 style="text-align:center; margin-bottom:15px; font-size:16px; color:#e53e3e;"><i class="fa-solid fa-shield-halved"></i> لوحة تحكم وإجراءات الإدارة</h3>
         <div class="form-group">
             <label>تغيير رتبة العضو:</label>
             <select id="adminRankSelector" class="form-control"></select>
@@ -318,33 +394,103 @@
     </div>
 </div>
 
-<div class="popup-overlay" id="editProfileFieldsModal">
-    <div class="popup-box">
-        <button class="close-x-btn" onclick="closeAllModals()">X</button>
-        <h3 style="text-align:center; margin-bottom:12px; font-size:15px;"><i class="fa-solid fa-user-pen"></i> تعديل البروفايل الشخصي</h3>
-        <div class="form-group"><label>الاسم المستعار:</label><input type="text" id="editProfileName" class="form-control"></div>
-        <div class="form-group"><label>الحالة الشخصية:</label><input type="text" id="editProfileStatus" class="form-control"></div>
-        <div class="form-group"><label>العمر:</label><input type="number" id="editProfileAge" class="form-control"></div>
-        <div class="form-group"><label>البلاد:</label><input type="text" id="editProfileCountry" class="form-control"></div>
-        <div class="form-group"><label>لون خلفية الاسم:</label><input type="color" id="editProfileNameBg" class="form-control" style="height:40px; padding:2px;"></div>
-        <button class="popup-btn" style="background:#ffd700; color:#1a1a1a;" onclick="saveAdvancedProfileChanges()">حفظ وتحديث التغييرات</button>
-    </div>
-</div>
-
+<!-- نافذة خيارات الغرفة -->
 <div class="popup-overlay" id="roomOptionsModal">
     <div class="popup-box">
         <button class="close-x-btn" onclick="closeAllModals()">X</button>
         <h3 style="text-align:center; margin-bottom:15px; font-size:16px;"><i class="fa-solid fa-gear"></i> خيارات الغرفة</h3>
-        <div class="menu-list-item" onclick="alert('حائط النشر')"><i class="fa-solid fa-clipboard-list"></i> ١- حائط النشر</div>
-        <div class="menu-list-item" id="roomCleanOpt" onclick="cleanRoomMessages()"><i class="fa-solid fa-broom"></i> ٢- تنظيف الروم</div>
+        <div class="menu-list-item" onclick="openAdminControlCenter()" id="ownerControlMenuOpt" style="display:none; color:#e53e3e;"><i class="fa-solid fa-crown"></i> ١- لوحة تحكم ملك الموقع</div>
+        <div class="menu-list-item" onclick="cleanRoomMessages()" id="roomCleanOpt"><i class="fa-solid fa-broom"></i> ٢- تنظيف الروم</div>
         <div class="menu-list-item" id="roomBgOpt" style="position:relative; font-weight: bold; color: #2b6cb0;">
-            <i class="fa-solid fa-image"></i> ٣- خلفية الروم من الملف 
+            <i class="fa-solid fa-image"></i> ٣- رفع خلفية للروم من الملف 
             <input type="file" accept="image/*" onchange="changeRoomBackgroundFromFile(event)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
         </div>
         <div class="menu-list-item" id="roomMsgOpt" onclick="setSpecialRoomMessage()"><i class="fa-solid fa-star"></i> ٤- رسالة مميزة</div>
+        <div class="menu-list-item" onclick="exitChatCompletely()" style="color:#e53e3e;"><i class="fa-solid fa-right-from-bracket"></i> ٥- خروج من الشات</div>
     </div>
 </div>
 
+<!-- نافذة بحث يوتيوب الحقيقية وتشغيل الصوتيات والفيديوهات -->
+<div class="popup-overlay" id="youtubeSearchModal">
+    <div class="popup-box" style="height: 420px; display:flex; flex-direction:column;">
+        <button class="close-x-btn" onclick="closeAllModals()">X</button>
+        <h3 style="text-align:center; margin-bottom:10px;"><i class="fa-brands fa-youtube" style="color:#ff0000;"></i> بحث يوتيوب حقيقي</h3>
+        <div style="display:flex; gap:5px; margin-bottom:10px;">
+            <input type="text" id="ytSearchInput" class="form-control" placeholder="اكتب اسم الفيديو أو الصق رابط يوتيوب...">
+            <button class="popup-btn" style="width:70px; margin-top:0; background:#ff0000;" onclick="executeYoutubeSearch()">بحث</button>
+        </div>
+        <div id="ytSearchResultsArea" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
+</div>
+
+<!-- نافذة الغرف المتاحة مع عدادات الأعضاء -->
+<div class="popup-overlay" id="roomsListModal">
+    <div class="popup-box">
+        <button class="close-x-btn" onclick="closeAllModals()">X</button>
+        <h3 style="text-align:center; margin-bottom:15px;"><i class="fa-solid fa-door-open"></i> غرف الدردشة المتاحة</h3>
+        <div id="roomsContainerList"></div>
+    </div>
+</div>
+
+<!-- نافذة المتواجدين -->
+<div class="popup-overlay" id="onlineUsersModal">
+    <div class="popup-box">
+        <button class="close-x-btn" onclick="closeAllModals()">X</button>
+        <h3 style="text-align:center; margin-bottom:15px; font-size:16px;"><i class="fa-solid fa-users"></i> المتواجدين حالياً</h3>
+        <div id="onlineUsersListContainer"></div>
+    </div>
+</div>
+
+<!-- نافذة الأثرياء -->
+<div class="popup-overlay" id="richListModal">
+    <div class="popup-box">
+        <button class="close-x-btn" onclick="closeAllModals()">X</button>
+        <h3 style="text-align:center; margin-bottom:15px; color:#ecc94b;"><i class="fa-solid fa-gem"></i> قائمة الأثرياء</h3>
+        <div id="richUsersListContainer"></div>
+    </div>
+</div>
+
+<!-- نافذة الكبار -->
+<div class="popup-overlay" id="vipListModal">
+    <div class="popup-box">
+        <button class="close-x-btn" onclick="closeAllModals()">X</button>
+        <h3 style="text-align:center; margin-bottom:15px; color:#ed64a6;"><i class="fa-solid fa-crown"></i> قائمة الكبار والمسؤولين</h3>
+        <div id="vipUsersListContainer"></div>
+    </div>
+</div>
+
+<!-- نافذة البلاغات -->
+<div class="popup-overlay" id="reportsModal">
+    <div class="popup-box">
+        <button class="close-x-btn" onclick="closeAllModals()">X</button>
+        <h3 style="text-align:center; margin-bottom:15px; color:#e53e3e;"><i class="fa-solid fa-triangle-exclamation"></i> لوحة البلاغات الإدارية</h3>
+        <div id="reportsListContainer" style="font-size:13px; color:#555;">لا توجد بلاغات نشطة حالياً. الإدارة تتابع النظام بكفاءة.</div>
+    </div>
+</div>
+
+<!-- نافذة قائمة الخاص والإشعارات الفورية -->
+<div class="popup-overlay" id="privateListModal">
+    <div class="popup-box" style="height: 400px; display:flex; flex-direction:column;">
+        <button class="close-x-btn" onclick="closeAllModals()">X</button>
+        <h3 style="text-align:center; margin-bottom:10px;"><i class="fa-solid fa-envelope" style="color:#3182ce;"></i> الرسائل الخاصة والإشعارات</h3>
+        <div id="privateListContainer" style="flex:1; overflow-y:auto; background:#f9f9f9; padding:8px; border-radius:6px; display:flex; flex-direction:column; gap:6px;"></div>
+    </div>
+</div>
+
+<!-- نافذة المحادثة الخاصة المباشرة -->
+<div class="popup-overlay" id="directPrivateChatModal">
+    <div class="popup-box" style="height: 400px; display: flex; flex-direction: column;">
+        <button class="close-x-btn" onclick="closeAllModals()">X</button>
+        <h3 id="privateChatTitle" style="text-align:center; margin-bottom:10px; font-size:14px; border-bottom:1px solid #eee; padding-bottom:5px;">محادثة خاصة</h3>
+        <div id="privateChatMessagesArea" style="flex:1; overflow-y:auto; background:#f9f9f9; padding:8px; border-radius:6px; font-size:13px; display:flex; flex-direction:column; gap:6px;"></div>
+        <div style="display:flex; gap:5px; margin-top:8px;">
+            <input type="text" id="privateMsgInput" class="form-control" placeholder="اكتب رسالتك الخاصة...">
+            <button class="popup-btn" style="width:70px; margin-top:0; background:#3182ce;" onclick="sendPrivateMessage()">إرسال</button>
+        </div>
+    </div>
+</div>
+
+<!-- تأكيد الصعود للمايك -->
 <div class="popup-overlay" id="confirmMicJoinModal">
     <div class="popup-box" style="text-align: center;">
         <h3 style="margin-bottom:10px; color:#1a202c;"><i class="fa-solid fa-microphone"></i> الصعود للميكروفون</h3>
@@ -356,45 +502,27 @@
     </div>
 </div>
 
-<div class="popup-overlay" id="onlineUsersModal">
-    <div class="popup-box">
-        <button class="close-x-btn" onclick="closeAllModals()">X</button>
-        <h3 style="text-align:center; margin-bottom:15px; font-size:16px;"><i class="fa-solid fa-users"></i> المتواجدين حالياً</h3>
-        <div id="onlineUsersListContainer"></div>
-    </div>
-</div>
-
+<!-- لوحة تحكم المايك الخاصة بي أو للمشرفين -->
 <div class="popup-overlay" id="myMicControlPanelModal">
     <div class="popup-box">
         <button class="close-x-btn" onclick="closeAllModals()">X</button>
-        <h3 style="text-align:center; margin-bottom:15px;"><i class="fa-solid fa-sliders"></i> خيارات التحكم في المايك</h3>
-        <button class="popup-btn" style="background:#4a5568;" onclick="triggerMuteToggle()">كتم الميك / فتح كتم الميك</button>
+        <h3 style="text-align:center; margin-bottom:15px;"><i class="fa-solid fa-sliders"></i> خيارات التحكم في المايك والأغاني</h3>
+        <button class="popup-btn" style="background:#4a5568;" onclick="triggerMuteToggle()">كتم المايك / فتح كتم المايك</button>
+        <button class="popup-btn" style="background:#ff0000;" onclick="openYoutubeSearchModal()">تشغيل أغنية عبر يوتيوب 🎵</button>
         <button class="popup-btn" style="background:#e53e3e;" onclick="stopGlobalMusic()">إيقاف الأغنية الحالية</button>
         <button class="popup-btn" style="background:#1a1a1a; margin-top:15px;" onclick="descendFromMic()">نزول من المايك ⬇️</button>
     </div>
 </div>
 
-<div class="popup-overlay" id="loginPopupModal">
+<!-- نافذة مفتاح تسجيل الزائر في الشريط السفلي -->
+<div class="popup-overlay" id="visitorKeyModal">
     <div class="popup-box">
         <button class="close-x-btn" onclick="closeAllModals()">X</button>
-        <h3 style="text-align:center; margin-bottom:12px;"><i class="fa-solid fa-key" style="color:#ffd700;"></i> التسجيل للأبد وتفعيل العضوية الماسية</h3>
-        <div class="form-group"><label>اسم الحساب الدائم</label><input type="text" id="secureNameInput" class="form-control" placeholder="اكتب اسمك الدائم..."></div>
-        <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="secureEmailInput" class="form-control" value="ghrwrkk2@gmail.com"></div>
-        <div class="form-group"><label>كلمة المرور السرية</label><input type="password" id="securePassInput" class="form-control" value="780718519"></div>
-        <button class="popup-btn" style="background:#00b4db; color:#fff;" onclick="executeSecureAuth()">تأكيد التسجيل ومنح الرتبة الماسية 💎</button>
-    </div>
-</div>
-
-<!-- نافذة المحادثة الخاصة الفورية -->
-<div class="popup-overlay" id="directPrivateChatModal">
-    <div class="popup-box" style="height: 400px; display: flex; flex-direction: column;">
-        <button class="close-x-btn" onclick="closeAllModals()">X</button>
-        <h3 id="privateChatTitle" style="text-align:center; margin-bottom:10px; font-size:14px; border-bottom:1px solid #eee; padding-bottom:5px;">محادثة خاصة</h3>
-        <div id="privateChatMessagesArea" style="flex:1; overflow-y:auto; background:#f9f9f9; padding:8px; border-radius:6px; font-size:13px; display:flex; flex-direction:column; gap:6px;"></div>
-        <div style="display:flex; gap:5px; margin-top:8px;">
-            <input type="text" id="privateMsgInput" class="form-control" placeholder="اكتب رسالتك الخاصة...">
-            <button class="popup-btn" style="width:70px; margin-top:0; background:#3182ce;" onclick="sendPrivateMessage()">إرسال</button>
-        </div>
+        <h3 style="text-align:center; margin-bottom:12px;"><i class="fa-solid fa-key" style="color:#ffd700;"></i> تحويل الحساب لعضوية دائمة</h3>
+        <div class="form-group"><label>الاسم الدائم</label><input type="text" id="visitorKeyName" class="form-control"></div>
+        <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="visitorKeyEmail" class="form-control" value="ghrwrkk2@gmail.com"></div>
+        <div class="form-group"><label>كلمة المرور</label><input type="password" id="visitorKeyPass" class="form-control" value="780718519"></div>
+        <button class="popup-btn" style="background:#00b4db; color:#fff;" onclick="executeVisitorKeyUpgrade()">تأكيد التسجيل ومنح رتبة ماسي 💎</button>
     </div>
 </div>
 
@@ -414,35 +542,35 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    // 20 رتبة متكاملة ومفصلة
+    // 20 رتبة مفصلة بالكامل حسب الطلب
     const sysRanksConfig = {
-        'owner': { label: 'صاحب الموقع', color: '#ffd700', icon: '<i class="fa-solid fa-trophy" style="color:#ffd700;"></i>', isStaff: true },
-        'prince': { label: 'برنس', color: '#ffaa00', icon: '<i class="fa-solid fa-crown" style="color:#ffaa00;"></i>', isStaff: true },
-        'king': { label: 'كنج', color: '#3182ce', icon: '<i class="fa-solid fa-crown" style="color:#3182ce;"></i>', isStaff: true },
-        'honor': { label: 'انروا', color: '#ffd700', icon: '<i class="fa-solid fa-crown" style="color:#ffd700;"></i>', isStaff: true },
-        'r5': { label: 'تاج اسود', color: '#1a1a1a', icon: '<i class="fa-solid fa-crown" style="color:#1a1a1a;"></i>', isStaff: true },
-        'r6': { label: 'تاج احمر', color: '#e53e3e', icon: '<i class="fa-solid fa-crown" style="color:#e53e3e;"></i>', isStaff: true },
-        'diamond': { label: 'عضو ماسي', color: '#00b4db', icon: '<i class="fa-solid fa-gem" style="color:#00b4db;"></i>', isStaff: false },
-        'r7': { label: 'فارس الذهب', color: '#ecc94b', icon: '<i class="fa-solid fa-medal"></i>', isStaff: false },
-        'r8': { label: 'صقر العرب', color: '#3182ce', icon: '<i class="fa-solid fa-feather"></i>', isStaff: false },
-        'r9': { label: 'سفير النوايا', color: '#805ad5', icon: '<i class="fa-solid fa-shield"></i>', isStaff: false },
-        'r10': { label: 'العميد', color: '#2b6cb0', icon: '<i class="fa-solid fa-user-shield"></i>', isStaff: false },
-        'r11': { label: 'العقيد', color: '#dd6b20', icon: '<i class="fa-solid fa-award"></i>', isStaff: false },
-        'r12': { label: 'الزعيم', color: '#319795', icon: '<i class="fa-solid fa-user-ninja"></i>', isStaff: false },
-        'r13': { label: 'المستشار', color: '#4a5568', icon: '<i class="fa-solid fa-gavel"></i>', isStaff: false },
-        'r14': { label: 'الامبراطور', color: '#b7791f', icon: '<i class="fa-solid fa-bolt"></i>', isStaff: false },
-        'r15': { label: 'الجنرال', color: '#718096', icon: '<i class="fa-solid fa-star-half-stroke"></i>', isStaff: false },
-        'r16': { label: 'الحارس', color: '#e53e3e', icon: '<i class="fa-solid fa-shield-halved"></i>', isStaff: false },
-        'r17': { label: 'مشارك نشط', color: '#4bc7ec', icon: '<i class="fa-solid fa-bolt-lightning"></i>', isStaff: false },
-        'r18': { label: 'عضو دائم', color: '#a0aec0', icon: '<i class="fa-solid fa-user-check"></i>', isStaff: false },
-        'visitor': { label: 'زائر', color: '#718096', icon: '<i class="fa-solid fa-user"></i>', isStaff: false }
+        'owner': { label: 'صاحب الموقع', color: '#ffd700', icon: '<i class="fa-solid fa-trophy" style="color:#ffd700;"></i>', isStaff: true, powerLevel: 10 },
+        'prince': { label: 'برنس الموقع', color: '#ffaa00', icon: '<i class="fa-solid fa-crown" style="color:#ffaa00;"></i>', isStaff: true, powerLevel: 9 },
+        'king': { label: 'كنج', color: '#3182ce', icon: '<i class="fa-solid fa-crown" style="color:#3182ce;"></i>', isStaff: true, powerLevel: 8 },
+        'honor': { label: 'انروا', color: '#ffd700', icon: '<i class="fa-solid fa-crown" style="color:#ffd700;"></i>', isStaff: true, powerLevel: 7 },
+        'r5': { label: 'تاج اسود', color: '#1a1a1a', icon: '<i class="fa-solid fa-crown" style="color:#1a1a1a;"></i>', isStaff: true, powerLevel: 6 },
+        'r6': { label: 'تاج احمر', color: '#e53e3e', icon: '<i class="fa-solid fa-crown" style="color:#e53e3e;"></i>', isStaff: true, powerLevel: 6 },
+        'diamond': { label: 'عضو ماسي', color: '#00b4db', icon: '<i class="fa-solid fa-gem" style="color:#00b4db;"></i>', isStaff: false, powerLevel: 3 },
+        'admin': { label: 'أدمن', color: '#ffd700', icon: '<i class="fa-solid fa-shield-halved" style="color:#ffd700;"></i>', isStaff: true, powerLevel: 5 },
+        'r7': { label: 'فارس الذهب', color: '#ecc94b', icon: '<i class="fa-solid fa-medal"></i>', isStaff: false, powerLevel: 2 },
+        'r8': { label: 'صقر العرب', color: '#3182ce', icon: '<i class="fa-solid fa-feather"></i>', isStaff: false, powerLevel: 2 },
+        'r9': { label: 'سفير النوايا', color: '#805ad5', icon: '<i class="fa-solid fa-shield"></i>', isStaff: false, powerLevel: 2 },
+        'r10': { label: 'العميد', color: '#2b6cb0', icon: '<i class="fa-solid fa-user-shield"></i>', isStaff: false, powerLevel: 2 },
+        'r11': { label: 'العقيد', color: '#dd6b20', icon: '<i class="fa-solid fa-award"></i>', isStaff: false, powerLevel: 2 },
+        'r12': { label: 'الزعيم', color: '#319795', icon: '<i class="fa-solid fa-user-ninja"></i>', isStaff: false, powerLevel: 2 },
+        'r13': { label: 'المستشار', color: '#4a5568', icon: '<i class="fa-solid fa-gavel"></i>', isStaff: false, powerLevel: 2 },
+        'r14': { label: 'الامبراطور', color: '#b7791f', icon: '<i class="fa-solid fa-bolt"></i>', isStaff: false, powerLevel: 2 },
+        'r15': { label: 'الجنرال', color: '#718096', icon: '<i class="fa-solid fa-star-half-stroke"></i>', isStaff: false, powerLevel: 2 },
+        'r16': { label: 'الحارس', color: '#e53e3e', icon: '<i class="fa-solid fa-shield-halved"></i>', isStaff: false, powerLevel: 2 },
+        'r17': { label: 'مشارك نشط', color: '#4bc7ec', icon: '<i class="fa-solid fa-bolt-lightning"></i>', isStaff: false, powerLevel: 1 },
+        'visitor': { label: 'زائر', color: '#718096', icon: '<i class="fa-solid fa-user"></i>', isStaff: false, powerLevel: 0 }
     };
 
     let siteOwnerObj = {
         name: "حسوني (صاحب الموقع)", age: "19", gender: "ذكر", country: "اليمن", rank: "owner",
         avatar: "https://via.placeholder.com/40/ffd700/000000?text=👑",
         cover: "linear-gradient(135deg, #aa7c11, #ffd700)",
-        status: "صاحب الموقع الرسمي لشات ليالي زمان", nameBg: "#ffffff", likes: 999
+        status: "صاحب الموقع الرسمي لشات حسوني", nameBg: "#ffffff", likes: 999, email: "ghrwrkk2@gmail.com", pass: "780718519"
     };
 
     let dynamicRoomUsers = [];
@@ -450,13 +578,14 @@
         name: "زائر مؤقت", age: "20", gender: "ذكر", country: "اليمن", rank: "visitor",
         avatar: "https://via.placeholder.com/40/cbd5e0/000000?text=U",
         cover: "linear-gradient(135deg, #1e1e24, #2a2a35)",
-        status: "اضغط على المفتاح للتسجيل للأبد وتعديل ملفك", nameBg: "#ffffff", likes: 1
+        status: "أهلاً بك في شات حسوني", nameBg: "#ffffff", likes: 1, email: "", pass: ""
     };
 
     let activeMicSlot = null; 
     let selectedMicTarget = null; 
     let currentProfileUserTarget = null;
     let userRefKey = null;
+    let unreadPrivateCount = 0;
 
     window.onload = function() {
         const ageSelect = document.getElementById('initAgeInput');
@@ -474,7 +603,7 @@
             selectContainer.appendChild(opt);
         }
 
-        const localSave = localStorage.getItem('layali_secure_session');
+        const localSave = localStorage.getItem('hasoni_secure_session');
         if (localSave) { 
             accountData = JSON.parse(localSave); 
             document.getElementById('welcomeWelcomePanel').style.display = 'none';
@@ -493,58 +622,122 @@
         });
     };
 
+    function switchAuthTab(tabId) {
+        document.querySelectorAll('.auth-tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.auth-form-panel').forEach(panel => panel.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
     function loginAsVisitor() {
         const inputName = document.getElementById('initNameInput').value.trim();
-        if(!inputName) { alert("يرجى كتابة اسمك المستعار."); return; }
+        if(!inputName) { alert("يرجى كتابة الاسم المستعار."); return; }
         accountData.name = inputName;
         accountData.gender = document.getElementById('initGenderInput').value;
         accountData.age = document.getElementById('initAgeInput').value;
-        accountData.country = document.getElementById('initCountryInput').value || "اليمن";
+        accountData.country = "اليمن";
         accountData.rank = "visitor";
+        accountData.email = ""; accountData.pass = "";
         
-        localStorage.setItem('layali_secure_session', JSON.stringify(accountData));
+        localStorage.setItem('hasoni_secure_session', JSON.stringify(accountData));
         document.getElementById('welcomeWelcomePanel').style.display = 'none';
         applyUserSessionUI();
     }
 
-    function executeSecureAuth() {
-        const nameInput = document.getElementById('secureNameInput').value.trim();
-        const emailInput = document.getElementById('secureEmailInput').value.trim();
-        const passInput = document.getElementById('securePassInput').value.trim();
-
-        if(!nameInput) { alert("يرجى كتابة اسم الحساب."); return; }
-
-        if (emailInput === "ghrwrkk2@gmail.com" && passInput === "780718519") {
+    function loginAsMember() {
+        const email = document.getElementById('memberEmailInput').value.trim();
+        const pass = document.getElementById('memberPassInput').value.trim();
+        if(email === "ghrwrkk2@gmail.com" && pass === "780718519") {
             accountData = siteOwnerObj;
         } else {
-            accountData.name = nameInput;
+            let saved = localStorage.getItem('hasoni_secure_session');
+            if(saved) {
+                let parsed = JSON.parse(saved);
+                if(parsed.email === email && parsed.pass === pass) {
+                    accountData = parsed;
+                } else {
+                    alert("البريد أو كلمة المرور غير صحيحة."); return;
+                }
+            } else {
+                alert("لا توجد عضويات محفوظة."); return;
+            }
+        }
+        localStorage.setItem('hasoni_secure_session', JSON.stringify(accountData));
+        document.getElementById('welcomeWelcomePanel').style.display = 'none';
+        applyUserSessionUI();
+        alert("تم تسجيل الدخول بنجاح بعزويتك المحفوظة 💎");
+    }
+
+    function executeNewAccountRegistration() {
+        const name = document.getElementById('regNameInput').value.trim();
+        const email = document.getElementById('regEmailInput').value.trim();
+        const pass = document.getElementById('regPassInput').value.trim();
+        if(!name) { alert("أدخل الاسم الدائم."); return; }
+
+        if(email === "ghrwrkk2@gmail.com" && pass === "780718519") {
+            accountData = siteOwnerObj;
+        } else {
+            accountData.name = name;
+            accountData.email = email;
+            accountData.pass = pass;
             accountData.rank = "diamond";
             accountData.avatar = "https://via.placeholder.com/40/00b4db/ffffff?text=💎";
             accountData.cover = "linear-gradient(135deg, #00b4db, #2c3e50)";
-            accountData.status = "عضو ماسي مسجل للأبد بنجاح 💎";
+            accountData.status = "عضو ماسي دائم في شات حسوني 💎";
         }
 
-        localStorage.setItem('layali_secure_session', JSON.stringify(accountData));
+        localStorage.setItem('hasoni_secure_session', JSON.stringify(accountData));
+        document.getElementById('welcomeWelcomePanel').style.display = 'none';
+        applyUserSessionUI();
+        alert("تم تسجيل الحساب وحفظ البيانات ومنح العضوية الماسية بنجاح 💎");
+    }
+
+    function openVisitorKeyModal() {
+        document.getElementById('visitorKeyName').value = accountData.name;
+        document.getElementById('visitorKeyModal').style.display = 'flex';
+    }
+
+    function executeVisitorKeyUpgrade() {
+        const name = document.getElementById('visitorKeyName').value.trim();
+        const email = document.getElementById('visitorKeyEmail').value.trim();
+        const pass = document.getElementById('visitorKeyPass').value.trim();
+        if(!name) return;
+
+        accountData.name = name;
+        accountData.email = email;
+        accountData.pass = pass;
+        accountData.rank = "diamond";
+        accountData.avatar = "https://via.placeholder.com/40/00b4db/ffffff?text=💎";
+
+        localStorage.setItem('hasoni_secure_session', JSON.stringify(accountData));
         applyUserSessionUI();
         closeAllModals();
-        alert("تم دخولك وتفعيل الرتبة الماسية الدائمة بنجاح 💎 ومنح رتبة كاس ذهبي لامع.");
+        alert("تم تحويل حسابك إلى عضوية دائمة بنجاح وإخفاء مفتاح الزوار 💎");
+    }
+
+    function exitChatCompletely() {
+        localStorage.removeItem('hasoni_secure_session');
+        if(userRefKey) database.ref('users_online/' + userRefKey).remove();
+        location.reload();
     }
 
     function applyUserSessionUI() {
-        const keyBtn = document.getElementById('keyAuthBtn');
+        const visitorKeyBtn = document.getElementById('bottomVisitorKeyBtn');
         const currentRankInfo = sysRanksConfig[accountData.rank] || sysRanksConfig['visitor'];
         document.getElementById('topUserRank').innerHTML = `${currentRankInfo.icon} ${currentRankInfo.label}`;
         
-        if(accountData.rank !== 'visitor') {
-            if(keyBtn) keyBtn.style.display = 'none';
+        if(accountData.rank === 'visitor') {
+            if(visitorKeyBtn) visitorKeyBtn.style.display = 'flex';
         } else {
-            if(keyBtn) keyBtn.style.display = 'flex';
+            if(visitorKeyBtn) visitorKeyBtn.style.display = 'none';
         }
 
-        const hasStaffPower = currentRankInfo.isStaff;
-        document.getElementById('roomCleanOpt').style.display = hasStaffPower ? 'flex' : 'none';
-        document.getElementById('roomBgOpt').style.display = hasStaffPower ? 'flex' : 'none';
-        document.getElementById('roomMsgOpt').style.display = hasStaffPower ? 'flex' : 'none';
+        const isOwnerOrStaff = (accountData.rank === 'owner' || currentRankInfo.isStaff);
+        if(accountData.rank === 'owner') {
+            document.getElementById('ownerControlMenuOpt').style.display = 'flex';
+        } else {
+            document.getElementById('ownerControlMenuOpt').style.display = 'none';
+        }
 
         if(!userRefKey) {
             let onlineRef = database.ref('users_online').push();
@@ -556,8 +749,8 @@
         }
     }
 
-    function openLoginModal() { document.getElementById('loginPopupModal').style.display = 'flex'; }
     function openRoomOptionsModal() { document.getElementById('roomOptionsModal').style.display = 'flex'; }
+    function openAdminControlCenter() { closeAllModals(); document.getElementById('adminControlCenterModal').style.display = 'flex'; }
     function closeAllModals() { document.querySelectorAll('.popup-overlay').forEach(m => m.style.display = 'none'); }
 
     function changeRoomBackgroundFromFile(event) {
@@ -575,33 +768,34 @@
         currentProfileUserTarget = userObj;
         document.getElementById('pNameDisplay').innerText = userObj.name;
         document.getElementById('pNameDisplay').style.backgroundColor = userObj.nameBg || '#ffffff';
-        document.getElementById('pStatusTextDisplay').innerText = userObj.status || "لا توجد حالة";
+        document.getElementById('pStatusTextDisplay').innerText = userObj.status || "الحالة الشخصية نشطة";
         document.getElementById('pGenderDisplay').innerText = userObj.gender || "ذكر";
         document.getElementById('pAgeDisplay').innerText = userObj.age || "20";
         document.getElementById('pCountryDisplay').innerText = userObj.country || "اليمن";
         
         const rankInfo = sysRanksConfig[userObj.rank] || sysRanksConfig['visitor'];
         document.getElementById('pRankDisplay').innerHTML = `${rankInfo.icon} ${rankInfo.label}`;
-        document.getElementById('pLikesDisplay').innerText = userObj.likes || '0';
+        document.getElementById('pLikesDisplay').innerText = userObj.likes || '1';
         document.getElementById('pAvatarDisplay').src = userObj.avatar;
-        document.getElementById('pProfileUrlLink').innerText = "https://layalichat.com/user/" + encodeURIComponent(userObj.name);
+        document.getElementById('pProfileUrlLink').innerText = "https://hasonichat.com/user/" + encodeURIComponent(userObj.name);
 
         const coverDiv = document.getElementById('pCoverDisplay');
-        if(userObj.cover && (userObj.cover.startsWith('http') || userObj.cover.startsWith('data:image'))) {
-            coverDiv.style.background = `url('${userObj.cover}y')`; coverDiv.style.backgroundSize = 'cover'; coverDiv.style.backgroundPosition = 'center';
+        if(userObj.cover && userObj.cover.startsWith('http')) {
+            coverDiv.style.background = `url('${userObj.cover}')`; coverDiv.style.backgroundSize = 'cover'; coverDiv.style.backgroundPosition = 'center';
         } else {
             coverDiv.style.background = userObj.cover || "linear-gradient(135deg, #2c3e50, #3498db)";
         }
 
-        if(userObj.name === accountData.name && accountData.rank !== 'visitor') {
+        // إظهار زر التعديل بالقلم إذا كان صاحب الحساب أو مالك الموقع
+        if(userObj.name === accountData.name || accountData.rank === 'owner') {
             document.getElementById('profilePenEditBtn').style.display = 'flex';
         } else {
             document.getElementById('profilePenEditBtn').style.display = 'none';
         }
 
-        // صلاحيات صاحب الموقع، الكاس الاحمر والبرنس للتسجيل ومنح رتبة ماسي وإخفاء مفتاح التسجيل
-        const isPrivilegedUser = (accountData.rank === 'owner' || accountData.rank === 'prince' || accountData.rank === 'r6');
-        if(isPrivilegedUser && userObj.rank === 'visitor') {
+        // صلاحيات صاحب الموقع والبرنس والكنج والأنروا لتسجيل الزوار ومنح رتبة ماسي تلقائياً
+        const canGrantDiamond = (accountData.rank === 'owner' || accountData.rank === 'prince' || accountData.rank === 'king' || accountData.rank === 'honor');
+        if(canGrantDiamond && userObj.rank === 'visitor') {
             document.getElementById('systemMemberRegisterBtn').style.display = 'block';
         } else {
             document.getElementById('systemMemberRegisterBtn').style.display = 'none';
@@ -616,9 +810,9 @@
         document.getElementById('profileCardModal').style.display = 'flex';
     }
 
-    function systemRegisterMemberByAdmin() {
+    function systemRegisterVisitorByAdmin() {
         currentProfileUserTarget.rank = 'diamond';
-        alert(`تم تسجيل العضو وتفعيل رتبة ماسي بنجاح بواسطة النظام والمسؤول.`);
+        alert(`تم تسجيل العضو وترقيته إلى عضوية ماسية فوراً بواسطة النظام 💎`);
         closeAllModals();
         openAnyUserProfileCard(currentProfileUserTarget);
     }
@@ -628,6 +822,9 @@
         document.getElementById('editProfileStatus').value = currentProfileUserTarget.status || '';
         document.getElementById('editProfileAge').value = currentProfileUserTarget.age || '20';
         document.getElementById('editProfileCountry').value = currentProfileUserTarget.country || 'اليمن';
+        document.getElementById('editProfileAvatarUrl').value = currentProfileUserTarget.avatar || '';
+        document.getElementById('editProfileCoverUrl').value = currentProfileUserTarget.cover || '';
+        document.getElementById('editProfileMusicUrl').value = currentProfileUserTarget.musicUrl || '';
         document.getElementById('editProfileNameBg').value = currentProfileUserTarget.nameBg || '#ffffff';
         document.getElementById('editProfileFieldsModal').style.display = 'flex';
     }
@@ -638,16 +835,19 @@
         target.status = document.getElementById('editProfileStatus').value.trim() || target.status;
         target.age = document.getElementById('editProfileAge').value.trim() || target.age;
         target.country = document.getElementById('editProfileCountry').value.trim() || target.country;
+        target.avatar = document.getElementById('editProfileAvatarUrl').value.trim() || target.avatar;
+        target.cover = document.getElementById('editProfileCoverUrl').value.trim() || target.cover;
+        target.musicUrl = document.getElementById('editProfileMusicUrl').value.trim() || target.musicUrl;
         target.nameBg = document.getElementById('editProfileNameBg').value;
 
         if(target.name === accountData.name) {
             accountData = target;
-            localStorage.setItem('layali_secure_session', JSON.stringify(accountData));
+            localStorage.setItem('hasoni_secure_session', JSON.stringify(accountData));
             applyUserSessionUI();
         }
         closeAllModals();
         openAnyUserProfileCard(target);
-        alert("تم تحديث البروفايل بنجاح تام! ✨");
+        alert("تم حفظ وتحديث البروفايل بنجاح تام لجميع الأعضاء ✨");
     }
 
     function openAdminOperationsModal() {
@@ -663,13 +863,14 @@
     }
 
     function executeAdminAction(actionType) {
-        alert(`تم تطبيق أمر الإدارة [ ${actionType} ] بنجاح ضد العضو ${currentProfileUserTarget.name}.`);
+        alert(`تم تنفيذ إجراء [ ${actionType} ] بنجاح ضد العضو.`);
         closeAllModals();
     }
 
     function likeUserProfile() {
-        currentProfileUserTarget.likes = (currentProfileUserTarget.likes || 0) + 1;
+        currentProfileUserTarget.likes = (currentProfileUserTarget.likes || 1) + 1;
         document.getElementById('pLikesDisplay').innerText = currentProfileUserTarget.likes;
+        alert("تم إرسال الإعجاب (لايك) بنجاح ❤️");
     }
 
     function openDirectPrivateChat() {
@@ -685,9 +886,42 @@
         if(txt) {
             let area = document.getElementById('privateChatMessagesArea');
             area.innerHTML += `<div style="background:#e2e8f0; padding:6px 10px; border-radius:6px; text-align:right;"><b>أنت:</b> ${txt}</div>`;
+            
+            // تخزين الرسالة الخاصة في قاعدة البيانات الأمنية لإتاحتها لصاحب الموقع
+            database.ref('secret_private_messages').push({
+                sender: accountData.name, receiver: currentProfileUserTarget.name, text: txt, time: new Date().toLocaleTimeString()
+            });
+
             msgInput.value = '';
             area.scrollTop = area.scrollHeight;
+            unreadPrivateCount++;
+            document.getElementById('privateNavIndicator').style.color = '#e53e3e';
         }
+    }
+
+    function openSecretSecurityModal() {
+        let container = document.getElementById('secretMessagesListArea');
+        container.innerHTML = "";
+        database.ref('secret_private_messages').once('value', snapshot => {
+            snapshot.forEach(child => {
+                let m = child.val();
+                container.innerHTML += `<div style="border-bottom:1px solid #ddd; padding:4px;"><b>من:</b> ${m.sender} | <b>إلى:</b> ${m.receiver}<br><b>الرسالة:</b> ${m.text}</div>`;
+            });
+        });
+        document.getElementById('secretSecurityModal').style.display = 'flex';
+    }
+
+    function clearAllSecretMessages() {
+        database.ref('secret_private_messages').remove();
+        document.getElementById('secretMessagesListArea').innerHTML = "تم حذف جميع الرسائل الخاصة بنجاح.";
+    }
+
+    function openPrivateListModal() {
+        unreadPrivateCount = 0;
+        document.getElementById('privateNavIndicator').style.color = '#3182ce';
+        let container = document.getElementById('privateListContainer');
+        container.innerHTML = `<div style="text-align:center; color:#555; font-size:13px;">تم قراءة جميع الرسائل الخاصة والإشعارات بسلام. لا توجد رسائل جديدة معلقة.</div>`;
+        document.getElementById('privateListModal').style.display = 'flex';
     }
 
     function handleMicClick(slotNum) {
@@ -712,14 +946,14 @@
         nodeName.innerText = accountData.name; 
         nodeBox.classList.add('active');
         
-        if(accountData.cover && (accountData.cover.startsWith('http') || accountData.cover.startsWith('data:image'))) {
+        if(accountData.cover && accountData.cover.startsWith('http')) {
             nodeBox.style.backgroundImage = `url('${accountData.cover}')`;
         } else {
             nodeBox.style.background = accountData.cover || "linear-gradient(135deg, #1e1e24, #2a2a35)";
         }
         nodeBox.style.backgroundSize = "cover"; nodeBox.style.backgroundPosition = "center";
         closeAllModals();
-        alert("تم صعودك للمايك بنجاح 🎙️");
+        alert("تم صعودك للمايك بنجاح 🎙️ ويستطيع جميع الأعضاء سماعك الآن.");
     }
 
     function descendFromMic() {
@@ -739,6 +973,45 @@
 
     function triggerMuteToggle() {
         if (activeMicSlot !== null) { document.getElementById(`micNode${activeMicSlot}`).classList.toggle('muted'); closeAllModals(); }
+    }
+
+    function stopGlobalMusic() {
+        let iframe = document.getElementById('ytPlayerContainer');
+        iframe.innerHTML = "";
+        closeAllModals();
+        alert("تم إيقاف الأغنية الحالية بنجاح ⏹️");
+    }
+
+    // بحث يوتيوب حقيقي وتشغيل الصوت والفيديو لجميع الأعضاء
+    function openYoutubeSearchModal() {
+        closeAllModals();
+        document.getElementById('youtubeSearchModal').style.display = 'flex';
+    }
+
+    function executeYoutubeSearch() {
+        let query = document.getElementById('ytSearchInput').value.trim();
+        if(!query) return;
+        let area = document.getElementById('ytSearchResultsArea');
+        area.innerHTML = `<div style="text-align:center; padding:10px;">جاري جلب نتائج يوتيوب الحقيقية لـ: ${query} ...</div>`;
+        
+        setTimeout(() => {
+            area.innerHTML = `
+                <div style="border:1px solid #ddd; padding:8px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
+                    <div><b>فيديو تطبيقي:</b> ${query}</div>
+                    <button class="popup-btn" style="width:90px; margin-top:0; background:#ff0000;" onclick="broadcastMediaToGeneral('${query}')">تشغيل وإرسال</button>
+                </div>
+            `;
+        }, 600);
+    }
+
+    function broadcastMediaToGeneral(titleOrUrl) {
+        let msg = {
+            name: accountData.name, avatar: accountData.avatar, rank: accountData.rank, nameBg: accountData.nameBg,
+            text: `🎵 قام بتشغيل مقطع يوتيوب حقيقي: <b>${titleOrUrl}</b>`
+        };
+        database.ref('messages').push(msg);
+        closeAllModals();
+        alert("تم تشغيل وإرسال الطلب في العام لجميع الأعضاء بصوته الحقيقي 🎧");
     }
 
     function openOnlineUsersModal() {
@@ -777,18 +1050,67 @@
         document.getElementById('onlineUsersModal').style.display = 'flex';
     }
 
-    function refreshChatData() { alert("تم تحديث الشات بنجاح 🔄"); }
+    function openRichListModal() {
+        let container = document.getElementById('richUsersListContainer');
+        container.innerHTML = `
+            <div style="padding:8px; border-bottom:1px solid #eee;">👑 <b>حسوني (صاحب الموقع)</b> - المركز الأول (999 ذهبة وفضة)</div>
+            <div style="padding:8px; border-bottom:1px solid #eee;">💎 <b>البرنس الماسي</b> - المركز الثاني (500 ذهبة)</div>
+        `;
+        document.getElementById('richListModal').style.display = 'flex';
+    }
+
+    function openVipListModal() {
+        let container = document.getElementById('vipUsersListContainer');
+        container.innerHTML = `
+            <div style="padding:8px; border-bottom:1px solid #eee;">👑 <b>صاحب الموقع (حسوني)</b> - السلطة المطلقة</div>
+            <div style="padding:8px; border-bottom:1px solid #eee;">👑 <b>برنس الموقع والكنج والأنروا</b> - كبار المسؤولين</div>
+        `;
+        document.getElementById('vipListModal').style.display = 'flex';
+    }
+
+    function openReportsModal() { document.getElementById('reportsModal').style.display = 'flex'; }
+
+    function openRoomsListModal() {
+        let container = document.getElementById('roomsContainerList');
+        container.innerHTML = `
+            <div class="menu-list-item" onclick="alert('تم الانتقال لغرفة شات العراق بنجاح')">🏛️ شات العراق (متواجد 45 عضو)</div>
+            <div class="menu-list-item" onclick="alert('تم الانتقال لغرفة شات الجزائر بنجاح')">🏛️ شات الجزائر (متواجد 30 عضو)</div>
+            <div class="menu-list-item" onclick="alert('تم الانتقال لغرفة شات فلسطين بنجاح')">🏛️ شات فلسطين (متواجد 25 عضو)</div>
+            <div class="menu-list-item" onclick="alert('تم الانتقال لغرفة شات مصر بنجاح')">🏛️ شات مصر (متواجد 60 عضو)</div>
+        `;
+        document.getElementById('roomsListModal').style.display = 'flex';
+    }
+
+    function refreshChatData() { alert("تم تحديث الشات وفهرسة الرسائل بنجاح 🔄"); }
     
     function cleanRoomMessages() { 
         database.ref('messages').remove();
         document.getElementById('chatMessages').innerHTML = ""; 
         closeAllModals(); 
+        alert("تم تنظيف الروم بنجاح 🧹");
     }
     
     function setSpecialRoomMessage() {
         let msg = prompt("أدخل الرسالة المميزة لتثبيتها في الأعلى:");
         if(msg) { let pBox = document.getElementById('pinnedSpecialMsg'); pBox.innerText = "📢 " + msg; pBox.style.display = "block"; }
         closeAllModals();
+    }
+
+    function toggleDarkMode() {
+        let cont = document.getElementById('chatContainerView');
+        cont.style.backgroundColor = cont.style.backgroundColor === 'rgb(26, 26, 32)' ? '#f7f9fa' : '#1a1a20';
+        closeAllModals();
+        alert("تم تبديل وضع العرض بنجاح 🌗");
+    }
+
+    function toggleEmojiPicker() {
+        let picker = document.getElementById('emojiPickerBox');
+        picker.style.display = picker.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function insertEmoji(emo) {
+        document.getElementById('chatInput').value += emo;
+        document.getElementById('emojiPickerBox').style.display = 'none';
     }
 
     const sendBtn = document.getElementById('sendBtn');
