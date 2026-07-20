@@ -32,6 +32,8 @@
         .promo-section h3 { font-size: 14px; color: #1e1e24; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
         .promo-section p { font-size: 12px; color: #4a5568; line-height: 1.6; }
 
+        .whatsapp-float-footer { text-align: center; margin-top: 15px; padding: 10px; background: #25d366; border-radius: 10px; color: #fff; font-weight: bold; font-size: 14px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 10px rgba(37,211,102,0.3); }
+
         .chat-header { background: linear-gradient(135deg, #1e1e24, #2a2a35); color: #fff; padding: 10px; border-bottom: 2px solid #ffd700; flex-shrink: 0; }
         .header-top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
         .logo-area { font-weight: bold; font-size: 15px; color: #ffd700; display: flex; align-items: center; gap: 6px; }
@@ -54,13 +56,13 @@
 
         .chat-messages { flex: 1; padding: 12px; overflow-y: auto; background-color: rgba(243, 244, 246, 0.85); display: flex; flex-direction: column; gap: 12px; padding-bottom: 115px; }
         .message-row { display: flex; align-items: flex-start; gap: 8px; width: 100%; }
-        .avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #ffd700; cursor: pointer; }
-        .message-content { flex: 1; display: flex; flex-direction: column; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #ffd700; cursor: pointer; flex-shrink: 0; }
+        .message-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
         
-        .user-tag-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; max-width: 85%; }
-        .username-container { border: 1px solid #cbd5e0; background-color: #ffffff; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; color: #2d3748; cursor: pointer; }
-        .msg-time-stamp { font-size: 10px; color: #718096; font-weight: 600; }
-        .message-text { background-color: #ffffff; color: #212529; padding: 8px 12px; border-radius: 8px; font-size: 13px; max-width: 85%; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-weight: 600; word-break: break-word; }
+        .user-tag-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; max-width: 100%; }
+        .username-container { border: 1px solid #cbd5e0; background-color: #ffffff; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; color: #2d3748; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .msg-time-stamp { font-size: 10px; color: #718096; font-weight: 600; flex-shrink: 0; }
+        .message-text { background-color: #ffffff; color: #212529; padding: 8px 12px; border-radius: 8px; font-size: 13px; max-width: 100%; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-weight: 600; word-break: break-word; overflow-wrap: break-word; }
 
         .bottom-controls-container { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; display: flex; flex-direction: column; z-index: 999; background-color: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
         .chat-input-bar { background-color: #ffffff; padding: 8px 10px; display: flex; align-items: center; gap: 8px; border-top: 1px solid #e1e8ed; }
@@ -162,6 +164,10 @@
             <h3>شات حسوني | دردشة حسوني | شات عربي دردشة عربية</h3>
             <p>الشات العربي في مجتمعنا هو أحد أبرز طرق التعبير عن الرأي بالكتابة بدون صوت حيث يلجئ شباب وصبايا الوطن العربي إلي الشات العربي الكتابي لممارسة حريات أوسع في التعبير عما في داخلهم...</p>
         </div>
+
+        <a href="https://wa.me/967780718519" target="_blank" class="whatsapp-float-footer">
+            <i class="fa-brands fa-whatsapp" style="font-size:20px;"></i> تواصل مع صاحب الموقع عبر واتساب: 967780718519
+        </a>
     </div>
     
     <div class="chat-header">
@@ -233,7 +239,7 @@
         <div class="profile-avatar-wrapper">
             <img src="" class="profile-card-avatar" id="pAvatarDisplay">
         </div>
-        <div class="profile-actions-bar">
+        <div class="profile-actions-bar" id="profileActionsBarContainer">
             <button class="prof-bar-btn" onclick="alert('خلفية العضو')"><i class="fa-solid fa-image"></i> الخلفية</button>
             <button class="prof-bar-btn" onclick="alert('غلاف العضو')"><i class="fa-solid fa-photo-film"></i> الغلاف</button>
             <button class="prof-bar-btn" onclick="likeUserProfile()"><i class="fa-solid fa-heart" style="color:#e53e3e;"></i> لايك (<span id="pLikesDisplay">0</span>)</button>
@@ -261,20 +267,22 @@
 <div class="popup-overlay" id="ownerExclusiveControlModal">
     <div class="popup-box">
         <button class="close-x-btn" onclick="closeAllModals()">X</button>
-        <h3 style="text-align:center; margin-bottom:15px; font-size:16px; color:#ffd700;"><i class="fa-solid fa-gear"></i> إعدادات الروم ولوحة التحكم</h3>
+        <h3 style="text-align:center; margin-bottom:15px; font-size:16px; color:#ffd700;"><i class="fa-solid fa-gear"></i> لوحة تحكم وإعدادات الموقع</h3>
         
         <div id="adminSevenOptionsContainer" style="display:none; flex-direction:column; gap:4px;">
-            <div class="menu-list-item" onclick="openSecretSecurityModal()">1. الأمن السري ومراقبة الرسائل</div>
-            <div class="menu-list-item" onclick="openProfileEditInputsFromMenu()">2. إعدادات البروفايل وتلوين الاسم</div>
-            <div class="menu-list-item" onclick="openMicSettingsModal()">3. إعدادات الميكات الصوتية</div>
-            <div class="menu-list-item" onclick="openLoginSettingsModal()">4. إعدادات لوحة تسجيل الدخول</div>
-            <div class="menu-list-item" onclick="openRanksSettingsModal()">5. إعدادات ورتب الأعضاء</div>
-            <div class="menu-list-item" onclick="openWallModal()">6. إعدادات حائط اليوميات</div>
-            <div class="menu-list-item" onclick="cleanRoomMessages()">7. تنظيف الروم العام بالكامل</div>
+            <div class="menu-list-item" onclick="openSecretSecurityModal()">1. الأمن السري ومراقبة الرسائل الخاصة</div>
+            <div class="menu-list-item" onclick="openMicSettingsModal()">2. إعدادات الميكات الصوتية</div>
+            <div class="menu-list-item" onclick="openRanksSettingsModal()">3. إعدادات ورتب الأعضاء</div>
+            <div class="menu-list-item" onclick="openProfileEditInputsFromMenu()">4. إعدادات البروفايل والأزرار</div>
+            <div class="menu-list-item" onclick="openLoginSettingsModal()">5. إعدادات لوحة تسجيل الدخول</div>
+            <div class="menu-list-item" onclick="openPermissionsSettingsModal()">6. إعدادات السماح والأذونات والرتب</div>
+            <div class="menu-list-item" onclick="openWallModal()">7. إعدادات حائط اليوميات والخواطر</div>
+            <div class="menu-list-item" onclick="cleanRoomMessages()"><span style="color:#ffd700;">⭐</span> تنظيف الروم العام بالكامل (للصاحب والإدارة)</div>
+            <div class="menu-list-item" onclick="openCreateCustomReportModal()"><span style="color:#e53e3e;">📢</span> إضافة بلاغ جديد (ريبورت) للروم</div>
         </div>
 
         <div id="normalUserSettingsNote" style="text-align:center; color:#555; padding:15px; display:none;">
-            أهلاً بك. هذه هي إعدادات النظام العامة.
+            عذراً، هذه اللوحة مخصصة لصاحب الموقع فقط 👑.
         </div>
     </div>
 </div>
@@ -282,37 +290,131 @@
 <div class="popup-overlay" id="secretSecurityModal">
     <div class="popup-box" style="height: 450px; display:flex; flex-direction:column;">
         <button class="close-x-btn" onclick="closeAllModals()">X</button>
-        <h3 style="text-align:center; margin-bottom:10px; color:#e53e3e; font-size:14px;"><i class="fa-solid fa-user-secret"></i> الأمن السري - مراقبة الرسائل الخاصة</h3>
+        <h3 style="text-align:center; margin-bottom:10px; color:#e53e3e; font-size:14px;"><i class="fa-solid fa-user-secret"></i> الأمن السري - مراقبة الرسائل الخاصة الحقيقية</h3>
         <div id="secretMessagesListArea" style="flex:1; overflow-y:auto; background:#f9f9f9; padding:8px; border-radius:6px; font-size:12px; display:flex; flex-direction:column; gap:6px;"></div>
         <button class="popup-btn" style="background:#e53e3e; margin-top:8px;" onclick="clearAllSecretMessages()">حذف سجل الرسائل الخاصة</button>
     </div>
 </div>
 
-<div class="popup-overlay" id="editProfileFieldsModal">
+<div class="popup-overlay" id="micSettingsManagerModal">
     <div class="popup-box">
         <button class="close-x-btn" onclick="closeAllModals()">X</button>
-        <h3 style="text-align:center; margin-bottom:12px; font-size:15px;"><i class="fa-solid fa-user-pen"></i> تعديل البروفايل وتلوين الاسم</h3>
-        <div class="form-group"><label>الاسم المستعار (يقبل الزخرفة):</label><input type="text" id="editProfileName" class="form-control"></div>
-        <div class="form-group"><label>البريد الإلكتروني:</label><input type="email" id="editProfileEmail" class="form-control"></div>
-        <div class="form-group"><label>كلمة المرور:</label><input type="password" id="editProfilePass" class="form-control"></div>
-        <div class="form-group"><label>الحالة الشخصية:</label><input type="text" id="editProfileStatus" class="form-control"></div>
-        <div class="form-group"><label>العمر:</label><input type="number" id="editProfileAge" class="form-control"></div>
-        <div class="form-group"><label>الجنس:</label><select id="editProfileGender" class="form-control"><option value="ذكر">ذكر</option><option value="أنثى">أنثى</option></select></div>
-        <div class="form-group"><label>البلاد:</label><input type="text" id="editProfileCountry" class="form-control"></div>
-        
-        <div class="form-group">
-            <label><i class="fa-solid fa-palette"></i> لون الخط (ثابت أو متحرك):</label>
-            <select id="editProfileNameStyleType" class="form-control" onchange="toggleNameStyleInputs(this.value)">
-                <option value="fixed">لون ثابت</option>
-                <option value="animated">لون متحرك (متدرج)</option>
-            </select>
+        <h3 style="text-align:center; margin-bottom:12px; color:#ffd700;"><i class="fa-solid fa-microphone"></i> إدارة إعدادات الميكات</h3>
+        <div class="form-group"><label>عدد الميكات الفعالة في الروم:</label><input type="number" id="micsCountInput" class="form-control" value="4" min="1" max="8"></div>
+        <button class="popup-btn" style="background:#ffd700; color:#1a1a1a;" onclick="saveMicSettingsChanges()">حفظ إعدادات الميكات للجميع 🎙️</button>
+    </div>
+</div>
+
+<div class="popup-overlay" id="ranksSettingsManagerModal">
+    <div class="popup-box" style="height:450px; display:flex; flex-direction:column;">
+        <button class="close-x-btn" onclick="closeAllModals()">X</button>
+        <h3 style="text-align:center; margin-bottom:10px; color:#ffd700;"><i class="fa-solid fa-crown"></i> إعدادات ورتب الأعضاء</h3>
+        <div class="form-group" style="margin-bottom:8px;">
+            <label>اسم الرتبة الجديدة:</label><input type="text" id="newRankKeyInput" class="form-control" placeholder="مثال: نائب المدير">
+            <label style="margin-top:4px;">شكل أو أيقونة الرتبة (HTML/Icon):</label><input type="text" id="newRankHtmlInput" class="form-control" placeholder='<i class="fa-solid fa-star" style="color:#ffd700;"></i>'>
+            <button class="popup-btn" style="background:#28a745; margin-top:6px;" onclick="addNewCustomRank()">➕ إضافة رتبة جديدة وتثبيتها</button>
         </div>
-        <div class="form-group" id="fixedColorGroup">
-            <label>اختر اللون الثابت:</label>
-            <input type="color" id="editProfileNameBg" class="form-control" style="height:40px; padding:2px; cursor:pointer;" value="#2d3748">
+        <button class="popup-btn" style="background:#ff9800; margin-bottom:8px;" onclick="openRankPresetsModal()">🌟 زر رتب مرشحة جاهزة بجميع أشكالها</button>
+        <div id="ranksListContainerArea" style="flex:1; overflow-y:auto; background:#f9f9f9; padding:8px; border-radius:6px; display:flex; flex-direction:column; gap:6px;"></div>
+    </div>
+</div>
+
+<div class="popup-overlay" id="rankPresetsModal">
+    <div class="popup-box" style="height:380px; display:flex; flex-direction:column;">
+        <button class="close-x-btn" onclick="closeAllModals()">X</button>
+        <h3 style="text-align:center; margin-bottom:10px; color:#ffd700;">🌟 رتب مرشحة جاهزة</h3>
+        <div style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:6px;">
+            <div class="menu-list-item" onclick="applyPresetRank('مستشار الموقع', '<i class=\'fa-solid fa-gem\' style=\'color:#00bcd4;\'></i>')">💎 مستشار الموقع</div>
+            <div class="menu-list-item" onclick="applyPresetRank('حارس النخبة', '<i class=\'fa-solid fa-shield\' style=\'color:#e91e63;\'></i>')">🛡️ حارس النخبة</div>
+            <div class="menu-list-item" onclick="applyPresetRank('أسطورة الشات', '<i class=\'fa-solid fa-fire\' style=\'color:#ff5722;\'></i>')">🔥 أسطورة الشات</div>
+            <div class="menu-list-item" onclick="applyPresetRank('نجم المجرة', '<i class=\'fa-solid fa-star\' style=\'color:#ffeb3b;\'></i>')">⭐ نجم المجرة</div>
+        </div>
+    </div>
+</div>
+
+<div class="popup-overlay" id="permissionsSettingsModal">
+    <div class="popup-box" style="height:420px; display:flex; flex-direction:column;">
+        <button class="close-x-btn" onclick="closeAllModals()">X</button>
+        <h3 style="text-align:center; margin-bottom:10px; color:#ffd700;"><i class="fa-solid fa-shield-halved"></i> إعدادات السماح والأذونات للصلاحيات</h3>
+        <p style="font-size:12px; color:#555; text-align:center; margin-bottom:8px;">اختر الرتبة المسموح لها بتنفيذ العقوبات (كتم، طرد، حظر) ومنح الرتب وتسجيل الزوار:</p>
+        <div class="form-group">
+            <label>الرتب المخولة بصلاحيات الإدارة الكبرى:</label>
+            <div id="permissionsCheckboxesArea" style="display:flex; flex-direction:column; gap:6px; background:#f9f9f9; padding:8px; border-radius:6px; font-size:13px;"></div>
+        </div>
+        <button class="popup-btn" style="background:#28a745;" onclick="savePermissionsSettings()">حفظ الصلاحيات المحدثة فوراً ✅</button>
+    </div>
+</div>
+
+<div class="popup-overlay" id="editProfileFieldsModal">
+    <div class="popup-box" style="height:450px; display:flex; flex-direction:column;">
+        <button class="close-x-btn" onclick="closeAllModals()">X</button>
+        <h3 style="text-align:center; margin-bottom:10px; font-size:15px;"><i class="fa-solid fa-user-pen"></i> إعدادات البروفايل والأزرار</h3>
+        <div style="flex:1; overflow-y:auto; padding-right:4px;">
+            <div class="form-group"><label>الاسم المستعار:</label><input type="text" id="editProfileName" class="form-control"></div>
+            <div class="form-group"><label>البريد الإلكتروني:</label><input type="email" id="editProfileEmail" class="form-control"></div>
+            <div class="form-group"><label>كلمة المرور:</label><input type="password" id="editProfilePass" class="form-control"></div>
+            <div class="form-group"><label>الحالة الشخصية:</label><input type="text" id="editProfileStatus" class="form-control"></div>
+            <div class="form-group"><label>العمر والجنس والبلاد:</label><input type="text" id="editProfileCountry" class="form-control" placeholder="الدولة..."></div>
+            
+            <div class="form-group">
+                <label><i class="fa-solid fa-palette"></i> لون أو زخرفة الخط:</label>
+                <select id="editProfileNameStyleType" class="form-control" onchange="toggleNameStyleInputs(this.value)">
+                    <option value="fixed">لون ثابت</option>
+                    <option value="animated">لون متحرك (متدرج)</option>
+                </select>
+            </div>
+            <div class="form-group" id="fixedColorGroup">
+                <label>اختر اللون:</label>
+                <input type="color" id="editProfileNameBg" class="form-control" style="height:40px; padding:2px; cursor:pointer;" value="#2d3748">
+            </div>
+            
+            <hr style="margin:10px 0;">
+            <label style="font-size:12px; font-weight:bold; color:#4a5568; margin-bottom:4px; display:block;">إدارة أزرار وخيارات البروفايل:</label>
+            <button class="popup-btn" style="background:#3182ce; margin-bottom:6px;" onclick="openProfileButtonsPresets()">🌟 زر أزرار بروفايل مرشحة</button>
+            <div id="profileCustomButtonsManagerArea" style="display:flex; flex-direction:column; gap:6px; font-size:12px;"></div>
+        </div>
+        <button class="popup-btn" style="background:#ffd700; color:#1a1a1a; margin-top:8px;" onclick="saveAdvancedProfileChanges()">حفظ وتحديث التغييرات للجميع ✨</button>
+    </div>
+</div>
+
+<div class="popup-overlay" id="profileButtonsPresetsModal">
+    <div class="popup-box">
+        <button class="close-x-btn" onclick="closeAllModals()">X</button>
+        <h3 style="text-align:center; margin-bottom:10px; color:#ffd700;">🌟 أزرار بروفايل مرشحة</h3>
+        <div class="menu-list-item" onclick="addProfileButtonOption('رابط استثنائي', 'fa-link')">🔗 زر رابط شخصي</div>
+        <div class="menu-list-item" onclick="addProfileButtonOption('قناتي تيليجرام', 'fa-brands fa-telegram')">📢 زر قناة تيليجرام</div>
+        <div class="menu-list-item" onclick="addProfileButtonOption('معرض الصور', 'fa-images')">🖼️ زر معرض الصور</div>
+    </div>
+</div>
+
+<div class="popup-overlay" id="loginSettingsManagerModal">
+    <div class="popup-box">
+        <button class="close-x-btn" onclick="closeAllModals()">X</button>
+        <h3 style="text-align:center; margin-bottom:12px; color:#ffd700;"><i class="fa-solid fa-key"></i> إعدادات لوحة تسجيل الدخول</h3>
+        <div class="form-group"><label>عنوان الترحيب الرئيسي:</label><input type="text" id="loginSettingMainTitle" class="form-control" value="شات حسوني"></div>
+        <div class="form-group"><label>عنوان الترحيب الفرعي:</label><input type="text" id="loginSettingSubTitle" class="form-control" value="شات حسوني | دردشة حسوني | شات عربي دردشة عربية"></div>
+        
+        <div class="form-group" style="display:flex; justify-content:space-between; align-items:center; background:#f9f9f9; padding:8px; border-radius:6px;">
+            <span style="font-size:13px; font-weight:bold;">سمح دخول الزوار:</span>
+            <input type="checkbox" id="allowVisitorsToggle" checked style="width:20px; height:20px; cursor:pointer;">
+        </div>
+        <div class="form-group" style="display:flex; justify-content:space-between; align-items:center; background:#f9f9f9; padding:8px; border-radius:6px; margin-top:6px;">
+            <span style="font-size:13px; font-weight:bold;">سمح تسجيل العضويات الجديدة:</span>
+            <input type="checkbox" id="allowRegistersToggle" checked style="width:20px; height:20px; cursor:pointer;">
         </div>
 
-        <button class="popup-btn" style="background:#ffd700; color:#1a1a1a;" onclick="saveAdvancedProfileChanges()">حفظ وتحديث التغييرات للجميع فوراً ✨</button>
+        <button class="popup-btn" style="background:#ffd700; color:#1a1a1a; margin-top:10px;" onclick="saveLoginSettingsChanges()">حفظ إعدادات لوحة الدخول فورا 💎</button>
+    </div>
+</div>
+
+<div class="popup-overlay" id="createCustomReportModalBox">
+    <div class="popup-box">
+        <button class="close-x-btn" onclick="closeAllModals()">X</button>
+        <h3 style="text-align:center; margin-bottom:12px; color:#e53e3e;">📢 إضافة بلاغ (ريبورت) جديد للروم</h3>
+        <div class="form-group"><label>اسم البلاغ أو نوعه:</label><input type="text" id="newReportNameInput" class="form-control" placeholder="مثال: الإزعاج المتكرر"></div>
+        <div class="form-group"><label>طريقة عمله وطريقة تنفيذه:</label><textarea id="newReportDescInput" class="form-control" placeholder="اكتب التفاصيل وطريقة معالجة النظام..." style="height:70px;"></textarea></div>
+        <div class="form-group"><label>الروم المستهدف:</label><input type="text" id="newReportRoomInput" class="form-control" value="الروم العام"></div>
+        <button class="popup-btn" style="background:#e53e3e; color:#fff;" onclick="executeCreateCustomReport()">نشر وإضافة الريبورت فوراً 🚨</button>
     </div>
 </div>
 
@@ -338,8 +440,18 @@
     <div class="popup-box">
         <button class="close-x-btn" onclick="closeAllModals()">X</button>
         <h3 style="text-align:center; margin-bottom:15px; font-size:16px;"><i class="fa-solid fa-bars"></i> خيارات الشات والغرفة</h3>
+        <div class="menu-list-item" onclick="openRoomBackgroundSettings()"><i class="fa-solid fa-image"></i> خلفية الروم (تظهر للجميع)</div>
         <div class="menu-list-item" onclick="cleanRoomMessages()"><i class="fa-solid fa-broom"></i> تنظيف الروم العام</div>
         <div class="menu-list-item" onclick="exitChatCompletely()" style="color:#e53e3e;"><i class="fa-solid fa-right-from-bracket"></i> خروج نهائي من الشات</div>
+    </div>
+</div>
+
+<div class="popup-overlay" id="roomBackgroundSettingsModal">
+    <div class="popup-box">
+        <button class="close-x-btn" onclick="closeAllModals()">X</button>
+        <h3 style="text-align:center; margin-bottom:12px; color:#ffd700;">🖼️ تغيير خلفية الروم العامة</h3>
+        <div class="form-group"><label>رابط الصورة الخلفية الجديدة:</label><input type="text" id="roomBgUrlInput" class="form-control" placeholder="https://example.com/image.jpg"></div>
+        <button class="popup-btn" style="background:#ffd700; color:#1a1a1a;" onclick="saveRoomBackgroundUrl()">تطبيق الخلفية للجميع فوراً 🏛️</button>
     </div>
 </div>
 
@@ -347,9 +459,7 @@
     <div class="popup-box">
         <button class="close-x-btn" onclick="closeAllModals()">X</button>
         <h3 style="text-align:center; margin-bottom:15px;"><i class="fa-solid fa-door-open"></i> غرف الدردشة المتاحة</h3>
-        
         <button id="ownerCreateRoomBtn" class="popup-btn" style="background:linear-gradient(135deg, #ffd700, #ffaa00); color:#1a1a1a; display:none; margin-bottom:12px;" onclick="openCreateCustomRoomModal()">✨ إنشاء روم خاص لملك الموقع</button>
-        
         <div id="roomsContainerList"></div>
     </div>
 </div>
@@ -400,10 +510,10 @@
 </div>
 
 <div class="popup-overlay" id="reportsModal">
-    <div class="popup-box">
+    <div class="popup-box" style="height:400px; display:flex; flex-direction:column;">
         <button class="close-x-btn" onclick="closeAllModals()">X</button>
-        <h3 style="text-align:center; margin-bottom:15px; color:#e53e3e;"><i class="fa-solid fa-triangle-exclamation"></i> لوحة البلاغات الإدارية</h3>
-        <div id="reportsListContainer" style="font-size:13px; color:#555;">لا توجد بلاغات نشطة حالياً. الإدارة تتابع النظام بكفاءة.</div>
+        <h3 style="text-align:center; margin-bottom:15px; color:#e53e3e;"><i class="fa-solid fa-triangle-exclamation"></i> لوحة البلاغات والريبورتات النشطة</h3>
+        <div id="reportsListContainer" style="flex:1; overflow-y:auto; font-size:13px; color:#555; display:flex; flex-direction:column; gap:6px;"></div>
     </div>
 </div>
 
@@ -488,7 +598,7 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    const sysRanksConfig = {
+    let sysRanksConfig = {
         'owner': { label: 'صاحب الموقع', color: '#ffd700', icon: '<i class="fa-solid fa-trophy" style="color:#ffd700;"></i>', isStaff: true, powerLevel: 10 },
         'prince': { label: 'برنس الموقع', color: '#ffaa00', icon: '<i class="fa-solid fa-crown" style="color:#ffaa00;"></i>', isStaff: true, powerLevel: 9 },
         'king': { label: 'كنج', color: '#3182ce', icon: '<i class="fa-solid fa-crown" style="color:#3182ce;"></i>', isStaff: true, powerLevel: 8 },
@@ -509,6 +619,19 @@
 
     let dynamicRoomUsers = [];
     let customRoomsList = [];
+    let customReportsList = [];
+    let profileCustomButtons = [
+        { label: 'الخلفية', icon: 'fa-image', action: 'bg' },
+        { label: 'الغلاف', icon: 'fa-photo-film', action: 'cover' },
+        { label: 'لايك', icon: 'fa-heart', action: 'like' },
+        { label: 'صداقة', icon: 'fa-user-plus', action: 'friend' },
+        { label: 'الهدايا', icon: 'fa-gift', action: 'gift' },
+        { label: 'المستوى', icon: 'fa-trophy', action: 'level' },
+        { label: 'الخاص', icon: 'fa-envelope', action: 'private' }
+    ];
+
+    let allowedPunishmentRanks = ['owner', 'prince', 'king'];
+
     let accountData = {
         name: "زائر مؤقت", age: "19", gender: "ذكر", country: "اليمن", rank: "visitor",
         avatar: "https://via.placeholder.com/40/cbd5e0/000000?text=U",
@@ -561,6 +684,29 @@
             snapshot.forEach(child => {
                 customRoomsList.push({ id: child.key, ...child.val() });
             });
+        });
+
+        database.ref('room_settings/background').on('value', function(snapshot) {
+            if(snapshot.exists()) {
+                document.getElementById('chatContainerView').style.backgroundImage = `url('${snapshot.val()}')`;
+            }
+        });
+
+        database.ref('custom_reports').on('value', function(snapshot) {
+            customReportsList = [];
+            snapshot.forEach(child => {
+                customReportsList.push({ id: child.key, ...child.val() });
+            });
+            renderReportsUI();
+        });
+
+        database.ref('system_ranks').on('value', function(snapshot) {
+            if(snapshot.exists()) {
+                snapshot.forEach(child => {
+                    let rData = child.val();
+                    sysRanksConfig[rData.key] = { label: rData.label, color: rData.color || '#ffd700', icon: rData.icon || '<i class="fa-solid fa-crown" style="color:#ffd700;"></i>', isStaff: true, powerLevel: 7 };
+                });
+            }
         });
     };
 
@@ -758,15 +904,16 @@
         const coverDiv = document.getElementById('pCoverDisplay');
         coverDiv.style.background = userObj.cover || "linear-gradient(135deg, #2c3e50, #3498db)";
 
-        const isStaffPrivileged = (accountData.rank === 'owner' || accountData.rank === 'prince' || accountData.rank === 'king' || accountData.email === "ghrwrkk2@gmail.com");
+        const isOwner = (accountData.rank === 'owner' || accountData.email === "ghrwrkk2@gmail.com");
+        const isPunishmentPrivileged = allowedPunishmentRanks.includes(accountData.rank) || isOwner;
         
-        if(userObj.name === accountData.name || isStaffPrivileged) {
+        if(userObj.name === accountData.name || isOwner) {
             document.getElementById('profilePenEditBtn').style.display = 'flex';
         } else {
             document.getElementById('profilePenEditBtn').style.display = 'none';
         }
 
-        if(isStaffPrivileged) {
+        if(isPunishmentPrivileged) {
             document.getElementById('adminOperationsBtn').style.display = 'block';
             document.getElementById('systemMemberRegisterBtn').style.display = 'block';
         } else {
@@ -774,7 +921,24 @@
             document.getElementById('systemMemberRegisterBtn').style.display = 'none';
         }
 
+        renderProfileActionsBar();
         document.getElementById('profileCardModal').style.display = 'flex';
+    }
+
+    function renderProfileActionsBar() {
+        let barContainer = document.getElementById('profileActionsBarContainer');
+        barContainer.innerHTML = "";
+        profileCustomButtons.forEach(btn => {
+            let buttonElem = document.createElement('button');
+            buttonElem.className = "prof-bar-btn";
+            buttonElem.innerHTML = `<i class="fa-solid ${btn.icon}"></i> ${btn.label}`;
+            buttonElem.onclick = function() {
+                if(btn.action === 'like') likeUserProfile();
+                else if(btn.action === 'private') openDirectPrivateChat();
+                else alert(`تم النقر على زر: ${btn.label}`);
+            };
+            barContainer.appendChild(buttonElem);
+        });
     }
 
     function systemRegisterVisitorByAdmin() {
@@ -799,12 +963,41 @@
         document.getElementById('editProfileEmail').value = targetObj.email || '';
         document.getElementById('editProfilePass').value = targetObj.pass || '';
         document.getElementById('editProfileStatus').value = targetObj.status || '';
-        document.getElementById('editProfileAge').value = targetObj.age || '19';
-        document.getElementById('editProfileGender').value = targetObj.gender || 'ذكر';
         document.getElementById('editProfileCountry').value = targetObj.country || 'اليمن';
         document.getElementById('editProfileNameStyleType').value = targetObj.nameStyleType || 'fixed';
         document.getElementById('editProfileNameBg').value = targetObj.nameBg || '#2d3748';
         toggleNameStyleInputs(document.getElementById('editProfileNameStyleType').value);
+        renderProfileButtonsManagerUI();
+        document.getElementById('editProfileFieldsModal').style.display = 'flex';
+    }
+
+    function renderProfileButtonsManagerUI() {
+        let container = document.getElementById('profileCustomButtonsManagerArea');
+        container.innerHTML = "";
+        profileCustomButtons.forEach((btn, index) => {
+            let row = document.createElement('div');
+            row.style.display = "flex"; row.style.justifyContent = "space-between"; row.style.alignItems = "center"; row.style.background = "#f9f9f9"; row.style.padding = "6px"; row.style.borderRadius = "4px";
+            row.innerHTML = `
+                <span><i class="fa-solid ${btn.icon}"></i> <b>${btn.label}</b></span>
+                <button class="popup-btn" style="width:50px; margin-top:0; padding:2px; background:#e53e3e; font-size:11px;" onclick="removeProfileButton(${index})">حذف</button>
+            `;
+            container.appendChild(row);
+        });
+    }
+
+    function removeProfileButton(index) {
+        profileCustomButtons.splice(index, 1);
+        renderProfileButtonsManagerUI();
+    }
+
+    function openProfileButtonsPresets() {
+        document.getElementById('profileButtonsPresetsModal').style.display = 'flex';
+    }
+
+    function addProfileButtonOption(label, icon) {
+        profileCustomButtons.push({ label: label, icon: icon, action: 'custom' });
+        closeAllModals();
+        renderProfileButtonsManagerUI();
         document.getElementById('editProfileFieldsModal').style.display = 'flex';
     }
 
@@ -823,8 +1016,6 @@
         target.email = document.getElementById('editProfileEmail').value.trim() || target.email;
         target.pass = document.getElementById('editProfilePass').value.trim() || target.pass;
         target.status = document.getElementById('editProfileStatus').value.trim() || target.status;
-        target.age = document.getElementById('editProfileAge').value.trim() || target.age;
-        target.gender = document.getElementById('editProfileGender').value;
         target.country = document.getElementById('editProfileCountry').value.trim() || target.country;
         target.nameStyleType = document.getElementById('editProfileNameStyleType').value;
         target.nameBg = document.getElementById('editProfileNameBg').value;
@@ -860,9 +1051,15 @@
     }
 
     function executeAdminAction(actionType) {
+        const isOwner = (accountData.rank === 'owner' || accountData.email === "ghrwrkk2@gmail.com");
+        if(!allowedPunishmentRanks.includes(accountData.rank) && !isOwner) {
+            alert("عذراً، لا تمتلك الصلاحية لتنفيذ هذا الإجراء.");
+            return;
+        }
+
         let announcement = {
             name: "نظام الإدارة", avatar: "https://via.placeholder.com/40/e53e3e/ffffff?text=⚠️", rank: "owner", nameBg: "#e53e3e",
-            text: `⚖️ تم تنفيذ إجراء [ <b>${actionType}</b> ] ضد العضو من قبل الطاقم الإداري.`,
+            text: `⚖️ تم تنفيذ إجراء [ <b>${actionType}</b> ] ضد العضو <b>${currentProfileUserTarget.name}</b> من قبل الطاقم الإداري (${accountData.name}).`,
             time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
         };
         database.ref('messages').push(announcement);
@@ -910,12 +1107,14 @@
                 container.innerHTML = `<div style="text-align:center; color:#777; padding:20px;">لا توجد رسائل خاصة مسجلة حالياً.</div>`;
             }
             snapshot.forEach(child => {
+                let mKey = child.key;
                 let m = child.val();
                 container.innerHTML += `
-                    <div style="border:1px solid #ffd700; background:#fff; padding:8px; border-radius:6px; margin-bottom:4px;">
+                    <div style="border:1px solid #ffd700; background:#fff; padding:8px; border-radius:6px; margin-bottom:4px; position:relative;">
                         <div style="font-size:11px; color:#e53e3e; margin-bottom:2px;"><b>المرسل:</b> ${m.sender} ➔ <b>المستلم:</b> ${m.receiver}</div>
                         <div style="font-size:13px; color:#2d3748; font-weight:bold;"><b>الرسالة:</b> ${m.text}</div>
                         <div style="font-size:9px; color:#a0aec0; text-align:left;">${m.time || ''}</div>
+                        <button class="popup-btn" style="position:absolute; top:5px; left:5px; width:50px; margin-top:0; padding:2px; background:#e53e3e; font-size:10px;" onclick="deleteSecretMessageItem('${mKey}')">حذف</button>
                     </div>
                 `;
             });
@@ -923,14 +1122,163 @@
         document.getElementById('secretSecurityModal').style.display = 'flex';
     }
 
+    function deleteSecretMessageItem(key) {
+        database.ref('secret_private_messages/' + key).remove();
+        alert("تم حذف الرسالة بنجاح.");
+        openSecretSecurityModal();
+    }
+
     function clearAllSecretMessages() {
         database.ref('secret_private_messages').remove();
         document.getElementById('secretMessagesListArea').innerHTML = "تم حذف سجل الرسائل الخاصة بنجاح.";
     }
 
-    function openMicSettingsModal() { alert("تم فتح إعدادات الميكات الصوتية."); }
-    function openLoginSettingsModal() { alert("تم فتح إعدادات لوحة تسجيل الدخول."); }
-    function openRanksSettingsModal() { alert("تم فتح إعدادات الرتب والصلاحيات."); }
+    function openMicSettingsModal() {
+        document.getElementById('micSettingsManagerModal').style.display = 'flex';
+    }
+
+    function saveMicSettingsChanges() {
+        let count = document.getElementById('micsCountInput').value;
+        alert(`تم حفظ عدد الميكات الفعالة (${count}) وتحديثها بنجاح 🎙️`);
+        closeAllModals();
+    }
+
+    function openRanksSettingsModal() {
+        renderRanksSettingsUI();
+        document.getElementById('ranksSettingsManagerModal').style.display = 'flex';
+    }
+
+    function renderRanksSettingsUI() {
+        let container = document.getElementById('ranksListContainerArea');
+        container.innerHTML = "";
+        for (let key in sysRanksConfig) {
+            let r = sysRanksConfig[key];
+            let row = document.createElement('div');
+            row.style.border = "1px solid #ddd"; row.style.padding = "8px"; row.style.borderRadius = "6px"; row.style.display = "flex"; row.style.justifyContent = "space-between"; row.style.alignItems = "center";
+            row.innerHTML = `
+                <div>${r.icon} <b>${r.label}</b> <span style="font-size:11px; color:#888;">(${key})</span></div>
+                <div style="display:flex; gap:4px;">
+                    <button class="popup-btn" style="width:60px; margin-top:0; padding:2px; background:#e53e3e; font-size:11px;" onclick="deleteCustomRank('${key}')">حذف</button>
+                </div>
+            `;
+            container.appendChild(row);
+        }
+    }
+
+    function addNewCustomRank() {
+        let keyName = document.getElementById('newRankKeyInput').value.trim();
+        let htmlIcon = document.getElementById('newRankHtmlInput').value.trim();
+        if(!keyName) { alert("أدخل اسم الرتبة."); return; }
+        
+        let rankKey = 'custom_' + Date.now();
+        sysRanksConfig[rankKey] = { label: keyName, color: '#ffd700', icon: htmlIcon || '<i class="fa-solid fa-crown" style="color:#ffd700;"></i>', isStaff: true, powerLevel: 6 };
+        
+        database.ref('system_ranks/' + rankKey).set({
+            key: rankKey, label: keyName, icon: htmlIcon || '<i class="fa-solid fa-crown" style="color:#ffd700;"></i>', color: '#ffd700'
+        });
+
+        document.getElementById('newRankKeyInput').value = '';
+        document.getElementById('newRankHtmlInput').value = '';
+        renderRanksSettingsUI();
+        alert("تم إضافة الرتبة الجديدة وحفظها للجميع بنجاح ✨");
+    }
+
+    function deleteCustomRank(key) {
+        if(sysRanksConfig[key]) {
+            delete sysRanksConfig[key];
+            database.ref('system_ranks/' + key).remove();
+            renderRanksSettingsUI();
+            alert("تم حذف الرتبة بنجاح.");
+        }
+    }
+
+    function openRankPresetsModal() {
+        document.getElementById('rankPresetsModal').style.display = 'flex';
+    }
+
+    function applyPresetRank(label, iconHtml) {
+        let rankKey = 'preset_' + Date.now();
+        sysRanksConfig[rankKey] = { label: label, color: '#ffd700', icon: iconHtml, isStaff: true, powerLevel: 6 };
+        database.ref('system_ranks/' + rankKey).set({ key: rankKey, label: label, icon: iconHtml, color: '#ffd700' });
+        closeAllModals();
+        openRanksSettingsModal();
+        alert(`تم تطبيق وإضافة الرتبة المرشحة (${label}) بنجاح 🌟`);
+    }
+
+    function openLoginSettingsModal() {
+        document.getElementById('loginSettingMainTitle').value = document.getElementById('panelMainTitle').innerText;
+        document.getElementById('loginSettingSubTitle').value = document.getElementById('panelSubTitle').innerText;
+        document.getElementById('loginSettingsManagerModal').style.display = 'flex';
+    }
+
+    function saveLoginSettingsChanges() {
+        let mainT = document.getElementById('loginSettingMainTitle').value;
+        let subT = document.getElementById('loginSettingSubTitle').value;
+        document.getElementById('panelMainTitle').innerText = mainT;
+        document.getElementById('panelSubTitle').innerText = subT;
+        closeAllModals();
+        alert("تم حفظ وتحديث إعدادات لوحة تسجيل الدخول بنجاح 💎");
+    }
+
+    function openPermissionsSettingsModal() {
+        let container = document.getElementById('permissionsCheckboxesArea');
+        container.innerHTML = "";
+        for (let key in sysRanksConfig) {
+            let r = sysRanksConfig[key];
+            let isChecked = allowedPunishmentRanks.includes(key) ? 'checked' : '';
+            let row = document.createElement('label');
+            row.style.display = "flex"; row.style.alignItems = "center"; row.style.gap = "8px"; row.style.cursor = "pointer";
+            row.innerHTML = `<input type="checkbox" value="${key}" ${isChecked} style="width:16px; height:16px;" class="perm-checkbox"> ${r.icon} <b>${r.label}</b>`;
+            container.appendChild(row);
+        }
+        document.getElementById('permissionsSettingsModal').style.display = 'flex';
+    }
+
+    function savePermissionsSettings() {
+        allowedPunishmentRanks = [];
+        document.querySelectorAll('.perm-checkbox').forEach(cb => {
+            if(cb.checked) allowedPunishmentRanks.push(cb.value);
+        });
+        closeAllModals();
+        alert("تم حفظ الصلاحيات والإذونات المحدثة بنجاح ✅");
+    }
+
+    function openCreateCustomReportModal() {
+        document.getElementById('createCustomReportModalBox').style.display = 'flex';
+    }
+
+    function executeCreateCustomReport() {
+        let name = document.getElementById('newReportNameInput').value.trim();
+        let desc = document.getElementById('newReportDescInput').value.trim();
+        let room = document.getElementById('newReportRoomInput').value.trim();
+        if(!name || !desc) { alert("يرجى تعبئة الحقول كاملة."); return; }
+
+        let newRep = { name: name, description: desc, room: room, time: new Date().toLocaleTimeString() };
+        database.ref('custom_reports').push(newRep);
+        document.getElementById('newReportNameInput').value = '';
+        document.getElementById('newReportDescInput').value = '';
+        closeAllModals();
+        alert("تم إضافة ونشر الريبورت الجديد للروم فوراً 🚨");
+    }
+
+    function renderReportsUI() {
+        let container = document.getElementById('reportsListContainer');
+        if(!container) return;
+        container.innerHTML = "";
+        if(customReportsList.length === 0) {
+            container.innerHTML = `<div style="text-align:center; color:#777; padding:20px;">لا توجد بلاغات نشطة حالياً. الإدارة تتابع النظام بكفاءة.</div>`;
+            return;
+        }
+        customReportsList.forEach(rep => {
+            container.innerHTML += `
+                <div style="border:1px solid #e53e3e; background:#fff; padding:8px; border-radius:6px; margin-bottom:4px;">
+                    <div style="font-size:13px; color:#e53e3e; font-weight:bold;">🚨 ${rep.name}</div>
+                    <div style="font-size:12px; color:#2d3748; margin-top:2px;"><b>طريقة العمل:</b> ${rep.description}</div>
+                    <div style="font-size:10px; color:#718096; margin-top:4px;"><b>الروم:</b> ${rep.room || 'الروم العام'} | ${rep.time || ''}</div>
+                </div>
+            `;
+        });
+    }
 
     function openPrivateListModal() {
         unreadPrivateCount = 0;
@@ -1074,7 +1422,10 @@
         document.getElementById('vipListModal').style.display = 'flex';
     }
 
-    function openReportsModal() { document.getElementById('reportsModal').style.display = 'flex'; }
+    function openReportsModal() {
+        renderReportsUI();
+        document.getElementById('reportsModal').style.display = 'flex';
+    }
 
     function openRoomsListModal() {
         const isOwner = (accountData.rank === 'owner' || accountData.email === "ghrwrkk2@gmail.com");
@@ -1109,6 +1460,19 @@
         database.ref('custom_rooms/' + roomId).remove();
         alert("تم حذف الروم بنجاح.");
         openRoomsListModal();
+    }
+
+    function openRoomBackgroundSettings() {
+        document.getElementById('roomBackgroundSettingsModal').style.display = 'flex';
+    }
+
+    function saveRoomBackgroundUrl() {
+        let bgUrl = document.getElementById('roomBgUrlInput').value.trim();
+        if(!bgUrl) { alert("أدخل رابط الخلفية."); return; }
+        database.ref('room_settings/background').set(bgUrl);
+        document.getElementById('chatContainerView').style.backgroundImage = `url('${bgUrl}')`;
+        closeAllModals();
+        alert("تم تطبيق خلفية الروم الجديدة وتحديثها للجميع فوراً 🏛️");
     }
 
     function renderRoomsListUI() {
@@ -1152,6 +1516,12 @@
     }
     
     function cleanRoomMessages() { 
+        const isOwner = (accountData.rank === 'owner' || accountData.email === "ghrwrkk2@gmail.com");
+        const isStaff = sysRanksConfig[accountData.rank]?.isStaff || isOwner;
+        if(!isStaff && !isOwner) {
+            alert("عذراً، تنظيف الروم مخصص لصاحب الموقع والإدارة فقط.");
+            return;
+        }
         database.ref('messages').remove();
         document.getElementById('chatMessages').innerHTML = ""; 
         closeAllModals(); 
@@ -1229,7 +1599,7 @@
             <img src="${msgObj.avatar}" class="avatar" onclick="openAnyUserProfileCard({name: '${msgObj.name}', rank: '${msgObj.rank}', avatar: '${msgObj.avatar}', nameBg: '${msgObj.nameBg || '#2d3748'}', nameStyleType: '${msgObj.nameStyleType || 'fixed'}'})">
             <div class="message-content">
                 <div class="user-tag-bar">
-                    <div style="display:flex; align-items:center; gap:4px;">
+                    <div style="display:flex; align-items:center; gap:4px; min-width:0; overflow:hidden;">
                         ${rankInfo.icon}
                         <div class="username-container" style="${nameContainerStyle}" onclick="document.getElementById('chatInput').value+=' @${msgObj.name} '; document.getElementById('chatInput').focus();"><span>${msgObj.name}</span></div>
                     </div>
