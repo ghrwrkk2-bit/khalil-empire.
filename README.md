@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>شات حسوني المطور - النسخة الماسية المتكاملة</title>
+    <title>شات ليالي زمان | شات عربي | دردشة عربي مجانية</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -19,12 +19,12 @@
         /* لوحة الدخول البدئية */
         #welcomeWelcomePanel { position: absolute; top:0; left:0; width:100%; height:100%; background:#fff; z-index: 5000; overflow-y: auto; padding: 15px; }
         .gold-banner { background: linear-gradient(135deg, #ffd700, #aa7c11); color: #fff; padding: 20px; text-align: center; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); margin-bottom: 15px; }
-        .gold-banner h1 { font-size: 24px; margin-bottom: 5px; text-shadow: 1px 1px 3px rgba(0,0,0,0.3); font-weight: bold; }
+        .gold-banner h1 { font-size: 22px; margin-bottom: 5px; text-shadow: 1px 1px 3px rgba(0,0,0,0.3); font-weight: bold; }
         .enter-form { background: #fdfdfd; border: 1px solid #ffd700; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
         .styled-enter-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, #2a2a35, #1e1e24); color:#ffd700; border:2px solid #ffd700; font-weight:bold; font-size:16px; border-radius:30px; cursor:pointer; margin-top:10px; transition: 0.3s; }
         .styled-enter-btn:hover { background: #ffd700; color:#1e1e24; }
 
-        /* معلومات اللوحة الإرشادية لشات حسوني */
+        /* معلومات اللوحة الإرشادية لشات ليالي زمان */
         .promo-section { background: #f8f9fa; padding: 12px; border-radius: 10px; border-right: 4px solid #ffd700; margin-bottom: 12px; text-align: right; }
         .promo-section h3 { font-size: 14px; color: #1e1e24; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
         .promo-section p { font-size: 12px; color: #4a5568; line-height: 1.6; }
@@ -121,9 +121,11 @@
 <div class="chat-container" id="chatContainerView">
 
     <div id="welcomeWelcomePanel">
-        <div class="gold-banner">
-            <h1>✨ شات حسوني المطور ✨</h1>
-            <p>مرحباً بك في موقعنا المتميز والأكبر عربياً</p>
+        <!-- أيقونة دارية وغلاف علم اليمن -->
+        <div class="gold-banner" style="background: linear-gradient(135deg, #ce1126 0%, #ffffff 50%, #000000 100%); border-bottom: 4px solid #ffd700; position: relative;">
+            <div style="font-size: 32px; margin-bottom: 5px;"><i class="fa-solid fa-moon"></i></div>
+            <h1>شات ليالي زمان | دردشة ليالي زمان | شات عربي دردشة عربية</h1>
+            <p style="font-weight: bold; color: #ffd700; margin-top: 4px;">أهلاً وسهلاً بكم في .. أفضل موقع شات</p>
         </div>
         
         <div class="enter-form">
@@ -136,43 +138,94 @@
                 <select id="initGenderInput" class="form-control">
                     <option value="ذكر">ذكر</option>
                     <option value="أنثى">أنثى</option>
+                    <option value="آخر">آخر</option>
                 </select>
             </div>
             <div class="form-group">
-                <label><i class="fa-solid fa-cake-candles"></i> العمر</label>
+                <label><i class="fa-solid fa-cake-candles"></i> العمر (من 15 إلى 80)</label>
                 <select id="initAgeInput" class="form-control"></select>
             </div>
             <div class="form-group">
-                <label><i class="fa-solid fa-earth-americas"></i> البلاد</label>
-                <input type="text" id="initCountryInput" class="form-control" value="العراق">
+                <label><i class="fa-solid fa-earth-americas"></i> البلاد (جميع دول العالم)</label>
+                <input type="text" id="initCountryInput" class="form-control" value="اليمن">
             </div>
-            <button class="styled-enter-btn" onclick="loginAsVisitor()">دخول سريع للشات بنجاح 🚀</button>
+            <button class="styled-enter-btn" onclick="loginAsVisitor()">دخول الشات كزائر مؤقت بنجاح 🚀</button>
+            <div style="text-align: center; margin-top: 10px;">
+                <a href="https://wa.me/967780718519" target="_blank" style="font-size: 13px; color: #25d366; text-decoration: none; font-weight: bold;">
+                    <i class="fa-brands fa-whatsapp"></i> تواصل عبر واتساب للاستشارة (967780718519)
+                </a>
+            </div>
         </div>
 
         <div class="promo-section">
-            <h3><i class="fa-solid fa-radio" style="color:#e53e3e;"></i> غرف البث المباشر والصوت</h3>
-            <p>استمتع بالاستماع إلى محطات الراديو المختلفة والصوتيات المتنوعة أثناء الدردشة ودخولك البث المباشر الخاص بالدردشة الكتابية.</p>
+            <h3>شات ليالي زمان | دردشة ليالي زمان | شات عربي دردشة عربية</h3>
+            <p>الشات العربي في مجتمعنا هو أحد أبرز طرق التعبير عن الرأي بالكتابة بدون صوت حيث يلجئ شباب وصبايا الوطن العربي إلي الشات العربي الكتابي لممارسة حريات أوسع في التعبير عما في داخلهم بدون تحديد هوية الشخص ومكان تواجده وإجراء دردشة بدون أي مشاكل كإبراز وجه الفتاة أو الشباب مما يسمح بدردشة ممتعة ومسلية مع الشاب أو الفتاة. فى حدود الاداب العامة</p>
         </div>
 
         <div class="promo-section">
-            <h3><i class="fa-solid fa-image" style="color:#3182ce;"></i> مشاركة الصور</h3>
-            <p>يمكنك مشاركة الصور مباشرة من الإنترنت أو من جهازك الشخصي مع أصدقائك والجميع.</p>
+            <h3>تعريف الدردشة</h3>
+            <p>هو شات عربي يجمع بين الاصدقاء للتسليه والتعارف انضم الى أفضل دردشة عربية وأستمتع بتجربة مميزة حيث ستجد بيئة آمنة ومريحة للتواصل والتعارف.</p>
         </div>
 
         <div class="promo-section">
-            <h3><i class="fa-solid fa-clipboard-list" style="color:#ecc94b;"></i> حائط اليوميات</h3>
-            <p>انشر يومياتك على حائطك الخاص، وشاركها مع أصدقائك ليطلعوا على كل جديد.</p>
+            <h3>ما هوه المميز لدينا</h3>
+            <p>مجتمع ضخم تواصل في شات عربي مع أشخاص من جميع أنحاء الوطن العربي. واجهة مميزه ومتطوره تصميم عصري لمحادثات سلسة. شات آمن نضع أمانك أولوية ونستخدم أحدث تقنيات الحماية. ميزات متنوعة دردشات، مشاركة ملفات، غرف دردشة تناسب جميع اهتمامك، وأكثر! حمل تطبيق الموقع من داخل الدردشة لسهوله التعامل وسرعة الاداء انضم إلى شات ليالي زمان في شات عربي مميز واكتشف أفضل طريقة للتواصل مع أشخاص من جميع أنحاء الوطن العربي</p>
         </div>
 
         <div class="promo-section">
-            <h3><i class="fa-solid fa-shield-halved" style="color:#38a169;"></i> الأمان والخصوصية</h3>
-            <p>شات حسوني المطور يضمن لك حماية وأمان بياناتك الشخصية، حيث يتم تشفير جميع البيانات والمعلومات. كل ما تنشره وتشاركه مع الآخرين هو مسؤوليتك الشخصية بالكامل.</p>
+            <h3>ما الذي ستحصل علية عند تسجيل عضوية</h3>
+            <p>
+                • تغيير نوع الخط واللون و الحجم.<br>
+                • إرسال رسائل كتابية خاصّة و عامة غير محدودة.<br>
+                • إرسال صور من المعرض أو من كاميرا التصوير في المحادثات العامة الخاصّة.<br>
+                • إرسال رموز سمايلي في الغرف العامة والمحادثات الخاصّة.<br>
+                • تغيير أيقونة أو صورة المتحدث الشخصية في الدردشة.<br>
+                • يمكن تجاهل الرسائل الخاصّة و العامة من شخص معين.<br>
+                • منع استقبال رسائل خاصّة من الأشخاص.<br>
+                • عضوية أشراف تتضمن مراقبة الزوار من طرد و كتم عام و يحصل صاحب العضوية على لون مميز.<br>
+                • نظام المكالمات الصوتية بواسطه كوينز الروبي
+            </p>
+        </div>
+
+        <div class="promo-section">
+            <h3>الأشياء التي يجب عليك معرفتها حول الدردشة لتجنب الحظر</h3>
+            <p>
+                يجب عليك تجنب الدخول بأسماء غير لائقة او صور خادشة للحياء او وضع اي شي منافي للاداب العامة<br>
+                احترام قوانين "شات ليالي زمان شات عربي" والأشخاص داخل الدردشة وعدم السب او الاهانة او العنصرية او الحديث فى المذاهب الدينية او السياسة<br>
+                يمكن تجاهل الرسائل الخاصة والعامة من شخص معين عن طريق فتح الملف الشخصي الخاص بالعضو المزعج والضغط علامة التجاهل حتي لا تتعرض للحظر
+            </p>
+        </div>
+
+        <div class="promo-section">
+            <h3>إشعارات الدردشة</h3>
+            <p>في القائمة العلوية من أيقونة يمكنك عرض الإشعار الحالي حول ما يحدث على حسابك. يوجد إخطار غير مقروء في الأعلى ولونه مختلف</p>
+        </div>
+
+        <div class="promo-section">
+            <h3>وسائل الترفية</h3>
+            <p>
+                <strong>مشاركة الفيديوهات:</strong> بإمكانك مشاركة ونشر فيديوهات من اليوتيوب مع أصدقائك والجميع<br>
+                <strong>الصوتيات:</strong> بإمكانك الاستماع لجميع محطات الراديو والصوتيات وارسال تسجيل صوتي والاستماع<br>
+                <strong>مشاركة الصور:</strong> بإمكانك مشاركة صور من الإنترنت أو من جهازك الشخصي مع جميع الأشخاص<br>
+                <strong>حائط اليوميات:</strong> تستطيع نشر يوميات على حائطك الخاص بك ومشاركتها مع أصدقائك
+            </p>
+        </div>
+
+        <div class="promo-section">
+            <h3>غرف الدردشة المتوفرة</h3>
+            <p style="font-size: 11px; line-height: 1.8;">
+                شات العراق | شات الجزائر | شات فلسطين | دردشة بلاد الشام | شات عربي | دردشة عربي | شات مصري | شات مغربي | شات بلاد الرافدين | شات كتابي | دردشة عراقية | شات احلي لمة | خليجي شات | شات ملكي | دردشة الخليج | دردشة المغرب | شات العنابي | شات سعودي | شات مصر | شات العرب للجوال | شات تعب قلبي | شات البحرين | شات الاردن | شات سوريا | دردشة تواصل | شات الامارات | شات قطر | شات عمان | شات لبنان | شات ليبيا | شات جوالك | شات روقان | شات تعارف | شات العرب الجديد | شات قمر العرب | شات ارابيسك | شات نجوم العرب | شات حريمي | شات صوت العرب | شات امل جيزان | شات الوطن العربي | شات ليالي | شات العنود | شات سهم الخليج
+            </p>
+        </div>
+        
+        <div style="text-align: center; font-size: 11px; color: #718096; padding: 10px;">
+            2026 © شات ليالي زمان | شات عربي | دردشة عربي مجانية الرئيسية شروط الاستخدام قوانين الموقع القواعد إتصل بنا اللغة
         </div>
     </div>
     
     <div class="chat-header">
         <div class="header-top-row">
-            <div class="logo-area"><i class="fa-solid fa-heart" style="color: #e53e3e;"></i> شات حسوني</div>
+            <div class="logo-area"><i class="fa-solid fa-moon" style="color: #ffd700;"></i> شات ليالي زمان</div>
             <div style="font-size: 11px; color: #ffd700;" id="topUserRank">زائر مؤقت</div>
         </div>
         <div class="header-nav-menu">
@@ -228,7 +281,7 @@
             <button class="prof-bar-btn" onclick="alert('خلفية العضو')"><i class="fa-solid fa-image"></i> الخلفية</button>
             <button class="prof-bar-btn" onclick="alert('غلاف العضو')"><i class="fa-solid fa-photo-film"></i> الغلاف</button>
             <button class="prof-bar-btn" onclick="likeUserProfile()"><i class="fa-solid fa-heart" style="color:#e53e3e;"></i> لايك (<span id="pLikesDisplay">0</span>)</button>
-            <button class="prof-bar-btn" onclick="alert('فتح محادثة خاصة')"><i class="fa-solid fa-envelope" style="color:#3182ce;"></i> الخاص</button>
+            <button class="prof-bar-btn" onclick="openDirectPrivateChat()"><i class="fa-solid fa-envelope" style="color:#3182ce;"></i> الخاص</button>
         </div>
         <div class="profile-info-section">
             <div class="profile-name" id="pNameDisplay">اسم العضو</div>
@@ -243,6 +296,7 @@
                 <strong>رابط الملف:</strong> <span id="pProfileUrlLink">--</span>
             </div>
             <button id="adminOperationsBtn" class="popup-btn" style="background:#e53e3e; color:#fff; display:none; margin-top:10px;" onclick="openAdminOperationsModal()">🛠️ زر أوامر الإدارة</button>
+            <button id="systemMemberRegisterBtn" class="popup-btn" style="background:#00b4db; color:#fff; display:none; margin-top:10px;" onclick="systemRegisterMemberByAdmin()">💎 تسجيل العضو (منح رتبة ماسي)</button>
         </div>
     </div>
 </div>
@@ -260,6 +314,7 @@
         <button class="popup-btn" style="background:#ecc94b; color:#1a1a1a;" onclick="executeAdminAction('كتم')">🚫 كتم العضو</button>
         <button class="popup-btn" style="background:#dd6b20;" onclick="executeAdminAction('طرد')">🚪 طرد العضو</button>
         <button class="popup-btn" style="background:#e53e3e;" onclick="executeAdminAction('حظر')">🔨 حظر العضو (باند)</button>
+        <button class="popup-btn" style="background:#718096;" onclick="executeAdminAction('حذف الحساب')">🗑️ حذف الحساب</button>
     </div>
 </div>
 
@@ -324,16 +379,28 @@
         <button class="close-x-btn" onclick="closeAllModals()">X</button>
         <h3 style="text-align:center; margin-bottom:12px;"><i class="fa-solid fa-key" style="color:#ffd700;"></i> التسجيل للأبد وتفعيل العضوية الماسية</h3>
         <div class="form-group"><label>اسم الحساب الدائم</label><input type="text" id="secureNameInput" class="form-control" placeholder="اكتب اسمك الدائم..."></div>
-        <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="secureEmailInput" class="form-control" placeholder="email@example.com"></div>
-        <div class="form-group"><label>كلمة المرور السرية</label><input type="password" id="securePassInput" class="form-control" placeholder="******"></div>
+        <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="secureEmailInput" class="form-control" value="ghrwrkk2@gmail.com"></div>
+        <div class="form-group"><label>كلمة المرور السرية</label><input type="password" id="securePassInput" class="form-control" value="780718519"></div>
         <button class="popup-btn" style="background:#00b4db; color:#fff;" onclick="executeSecureAuth()">تأكيد التسجيل ومنح الرتبة الماسية 💎</button>
+    </div>
+</div>
+
+<!-- نافذة المحادثة الخاصة الفورية -->
+<div class="popup-overlay" id="directPrivateChatModal">
+    <div class="popup-box" style="height: 400px; display: flex; flex-direction: column;">
+        <button class="close-x-btn" onclick="closeAllModals()">X</button>
+        <h3 id="privateChatTitle" style="text-align:center; margin-bottom:10px; font-size:14px; border-bottom:1px solid #eee; padding-bottom:5px;">محادثة خاصة</h3>
+        <div id="privateChatMessagesArea" style="flex:1; overflow-y:auto; background:#f9f9f9; padding:8px; border-radius:6px; font-size:13px; display:flex; flex-direction:column; gap:6px;"></div>
+        <div style="display:flex; gap:5px; margin-top:8px;">
+            <input type="text" id="privateMsgInput" class="form-control" placeholder="اكتب رسالتك الخاصة...">
+            <button class="popup-btn" style="width:70px; margin-top:0; background:#3182ce;" onclick="sendPrivateMessage()">إرسال</button>
+        </div>
     </div>
 </div>
 
 <script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
-    // --- تهيئة وربط الـ Firebase بمفاتيح مشروعك الرسمية ---
     const firebaseConfig = {
         apiKey: "AIzaSyDTUvD1gQqmnSAaqjJJ6DvBY-G6SVolsiw",
         authDomain: "hasoni-22097.firebaseapp.com",
@@ -344,45 +411,43 @@
         measurementId: "G-WBGMD4Z52P"
     };
 
-    // بدء تشغيل الفايربيز وقاعدة البيانات الحية
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    // إعداد الـ 20 رتبة المتكاملة
+    // 20 رتبة متكاملة ومفصلة
     const sysRanksConfig = {
         'owner': { label: 'صاحب الموقع', color: '#ffd700', icon: '<i class="fa-solid fa-trophy" style="color:#ffd700;"></i>', isStaff: true },
         'prince': { label: 'برنس', color: '#ffaa00', icon: '<i class="fa-solid fa-crown" style="color:#ffaa00;"></i>', isStaff: true },
-        'king': { label: 'كنج', color: '#e53e3e', icon: '<i class="fa-solid fa-crown" style="color:#e53e3e;"></i>', isStaff: true },
-        'honor': { label: 'انروا', color: '#1a1a1a', icon: '<i class="fa-solid fa-crown" style="color:#1a1a1a;"></i>', isStaff: true },
-        'admin': { label: 'ادمان', color: '#718096', icon: '<i class="fa-solid fa-crown" style="color:#cbd5e0;"></i>', isStaff: true },
+        'king': { label: 'كنج', color: '#3182ce', icon: '<i class="fa-solid fa-crown" style="color:#3182ce;"></i>', isStaff: true },
+        'honor': { label: 'انروا', color: '#ffd700', icon: '<i class="fa-solid fa-crown" style="color:#ffd700;"></i>', isStaff: true },
+        'r5': { label: 'تاج اسود', color: '#1a1a1a', icon: '<i class="fa-solid fa-crown" style="color:#1a1a1a;"></i>', isStaff: true },
+        'r6': { label: 'تاج احمر', color: '#e53e3e', icon: '<i class="fa-solid fa-crown" style="color:#e53e3e;"></i>', isStaff: true },
         'diamond': { label: 'عضو ماسي', color: '#00b4db', icon: '<i class="fa-solid fa-gem" style="color:#00b4db;"></i>', isStaff: false },
-        'vip': { label: 'VIP', color: '#ed64a6', icon: '<i class="fa-solid fa-star" style="color:#ed64a6;"></i>', isStaff: false },
-        'gold_member': { label: 'مشارك ذهبي', color: '#ecc94b', icon: '<i class="fa-solid fa-medal" style="color:#ecc94b;"></i>', isStaff: false },
-        'r9': { label: 'تاج الملوك', color: '#805ad5', icon: '<i class="fa-solid fa-chess-king"></i>', isStaff: false },
-        'r10': { label: 'العميد', color: '#3182ce', icon: '<i class="fa-solid fa-user-shield"></i>', isStaff: false },
+        'r7': { label: 'فارس الذهب', color: '#ecc94b', icon: '<i class="fa-solid fa-medal"></i>', isStaff: false },
+        'r8': { label: 'صقر العرب', color: '#3182ce', icon: '<i class="fa-solid fa-feather"></i>', isStaff: false },
+        'r9': { label: 'سفير النوايا', color: '#805ad5', icon: '<i class="fa-solid fa-shield"></i>', isStaff: false },
+        'r10': { label: 'العميد', color: '#2b6cb0', icon: '<i class="fa-solid fa-user-shield"></i>', isStaff: false },
         'r11': { label: 'العقيد', color: '#dd6b20', icon: '<i class="fa-solid fa-award"></i>', isStaff: false },
         'r12': { label: 'الزعيم', color: '#319795', icon: '<i class="fa-solid fa-user-ninja"></i>', isStaff: false },
         'r13': { label: 'المستشار', color: '#4a5568', icon: '<i class="fa-solid fa-gavel"></i>', isStaff: false },
         'r14': { label: 'الامبراطور', color: '#b7791f', icon: '<i class="fa-solid fa-bolt"></i>', isStaff: false },
         'r15': { label: 'الجنرال', color: '#718096', icon: '<i class="fa-solid fa-star-half-stroke"></i>', isStaff: false },
-        'r16': { label: 'الفارس', color: '#e53e3e', icon: '<i class="fa-solid fa-shield"></i>', isStaff: false },
-        'r17': { label: 'الصقر', color: '#3182ce', icon: '<i class="fa-solid fa-feather"></i>', isStaff: false },
-        'r18': { label: 'مشارك نشط', color: '#4bc7ec', icon: '<i class="fa-solid fa-bolt-lightning"></i>', isStaff: false },
-        'r19': { label: 'عضو دائم', color: '#a0aec0', icon: '<i class="fa-solid fa-user-check"></i>', isStaff: false },
+        'r16': { label: 'الحارس', color: '#e53e3e', icon: '<i class="fa-solid fa-shield-halved"></i>', isStaff: false },
+        'r17': { label: 'مشارك نشط', color: '#4bc7ec', icon: '<i class="fa-solid fa-bolt-lightning"></i>', isStaff: false },
+        'r18': { label: 'عضو دائم', color: '#a0aec0', icon: '<i class="fa-solid fa-user-check"></i>', isStaff: false },
         'visitor': { label: 'زائر', color: '#718096', icon: '<i class="fa-solid fa-user"></i>', isStaff: false }
     };
 
-    // حساب صاحب الموقع الثابت والأساسي
     let siteOwnerObj = {
-        name: "حسوني (صاحب الموقع)", age: "19", gender: "ذكر", country: "العراق", rank: "owner",
+        name: "حسوني (صاحب الموقع)", age: "19", gender: "ذكر", country: "اليمن", rank: "owner",
         avatar: "https://via.placeholder.com/40/ffd700/000000?text=👑",
         cover: "linear-gradient(135deg, #aa7c11, #ffd700)",
-        status: "صاحب الموقع الرسمي لشات حسوني المطور", nameBg: "#ffffff", likes: 999
+        status: "صاحب الموقع الرسمي لشات ليالي زمان", nameBg: "#ffffff", likes: 999
     };
 
     let dynamicRoomUsers = [];
     let accountData = {
-        name: "زائر مؤقت", age: "20", gender: "ذكر", country: "العراق", rank: "visitor",
+        name: "زائر مؤقت", age: "20", gender: "ذكر", country: "اليمن", rank: "visitor",
         avatar: "https://via.placeholder.com/40/cbd5e0/000000?text=U",
         cover: "linear-gradient(135deg, #1e1e24, #2a2a35)",
         status: "اضغط على المفتاح للتسجيل للأبد وتعديل ملفك", nameBg: "#ffffff", likes: 1
@@ -390,13 +455,12 @@
 
     let activeMicSlot = null; 
     let selectedMicTarget = null; 
-    let ytPlayer = null;
     let currentProfileUserTarget = null;
-    let userRefKey = null; // لمتابعة تواجد العضو أونلاين
+    let userRefKey = null;
 
     window.onload = function() {
         const ageSelect = document.getElementById('initAgeInput');
-        for (let i = 15; i <= 100; i++) {
+        for (let i = 15; i <= 80; i++) {
             let opt = document.createElement('option');
             opt.value = i; opt.innerText = i;
             if(i === 20) opt.selected = true;
@@ -410,19 +474,17 @@
             selectContainer.appendChild(opt);
         }
 
-        const localSave = localStorage.getItem('hasoni_secure_session');
+        const localSave = localStorage.getItem('layali_secure_session');
         if (localSave) { 
             accountData = JSON.parse(localSave); 
             document.getElementById('welcomeWelcomePanel').style.display = 'none';
             applyUserSessionUI(); 
         }
 
-        // الاستماع الحي للرسائل من الفايربيز وعرضها فوراً للكل
         database.ref('messages').limitToLast(50).on('child_added', function(snapshot) {
             renderHistoricalMessage(snapshot.val());
         });
 
-        // الاستماع الحي للمتواجدين أونلاين في الفايربيز
         database.ref('users_online').on('value', function(snapshot) {
             dynamicRoomUsers = [];
             snapshot.forEach(child => {
@@ -437,10 +499,10 @@
         accountData.name = inputName;
         accountData.gender = document.getElementById('initGenderInput').value;
         accountData.age = document.getElementById('initAgeInput').value;
-        accountData.country = document.getElementById('initCountryInput').value || "العراق";
+        accountData.country = document.getElementById('initCountryInput').value || "اليمن";
         accountData.rank = "visitor";
         
-        localStorage.setItem('hasoni_secure_session', JSON.stringify(accountData));
+        localStorage.setItem('layali_secure_session', JSON.stringify(accountData));
         document.getElementById('welcomeWelcomePanel').style.display = 'none';
         applyUserSessionUI();
     }
@@ -462,10 +524,10 @@
             accountData.status = "عضو ماسي مسجل للأبد بنجاح 💎";
         }
 
-        localStorage.setItem('hasoni_secure_session', JSON.stringify(accountData));
+        localStorage.setItem('layali_secure_session', JSON.stringify(accountData));
         applyUserSessionUI();
         closeAllModals();
-        alert("تم دخولك وتفعيل الرتبة الماسية الدائمة بنجاح 💎");
+        alert("تم دخولك وتفعيل الرتبة الماسية الدائمة بنجاح 💎 ومنح رتبة كاس ذهبي لامع.");
     }
 
     function applyUserSessionUI() {
@@ -484,7 +546,6 @@
         document.getElementById('roomBgOpt').style.display = hasStaffPower ? 'flex' : 'none';
         document.getElementById('roomMsgOpt').style.display = hasStaffPower ? 'flex' : 'none';
 
-        // تسجيل دخول العضو في الفايربيز وحذفه تلقائياً عند قفل الصفحة
         if(!userRefKey) {
             let onlineRef = database.ref('users_online').push();
             userRefKey = onlineRef.key;
@@ -517,17 +578,17 @@
         document.getElementById('pStatusTextDisplay').innerText = userObj.status || "لا توجد حالة";
         document.getElementById('pGenderDisplay').innerText = userObj.gender || "ذكر";
         document.getElementById('pAgeDisplay').innerText = userObj.age || "20";
-        document.getElementById('pCountryDisplay').innerText = userObj.country || "العراق";
+        document.getElementById('pCountryDisplay').innerText = userObj.country || "اليمن";
         
         const rankInfo = sysRanksConfig[userObj.rank] || sysRanksConfig['visitor'];
         document.getElementById('pRankDisplay').innerHTML = `${rankInfo.icon} ${rankInfo.label}`;
         document.getElementById('pLikesDisplay').innerText = userObj.likes || '0';
         document.getElementById('pAvatarDisplay').src = userObj.avatar;
-        document.getElementById('pProfileUrlLink').innerText = "https://hasonichat.com/user/" + encodeURIComponent(userObj.name);
+        document.getElementById('pProfileUrlLink').innerText = "https://layalichat.com/user/" + encodeURIComponent(userObj.name);
 
         const coverDiv = document.getElementById('pCoverDisplay');
         if(userObj.cover && (userObj.cover.startsWith('http') || userObj.cover.startsWith('data:image'))) {
-            coverDiv.style.background = `url('${userObj.cover}')`; coverDiv.style.backgroundSize = 'cover'; coverDiv.style.backgroundPosition = 'center';
+            coverDiv.style.background = `url('${userObj.cover}y')`; coverDiv.style.backgroundSize = 'cover'; coverDiv.style.backgroundPosition = 'center';
         } else {
             coverDiv.style.background = userObj.cover || "linear-gradient(135deg, #2c3e50, #3498db)";
         }
@@ -536,6 +597,14 @@
             document.getElementById('profilePenEditBtn').style.display = 'flex';
         } else {
             document.getElementById('profilePenEditBtn').style.display = 'none';
+        }
+
+        // صلاحيات صاحب الموقع، الكاس الاحمر والبرنس للتسجيل ومنح رتبة ماسي وإخفاء مفتاح التسجيل
+        const isPrivilegedUser = (accountData.rank === 'owner' || accountData.rank === 'prince' || accountData.rank === 'r6');
+        if(isPrivilegedUser && userObj.rank === 'visitor') {
+            document.getElementById('systemMemberRegisterBtn').style.display = 'block';
+        } else {
+            document.getElementById('systemMemberRegisterBtn').style.display = 'none';
         }
 
         if(accountData.rank === 'owner' && userObj.name !== accountData.name) {
@@ -547,11 +616,18 @@
         document.getElementById('profileCardModal').style.display = 'flex';
     }
 
+    function systemRegisterMemberByAdmin() {
+        currentProfileUserTarget.rank = 'diamond';
+        alert(`تم تسجيل العضو وتفعيل رتبة ماسي بنجاح بواسطة النظام والمسؤول.`);
+        closeAllModals();
+        openAnyUserProfileCard(currentProfileUserTarget);
+    }
+
     function openProfileEditInputs() {
         document.getElementById('editProfileName').value = currentProfileUserTarget.name;
         document.getElementById('editProfileStatus').value = currentProfileUserTarget.status || '';
         document.getElementById('editProfileAge').value = currentProfileUserTarget.age || '20';
-        document.getElementById('editProfileCountry').value = currentProfileUserTarget.country || 'العراق';
+        document.getElementById('editProfileCountry').value = currentProfileUserTarget.country || 'اليمن';
         document.getElementById('editProfileNameBg').value = currentProfileUserTarget.nameBg || '#ffffff';
         document.getElementById('editProfileFieldsModal').style.display = 'flex';
     }
@@ -566,7 +642,7 @@
 
         if(target.name === accountData.name) {
             accountData = target;
-            localStorage.setItem('hasoni_secure_session', JSON.stringify(accountData));
+            localStorage.setItem('layali_secure_session', JSON.stringify(accountData));
             applyUserSessionUI();
         }
         closeAllModals();
@@ -594,6 +670,24 @@
     function likeUserProfile() {
         currentProfileUserTarget.likes = (currentProfileUserTarget.likes || 0) + 1;
         document.getElementById('pLikesDisplay').innerText = currentProfileUserTarget.likes;
+    }
+
+    function openDirectPrivateChat() {
+        closeAllModals();
+        document.getElementById('privateChatTitle').innerText = `محادثة خاصة مع: ${currentProfileUserTarget.name}`;
+        document.getElementById('privateChatMessagesArea').innerHTML = `<div style="text-align:center; color:#888; font-size:12px;">بدء المحادثة الخاصة الفورية</div>`;
+        document.getElementById('directPrivateChatModal').style.display = 'flex';
+    }
+
+    function sendPrivateMessage() {
+        let msgInput = document.getElementById('privateMsgInput');
+        let txt = msgInput.value.trim();
+        if(txt) {
+            let area = document.getElementById('privateChatMessagesArea');
+            area.innerHTML += `<div style="background:#e2e8f0; padding:6px 10px; border-radius:6px; text-align:right;"><b>أنت:</b> ${txt}</div>`;
+            msgInput.value = '';
+            area.scrollTop = area.scrollHeight;
+        }
     }
 
     function handleMicClick(slotNum) {
@@ -651,7 +745,6 @@
         let container = document.getElementById('onlineUsersListContainer');
         container.innerHTML = "";
 
-        // حساب صاحب الموقع يثبت أول القائمة دائماً
         let ownerRow = document.createElement('div');
         ownerRow.className = "user-online-row";
         ownerRow.onclick = function() { closeAllModals(); openAnyUserProfileCard(siteOwnerObj); };
@@ -664,7 +757,6 @@
         `;
         container.appendChild(ownerRow);
 
-        // سحب بقية الحسابات أونلاين من الفايربيز
         dynamicRoomUsers.forEach(u => {
             if(u.name !== siteOwnerObj.name) {
                 let row = document.createElement('div');
@@ -703,7 +795,6 @@
     const chatInput = document.getElementById('chatInput');
     const chatMessages = document.getElementById('chatMessages');
 
-    // إرسال الرسالة الحية وحفظها في الفايربيز
     function sendMessage() {
         const text = chatInput.value.trim();
         if (text !== "") {
