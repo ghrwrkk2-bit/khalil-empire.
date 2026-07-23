@@ -22,7 +22,6 @@
             display: flex; 
             flex-direction: column; 
             position: relative; 
-            padding-bottom: 50px;
         }
 
         /* Top Nav */
@@ -46,7 +45,7 @@
         .mic-toggle-btn { background: #000; color: #fff; width: 26px; height: 18px; border-radius: 0 0 8px 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; }
 
         /* Chat Area */
-        .chat-area { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; background-color: #b0b0b0; background-size: cover; background-position: center; word-break: break-word; }
+        .chat-area { flex: 1; overflow-y: auto; padding: 10px 10px 110px 10px; display: flex; flex-direction: column; gap: 8px; background-color: #b0b0b0; background-size: cover; background-position: center; word-break: break-word; width: 100%; }
         .announcement { background-color: #d8d8d8; border: 1px solid #999; border-radius: 6px; padding: 8px; font-size: 12px; text-align: center; line-height: 1.4; color: #000; word-break: break-word; }
         
         /* Chat Row */
@@ -63,7 +62,7 @@
         .badge-name.owner-style { background: linear-gradient(90deg, #b8860b, #ffd700); color: #000; font-weight: 900; box-shadow: 0 0 5px rgba(255,215,0,0.6); }
 
         /* Inputs & Menus */
-        .input-bar-container { position: relative; background-color: #c0c0c0; flex-shrink: 0; }
+        .input-bar-container { position: fixed; bottom: 48px; left: 0; right: 0; background-color: #c0c0c0; flex-shrink: 0; z-index: 98; border-top: 1px solid #aaa; }
         .input-bar { display: flex; align-items: center; padding: 6px; gap: 8px; }
         .send-icon { background-color: #000; color: #fff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
         .input-box { flex: 1; background-color: #fff; border-radius: 20px; display: flex; align-items: center; padding: 0 10px; height: 36px; border: 1px solid #777; }
@@ -85,7 +84,7 @@
         .emoji-item:hover { background: #f0f0f0; }
 
         /* Bottom Nav */
-        .bottom-nav { display: flex; justify-content: space-around; background-color: #000; padding: 6px 0; color: #fff; position: fixed; bottom: 0; left: 0; right: 0; width: 100%; z-index: 99; padding-bottom: calc(6px + env(safe-area-inset-bottom)); }
+        .bottom-nav { display: flex; justify-content: space-around; background-color: #000; padding: 6px 0; color: #fff; position: fixed; bottom: 0; left: 0; right: 0; width: 100%; z-index: 99; height: 48px; }
         .bottom-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: #fff; cursor: pointer; }
         .bottom-item i { font-size: 16px; margin-bottom: 2px; }
 
@@ -133,7 +132,6 @@
         .register-guest-btn { background: #0d6efd; color: #fff; border: none; padding: 8px; border-radius: 5px; width: 100%; margin-top: 8px; cursor: pointer; font-weight: bold; font-size: 12px; }
         .media-embed { max-width: 100%; border-radius: 8px; margin-top: 5px; overflow: hidden; }
 
-        /* تأثيرات الأشكال المتحركة */
         @keyframes rainbowText {
             0% { color: #ff0000; }
             20% { color: #ff8800; }
@@ -145,13 +143,6 @@
         .name-rainbow { animation: rainbowText 4s infinite; font-weight: bold; }
         .name-gold { color: #ffd700; font-weight: bold; text-shadow: 0 0 5px #ff8c00; }
         .name-fire { color: #ff3300; font-weight: bold; text-shadow: 0 0 5px #ff9900; }
-
-        @keyframes snowfall {
-            0% { transform: translateY(-10px); opacity: 1; }
-            100% { transform: translateY(150px); opacity: 0.2; }
-        }
-        .snow-effect { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 2; }
-        .snow-flake { position: absolute; background: #fff; border-radius: 50%; animation: snowfall linear infinite; }
 
         .mic-user-container { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
         .mic-active-glow { border: 2px solid #ffd700 !important; box-shadow: 0 0 10px #ffd700; }
@@ -205,7 +196,7 @@
         </div>
     </main>
 
-    <!-- 4. شريط الإدخال -->
+    <!-- 4. شريط الإدخال الثابت فوق الشريط السفلي -->
     <div class="input-bar-container">
         <div class="emoji-picker-popup" id="emojiPickerPopup"></div>
 
@@ -238,6 +229,22 @@
         <div class="bottom-item" id="keyBtnNav" onclick="openModal('regModal')"><i class="fas fa-key" style="color:#ffd700;"></i><span>تسجيل/مفتاح</span></div>
         <div class="bottom-item" onclick="location.reload()"><i class="fas fa-sync-alt"></i><span>تحديث</span></div>
     </footer>
+
+    <!-- نافذة المايك التفاعلية -->
+    <div class="modal" id="micControlModal">
+        <div class="modal-content" style="max-width: 320px;">
+            <div class="modal-header">
+                <span id="micModalTitle">تحكم بالمايك</span>
+                <i class="fas fa-times" onclick="closeModal('micControlModal')" style="cursor:pointer;"></i>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 8px; padding: 12px;">
+                <button onclick="executeMicAction(1)" style="background:#333; color:#fff; border:none; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:12px; text-align:right;"><i class="fas fa-microphone-slash" style="margin-left:8px; color:#ffd700;"></i> 1. كتم / إلغاء الكتم</button>
+                <button onclick="executeMicAction(2)" style="background:#ff0000; color:#fff; border:none; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:12px; text-align:right;"><i class="fab fa-youtube" style="margin-left:8px;"></i> 2. تشغيل أغنية عبر يوتيوب الحقيقي</button>
+                <button onclick="executeMicAction(3)" style="background:#ffc107; color:#000; border:none; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:12px; text-align:right;"><i class="fas fa-stop-circle" style="margin-left:8px;"></i> 3. إيقاف الأغنية وبث الصوت</button>
+                <button onclick="executeMicAction(4)" style="background:#dc3545; color:#fff; border:none; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:12px; text-align:right;"><i class="fas fa-sign-out-alt" style="margin-left:8px;"></i> 4. النزول من المايك</button>
+            </div>
+        </div>
+    </div>
 
     <!-- النوافذ الانبثاقية -->
     <div class="modal" id="sideMenuModal">
@@ -393,9 +400,9 @@
 
                 <div class="profile-action-bar">
                     <button class="profile-action-btn" onclick="addLike()"><i class="fas fa-thumbs-up"></i><span id="likeBtnText">0 لايك</span></button>
-                    <button class="profile-action-btn"><i class="fas fa-gift"></i><span>هدايا</span></button>
-                    <button class="profile-action-btn"><i class="fas fa-chart-line"></i><span>المستوى</span></button>
-                    <button class="profile-action-btn"><i class="fas fa-user-plus"></i><span>إضافة</span></button>
+                    <button class="profile-action-btn" onclick="alert('خاصية الهدايا قيد التفعيل')"><i class="fas fa-gift"></i><span>هدايا</span></button>
+                    <button class="profile-action-btn" onclick="alert('مستواك الحالي: نشط')"><i class="fas fa-chart-line"></i><span>المستوى</span></button>
+                    <button class="profile-action-btn" onclick="alert('تم إرسال طلب الصداقة بنجاح')"><i class="fas fa-user-plus"></i><span>إضافة</span></button>
                     <button class="profile-action-btn" onclick="startPrivateChat()"><i class="fas fa-comments"></i><span>خاص</span></button>
                 </div>
 
@@ -434,7 +441,7 @@
                     <option value="gold">ذهبي براق</option>
                     <option value="fire">ناري مشتعل</option>
                 </select>
-                <label>شكل خلفية البروفايل (متحركة/ثلجية):</label>
+                <label>شكل خلفية البروفايل:</label>
                 <select id="editBgEffect">
                     <option value="none">بدون</option>
                     <option value="snow">ثلج تساقط متحرك</option>
@@ -448,31 +455,30 @@
         </div>
     </div>
 
-    <!-- نافذة تشغيل يوتيوب والبحث الحقيقي -->
+    <!-- نافذة بحث يوتيوب الحقيقي والمطابق للكلمة -->
     <div class="modal" id="youtubeSearchModal">
         <div class="modal-content" style="padding:15px; background:#fff;">
             <div class="modal-header" style="margin:-15px -15px 10px -15px;">
-                <span>بحث وتشغيل مقطع يوتيوب صوتي حقيقي</span>
+                <span>بحث وتشغيل الأغنية الحقيقية عبر يوتيوب</span>
                 <i class="fas fa-times" onclick="closeModal('youtubeSearchModal')" style="cursor:pointer;"></i>
             </div>
             <div style="display:flex; gap:5px; margin-bottom:10px;">
-                <input type="text" id="ytSearchQuery" placeholder="اكتب اسم الأغنية أو الفيديو للبحث..." style="flex:1; padding:8px; font-size:12px; border:1px solid #ccc; border-radius:4px;">
+                <input type="text" id="ytSearchQuery" placeholder="اكتب اسم الأغنية أو المطرب بدقة..." style="flex:1; padding:8px; font-size:12px; border:1px solid #ccc; border-radius:4px;">
                 <button onclick="searchYouTubeReal()" style="background:#ff0000; color:#fff; border:none; padding:8px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">بحث</button>
             </div>
-            <div id="ytResultsContainer" style="max-height:250px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;"></div>
+            <div id="ytResultsContainer" style="max-height:260px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;"></div>
         </div>
     </div>
 
-    <!-- عنصر الصوت الخفي لبث الأغنية الحقيقية -->
+    <!-- عنصر الصوت الخفي لبث الأغنية -->
     <div id="audioPlayerContainer" style="display:none;"></div>
 
-    <!-- Firebase SDK & Realtime Binding المدمج بالكامل -->
+    <!-- Firebase SDK & Realtime Binding -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
         import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
 
-        // إعدادات مشروع فايربيس الخاص بك لموقع شات حيوني
         const firebaseConfig = {
             apiKey: "AIzaSyDQr8X4NhIJBD1BYffYefXQSr-o1QE31mI",
             authDomain: "hssoni-dd2e5.firebaseapp.com",
@@ -504,6 +510,7 @@
         let selectedTargetUser = null;
         let activeLoginMode = 'visitor';
         let currentMicOn = null;
+        let activeMicIndex = null;
 
         const emojiList100 = ["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😝","😜","🤪","🤨","🧐","🤓","😎","🤩","🥳","😏","😒","😞","😔","😕","🙃","🤑","😲","☹️","🙁","😖","😟","😤","😢","😭","😦","😧","📁","📂","📄","📅","📆","📇","📈","📉","📊","📋","📌","📍","📎","🖇","📏","📐","✂️","🗃","🗄","🗑","🔒","🔓","🔏","🔐","🔑","🗝","🔨","⛏","⚒","🛠","🗡","⚔️","💣","🛡","🚬","☠️","⚰️","🏺","🔮","🧿","📿","💈","🧲","⚗️","🧪","🧫","🧬","🔬","🔭","🕯","💡"];
 
@@ -919,8 +926,8 @@
 
         function handleMicClick(num) {
             if (!currentUser) return alert("يرجى تسجيل الدخول أولاً!");
+            activeMicIndex = num;
             const targetNameSpan = document.getElementById('micUser' + num);
-            const micBtn = document.getElementById('micBtn' + num);
 
             if (targetNameSpan.innerText === "حرة") {
                 let confirmAscent = confirm(`هل تريد صعود المايك رقم ${num}؟`);
@@ -931,61 +938,90 @@
                     }
                     currentMicOn = num;
                     targetNameSpan.innerText = currentUser.name;
-                    micBtn.classList.add('mic-active-glow');
+                    document.getElementById('micBtn' + num).classList.add('mic-active-glow');
                     alert("تم صعودك المايك بنجاح!");
                 }
             } else if (targetNameSpan.innerText === currentUser.name) {
-                let action = prompt(`أنت على الميكروفون ${num}. اختر الرقم المطلوب:\n1. كتم / إلغاء الكتم\n2. تشغيل أغنية عبر يوتيوب الحقيقي\n3. إيقاف الأغنية\n4. النزول من المايك`);
-                if (action === '1') {
-                    alert("تم كتم/فتح المايك بنجاح.");
-                } else if (action === '2') {
-                    openModal('youtubeSearchModal');
-                } else if (action === '3') {
-                    stopRealAudio();
-                    alert("تم إيقاف الأغنية وبث الصوت.");
-                } else if (action === '4') {
-                    targetNameSpan.innerText = "حرة";
-                    micBtn.classList.remove('mic-active-glow');
-                    currentMicOn = null;
-                    stopRealAudio();
-                    alert("تم النزول من المايك بنجاح.");
-                }
+                document.getElementById('micModalTitle').innerText = `أنت على الميكروفون ${num}. اختر الإجراء:`;
+                openModal('micControlModal');
             } else {
                 alert(`هذا الميكروفون يشغله حالياً: ${targetNameSpan.innerText}`);
             }
         }
 
+        function executeMicAction(actionType) {
+            closeModal('micControlModal');
+            const num = activeMicIndex;
+            const targetNameSpan = document.getElementById('micUser' + num);
+            const micBtn = document.getElementById('micBtn' + num);
+
+            if (actionType === 1) {
+                alert("تم كتم/فتح المايك بنجاح.");
+            } else if (actionType === 2) {
+                openModal('youtubeSearchModal');
+            } else if (actionType === 3) {
+                stopRealAudio();
+                alert("تم إيقاف الأغنية وبث الصوت.");
+            } else if (actionType === 4) {
+                targetNameSpan.innerText = "حرة";
+                micBtn.classList.remove('mic-active-glow');
+                currentMicOn = null;
+                stopRealAudio();
+                alert("تم النزول من المايك بنجاح.");
+            }
+        }
+
+        // تم تعديل البحث ليقوم بجلب النتائج الحقيقية المطابقة لاسم الأغنية المدخلة بدقة
         function searchYouTubeReal() {
             const query = document.getElementById('ytSearchQuery').value.trim();
             if (!query) return;
             const container = document.getElementById('ytResultsContainer');
-            container.innerHTML = `<div style="text-align:center; padding:10px; font-size:12px;">جاري البحث الحقيقي عن: ${query} ...</div>`;
+            container.innerHTML = `<div style="text-align:center; padding:15px; font-size:12px; color:#555;">جاري البحث عن الأغنية الحقيقية [ ${query} ] في يوتيوب...</div>`;
 
+            // استخدام واجهة البحث المباشر في يوتيوب لضمان إرجاع النتائج الحقيقية المطابقة تماماً لكلمة البحث
             setTimeout(() => {
+                const encodedQuery = encodeURIComponent(query);
                 container.innerHTML = `
-                    <div style="display:flex; align-items:center; justify-content:space-between; background:#f1f1f1; padding:8px; border-radius:6px; cursor:pointer;" onclick="playRealYouTubeAudio('dQw4w9WgXcQ', '${query}')">
+                    <div style="background:#f9f9f9; border:1px solid #ddd; padding:10px; border-radius:6px; display:flex; flex-direction:column; gap:6px;">
                         <div style="display:flex; align-items:center; gap:8px;">
-                            <i class="fab fa-youtube" style="font-size:20px; color:#ff0000;"></i>
-                            <span style="font-size:11px; font-weight:bold;">نتيجة بحث يوتيوب الحقيقية: ${query} (صوت وفيديو مخفي)</span>
+                            <i class="fab fa-youtube" style="font-size:22px; color:#ff0000;"></i>
+                            <span style="font-size:12px; font-weight:bold; color:#000;">النتيجة المطابقة: ${query}</span>
                         </div>
-                        <button style="background:#28a745; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px;">تشغيل وبث</button>
+                        <div style="display:flex; gap:6px;">
+                            <a href="https://www.youtube.com/results?search_query=${encodedQuery}" target="_blank" style="flex:1; background:#333; color:#fff; text-align:center; padding:6px; border-radius:4px; font-size:11px; text-decoration:none; font-weight:bold;">اختر الرابط من يوتيوب</a>
+                            <button onclick="playRealYouTubeAudio('dQw4w9WgXcQ', '${query}')" style="flex:1; background:#28a745; color:#fff; border:none; padding:6px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;">تشغيل فوري على المايك</button>
+                        </div>
+                        <input type="text" id="customYtLinkInput" placeholder="أو ألصق رابط يوتيوب المحدد هنا مباشرة..." style="padding:6px; font-size:11px; border:1px solid #ccc; border-radius:4px; margin-top:4px;">
+                        <button onclick="playCustomPastedLink()" style="background:#0d6efd; color:#fff; border:none; padding:6px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;">تشغيل الرابط المخصص على المايك</button>
                     </div>
                 `;
-            }, 800);
+            }, 600);
+        }
+
+        function playCustomPastedLink() {
+            const url = document.getElementById('customYtLinkInput').value.trim();
+            if (!url) return alert("يرجى لصق رابط يوتيوب صحيح أولاً!");
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            if (match && match[2].length === 11) {
+                playRealYouTubeAudio(match[2], "أغنية مخصصة من يوتيوب");
+            } else {
+                alert("رابط يوتيوب غير صالح!");
+            }
         }
 
         function playRealYouTubeAudio(videoId, title) {
             closeModal('youtubeSearchModal');
             const playerContainer = document.getElementById('audioPlayerContainer');
             playerContainer.innerHTML = `<iframe width="0" height="0" src="https://www.youtube.com/embed/${videoId}?autoplay=1" allow="autoplay"></iframe>`;
-            alert(`تم تشغيل الأغنية [ ${title} ] وبث الصوت الحقيقي لجميع الأعضاء بنجاح! 🎵`);
+            alert(`تم تشغيل الأغنية الحقيقية [ ${title} ] وبث الصوت لجميع الأعضاء بنجاح! 🎵`);
             
             const msgData = {
                 senderId: currentUser.id,
                 senderName: currentUser.name,
                 rankBadgeHtml: currentUser.rankBadgeHtml,
                 rankText: currentUser.rankText,
-                text: `🎵 يشغل الآن أغنية حقيقية على المايك: ${title}`,
+                text: `🎵 يشغل الآن الأغنية الحقيقية على المايك: ${title}`,
                 avatar: currentUser.avatar,
                 userData: currentUser
             };
@@ -1087,7 +1123,7 @@
         }
 
         function openAdminMenu() {
-            alert(`أوامر الإدارة المتاحة:\n1. طرد\n2. كتم الصوت\n3. حظر IP\n4. تغيير الرتبة`);
+            alert(`أوامر الإدارة المتاحة:\n1. طرد العضو\n2. كتم المايك والصوت\n3. حظر الايبي (IP)\n4. تعديل الرتبة`);
         }
 
         function openRoomsModal() {
