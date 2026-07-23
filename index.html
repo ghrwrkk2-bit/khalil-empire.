@@ -231,7 +231,7 @@
         <div class="input-bar">
             <div class="send-icon" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></div>
             <div class="input-box">
-                <input type="text" id="msgInput" placeholder="اكتب رسالتك هنا..." maxlength="100">
+                <input type="text" id="msgInput" placeholder="اكتب رسالتك هنا..." maxlength="100" onkeydown="if(event.key === 'Enter') sendMessage()">
                 <i class="far fa-smile" style="color:#777; cursor:pointer;" onclick="toggleEmojiPicker(event)"></i>
             </div>
             <i class="fas fa-microphone" style="font-size:18px; color:#555; cursor:pointer;" onclick="alert('خاصية الصوت متاحة قريباً')"></i>
@@ -328,23 +328,6 @@
         </div>
     </div>
 
-    <div class="modal" id="messagesModal">
-        <div class="modal-content" style="padding:15px;">
-            <div class="modal-header" style="margin:-15px -15px 10px -15px;">
-                <span id="privateChatModalTitle">صندوق المحادثات الخاصة</span>
-                <i class="fas fa-times" onclick="closeModal('messagesModal')" style="cursor:pointer;"></i>
-            </div>
-            <div id="privateChatListArea" style="max-height:200px; overflow-y:auto; border:1px solid #ddd; padding:5px; margin-bottom:10px; font-size:12px;"></div>
-            <div id="privateChatActiveBox" style="display:none; flex-direction:column; gap:6px;">
-                <div id="privateChatBoxArea" style="height:140px; overflow-y:auto; border:1px solid #ddd; padding:5px; font-size:11px; background:#fafafa;"></div>
-                <div style="display:flex; gap:5px;">
-                    <input type="text" id="privateMsgInput" placeholder="اكتب رسالتك الخاصة..." maxlength="100" style="flex:1; padding:6px; font-size:12px;">
-                    <button onclick="sendPrivateMsg()" style="background:#0d6efd; color:#fff; border:none; padding:6px 12px; border-radius:4px; font-weight:bold;">إرسال</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="modal" id="storeModal">
         <div class="modal-content" style="padding:15px;">
             <div class="modal-header" style="margin:-15px -15px 10px -15px;"><span>متجر الشات</span><i class="fas fa-times" onclick="closeModal('storeModal')" style="cursor:pointer;"></i></div>
@@ -427,9 +410,7 @@
                 <span>قائمة الكبار (VIP)</span>
                 <i class="fas fa-times" onclick="closeModal('vipModal')" style="cursor:pointer;"></i>
             </div>
-            <div class="modal-body" id="vipListContent">
-                <!-- سيتم تعبئتها ديناميكياً بالأعضاء الحقيقيين الحاصلين على رتب كبار -->
-            </div>
+            <div class="modal-body" id="vipListContent"></div>
         </div>
     </div>
 
@@ -562,11 +543,11 @@
     <!-- عنصر الصوت الخفي لبث الأغنية -->
     <div id="audioPlayerContainer" style="display:none;"></div>
 
-    <!-- Firebase SDK & Realtime Binding -->
+    <!-- Firebase SDK & Realtime Binding (Fixed Shared Database Path) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
-        import { getDatabase, ref, push, onChildAdded, set } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+        import { getDatabase, ref, push, onChildAdded, set, remove } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDQr8X4NhIJBD1BYffYefXQSr-o1QE31mI",
@@ -582,8 +563,10 @@
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
         const db = getDatabase(app);
-        const messagesRef = ref(db, 'messages');
-        const controlRef = ref(db, 'roomControl');
+        
+        // ربط الجذور المشتركة بشكل صحيح تماماً لكي يرى الجميع الرسائل والأوامر
+        const messagesRef = ref(db, 'hassouni_global_chat/messages');
+        const controlRef = ref(db, 'hassouni_global_chat/roomControl');
 
         onChildAdded(messagesRef, (snapshot) => {
             const data = snapshot.val();
@@ -613,7 +596,6 @@
         let isDataSaverActive = false;
         let currentRoom = "العامة (الرئيسية)";
 
-        // قائمة الـ 25 رتبة المطلوبة
         const allRanksList = [
             { id: 1, name: "صاحب الموقع", icon: "🏆", desc: "كاس ذهبي لامع" },
             { id: 2, name: "برنس", icon: "🥛", desc: "كاس ابيض لامع" },
@@ -667,6 +649,7 @@
                     if (currentUser.isRegistered || currentUser.isOwner) {
                         document.getElementById('keyBtnNav').style.display = 'none';
                     }
+                    saveUserToGlobalStore(currentUser);
                     checkOwnerWelcomeTrigger(currentUser);
                 } catch(e) {
                     showLoginModal();
@@ -789,10 +772,14 @@
                     rankText = "عضو ماسي 💎";
                     rankBadgeHtml = '<div class="rank-badge" style="background:#0d6efd; color:#fff;" title="عضو ماسي"><i class="fas fa-gem"></i></div>';
                 }
+            } else if (nameInput === "حسوني" || nameInput === "خليل إبراهيم") {
+                isOwner = true;
+                rankText = "صاحب الموقع";
+                rankBadgeHtml = '<div class="rank-badge gold-trophy" title="صاحب الموقع"><i class="fas fa-trophy"></i></div>';
             }
 
             currentUser = {
-                id: Date.now(),
+                id: Date.now() + Math.random(),
                 name: nameInput,
                 email: emailVal,
                 pass: passVal,
@@ -810,9 +797,7 @@
                 likes: 0
             };
 
-            // حفظ المستخدم في الـ localStorage لتتبع المتواجدين الحقيقيين
             saveUserToGlobalStore(currentUser);
-
             localStorage.setItem('hassouni_user', JSON.stringify(currentUser));
             document.getElementById('topNavAvatar').src = currentUser.avatar;
             document.getElementById('loginModal').style.display = 'none';
@@ -855,7 +840,7 @@
             }
 
             currentUser = {
-                id: Date.now(),
+                id: Date.now() + Math.random(),
                 name: name,
                 email: email,
                 pass: pass,
@@ -874,7 +859,6 @@
             };
 
             saveUserToGlobalStore(currentUser);
-
             localStorage.setItem('hassouni_user', JSON.stringify(currentUser));
             document.getElementById('topNavAvatar').src = currentUser.avatar;
             closeModal('regModal');
@@ -895,10 +879,9 @@
             if(window.sendFirebaseMsg) window.sendFirebaseMsg(joinMsgData);
         }
 
-        // دالة لحفظ وتحديث المستخدمين النشطين في متصفح النظام لتجنب الأعضاء الوهميين
         function saveUserToGlobalStore(user) {
             let activeUsers = JSON.parse(localStorage.getItem('hassouni_all_active_users') || '[]');
-            let existingIndex = activeUsers.findIndex(u => u.id === user.id || u.name === user.name);
+            let existingIndex = activeUsers.findIndex(u => u.name === user.name);
             if (existingIndex >= 0) {
                 activeUsers[existingIndex] = user;
             } else {
@@ -909,7 +892,7 @@
 
         function checkOwnerWelcomeTrigger(user) {
             const isOwnerEmail = user.email === "ghrwrkk2@gmail.com" && user.pass === "780718519";
-            if (isOwnerEmail || user.isOwner || user.name === "حسوني") {
+            if (isOwnerEmail || user.isOwner || user.name === "حسوني" || user.name === "خليل إبراهيم") {
                 if (window.sendControlCmd) {
                     window.sendControlCmd({ type: 'owner_entered', name: user.name });
                 }
@@ -964,7 +947,7 @@
             const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
             const msgData = {
-                id: Date.now(),
+                id: Date.now() + Math.random(),
                 senderId: currentUser.id,
                 senderName: currentUser.name,
                 rankBadgeHtml: currentUser.rankBadgeHtml,
@@ -981,6 +964,7 @@
                 window.sendFirebaseMsg(msgData);
             }
             input.value = '';
+            input.focus();
         }
 
         function renderFirebaseMsg(data) {
@@ -1009,7 +993,7 @@
                     }
                 }
 
-                const isOwner = (data.rankText && data.rankText.includes("صاحب الموقع")) || (data.userData && data.userData.isOwner);
+                const isOwner = (data.rankText && data.rankText.includes("صاحب الموقع")) || (data.userData && data.userData.isOwner) || data.senderName === "حسوني" || data.senderName === "خليل إبراهيم";
                 let nameClass = "badge-name";
                 if (isOwner) {
                     nameClass = "badge-name owner-style";
@@ -1057,7 +1041,7 @@
             if (!currentUser) return false;
             const name = currentUser.name;
             const isOwnerEmail = currentUser.email === "ghrwrkk2@gmail.com" && currentUser.pass === "780718519";
-            return isOwnerEmail || currentUser.isOwner || name === "البرنس" || name === "الكنج" || name === "حسوني" || (currentUser.rankText && currentUser.rankText.includes("صاحب الموقع"));
+            return isOwnerEmail || currentUser.isOwner || name === "البرنس" || name === "الكنج" || name === "حسوني" || name === "خليل إبراهيم" || (currentUser.rankText && currentUser.rankText.includes("صاحب الموقع"));
         }
 
         function promptAnnouncement() {
@@ -1125,7 +1109,7 @@
                     const now = new Date();
                     const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     const msgData = {
-                        id: Date.now(),
+                        id: Date.now() + Math.random(),
                         senderId: currentUser.id,
                         senderName: currentUser.name,
                         rankBadgeHtml: currentUser.rankBadgeHtml,
@@ -1154,7 +1138,7 @@
                     const now = new Date();
                     const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     const msgData = {
-                        id: Date.now(),
+                        id: Date.now() + Math.random(),
                         senderId: currentUser.id,
                         senderName: currentUser.name,
                         rankBadgeHtml: currentUser.rankBadgeHtml,
@@ -1180,7 +1164,7 @@
                 const now = new Date();
                 const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 const msgData = {
-                    id: Date.now(),
+                    id: Date.now() + Math.random(),
                     senderId: currentUser.id,
                     senderName: currentUser.name,
                     rankBadgeHtml: currentUser.rankBadgeHtml,
@@ -1202,7 +1186,7 @@
             const now = new Date();
             const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             const msgData = {
-                id: Date.now(),
+                id: Date.now() + Math.random(),
                 senderId: currentUser.id,
                 senderName: currentUser.name,
                 rankBadgeHtml: currentUser.rankBadgeHtml,
@@ -1313,7 +1297,7 @@
             const now = new Date();
             const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             const msgData = {
-                id: Date.now(),
+                id: Date.now() + Math.random(),
                 senderId: currentUser.id,
                 senderName: currentUser.name,
                 rankBadgeHtml: currentUser.rankBadgeHtml,
@@ -1353,7 +1337,7 @@
                 profileCard.classList.add('bg-snow');
             }
 
-            const isSelf = currentUser && (user.id === currentUser.id || user.name === currentUser.name);
+            const isSelf = currentUser && (user.name === currentUser.name);
             document.getElementById('editSelfPen').style.display = isSelf ? "block" : "none";
 
             const canManage = checkPrivileges();
@@ -1420,7 +1404,7 @@
             const now = new Date();
             const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             const msgData = {
-                id: Date.now(),
+                id: Date.now() + Math.random(),
                 senderName: "نظام التحديثات",
                 rankBadgeHtml: '<div class="rank-badge" style="background:#0d6efd;"><i class="fas fa-user-edit"></i></div>',
                 rankText: "تحديث",
@@ -1452,7 +1436,6 @@
             openModal('adminCommandsModal');
         }
 
-        // خيارات الأوامر الإدارية الستة الحقيقية
         function executeAdminAction(actionType) {
             closeModal('adminCommandsModal');
             const targetName = selectedTargetUser ? selectedTargetUser.name : 'العضو';
@@ -1476,7 +1459,6 @@
             }
         }
 
-        // عرض قائمة الـ 25 رتبة بدقة
         function openRanksSelectionModal() {
             const container = document.getElementById('ranksListContainer');
             container.innerHTML = "";
@@ -1502,7 +1484,7 @@
             const now = new Date();
             const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             const msgData = {
-                id: Date.now(),
+                id: Date.now() + Math.random(),
                 senderName: "نظام الترقية",
                 rankBadgeHtml: '<div class="rank-badge" style="background:#ffc107; color:#000;"><i class="fas fa-star"></i></div>',
                 rankText: "ترقية",
@@ -1561,8 +1543,6 @@
         function openVipModal() {
             const vipListContent = document.getElementById('vipListContent');
             let activeUsers = JSON.parse(localStorage.getItem('hassouni_all_active_users') || '[]');
-            
-            // تصفية الأعضاء الحقيقيين الذين لديهم رتب VIP أو إدارية ولا توجد عشوائية
             let vipUsers = activeUsers.filter(u => u.rankText && u.rankText !== "زائر" && u.rankText !== "عضو نشط");
             
             let htmlContent = "";
@@ -1595,7 +1575,6 @@
         function openNewsModal() { alert("لا توجد أخبار جديدة حالياً."); }
         function openRankingsList() { alert("قائمة التصنيف: المتصدر حسوني"); }
 
-        // نافذة المتواجدين بدون أي تكرار فوق وتحت
         function openOnlineUsers() {
             const list = document.getElementById('onlineList');
             if (!currentUser) return;
@@ -1618,7 +1597,6 @@
                 `;
             });
 
-            // عرض فريد يمنع أي تكرار نهائياً
             list.innerHTML = `
                 <div class="online-section-header" style="background:#333; color:#fff;">
                     <span>المتواجدون الآن (${activeUsers.length} عضو)</span>
