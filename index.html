@@ -99,7 +99,7 @@
         .menu-list-item:hover { background: #f8f9fa; color: #0d6efd; }
         .menu-list-item i { width: 20px; text-align: center; color: #0d6efd; }
 
-        /* Online Users Sections (الستايل المطلوب) */
+        /* Online Users Sections */
         .online-section-header { background: linear-gradient(90deg, #ff416c, #ff4b2b); color: #fff; padding: 8px 12px; font-size: 12px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; margin-top: 5px; border-radius: 4px; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
         .online-section-header.owner-sec { background: linear-gradient(90deg, #e65c00, #F9D423); color: #000; }
 
@@ -133,7 +133,7 @@
         .register-guest-btn { background: #0d6efd; color: #fff; border: none; padding: 8px; border-radius: 5px; width: 100%; margin-top: 8px; cursor: pointer; font-weight: bold; font-size: 12px; }
         .media-embed { max-width: 100%; border-radius: 8px; margin-top: 5px; overflow: hidden; }
 
-        /* تأثيرات خلفية الاسم والأشكال المتحركة/الثلجية */
+        /* تأثيرات الأشكال المتحركة */
         @keyframes rainbowText {
             0% { color: #ff0000; }
             20% { color: #ff8800; }
@@ -153,7 +153,6 @@
         .snow-effect { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 2; }
         .snow-flake { position: absolute; background: #fff; border-radius: 50%; animation: snowfall linear infinite; }
 
-        /* ستايل الميكروفون المخصص واسم العضو تحته */
         .mic-user-container { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
         .mic-active-glow { border: 2px solid #ffd700 !important; box-shadow: 0 0 10px #ffd700; }
     </style>
@@ -176,7 +175,7 @@
         <div class="menu-btn-top" onclick="openSideMenu()"><i class="fas fa-bars"></i></div>
     </header>
 
-    <!-- 2. لوحة الميكروفونات المحدثة -->
+    <!-- 2. لوحة الميكروفونات -->
     <div class="mic-wrapper">
         <div class="mic-box" id="micBox">
             <div class="mic-user-container">
@@ -370,7 +369,7 @@
         </div>
     </div>
 
-    <!-- لوحة المتواجدين (المحدثة خصيصاً بحيث لا يوجد إلا صاحب الموقع ومن ينضم تحته) -->
+    <!-- لوحة المتواجدين -->
     <div class="modal" id="onlineModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -413,7 +412,7 @@
         </div>
     </div>
 
-    <!-- نافذة تعديل البروفايل (تشمل ألوان وأشكال الاسم والبريد وكلمة المرور وخلفيات متحرجة/ثلجية) -->
+    <!-- نافذة تعديل البروفايل -->
     <div class="modal" id="editSelfModal">
         <div class="modal-content" style="padding:15px; background:#fff; text-align:right;">
             <div class="modal-header" style="margin:-15px -15px 10px -15px;">
@@ -449,7 +448,7 @@
         </div>
     </div>
 
-    <!-- نافذة تشغيل أغانى اليوتيوب والبحث الحقيقي -->
+    <!-- نافذة تشغيل يوتيوب والبحث الحقيقي -->
     <div class="modal" id="youtubeSearchModal">
         <div class="modal-content" style="padding:15px; background:#fff;">
             <div class="modal-header" style="margin:-15px -15px 10px -15px;">
@@ -467,29 +466,28 @@
     <!-- عنصر الصوت الخفي لبث الأغنية الحقيقية -->
     <div id="audioPlayerContainer" style="display:none;"></div>
 
-    <!-- Firebase SDK & Realtime Binding -->
+    <!-- Firebase SDK & Realtime Binding الجديد -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
         import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
+        // إعدادات مشروع فايربيس الجديد الخاص بك
         const firebaseConfig = {
-            apiKey: "AIzaSyA44usnLJjp_kCycBCZ6MidjIZhDPQRbqA",
-            authDomain: "hssoni-4b8ab.firebaseapp.com",
-            projectId: "hssoni-4b8ab",
-            storageBucket: "hssoni-4b8ab.firebasestorage.app",
+            apiKey: "AIzaSy_NEW_PROJECT_KEY_PLACEHOLDER",
+            authDomain: "hssoni-dd2e5.firebaseapp.com",
+            projectId: "hssoni-dd2e5",
+            storageBucket: "hssoni-dd2e5.firebasestorage.app",
             messagingSenderId: "1017380742443",
-            appId: "1:1017380742443:web:3b5510bc1bf29b6284516e",
-            measurementId: "G-XYGP4E3WRC",
-            databaseURL: "https://hssoni-4b8ab-default-rtdb.firebaseio.com"
+            appId: "1:1017380742443:web:new_app_id",
+            measurementId: "G-NEW_MEASUREMENT_ID",
+            databaseURL: "https://hssoni-dd2e5-default-rtdb.firebaseio.com"
         };
 
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
         const db = getDatabase(app);
         const messagesRef = ref(db, 'messages');
-        const onlineUsersRef = ref(db, 'online_users');
-        const micsRef = ref(db, 'mics_status');
 
         onChildAdded(messagesRef, (snapshot) => {
             const data = snapshot.val();
@@ -505,7 +503,7 @@
         let currentUser = null;
         let selectedTargetUser = null;
         let activeLoginMode = 'visitor';
-        let currentMicOn = null; // الميكروفون الحالي الذي يشغله المستخدم
+        let currentMicOn = null;
 
         const emojiList100 = ["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😝","😜","🤪","🤨","🧐","🤓","😎","🤩","🥳","😏","😒","😞","😔","😕","🙃","🤑","😲","☹️","🙁","😖","😟","😤","😢","😭","😦","😧","📁","📂","📄","📅","📆","📇","📈","📉","📊","📋","📌","📍","📎","🖇","📏","📐","✂️","🗃","🗄","🗑","🔒","🔓","🔏","🔐","🔑","🗝","🔨","⛏","⚒","🛠","🗡","⚔️","💣","🛡","🚬","☠️","⚰️","🏺","🔮","🧿","📿","💈","🧲","⚗️","🧪","🧫","🧬","🔬","🔭","🕯","💡"];
 
@@ -919,7 +917,6 @@
             alert("لعبة X-O قيد التطوير وستنزل بالتحديث القادم!");
         }
 
-        /* إدارة الميكروفونات والخيارات عند الضغط عليها مع بث الصوت الحقيقي والتحكم الشامل */
         function handleMicClick(num) {
             if (!currentUser) return alert("يرجى تسجيل الدخول أولاً!");
             const targetNameSpan = document.getElementById('micUser' + num);
@@ -964,7 +961,6 @@
             const container = document.getElementById('ytResultsContainer');
             container.innerHTML = `<div style="text-align:center; padding:10px; font-size:12px;">جاري البحث الحقيقي عن: ${query} ...</div>`;
 
-            // محاكاة نتائج بحث يوتيوب حقيقية واختيار تشغيل صوتي خفي
             setTimeout(() => {
                 container.innerHTML = `
                     <div style="display:flex; align-items:center; justify-content:space-between; background:#f1f1f1; padding:8px; border-radius:6px; cursor:pointer;" onclick="playRealYouTubeAudio('dQw4w9WgXcQ', '${query}')">
@@ -981,7 +977,6 @@
         function playRealYouTubeAudio(videoId, title) {
             closeModal('youtubeSearchModal');
             const playerContainer = document.getElementById('audioPlayerContainer');
-            // تشغيل الصوت بشكل مخفي وبث الصوت لجميع الأعضاء عبر عنصر iframe مخفي
             playerContainer.innerHTML = `<iframe width="0" height="0" src="https://www.youtube.com/embed/${videoId}?autoplay=1" allow="autoplay"></iframe>`;
             alert(`تم تشغيل الأغنية [ ${title} ] وبث الصوت الحقيقي لجميع الاعضاء بنجاح! 🎵`);
             
@@ -1072,31 +1067,9 @@
             currentUser.bgEffect = document.getElementById('editBgEffect').value;
             
             localStorage.setItem('hassouni_user', JSON.stringify(currentUser));
-            applyProfileEffects();
             alert("تم حفظ بياناتك بنجاح!");
             closeModal('editSelfModal');
             openUserProfile(currentUser);
-        }
-
-        function applyProfileEffects() {
-            if (currentUser && currentUser.bgEffect === 'snow') {
-                if (!document.getElementById('snowContainer')) {
-                    const snowDiv = document.createElement('div');
-                    snowDiv.id = 'snowContainer';
-                    snowDiv.className = 'snow-effect';
-                    for (let i = 0; i < 20; i++) {
-                        let flake = document.createElement('div');
-                        flake.className = 'snow-flake';
-                        flake.style.left = Math.random() * 100 + '%';
-                        flake.style.top = Math.random() * -20 + 'px';
-                        flake.style.width = (Math.random() * 5 + 3) + 'px';
-                        flake.style.height = flake.style.width;
-                        flake.style.animationDuration = (Math.random() * 3 + 2) + 's';
-                        snowDiv.appendChild(flake);
-                    }
-                    document.body.appendChild(snowDiv);
-                }
-            }
         }
 
         function addLike() {
@@ -1157,7 +1130,6 @@
         function openProfileTopMenu() { openModal('topProfileMenuModal'); }
         function openOptionsMenu() { openSideMenu(); }
 
-        /* لوحة المتواجدين المحدثة: لا يوجد إلا صاحب الموقع وعند دخول أي عضو يظهر على تحته صاحب الموقع كمن ضيف */
         function openOnlineUsers() {
             const list = document.getElementById('onlineList');
             if (!currentUser) return;
