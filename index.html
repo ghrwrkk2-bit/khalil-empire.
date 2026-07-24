@@ -2,114 +2,206 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- إعدادات الشاشة لمنع التكبير التلقائي ودعم النوتش والشاشات الحديثة -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#000000">
     <title>شات حسوني | أحلى دردشة عربية</title>
+
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: tahoma, arial, sans-serif; }
-        body { background-color: #b0b0b0; color: #000; display: flex; flex-direction: column; height: 100vh; overflow: hidden; transition: 0.3s; }
+        /* إعادة ضبط الشمولية لمنع الاختلافات بين المتصفحات */
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: tahoma, arial, sans-serif, system-ui, -apple-system; 
+            -webkit-tap-highlight-color: transparent; /* إزالة التظليل عند اللمس في الهواتف */
+            -webkit-touch-callout: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100vh;
+            height: 100dvh; /* ارتفاع ديناميكي مخصص لمتصفحات الهواتف الحديثة */
+            overflow: hidden;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        body { 
+            background-color: #b0b0b0; 
+            color: #000; 
+            display: flex; 
+            flex-direction: column; 
+            transition: background-color 0.3s, filter 0.3s;
+            /* مراعاة حواف الآيفون والنوتش */
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            padding-left: env(safe-area-inset-left, 0px);
+            padding-right: env(safe-area-inset-right, 0px);
+        }
+
         body.saver-mode { background-color: #222 !important; filter: grayscale(40%); }
 
         /* الشريط العلوي Top Nav */
-        .top-nav { display: flex; align-items: center; justify-content: space-between; background-color: #000; padding: 6px 10px; color: #fff; z-index: 10; border-bottom: 2px solid #ffd700; }
-        .avatar-container { position: relative; cursor: pointer; }
+        .top-nav { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            background-color: #000; 
+            padding: 6px 10px; 
+            color: #fff; 
+            z-index: 10; 
+            border-bottom: 2px solid #ffd700; 
+            flex-shrink: 0;
+        }
+        .avatar-container { position: relative; cursor: pointer; flex-shrink: 0; }
         .avatar { width: 38px; height: 38px; border-radius: 50%; border: 2px solid #28a745; object-fit: cover; }
         
-        .nav-icons { display: flex; justify-content: space-between; align-items: center; flex: 1; margin-right: 15px; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: #fff; cursor: pointer; transition: 0.2s; }
-        .nav-item:hover { color: #ffd700; transform: scale(1.05); }
+        .nav-icons { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            flex: 1; 
+            margin-right: 10px; 
+            overflow-x: auto; /* دعم التمرير إذا كانت الشاشة ضيقة جداً */
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .nav-icons::-webkit-scrollbar { display: none; }
+
+        .nav-item { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            font-size: 10px; 
+            color: #fff; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            min-width: 42px;
+            flex-shrink: 0;
+        }
+        .nav-item:hover, .nav-item:active { color: #ffd700; transform: scale(1.05); }
         .nav-item i { font-size: 15px; margin-bottom: 2px; }
         .nav-item.gold { color: #ffd700; }
         .nav-item.yellow { color: #ffeb3b; }
 
         /* لوحة الميكروفونات */
-        .mic-wrapper { display: flex; flex-direction: column; align-items: center; background: transparent; z-index: 9; }
-        .mic-box { display: flex; gap: 12px; align-items: center; padding: 6px; background: transparent; }
+        .mic-wrapper { display: flex; flex-direction: column; align-items: center; background: transparent; z-index: 9; flex-shrink: 0; }
+        .mic-box { display: flex; gap: 8px; align-items: center; padding: 6px; background: transparent; max-width: 100%; overflow-x: auto; }
         .mic-container { display: flex; flex-direction: column; align-items: center; position: relative; }
         .mic-btn { background-color: #0d6efd; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; border: 2px solid #fff; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3); background-size: cover; background-position: center; transition: 0.2s; }
-        .mic-btn:hover { transform: scale(1.05); }
-        .mic-username { font-size: 9px; color: #fff; background: rgba(0,0,0,0.7); padding: 1px 5px; border-radius: 4px; margin-top: 3px; max-width: 50px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .mic-toggle-btn { background: #000; color: #fff; width: 28px; height: 18px; border-radius: 0 0 8px 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; }
+        .mic-btn:active { transform: scale(0.95); }
+        .mic-username { font-size: 9px; color: #fff; background: rgba(0,0,0,0.7); padding: 1px 5px; border-radius: 4px; margin-top: 3px; max-width: 55px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; }
+        .mic-toggle-btn { background: #000; color: #fff; width: 32px; height: 18px; border-radius: 0 0 8px 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; }
 
         /* منطقة الشات العام */
-        .chat-area { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; background-color: #b0b0b0; background-size: cover; background-position: center; }
+        .chat-area { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 10px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+            background-color: #b0b0b0; 
+            background-size: cover; 
+            background-position: center; 
+            -webkit-overflow-scrolling: touch; /* تمرير سلس على هواتف آيفون */
+        }
         .announcement { background-color: rgba(216, 216, 216, 0.95); border: 1px solid #999; border-radius: 6px; padding: 8px; font-size: 12px; text-align: center; line-height: 1.4; color: #000; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         
         .chat-row { display: flex; flex-direction: column; gap: 4px; font-size: 13px; background: rgba(255,255,255,0.96); padding: 8px 10px; border-radius: 6px; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: 0.2s; }
-        .chat-row:hover { background: rgba(255,255,255,1); }
         .msg-time { font-size: 9px; color: #555; background: rgba(0,0,0,0.05); padding: 2px 5px; border-radius: 4px; margin-right: auto; }
         .quoted-box { background: rgba(0,0,0,0.08); border-right: 3px solid #0d6efd; padding: 3px 6px; font-size: 11px; margin-bottom: 3px; border-radius: 3px; color: #333; }
 
-        /* الترتيب الجديد والدقيق: الأفاتار + أيقونة الكاس منفصلة + اسم العضو داخل خلفية الرتبة */
+        /* الأفاتار ورتبة العضو */
         .rank-display-flex { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         .user-avatar { width: 34px; height: 34px; border-radius: 50%; border: 1px solid #ffd700; object-fit: cover; cursor: pointer; transition: 0.2s; }
-        .user-avatar:hover { transform: scale(1.08); }
+        .user-avatar:active { transform: scale(1.08); }
         
-        /* الصندوق الخلفي الذي يحمل اسم العضو الآن */
         .rank-bg-box { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; border: 1px solid rgba(0,0,0,0.2); cursor: pointer; transition: 0.2s; }
         .rank-bg-box:hover { opacity: 0.9; text-decoration: underline; }
         
-        /* أيقونة الكاس أو الرتبة منفصلة بوضوح */
         .rank-icon-only { font-size: 14px; padding: 2px; }
 
         /* شريط الإدخال */
-        .input-bar { display: flex; flex-direction: column; background-color: #c0c0c0; padding: 6px; gap: 4px; border-top: 1px solid #999; }
-        .input-main-row { display: flex; align-items: center; gap: 8px; width: 100%; }
-        .send-icon { background-color: #000; color: #fff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
-        .send-icon:hover { background-color: #0d6efd; }
+        .input-bar { display: flex; flex-direction: column; background-color: #c0c0c0; padding: 6px; gap: 4px; border-top: 1px solid #999; flex-shrink: 0; }
+        .input-main-row { display: flex; align-items: center; gap: 6px; width: 100%; }
+        .send-icon { background-color: #000; color: #fff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
+        .send-icon:active { background-color: #0d6efd; }
         .input-box { flex: 1; background-color: #fff; border-radius: 20px; display: flex; align-items: center; padding: 0 10px; height: 36px; border: 1px solid #777; }
-        .input-box input { border: none; outline: none; width: 100%; font-size: 13px; background: transparent; color: #000; }
+        
+        /* ضبط حجم الخط بـ 16px لمنع التكبير التلقائي المتعب في آيفون iOS Safari */
+        .input-box input, select, textarea { 
+            border: none; 
+            outline: none; 
+            width: 100%; 
+            font-size: 16px !important; 
+            background: transparent; 
+            color: #000; 
+        }
         
         #replyPreviewBar { display: none; background: #e0e0e0; padding: 4px 10px; font-size: 11px; border-radius: 4px; justify-content: space-between; align-items: center; border-right: 3px solid #0d6efd; }
 
         /* الشريط السفلي */
-        .bottom-nav { display: flex; justify-content: space-around; background-color: #000; padding: 6px 0; color: #fff; border-top: 2px solid #ffd700; }
-        .bottom-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: #fff; cursor: pointer; transition: 0.2s; }
-        .bottom-item:hover { color: #ffd700; transform: translateY(-2px); }
+        .bottom-nav { display: flex; justify-content: space-around; background-color: #000; padding: 6px 0; color: #fff; border-top: 2px solid #ffd700; flex-shrink: 0; }
+        .bottom-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: #fff; cursor: pointer; transition: 0.2s; flex: 1; }
+        .bottom-item:active { color: #ffd700; transform: translateY(-2px); }
         .bottom-item i { font-size: 16px; margin-bottom: 2px; }
 
         /* النوافذ الانبثاقية والقوائم */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; animation: fadeIn 0.2s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .modal-content { background: #fff; color: #000; width: 95%; max-width: 420px; border-radius: 10px; overflow: hidden; max-height: 90vh; display: flex; flex-direction: column; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .modal-header { background: #000; color: #ffd700; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: bold; }
-        .modal-body { padding: 15px; overflow-y: auto; }
+        
+        .modal-content { 
+            background: #fff; 
+            color: #000; 
+            width: 92%; 
+            max-width: 420px; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            max-height: 88dvh; 
+            display: flex; 
+            flex-direction: column; 
+            position: relative; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); 
+        }
+        .modal-header { background: #000; color: #ffd700; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: bold; flex-shrink: 0; }
+        .modal-body { padding: 15px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
-        .side-menu-list { display: flex; flex-direction: column; }
+        .side-menu-list { display: flex; flex-direction: column; -webkit-overflow-scrolling: touch; }
         .side-menu-item { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 13px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: 0.2s; }
-        .side-menu-item:hover { background: #f5f5f5; color: #0d6efd; }
+        .side-menu-item:active { background: #f5f5f5; color: #0d6efd; }
 
         /* لوحة الدخول */
-        .welcome-card { background: #fff; overflow-y: auto; max-height: 85vh; text-align: right; }
+        .welcome-card { background: #fff; overflow-y: auto; max-height: 88dvh; text-align: right; -webkit-overflow-scrolling: touch; }
         .welcome-header-cover { height: 120px; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.7)), url('https://upload.wikimedia.org/wikipedia/commons/8/89/Flag_of_Yemen.svg') center/cover; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; text-shadow: 0 2px 4px #000; }
         .login-tabs-btn { display: flex; justify-content: space-around; background: #222; padding: 6px; }
         .login-tab-btn { background: #333; color: #fff; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 12px; flex: 1; margin: 0 3px; font-weight: bold; transition: 0.2s; }
         .login-tab-btn.active { background: #0d6efd; }
         .login-form-box { padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .login-form-box input, .login-form-box select { padding: 9px; border: 1px solid #ccc; border-radius: 5px; font-size: 12px; outline: none; }
-        .login-submit-btn { background: #28a745; color: #fff; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.2s; }
-        .login-submit-btn:hover { background: #218838; }
+        .login-form-box input, .login-form-box select { padding: 9px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; outline: none; }
+        .login-submit-btn { background: #28a745; color: #fff; border: none; padding: 12px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; }
+        .login-submit-btn:active { background: #218838; }
 
         /* البروفايل */
         .profile-card-modal { background: #18191a; color: #fff; }
-        .profile-header-bg { position: relative; height: 150px; background-size: cover; background-position: center; display: flex; align-items: flex-start; justify-content: space-between; padding: 10px; }
+        .profile-header-bg { position: relative; height: 140px; background-size: cover; background-position: center; display: flex; align-items: flex-start; justify-content: space-between; padding: 10px; }
         .profile-user-avatar { position: absolute; bottom: -25px; right: 15px; width: 75px; height: 75px; border-radius: 15px; border: 3px solid #ffd700; object-fit: cover; }
-        .profile-body-content { padding: 35px 15px 15px 15px; background: #18191a; }
+        .profile-body-content { padding: 35px 15px 15px 15px; background: #18191a; overflow-y: auto; -webkit-overflow-scrolling: touch; }
         .profile-actions-bar { display: flex; gap: 4px; margin: 12px 0; background: #242526; padding: 6px; border-radius: 8px; }
-        .profile-action-btn { flex: 1; background: #3a3b3c; color: #fff; border: none; padding: 6px 2px; border-radius: 5px; font-size: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: 0.2s; }
-        .profile-action-btn:hover { background: #4e4f50; }
+        .profile-action-btn { flex: 1; background: #3a3b3c; color: #fff; border: none; padding: 8px 2px; border-radius: 5px; font-size: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: 0.2s; }
+        .profile-action-btn:active { background: #4e4f50; }
         .profile-action-btn i { font-size: 12px; }
-        .info-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 11px; }
-        .admin-cmd-btn { background: #dc3545; color: #fff; border: none; padding: 9px; border-radius: 5px; width: 100%; margin-top: 10px; cursor: pointer; font-weight: bold; font-size: 12px; transition: 0.2s; }
-        .admin-cmd-btn:hover { background: #c82333; }
-        
+        .info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 12px; }
+        .admin-cmd-btn { background: #dc3545; color: #fff; border: none; padding: 10px; border-radius: 5px; width: 100%; margin-top: 10px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.2s; }
+
         /* لوحة التحكم */
-        .admin-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 10px; }
+        .admin-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 5px; }
         .admin-card-item { background: #f8f9fa; border: 1px solid #ddd; padding: 10px; border-radius: 6px; text-align: center; cursor: pointer; font-size: 11px; font-weight: bold; display: flex; flex-direction: column; align-items: center; gap: 5px; transition: 0.2s; }
         .admin-card-item i { font-size: 16px; color: #0d6efd; }
-        .admin-card-item:hover { background: #e2e6ea; transform: translateY(-2px); }
+        .admin-card-item:active { background: #e2e6ea; }
     </style>
 </head>
 <body>
@@ -170,10 +262,10 @@
             <div class="send-icon" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></div>
             <div class="input-box">
                 <input type="text" id="msgInput" placeholder="اكتب رسالتك هنا..." onkeypress="if(event.key === 'Enter') sendMessage()">
-                <i class="far fa-smile" style="color:#777; cursor:pointer;" onclick="alert('قريباً: لوحة الوجوه التعبيرية')"></i>
+                <i class="far fa-smile" style="color:#777; cursor:pointer; padding: 5px;" onclick="alert('قريباً: لوحة الوجوه التعبيرية')"></i>
             </div>
-            <i class="fas fa-microphone" style="font-size:18px; color:#555; cursor:pointer;" onclick="alert('التسجيل الصوتي مفعل')"></i>
-            <i class="fas fa-plus" style="font-size:18px; color:#555; cursor:pointer;" onclick="openModal('plusMenuModal')"></i>
+            <i class="fas fa-microphone" style="font-size:18px; color:#555; cursor:pointer; padding: 4px;" onclick="alert('التسجيل الصوتي مفعل')"></i>
+            <i class="fas fa-plus" style="font-size:18px; color:#555; cursor:pointer; padding: 4px;" onclick="openModal('plusMenuModal')"></i>
         </div>
     </div>
 
@@ -193,14 +285,14 @@
         <div class="modal-content" style="max-width:350px; background:#fff; border-radius:15px; padding:15px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <span style="font-weight:bold; font-size:13px;">مشاركة الوسائط والألعاب</span>
-                <i class="fas fa-times" onclick="closeModal('plusMenuModal')" style="cursor:pointer;"></i>
+                <i class="fas fa-times" onclick="closeModal('plusMenuModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div style="display:flex; justify-content:space-around; align-items:center; padding:10px 0;">
-                <div onclick="alert('رفع ملف أو صورة')" style="background:#e3f2fd; width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fas fa-cloud-upload-alt" style="color:#0d6efd; font-size:20px;"></i></div>
-                <div onclick="alert('مشاركة فيديو تيك توك')" style="background:#000; width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fab fa-tiktok" style="color:#fff; font-size:20px;"></i></div>
-                <div onclick="alert('لعبة النرد')" style="background:#e8f5e9; width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fas fa-dice" style="color:#28a745; font-size:20px;"></i></div>
-                <div onclick="alert('مشاركة فيديو يوتيوب')" style="background:#ffebee; width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fab fa-youtube" style="color:#ff0000; font-size:20px;"></i></div>
-                <div onclick="alert('لعبة إكس أو')" style="background:#fff3e0; width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fas fa-gamepad" style="color:#ff9800; font-size:20px;"></i></div>
+                <div onclick="alert('رفع ملف أو صورة')" style="background:#e3f2fd; width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fas fa-cloud-upload-alt" style="color:#0d6efd; font-size:18px;"></i></div>
+                <div onclick="alert('مشاركة فيديو تيك توك')" style="background:#000; width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fab fa-tiktok" style="color:#fff; font-size:18px;"></i></div>
+                <div onclick="alert('لعبة النرد')" style="background:#e8f5e9; width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fas fa-dice" style="color:#28a745; font-size:18px;"></i></div>
+                <div onclick="alert('مشاركة فيديو يوتيوب')" style="background:#ffebee; width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fab fa-youtube" style="color:#ff0000; font-size:18px;"></i></div>
+                <div onclick="alert('لعبة إكس أو')" style="background:#fff3e0; width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fas fa-gamepad" style="color:#ff9800; font-size:18px;"></i></div>
             </div>
         </div>
     </div>
@@ -210,14 +302,14 @@
         <div class="modal-content" style="max-width:320px; padding:15px; text-align:center;">
             <div class="modal-header" style="margin:-15px -15px 15px -15px;">
                 <span id="micModalTitle">خيارات المايك</span>
-                <i class="fas fa-times" onclick="closeModal('micControlModal')" style="cursor:pointer;"></i>
+                <i class="fas fa-times" onclick="closeModal('micControlModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div style="display:flex; flex-direction:column; gap:8px;">
-                <button onclick="micAction('mute')" style="padding:10px; background:#ffc107; color:#000; border:none; border-radius:5px; font-weight:bold; cursor:pointer;"><i class="fas fa-microphone-slash"></i> كتم المايك</button>
-                <button onclick="micAction('unmute')" style="padding:10px; background:#28a745; color:#fff; border:none; border-radius:5px; font-weight:bold; cursor:pointer;"><i class="fas fa-microphone"></i> فتح كتم المايك</button>
-                <button onclick="micAction('playSong')" style="padding:10px; background:#0d6efd; color:#fff; border:none; border-radius:5px; font-weight:bold; cursor:pointer;"><i class="fab fa-youtube"></i> بحث يوتيوب وبث صوت حقيقي للجميع</button>
-                <button onclick="micAction('stopSong')" style="padding:10px; background:#6c757d; color:#fff; border:none; border-radius:5px; font-weight:bold; cursor:pointer;"><i class="fas fa-stop"></i> ايقاف الاغنية الحالية</button>
-                <button onclick="micAction('leave')" style="padding:10px; background:#dc3545; color:#fff; border:none; border-radius:5px; font-weight:bold; cursor:pointer;"><i class="fas fa-sign-out-alt"></i> نزول من المايك</button>
+                <button onclick="micAction('mute')" style="padding:11px; background:#ffc107; color:#000; border:none; border-radius:6px; font-weight:bold; cursor:pointer;"><i class="fas fa-microphone-slash"></i> كتم المايك</button>
+                <button onclick="micAction('unmute')" style="padding:11px; background:#28a745; color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;"><i class="fas fa-microphone"></i> فتح كتم المايك</button>
+                <button onclick="micAction('playSong')" style="padding:11px; background:#0d6efd; color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;"><i class="fab fa-youtube"></i> بحث يوتيوب وبث صوت حقيقي للجميع</button>
+                <button onclick="micAction('stopSong')" style="padding:11px; background:#6c757d; color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;"><i class="fas fa-stop"></i> ايقاف الاغنية الحالية</button>
+                <button onclick="micAction('leave')" style="padding:11px; background:#dc3545; color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;"><i class="fas fa-sign-out-alt"></i> نزول من المايك</button>
             </div>
         </div>
     </div>
@@ -227,12 +319,12 @@
         <div class="modal-content" style="padding:15px; max-width:400px; background:#fff;">
             <div class="modal-header" style="margin:-15px -15px 10px -15px;">
                 <span>بحث يوتيوب وبث الصوت للجميع</span>
-                <i class="fas fa-times" onclick="closeModal('ytSearchModal')" style="cursor:pointer;"></i>
+                <i class="fas fa-times" onclick="closeModal('ytSearchModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div style="display:flex; flex-direction:column; gap:8px;">
-                <input type="text" id="ytSearchQuery" placeholder="اكتب اسم الأغنية أو الفنان للبحث..." style="padding:9px; border:1px solid #ccc; border-radius:5px; font-size:12px;">
-                <button onclick="executeYouTubeSearch()" style="background:#ff0000; color:#fff; border:none; padding:9px; border-radius:5px; font-weight:bold; cursor:pointer;"><i class="fab fa-youtube"></i> بحث وبث الصوت الحقيقي</button>
-                <div id="ytResultsArea" style="max-height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:5px; margin-top:5px;"></div>
+                <input type="text" id="ytSearchQuery" placeholder="اكتب اسم الأغنية أو الفنان للبحث..." style="padding:10px; border:1px solid #ccc; border-radius:5px; font-size:14px;">
+                <button onclick="executeYouTubeSearch()" style="background:#ff0000; color:#fff; border:none; padding:11px; border-radius:5px; font-weight:bold; cursor:pointer;"><i class="fab fa-youtube"></i> بحث وبث الصوت الحقيقي</button>
+                <div id="ytResultsArea" style="max-height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:5px; margin-top:5px; -webkit-overflow-scrolling: touch;"></div>
             </div>
         </div>
     </div>
@@ -242,7 +334,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <span>خيارات الحساب الشخصي</span>
-                <i class="fas fa-times" onclick="closeModal('topProfileModal')" style="cursor:pointer;"></i>
+                <i class="fas fa-times" onclick="closeModal('topProfileModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div class="side-menu-list">
                 <div class="side-menu-item" onclick="alert('معلومات المستوى: ' + (currentUser? currentUser.level : 1))"><i class="fas fa-layer-group"></i> معلومات المستوى</div>
@@ -258,9 +350,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <span>قائمة شات حسوني الرئيسية</span>
-                <i class="fas fa-times" onclick="closeModal('sideMenuModal')" style="cursor:pointer;"></i>
+                <i class="fas fa-times" onclick="closeModal('sideMenuModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
-            <div class="side-menu-list" style="max-height:75vh; overflow-y:auto;">
+            <div class="side-menu-list" style="max-height:75vh; overflow-y:auto; -webkit-overflow-scrolling: touch;">
                 <div class="side-menu-item" onclick="closeModal('sideMenuModal'); openModal('roomsListModal');"><i class="fas fa-door-closed"></i> قائمة الرومات</div>
                 <div class="side-menu-item" onclick="openModal('friendsModal')"><i class="fas fa-stream"></i> حائط الأصدقاء</div>
                 <div class="side-menu-item" onclick="openOnlineList()"><i class="fas fa-list-ol"></i> قائمة التصنيف</div>
@@ -276,16 +368,16 @@
         <div class="modal-content" style="padding:15px;">
             <div class="modal-header" style="margin:-15px -15px 15px -15px;">
                 <span>خيارات الروم والخيارات الإضافية</span>
-                <i class="fas fa-times" onclick="closeModal('roomOptsModal')" style="cursor:pointer;"></i>
+                <i class="fas fa-times" onclick="closeModal('roomOptsModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div style="display:flex; flex-direction:column; gap:10px;" id="roomOptsListContainer">
-                <button onclick="cleanRoom()" style="padding:10px; background:#dc3545; color:#fff; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">🧹 تنظيف الروم (الشات العام)</button>
+                <button onclick="cleanRoom()" style="padding:11px; background:#dc3545; color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">🧹 تنظيف الروم (الشات العام)</button>
                 <label style="font-weight:bold; font-size:12px;">🖼️ رفع خلفية للروم:</label>
-                <input type="file" id="roomBgFile" accept="image/*" onchange="uploadRoomBg(this)" style="padding:6px; font-size:11px;">
+                <input type="file" id="roomBgFile" accept="image/*" onchange="uploadRoomBg(this)" style="padding:6px; font-size:12px;">
                 
                 <button id="ownerControlPanelBtn" onclick="openAdminDashboard()" style="display:none; padding:12px; background:linear-gradient(45deg,#ffd700,#ff8c00); color:#000; border:none; border-radius:6px; font-weight:bold; font-size:13px; cursor:pointer; box-shadow:0 0 10px rgba(255,215,0,0.5);">👑 لوحة التحكم (صاحب الموقع فقط)</button>
                 
-                <button onclick="addNewOptionItem()" style="padding:10px; background:#17a2b8; color:#fff; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">➕ أضف خيار جديد للقائمة</button>
+                <button onclick="addNewOptionItem()" style="padding:11px; background:#17a2b8; color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">➕ أضف خيار جديد للقائمة</button>
             </div>
         </div>
     </div>
@@ -322,7 +414,7 @@
 
                 <button class="login-submit-btn" onclick="submitLogin()">دخول الشات</button>
                 
-                <div style="text-align:center; margin-top:5px; font-size:11px; padding:6px; background:#f1f1f1; border-radius:5px;">
+                <div style="text-align:center; margin-top:5px; font-size:11px; padding:8px; background:#f1f1f1; border-radius:5px;">
                     <i class="fab fa-whatsapp" style="color:#25d366; font-size:14px;"></i> للتواصل والدعم الفني: 
                     <a href="https://wa.me/967780718519" target="_blank" style="color:#0d6efd; font-weight:bold; text-decoration:none;">967780718519</a>
                 </div>
@@ -335,13 +427,13 @@
         <div class="modal-content" style="padding:15px;">
             <div class="modal-header" style="margin:-15px -15px 15px -15px;">
                 <span>تسجيل حساب وحصول العضوية</span>
-                <i class="fas fa-times" onclick="closeModal('regModal')" style="cursor:pointer;"></i>
+                <i class="fas fa-times" onclick="closeModal('regModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div style="display:flex; flex-direction:column; gap:8px;">
                 <input type="text" id="regName" placeholder="الاسم المستعار...">
                 <input type="email" id="regEmail" placeholder="البريد الإلكتروني...">
                 <input type="password" id="regPass" placeholder="كلمة المرور...">
-                <button onclick="registerKey()" style="background:#28a745; color:#fff; border:none; padding:9px; border-radius:5px; cursor:pointer; font-weight:bold;">تسجيل الحساب الآن</button>
+                <button onclick="registerKey()" style="background:#28a745; color:#fff; border:none; padding:11px; border-radius:5px; cursor:pointer; font-weight:bold;">تسجيل الحساب الآن</button>
             </div>
         </div>
     </div>
@@ -351,7 +443,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <span>المتواجدين الآن في الشات (<span id="onlineCount">0</span>)</span>
-                <i class="fas fa-times" onclick="closeModal('onlineModal')" style="cursor:pointer;"></i>
+                <i class="fas fa-times" onclick="closeModal('onlineModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div class="modal-body" id="onlineList"></div>
         </div>
@@ -362,7 +454,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <span>قائمة الغرف العامة</span>
-                <i class="fas fa-times" onclick="closeModal('roomsListModal')" style="cursor:pointer;"></i>
+                <i class="fas fa-times" onclick="closeModal('roomsListModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div class="modal-body" style="display:flex; flex-direction:column; gap:8px;">
                 <div class="side-menu-item" onclick="switchRoom('روم شات حسوني الرئيسي')">🏰 روم شات حسوني الرئيسي</div>
@@ -378,7 +470,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <span>حائط وقائمة الأصدقاء</span>
-                <i class="fas fa-times" onclick="closeModal('friendsModal')" style="cursor:pointer;"></i>
+                <i class="fas fa-times" onclick="closeModal('friendsModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div class="modal-body" id="friendsListContainer">
                 <div style="font-size:12px; color:#555; text-align:center; padding:15px;">لا توجد أصدقاء حالياً.</div>
@@ -424,9 +516,9 @@
         <div class="modal-content" style="padding:15px; background:#fff; text-align:right;">
             <div class="modal-header" style="margin:-15px -15px 10px -15px;">
                 <span>تعديل بروفايلي الشخصي</span>
-                <i class="fas fa-times" onclick="closeModal('editSelfModal')" style="cursor:pointer;"></i>
+                <i class="fas fa-times" onclick="closeModal('editSelfModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
-            <div style="display:flex; flex-direction:column; gap:6px; max-height:75vh; overflow-y:auto; font-size:11px;">
+            <div style="display:flex; flex-direction:column; gap:6px; max-height:75vh; overflow-y:auto; font-size:12px; -webkit-overflow-scrolling: touch;">
                 <label>الاسم:</label><input type="text" id="editName">
                 <label>العمر:</label><input type="number" id="editAge">
                 <label>الجنس:</label><select id="editGender"><option value="ذكر">ذكر</option><option value="أنثى">أنثى</option></select>
@@ -434,7 +526,7 @@
                 <label>المعلومات (البيو):</label><input type="text" id="editBio">
                 <label>صورة شخصية:</label><input type="file" id="editAvatarFile" accept="image/*">
                 <label>غلاف الملف:</label><input type="file" id="editCoverFile" accept="image/*">
-                <button onclick="saveSelfProfile()" style="background:#28a745; color:#fff; border:none; padding:8px; border-radius:5px; margin-top:10px; font-weight:bold; cursor:pointer;">حفظ التغييرات</button>
+                <button onclick="saveSelfProfile()" style="background:#28a745; color:#fff; border:none; padding:10px; border-radius:5px; margin-top:10px; font-weight:bold; cursor:pointer;">حفظ التغييرات</button>
             </div>
         </div>
     </div>
@@ -444,15 +536,15 @@
         <div class="modal-content" style="padding:15px; background:#fff;">
             <div class="modal-header" style="margin:-15px -15px 10px -15px;">
                 <span>أوامر الإدارة السريعة</span>
-                <i class="fas fa-times" onclick="closeModal('adminCmdModal')" style="cursor:pointer;"></i>
+                <i class="fas fa-times" onclick="closeModal('adminCmdModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div style="display:flex; flex-direction:column; gap:6px; font-size:12px;">
-                <button onclick="openRanksList()" style="padding:9px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">👑 تغيير رتبة العضو</button>
-                <button onclick="toggleBanTarget()" id="banBtn" style="padding:9px; background:#dc3545; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">حظر / فك حظر العضو</button>
-                <button onclick="toggleKickTarget()" style="padding:9px; background:#fd7e14; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">طرد العضو</button>
-                <button onclick="toggleMuteTarget()" id="muteBtn" style="padding:9px; background:#ffc107; color:#000; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">كتم / فك كتم العضو</button>
-                <button onclick="toggleBlockTarget()" style="padding:9px; background:#6f42c1; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">حجب / فك حجب العضو</button>
-                <button onclick="deleteTargetAcc()" style="padding:9px; background:#343a40; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">حذف الحساب نهائياً</button>
+                <button onclick="openRanksList()" style="padding:10px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">👑 تغيير رتبة العضو</button>
+                <button onclick="toggleBanTarget()" id="banBtn" style="padding:10px; background:#dc3545; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">حظر / فك حظر العضو</button>
+                <button onclick="toggleKickTarget()" style="padding:10px; background:#fd7e14; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">طرد العضو</button>
+                <button onclick="toggleMuteTarget()" id="muteBtn" style="padding:10px; background:#ffc107; color:#000; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">كتم / فك كتم العضو</button>
+                <button onclick="toggleBlockTarget()" style="padding:10px; background:#6f42c1; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">حجب / فك حجب العضو</button>
+                <button onclick="deleteTargetAcc()" style="padding:10px; background:#343a40; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">حذف الحساب نهائياً</button>
             </div>
         </div>
     </div>
@@ -462,9 +554,9 @@
         <div class="modal-content" style="padding:15px; background:#fff;">
             <div class="modal-header" style="margin:-15px -15px 10px -15px;">
                 <span>قائمة الـ 25 رتبة</span>
-                <i class="fas fa-times" onclick="closeModal('ranksModal')" style="cursor:pointer;"></i>
+                <i class="fas fa-times" onclick="closeModal('ranksModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
-            <div style="display:flex; flex-direction:column; gap:5px; max-height:65vh; overflow-y:auto;" id="ranksListContainer"></div>
+            <div style="display:flex; flex-direction:column; gap:5px; max-height:65vh; overflow-y:auto; -webkit-overflow-scrolling: touch;" id="ranksListContainer"></div>
         </div>
     </div>
 
@@ -473,24 +565,24 @@
         <div class="modal-content" style="height:450px;">
             <div class="modal-header">
                 <span id="privateChatTitle">محادثة خاصة</span>
-                <i class="fas fa-times" onclick="closeModal('privateChatModal')" style="cursor:pointer;"></i>
+                <i class="fas fa-times" onclick="closeModal('privateChatModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
-            <div class="modal-body" id="privateMsgArea" style="flex:1; background:#f0f0f0; display:flex; flex-direction:column; gap:6px;"></div>
+            <div class="modal-body" id="privateMsgArea" style="flex:1; background:#f0f0f0; display:flex; flex-direction:column; gap:6px; -webkit-overflow-scrolling: touch;"></div>
             <div style="padding:8px; background:#ddd; display:flex; gap:5px;">
-                <input type="text" id="privateInput" placeholder="اكتب رسالة خاص..." style="flex:1; padding:6px; border-radius:4px; border:1px solid #ccc;" onkeypress="if(event.key === 'Enter') sendPrivateMsg()">
-                <button onclick="sendPrivateMsg()" style="background:#0d6efd; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">إرسال</button>
+                <input type="text" id="privateInput" placeholder="اكتب رسالة خاص..." style="flex:1; padding:8px; border-radius:4px; border:1px solid #ccc;" onkeypress="if(event.key === 'Enter') sendPrivateMsg()">
+                <button onclick="sendPrivateMsg()" style="background:#0d6efd; color:#fff; border:none; padding:8px 14px; border-radius:4px; cursor:pointer;">إرسال</button>
             </div>
         </div>
     </div>
 
     <!-- لوحة تحكم صاحب الموقع الكاملة والحقيقية -->
     <div class="modal" id="adminDashboardModal">
-        <div class="modal-content" style="max-width:450px; background:#fff; height:85vh;">
+        <div class="modal-content" style="max-width:450px; background:#fff; height:85dvh;">
             <div class="modal-header" style="background:#000; color:#ffd700;">
                 <span>👑 لوحة التحكم الشاملة (صاحب الموقع)</span>
-                <i class="fas fa-times" onclick="closeModal('adminDashboardModal')" style="cursor:pointer;"></i>
+                <i class="fas fa-times" onclick="closeModal('adminDashboardModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
-            <div class="modal-body" style="padding:10px;">
+            <div class="modal-body" style="padding:10px; -webkit-overflow-scrolling: touch;">
                 <div class="admin-grid">
                     <div class="admin-card-item" onclick="openAdminSub(1)"><i class="fas fa-user-secret"></i> 1. الأمن السري</div>
                     <div class="admin-card-item" onclick="openAdminSub(2)"><i class="fas fa-microphone-alt"></i> 2. إعداد الميكات</div>
@@ -503,12 +595,32 @@
                     <div class="admin-card-item" onclick="openAdminSub(9)"><i class="fas fa-plus-circle"></i> 9. إعداد التزويد</div>
                     <div class="admin-card-item" onclick="openAdminSub(10)"><i class="fas fa-robot"></i> 10. الروبوتات</div>
                 </div>
-                <div id="adminSubContentArea" style="margin-top:10px; border-top:1px solid #ddd; padding-top:10px; max-height:35vh; overflow-y:auto; font-size:12px;"></div>
+                <div id="adminSubContentArea" style="margin-top:10px; border-top:1px solid #ddd; padding-top:10px; max-height:35vh; overflow-y:auto; font-size:12px; -webkit-overflow-scrolling: touch;"></div>
             </div>
         </div>
     </div>
 
     <audio id="globalAudioPlayer" style="display:none;" autoplay></audio>
+
+    <!-- ربط Firebase مع السكربت الكامل -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyA6DkpqUEzzpkbEbOPTx3PxG7RdLdgyFZg",
+        authDomain: "hssoni-59f5c.firebaseapp.com",
+        databaseURL: "https://hssoni-59f5c-default-rtdb.firebaseio.com",
+        projectId: "hssoni-59f5c",
+        storageBucket: "hssoni-59f5c.firebasestorage.app",
+        messagingSenderId: "614244033785",
+        appId: "1:614244033785:web:652bce717e1b831945ae28",
+        measurementId: "G-FBBQ71XQVD"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const analytics = getAnalytics(app);
+    </script>
 
     <script>
         const ranksList = [
@@ -680,16 +792,13 @@
             location.reload();
         }
 
-        /* دالة عرض الترتيب المطلوبة: الأفاتار + أيقونة الكاس منفصلة + اسم العضو داخل خلفية الرتبة الملونة */
         function renderUserRankStructure(userObj, nameClickAction) {
             let rankBgHtml = '';
             let rankIconHtml = '';
             let avatarUrl = userObj && userObj.avatar ? userObj.avatar : 'https://via.placeholder.com/34';
             
             if(userObj && userObj.rank) {
-                // وضع اسم العضو بداخل الصندوق الخلفي للرتبة
                 rankBgHtml = `<div class="rank-bg-box" style="${userObj.rank.style}" onclick="${nameClickAction}">${userObj.name}</div>`;
-                // أيقونة الرتبة (الكأس أو الشعار) أصبحت منفصلة تماماً
                 rankIconHtml = `<span class="rank-icon-only" style="color:${userObj.rank.color};"><i class="fas ${userObj.rank.icon}"></i></span>`;
             } else {
                 rankBgHtml = `<div class="rank-bg-box" style="background:#ddd; color:#333;" onclick="${nameClickAction}">${userObj ? userObj.name : 'مستخدم'}</div>`;
@@ -1085,7 +1194,7 @@
                 area.innerHTML = `
                     <h4 style="color:#dc3545; margin-bottom:5px;">🛡️ 1. الأمن السري - سجل الرسائل الخاصة الكاملة</h4>
                     <p style="font-size:10px; color:#555; margin-bottom:8px;">عرض حقيقي لجميع الرسائل الخاصة المتبادلة بين الأعضاء:</p>
-                    <div style="background:#eee; padding:8px; border-radius:4px; max-height:180px; overflow-y:auto; display:flex; flex-direction:column; gap:4px;">
+                    <div style="background:#eee; padding:8px; border-radius:4px; max-height:180px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; -webkit-overflow-scrolling: touch;">
                         <div style="background:#fff; padding:5px; border-radius:3px;"><b>المرسل:</b> أحمد اليمن | <b>المستلم:</b> سارة الشام <br><b>الرسالة:</b> مرحبا أختي كيف حالك؟</div>
                         <div style="background:#fff; padding:5px; border-radius:3px;"><b>المرسل:</b> سارة الشام | <b>المستلم:</b> أحمد اليمن <br><b>الرسالة:</b> أهلاً بك أخي، الحمد لله.</div>
                     </div>
@@ -1094,15 +1203,15 @@
                 area.innerHTML = `
                     <h4 style="color:#0d6efd; margin-bottom:5px;">🎤 2. إعداد الميكات والتحكم بها</h4>
                     <p style="font-size:10px; color:#555; margin-bottom:8px;">عدد الميكات النشطة حالياً: 4 ميكروفونات</p>
-                    <button onclick="alert('تمت زيادة ميكروفون جديد بنجاح وأصبح العدد 5!')" style="padding:6px 12px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">➕ إضافة ميكروفون جديد وزيادة الخيارات</button>
+                    <button onclick="alert('تمت زيادة ميكروفون جديد بنجاح وأصبح العدد 5!')" style="padding:8px 12px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">➕ إضافة ميكروفون جديد وزيادة الخيارات</button>
                 `;
             } else if(sectionNum === 3) {
                 let listHtml = `<h4 style="color:#ffc107; margin-bottom:5px;">👑 3. إعداد الـ 25 رتبة</h4>
-                <div style="max-height:140px; overflow-y:auto; display:flex; flex-direction:column; gap:3px; margin-bottom:8px;">`;
+                <div style="max-height:140px; overflow-y:auto; display:flex; flex-direction:column; gap:3px; margin-bottom:8px; -webkit-overflow-scrolling: touch;">`;
                 ranksList.forEach(r => {
                     listHtml += `<div style="padding:4px; background:#f1f1f1; display:flex; justify-content:space-between; align-items:center;"><span>${r.id}. ${r.name}</span> <button onclick="let newN = prompt('عدل اسم الرتبة:', '${r.name}'); if(newN){ r.name=newN; alert('تم التعديل وحفظه فوراً'); }" style="background:#0d6efd; color:#fff; border:none; padding:2px 6px; border-radius:3px; cursor:pointer;">تعديل</button></div>`;
                 });
-                listHtml += `</div><button onclick="let rn=prompt('اسم الرتبة الجديدة:'); let sh=prompt('شكل الأيقونة (مثلاً fa-star):'); if(rn){ ranksList.push({id:ranksList.length+1, name:rn, icon:sh||'fa-star', color:'#fff', style:'background:#333;color:'#fff;'}); alert('تمت إضافة وحفظ الرتبة فوراً!'); }" style="padding:6px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; width:100%;">➕ إضافة رتبة جديدة وحفظها فوراً</button>`;
+                listHtml += `</div><button onclick="let rn=prompt('اسم الرتبة الجديدة:'); let sh=prompt('شكل الأيقونة (مثلاً fa-star):'); if(rn){ ranksList.push({id:ranksList.length+1, name:rn, icon:sh||'fa-star', color:'#fff', style:'background:#333;color:#fff;'}); alert('تمت إضافة وحفظ الرتبة فوراً!'); }" style="padding:8px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; width:100%;">➕ إضافة رتبة جديدة وحفظها فوراً</button>`;
                 area.innerHTML = listHtml;
             } else if(sectionNum === 4) {
                 area.innerHTML = `
@@ -1118,11 +1227,11 @@
                 area.innerHTML = `
                     <h4 style="color:#e91e63; margin-bottom:5px;">👤 5. إعداد البروفايل والأزرار</h4>
                     <p style="font-size:10px; color:#555;">الأزرار الحالية: لايك، هدايا، صداقة، خاص.</p>
-                    <button onclick="let btnN=prompt('اسم الزر أو الخيار الجديد:'); let btnW=prompt('أين يوضع؟ (مثلاً بروفايل الأعضاء):'); if(btnN){ alert('تمت إضافة الزر وطريقة عمله في ' + btnW + ' بنجاح تام!'); }" style="padding:6px; background:#17a2b8; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; width:100%;">➕ إضافة زر أو خيار جديد للبروفايل</button>
+                    <button onclick="let btnN=prompt('اسم الزر أو الخيار الجديد:'); let btnW=prompt('أين يوضع؟ (مثلاً بروفايل الأعضاء):'); if(btnN){ alert('تمت إضافة الزر وطريقة عمله في ' + btnW + ' بنجاح تام!'); }" style="padding:8px; background:#17a2b8; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; width:100%;">➕ إضافة زر أو خيار جديد للبروفايل</button>
                 `;
             } else if(sectionNum === 6) {
                 let msgListHtml = `<h4 style="color:#20c997; margin-bottom:5px;">💬 6. إعدادات العام (مراجعة وحذف الرسائل)</h4>
-                <div style="max-height:150px; overflow-y:auto; display:flex; flex-direction:column; gap:4px;">`;
+                <div style="max-height:150px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; -webkit-overflow-scrolling: touch;">`;
                 if(globalPublicMessages.length === 0) {
                     msgListHtml += `<div style="color:#666;">لا توجد رسائل عامة مسجلة حالياً.</div>`;
                 } else {
@@ -1137,7 +1246,7 @@
                     <h4 style="color:#fd7e14; margin-bottom:5px;">🚪 7. إعداد لوحة تسجيل الدخول</h4>
                     <label style="font-size:11px; font-weight:bold;">اختر خلفية لوحة تسجيل الدخول من جهازك:</label>
                     <input type="file" accept="image/*" onchange="let url=URL.createObjectURL(this.files[0]); document.getElementById('loginCoverArea').style.backgroundImage='url('+url+')'; alert('تم تحديث خلفية تسجيل الدخول من الملف بنجاح!');" style="margin:5px 0; font-size:11px;">
-                    <button onclick="let txt=prompt('أضف نصاً أو زر جديد في لوحة الدخول:'); if(txt){ alert('تمت إضافة (' + txt + ') إلى لوحة الدخول بنجاح!'); }" style="padding:6px; background:#0d6efd; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; width:100%;">➕ إضافة نص أو زر للوحة الدخول</button>
+                    <button onclick="let txt=prompt('أضف نصاً أو زر جديد في لوحة الدخول:'); if(txt){ alert('تمت إضافة (' + txt + ') إلى لوحة الدخول بنجاح!'); }" style="padding:8px; background:#0d6efd; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; width:100%;">➕ إضافة نص أو زر للوحة الدخول</button>
                 `;
             } else if(sectionNum === 8) {
                 area.innerHTML = `
@@ -1146,19 +1255,19 @@
                 `;
             } else if(sectionNum === 9) {
                 let supplyHtml = `<h4 style="color:#e83e8c; margin-bottom:5px;">🚀 9. إعداد التزويد (المميزات الإضافية)</h4>
-                <div style="max-height:130px; overflow-y:auto; display:flex; flex-direction:column; gap:3px; margin-bottom:8px;">`;
+                <div style="max-height:130px; overflow-y:auto; display:flex; flex-direction:column; gap:3px; margin-bottom:8px; -webkit-overflow-scrolling: touch;">`;
                 customSuppliesList.forEach(sup => {
                     supplyHtml += `<div style="background:#f1f1f1; padding:4px; font-size:11px;">✔ ${sup}</div>`;
                 });
-                supplyHtml += `</div><button onclick="let sName=prompt('اسم المميزة الجديدة:'); let sPlace=prompt('مكانها:'); let sWay=prompt('طريقة عملها:'); if(sName){ customSuppliesList.push(sName + ' ('+sWay+')'); alert('تم حفظ المميزة فوراً بنجاح!'); openAdminSub(9); }" style="padding:6px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; width:100%;">➕ إضافة مميزة جديدة وحفظها فوراً</button>`;
+                supplyHtml += `</div><button onclick="let sName=prompt('اسم المميزة الجديدة:'); let sPlace=prompt('مكانها:'); let sWay=prompt('طريقة عملها:'); if(sName){ customSuppliesList.push(sName + ' ('+sWay+')'); alert('تم حفظ المميزة فوراً بنجاح!'); openAdminSub(9); }" style="padding:8px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; width:100%;">➕ إضافة مميزة جديدة وحفظها فوراً</button>`;
                 area.innerHTML = supplyHtml;
             } else if(sectionNum === 10) {
                 let botHtml = `<h4 style="color:#6f42c1; margin-bottom:5px;">🤖 10. إدارة الروبوتات</h4>
-                <div style="max-height:130px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; margin-bottom:8px;">`;
+                <div style="max-height:130px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; margin-bottom:8px; -webkit-overflow-scrolling: touch;">`;
                 customBotsList.forEach(b => {
                     botHtml += `<div style="background:#f1f1f1; padding:4px; font-size:11px;">🤖 <b>${b.name}</b> - الروم: ${b.room} (${b.status})</div>`;
                 });
-                botHtml += `</div><button onclick="let bName=prompt('اسم الروبوت الجديد (مثلاً روبوت ترحيب):'); let bWay=prompt('طريقة عمله:'); let bRoom=prompt('في أي روم يظهر؟'); if(bName){ customBotsList.push({name:bName, room:bRoom||'العام', status:'يعمل بنجاح'}); alert('تم وضع الروبوت بنجاح تام!'); openAdminSub(10); }" style="padding:6px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; width:100%;">➕ إضافة روبوت جديد وتفعيله</button>`;
+                botHtml += `</div><button onclick="let bName=prompt('اسم الروبوت الجديد (مثلاً روبوت ترحيب):'); let bWay=prompt('طريقة عمله:'); let bRoom=prompt('في أي روم يظهر؟'); if(bName){ customBotsList.push({name:bName, room:bRoom||'العام', status:'يعمل بنجاح'}); alert('تم وضع الروبوت بنجاح تام!'); openAdminSub(10); }" style="padding:8px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; width:100%;">➕ إضافة روبوت جديد وتفعيله</button>`;
                 area.innerHTML = botHtml;
             }
         }
