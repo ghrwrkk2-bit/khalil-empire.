@@ -1830,6 +1830,173 @@
             localStorage.removeItem('hassouni_user');
             location.reload();
         }
+                                    <span style="font-weight:bold; font-size:12px;">${u.name}</span>
+                        </div>
+                        <span style="font-size:10px; background:#28a745; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">متواجد الآن</span>
+                    </div>
+                `;
+            });
+
+            list.innerHTML = `
+                <div class="online-section-header owner-sec">
+                    <span>👑 قسم صاحب الموقع والإدارة</span>
+                    <span>1</span>
+                </div>
+                <div class="online-user-card" onclick="openUserProfile(event, {name:'حسوني', rankText:'صاحب الموقع', rankBadgeHtml:'<div class=\'rank-badge gold-trophy\'><i class=\'fas fa-trophy\'></i></div>', avatar:'https://via.placeholder.com/80', age:'25', gender:'ذكر', country:'اليمن', isOwner:true})">
+                    <div class="online-user-info">
+                        <img src="https://via.placeholder.com/80" class="online-user-avatar">
+                        <span style="font-weight:bold; font-size:12px; color:#ffd700;">حسوني (صاحب الموقع)</span>
+                    </div>
+                    <span style="font-size:10px; background:#ffd700; color:#000; padding:2px 6px; border-radius:4px; font-weight:bold;">المالك</span>
+                </div>
+
+                <div class="online-section-header">
+                    <span>🟢 الأعضاء والمتواجدون (${activeUsers.length})</span>
+                    <span>نشط</span>
+                </div>
+                ${membersHtml}
+            `;
+            openModal('onlineModal');
+        }
+
+        function startPrivateChatWithTarget() {
+            if (!selectedTargetUser) return;
+            closeModal('profileViewModal');
+            activePrivateChatTarget = selectedTargetUser;
+            document.getElementById('privateChatModalTitle').style.display = 'none';
+            document.getElementById('privateChatListArea').style.display = 'none';
+            document.getElementById('privateChatActiveBox').style.display = 'flex';
+            
+            // تحديث عنوان نافذة الخاص
+            const titleEl = document.getElementById('privateChatModalTitle');
+            titleEl.style.display = 'block';
+            titleEl.innerText = `محادثة خاصة مع: ${selectedTargetUser.name}`;
+            
+            loadPrivateMessagesForTarget(selectedTargetUser.name);
+            openModal('messagesModal');
+        }
+
+        function openPrivateMessagesList() {
+            document.getElementById('privateChatActiveBox').style.display = 'none';
+            document.getElementById('privateChatListArea').style.display = 'block';
+            document.getElementById('privateChatModalTitle').style.display = 'block';
+            document.getElementById('privateChatModalTitle').innerText = 'صندوق الرسائل والمحادثات';
+
+            let activeUsers = JSON.parse(localStorage.getItem('hassouni_all_active_users') || '[]');
+            const listArea = document.getElementById('privateChatListArea');
+            listArea.innerHTML = '';
+
+            let otherUsers = activeUsers.filter(u => currentUser && u.name !== currentUser.name);
+            if (otherUsers.length === 0) {
+                listArea.innerHTML = `<div style="text-align:center; padding:15px; font-size:12px; color:#555;">لا توجد محادثات خاصة سابقة. يمكنك بدء محادثة من قائمة المتواجدين أو البروفايلات.</div>`;
+            } else {
+                otherUsers.forEach(u => {
+                    const item = document.createElement('div');
+                    item.className = 'online-user-card';
+                    item.onclick = function() {
+                        activePrivateChatTarget = u;
+                        document.getElementById('privateChatListArea').style.display = 'none';
+                        document.getElementById('privateChatActiveBox').style.display = 'flex';
+                        document.getElementById('privateChatModalTitle').innerText = `محادثة خاصة مع: ${u.name}`;
+                        loadPrivateMessagesForTarget(u.name);
+                    };
+                    item.innerHTML = `
+                        <div class="online-user-info">
+                            <img src="${u.avatar || 'https://via.placeholder.com/80'}" class="online-user-avatar">
+                            <span style="font-weight:bold; font-size:12px;">محادثة مع ${u.name}</span>
+                        </div>
+                        <span style="font-size:10px; background:#0d6efd; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">دخول</span>
+                    `;
+                    listArea.appendChild(item);
+                });
+            }
+            openModal('messagesModal');
+        }
+
+        function sendPrivateMessage() {
+            if (!currentUser || !activePrivateChatTarget) return;
+            const input = document.getElementById('privateMsgInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            const pMsgData = {
+                id: Date.now() + Math.random(),
+                senderName: currentUser.name,
+                targetName: activePrivateChatTarget.name,
+                text: text,
+                time: timeString
+            };
+
+            let allPMs = JSON.parse(localStorage.getItem('hassouni_private_msgs_history') || '[]');
+            allPMs.push(pMsgData);
+            localStorage.setItem('hassouni_private_msgs_history', JSON.stringify(allPMs));
+
+            if (window.sendFirebasePrivateMsg) {
+                window.sendFirebasePrivateMsg(pMsgData);
+            }
+
+            appendPrivateMsgToDOM(pMsgData);
+            input.value = '';
+            input.focus();
+        }
+
+        function loadPrivateMessagesForTarget(targetName) {
+            const area = document.getElementById('privateMessagesArea');
+            area.innerHTML = '';
+            let allPMs = JSON.parse(localStorage.getItem('hassouni_private_msgs_history') || '[]');
+            
+            let filtered = allPMs.filter(m => 
+                (m.senderName === currentUser.name && m.targetName === targetName) ||
+                (m.senderName === targetName && m.targetName === currentUser.name)
+            );
+
+            filtered.forEach(m => {
+                appendPrivateMsgToDOM(m);
+            });
+        }
+
+        function appendPrivateMsgToDOM(m) {
+            const area = document.getElementById('privateMessagesArea');
+            const div = document.createElement('div');
+            const isMe = m.senderName === currentUser.name;
+            div.style.alignSelf = isMe ? 'flex-end' : 'flex-start';
+            div.style.background = isMe ? '#d1e7dd' : '#f8d7da';
+            div.style.padding = '6px 10px';
+            div.style.borderRadius = '6px';
+            div.style.fontSize = '12px';
+            div.style.maxWidth = '80%';
+            div.innerHTML = `<strong>${m.senderName}:</strong> ${m.text} <span style="font-size:9px; color:#555; display:block; text-align:left;">${m.time}</span>`;
+            area.appendChild(div);
+            area.scrollTop = area.scrollHeight;
+        }
+
+        function handleRealtimePrivateMsg(pMsg) {
+            if (currentUser && (pMsg.targetName === currentUser.name || pMsg.senderName === currentUser.name)) {
+                if (activePrivateChatTarget && (pMsg.senderName === activePrivateChatTarget.name || pMsg.targetName === activePrivateChatTarget.name)) {
+                    appendPrivateMsgToDOM(pMsg);
+                } else {
+                    unreadPrivateCount++;
+                    document.getElementById('msgBadgeCount').innerText = unreadPrivateCount;
+                    document.getElementById('msgBadgeCount').style.display = 'block';
+                }
+            }
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function logout() {
+            localStorage.removeItem('hassouni_user');
+            location.reload();
+        }
     </script>
 </body>
 </html>
