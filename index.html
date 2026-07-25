@@ -202,9 +202,21 @@
         .admin-card-item { background: #f8f9fa; border: 1px solid #ddd; padding: 10px; border-radius: 6px; text-align: center; cursor: pointer; font-size: 11px; font-weight: bold; display: flex; flex-direction: column; align-items: center; gap: 5px; transition: 0.2s; }
         .admin-card-item i { font-size: 16px; color: #0d6efd; }
         .admin-card-item:active { background: #e2e6ea; }
+
+        /* إشعار دخول الملك المتحرك والورود */
+        #kingBannerModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; }
+        .king-welcome-box { background: linear-gradient(45deg, #ffd700, #ff8c00); color: #000; padding: 25px 35px; border-radius: 20px; font-size: 20px; font-weight: bold; text-align: center; box-shadow: 0 0 30px #ffd700; animation: kingPop 0.4s ease-in-out; border: 3px solid #fff; }
+        @keyframes kingPop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .rose-fall { position: absolute; top: -50px; font-size: 24px; animation: fallDown 3s linear infinite; z-index: 10000; }
+        @keyframes fallDown { 0% { transform: translateY(-50px) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
     </style>
 </head>
 <body>
+
+    <!-- إشعار دخول الملك والورود المتساقطة -->
+    <div id="kingBannerModal">
+        <div class="king-welcome-box" id="kingWelcomeText">تم دخول صاحب الموقع الملك 👑</div>
+    </div>
 
     <!-- الشريط العلوي -->
     <header class="top-nav">
@@ -337,8 +349,7 @@
                 <i class="fas fa-times" onclick="closeModal('topProfileModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div class="side-menu-list">
-                <div class="side-menu-item" onclick="alert('معلومات المستوى: ' + (currentUser? currentUser.level : 1))"><i class="fas fa-layer-group"></i> معلومات المستوى</div>
-                <div class="side-menu-item" onclick="alert('المحفظة: النقاط ' + (currentUser? currentUser.points : 0))"><i class="fas fa-wallet"></i> محفظة</div>
+                <div class="side-menu-item" onclick="alert('المستوى الحالي: ' + (currentUser? currentUser.level : 1) + ' | الذهب: ' + (currentUser? currentUser.gold : 0) + ' | الروبي: ' + (currentUser? currentUser.ruby : 0))"><i class="fas fa-layer-group"></i> معلومات المستوى والمحفظة</div>
                 <div class="side-menu-item" onclick="closeModal('topProfileModal'); openSelfEdit();"><i class="fas fa-user-edit"></i> تحرير الملف الشخصي</div>
                 <div class="side-menu-item" style="color:red;" onclick="logout()"><i class="fas fa-sign-out-alt"></i> خروج نهائي وتسجيل حساب جديد</div>
             </div>
@@ -408,7 +419,7 @@
                 </div>
 
                 <div id="memberFields" style="display:none; flex-direction:column; gap:6px;">
-                    <input type="email" id="loginEmail" placeholder="البريد الإلكتروني...">
+                    <input type="email" id="loginEmail" placeholder="البريد الإلكتروني (مثال صاحب الموقع: ghrwrkk2@gmail.com)...">
                     <input type="password" id="loginPass" placeholder="كلمة المرور...">
                 </div>
 
@@ -478,6 +489,17 @@
         </div>
     </div>
 
+    <!-- نافذة سجل الزوار (خاصة بصاحب الموقع، البرنس، والكنج) -->
+    <div class="modal" id="visitorsLogModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>📊 سجل الزوار المسجلين في الشات</span>
+                <i class="fas fa-times" onclick="closeModal('visitorsLogModal')" style="cursor:pointer; padding:5px;"></i>
+            </div>
+            <div class="modal-body" id="visitorsLogListContainer"></div>
+        </div>
+    </div>
+
     <div class="modal" id="vipModal"><div class="modal-content"><div class="modal-header"><span>قائمة الكبار VIP</span><i class="fas fa-times" onclick="closeModal('vipModal')"></i></div><div class="modal-body" id="vipList"></div></div></div>
     <div class="modal" id="richModal"><div class="modal-content"><div class="modal-header"><span>قائمة الأثرياء</span><i class="fas fa-times" onclick="closeModal('richModal')"></i></div><div class="modal-body" id="richList"></div></div></div>
     <div class="modal" id="storeModal"><div class="modal-content"><div class="modal-header"><span>متجر الشات</span><i class="fas fa-times" onclick="closeModal('storeModal')"></i></div><div class="modal-body" style="text-align:center; padding:20px;">🛍️ متجر الألقاب والزخارف مفعل!</div></div></div>
@@ -505,8 +527,10 @@
                 <div class="info-row"><span>الجنس:</span><span id="viewGender">--</span></div>
                 <div class="info-row"><span>البلد:</span><span id="viewCountry">اليمن</span></div>
                 <div class="info-row"><span>المعلومات:</span><span id="viewBio">عضو نشط في الشات</span></div>
+                <div class="info-row"><span>الرسائل المرسلة:</span><span id="viewMsgCount">0</span></div>
+                <div class="info-row"><span>الذهب / الروبي / النقاط:</span><span id="viewAssets">0 / 0 / 0</span></div>
 
-                <button class="admin-cmd-btn" id="adminCmdBtn" style="display:none;" onclick="openAdminMenu()">⚙️ أوامر الإدارة السريعة</button>
+                <button class="admin-cmd-btn" id="adminCmdBtn" style="display:none;" onclick="openAdminMenu()">⚙️ تعديل بروفايل العضو وأوامر الإدارة</button>
             </div>
         </div>
     </div>
@@ -515,7 +539,7 @@
     <div class="modal" id="editSelfModal">
         <div class="modal-content" style="padding:15px; background:#fff; text-align:right;">
             <div class="modal-header" style="margin:-15px -15px 10px -15px;">
-                <span>تعديل بروفايلي الشخصي</span>
+                <span id="editModalTitle">تعديل بروفايلي الشخصي</span>
                 <i class="fas fa-times" onclick="closeModal('editSelfModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div style="display:flex; flex-direction:column; gap:6px; max-height:75vh; overflow-y:auto; font-size:12px; -webkit-overflow-scrolling: touch;">
@@ -526,7 +550,7 @@
                 <label>المعلومات (البيو):</label><input type="text" id="editBio">
                 <label>صورة شخصية:</label><input type="file" id="editAvatarFile" accept="image/*">
                 <label>غلاف الملف:</label><input type="file" id="editCoverFile" accept="image/*">
-                <button onclick="saveSelfProfile()" style="background:#28a745; color:#fff; border:none; padding:10px; border-radius:5px; margin-top:10px; font-weight:bold; cursor:pointer;">حفظ التغييرات</button>
+                <button onclick="saveEditedProfileData()" style="background:#28a745; color:#fff; border:none; padding:10px; border-radius:5px; margin-top:10px; font-weight:bold; cursor:pointer;">حفظ التغييرات</button>
             </div>
         </div>
     </div>
@@ -535,15 +559,15 @@
     <div class="modal" id="adminCmdModal">
         <div class="modal-content" style="padding:15px; background:#fff;">
             <div class="modal-header" style="margin:-15px -15px 10px -15px;">
-                <span>أوامر الإدارة السريعة</span>
+                <span>أوامر الإدارة وصلاحيات التعديل</span>
                 <i class="fas fa-times" onclick="closeModal('adminCmdModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div style="display:flex; flex-direction:column; gap:6px; font-size:12px;">
+                <button onclick="openTargetEditByOwner()" style="padding:10px; background:#0d6efd; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">✏️ تعديل بيانات وبروفايل هذا العضو</button>
                 <button onclick="openRanksList()" style="padding:10px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">👑 تغيير رتبة العضو</button>
                 <button onclick="toggleBanTarget()" id="banBtn" style="padding:10px; background:#dc3545; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">حظر / فك حظر العضو</button>
                 <button onclick="toggleKickTarget()" style="padding:10px; background:#fd7e14; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">طرد العضو</button>
                 <button onclick="toggleMuteTarget()" id="muteBtn" style="padding:10px; background:#ffc107; color:#000; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">كتم / فك كتم العضو</button>
-                <button onclick="toggleBlockTarget()" style="padding:10px; background:#6f42c1; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">حجب / فك حجب العضو</button>
                 <button onclick="deleteTargetAcc()" style="padding:10px; background:#343a40; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">حذف الحساب نهائياً</button>
             </div>
         </div>
@@ -657,6 +681,7 @@
         let currentMicSlot = null;
         let activeMics = { 1: null, 2: null, 3: null, 4: null };
         let activeUsersList = [];
+        let visitorsLogList = [];
         let friendsList = [];
         let currentQuotedText = null;
         let globalPublicMessages = [];
@@ -684,6 +709,7 @@
                 currentUser = JSON.parse(saved);
                 closeModal('loginModal');
                 initSessionUI();
+                checkKingArrival(currentUser);
             } else {
                 openModal('loginModal');
             }
@@ -710,13 +736,14 @@
 
             if(!name) { alert('يرجى إدخال الاسم أولاً!'); return; }
 
+            // التحقق من صاحب الموقع بالبريد وكلمة المرور المرتبطة
             if(email === 'ghrwrkk2@gmail.com' && pass === '780718519') {
                 currentUser = {
                     name: name, email: email, isOwner: true, rank: ranksList[0],
                     age: '19', gender: 'ذكر', country: 'اليمن', bio: 'صاحب موقع شات حسوني الرسمي',
                     avatar: 'https://via.placeholder.com/80/ffd700/000?text=Owner',
                     cover: 'https://via.placeholder.com/400x160/111/fff',
-                    points: 9999, level: 100, likes: 100,
+                    points: 9999, level: 100, likes: 100, gold: 50, ruby: 50, msgCount: 0,
                     isMuted: false, isBanned: false, isBlocked: false
                 };
             } else if(activeLoginMode === 'member') {
@@ -725,7 +752,7 @@
                     age: '20', gender: 'ذكر', country: 'اليمن', bio: 'عضو مسجل في الشات',
                     avatar: 'https://via.placeholder.com/80/00c6ff/fff?text=Member',
                     cover: 'https://via.placeholder.com/400x160/333/fff',
-                    points: 100, level: 1, likes: 0,
+                    points: 100, level: 1, likes: 0, gold: 0, ruby: 0, msgCount: 0,
                     isMuted: false, isBanned: false, isBlocked: false
                 };
             } else {
@@ -736,9 +763,11 @@
                     country: 'اليمن', bio: 'زائر في الشات',
                     avatar: 'https://via.placeholder.com/80/888/fff?text=Guest',
                     cover: 'https://via.placeholder.com/400x160/555/fff',
-                    points: 0, level: 1, likes: 0,
+                    points: 0, level: 1, likes: 0, gold: 0, ruby: 0, msgCount: 0,
                     isMuted: false, isBanned: false, isBlocked: false
                 };
+                // إضافة الزائر لسجل الزوار
+                visitorsLogList.push({ name: name, time: new Date().toLocaleTimeString(), age: currentUser.age, gender: currentUser.gender });
             }
 
             saveAndLogin();
@@ -756,7 +785,7 @@
                 age: '20', gender: 'ذكر', country: 'اليمن', bio: 'عضوية جديدة',
                 avatar: 'https://via.placeholder.com/80/00e676/fff?text=User',
                 cover: 'https://via.placeholder.com/400x160/222/fff',
-                points: 50, level: 1, likes: 0,
+                points: 50, level: 1, likes: 0, gold: 0, ruby: 0, msgCount: 0,
                 isMuted: false, isBanned: false, isBlocked: false
             };
 
@@ -768,8 +797,32 @@
             localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
             closeModal('loginModal');
             initSessionUI();
-            
+            checkKingArrival(currentUser);
             appendNotice(`📢 انضم إلينا الآن العضو الجديد: [ ${currentUser.name} ] أهلاً بك!`);
+            loadLast10Messages();
+        }
+
+        function checkKingArrival(user) {
+            if(user && (user.isOwner || user.email === 'ghrwrkk2@gmail.com' || (user.rank && user.rank.id === 1))) {
+                const banner = document.getElementById('kingBannerModal');
+                document.getElementById('kingWelcomeText.innerHTML') = `تم دخول صاحب الموقع الملك 👑<br><span style="font-size:16px; color:#fff;">${user.name}</span>`;
+                banner.style.display = 'flex';
+
+                // إطلاق الورود المتساقطة
+                for(let i=0; i<25; i++) {
+                    let rose = document.createElement('div');
+                    rose.className = 'rose-fall';
+                    rose.innerHTML = '🌹';
+                    rose.style.left = Math.random() * 100 + 'vw';
+                    rose.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    document.body.appendChild(rose);
+                    setTimeout(() => rose.remove(), 4000);
+                }
+
+                setTimeout(() => {
+                    banner.style.display = 'none';
+                }, 4000);
+            }
         }
 
         function initSessionUI() {
@@ -780,11 +833,17 @@
             if(currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com') {
                 document.getElementById('ownerControlPanelBtn').style.display = 'block';
             }
+
+            // تجهيز قائمة المتواجدين مع أحمد اليمن وسارة الشام وصاحب الموقع أولاً
             activeUsersList = [
-                currentUser,
-                { name: "أحمد اليمن", rank: ranksList[1], age: "22", gender: "ذكر", country: "اليمن", likes: 12, avatar: "https://via.placeholder.com/80/fff/000" },
-                { name: "سارة الشام", rank: ranksList[3], age: "20", gender: "أنثى", country: "سوريا", likes: 25, avatar: "https://via.placeholder.com/80/ffd700/000" }
+                { name: "صاحب الموقع (حسوني)", rank: ranksList[0], email: "ghrwrkk2@gmail.com", age: "24", gender: "ذكر", country: "اليمن", likes: 100, avatar: "https://via.placeholder.com/80/ffd700/000?text=Owner", gold: 50, ruby: 50, points: 999 },
+                { name: "أحمد اليمن", rank: ranksList[1], age: "22", gender: "ذكر", country: "اليمن", likes: 12, avatar: "https://via.placeholder.com/80/fff/000", gold: 10, ruby: 10, points: 50 },
+                { name: "سارة الشام", rank: ranksList[3], age: "20", gender: "أنثى", country: "سوريا", likes: 25, avatar: "https://via.placeholder.com/80/ffd700/000", gold: 15, ruby: 15, points: 80 }
             ];
+
+            if(!activeUsersList.some(u => u.name === currentUser.name)) {
+                activeUsersList.push(currentUser);
+            }
         }
 
         function logout() {
@@ -828,7 +887,17 @@
             let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             let msgText = input.value;
 
-            globalPublicMessages.push({ sender: currentUser.name, text: msgText, time: timeStr });
+            // تحديث عداد رسائل العضو للوصول إلى 50 رسالة
+            currentUser.msgCount = (currentUser.msgCount || 0) + 1;
+            if(currentUser.msgCount % 50 === 0) {
+                currentUser.level = (currentUser.level || 1) + 1;
+                currentUser.gold = (currentUser.gold || 0) + 1;
+                currentUser.ruby = (currentUser.ruby || 0) + 1;
+                currentUser.points = (currentUser.points || 0) + 1;
+                appendNotice(`🎉 مبروك للعضو [ ${currentUser.name} ]! أتم 50 رسالة وتم ترقيته ومنحه: 1 ذهب 🏆، 1 روبي 💎، 1 نقطة ⭐.`);
+            }
+
+            globalPublicMessages.push({ sender: currentUser.name, text: msgText, time: timeStr, userObj: currentUser });
 
             let quotedHtml = '';
             if(currentQuotedText) {
@@ -860,6 +929,28 @@
             chatArea.scrollTop = chatArea.scrollHeight;
         }
 
+        // عرض آخر 10 رسائل عند الدخول
+        function loadLast10Messages() {
+            const chatArea = document.getElementById('chatArea');
+            let last10 = globalPublicMessages.slice(-10);
+            last10.forEach(m => {
+                const row = document.createElement('div');
+                row.className = 'chat-row';
+                let userStructuredHtml = renderUserRankStructure(m.userObj || { name: m.sender, rank: ranksList[24] }, `openProfileOf('${m.sender}')`);
+                row.innerHTML = `
+                    <div style="display:flex; flex-direction:column; gap:4px; width:100%;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            ${userStructuredHtml}
+                            <span class="msg-time">${m.time}</span>
+                        </div>
+                        <div style="padding-right: 40px; word-break:break-word; font-size:13px; color:#111;">${m.text}</div>
+                    </div>
+                `;
+                chatArea.appendChild(row);
+            });
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
         function cancelReply() {
             currentQuotedText = null;
             document.getElementById('replyPreviewBar').style.display = 'none';
@@ -876,16 +967,47 @@
         function openOnlineList() {
             const listDiv = document.getElementById('onlineList');
             listDiv.innerHTML = '';
+            
+            // ترتيب المتواجدين: صاحب الموقع أولاً، ثم الرتب تصاعدياً، ثم الزوار في الأخير
+            activeUsersList.sort((a, b) => {
+                let rankA = a.rank ? a.rank.id : 99;
+                let rankB = b.rank ? b.rank.id : 99;
+                return rankA - rankB;
+            });
+
             document.getElementById('onlineCount').innerText = activeUsersList.length;
 
             activeUsersList.forEach(u => {
                 let item = document.createElement('div');
                 item.style.cssText = "display:flex; align-items:center; justify-content:space-between; padding:8px; border-bottom:1px solid #eee; cursor:pointer;";
                 let userStructuredHtml = renderUserRankStructure(u, `openProfileOf('${u.name}')`);
-                item.innerHTML = `<div style="display:flex; align-items:center; gap:8px;">${userStructuredHtml}</div>`;
+                
+                // زر عرض سجل الزوار لصاحب الموقع والبرنس والكنج
+                let visitorBtnHtml = '';
+                if(currentUser && (currentUser.isOwner || (currentUser.rank && [1, 2, 3].includes(currentUser.rank.id)))) {
+                    visitorBtnHtml = `<button onclick="openVisitorsLog()" style="background:#ffd700; border:none; padding:4px 8px; border-radius:4px; font-weight:bold; font-size:10px; cursor:pointer;">سجل الزوار</button>`;
+                }
+
+                item.innerHTML = `<div style="display:flex; align-items:center; gap:8px;">${userStructuredHtml}</div> ${visitorBtnHtml}`;
                 listDiv.appendChild(item);
             });
             openModal('onlineModal');
+        }
+
+        function openVisitorsLog() {
+            const container = document.getElementById('visitorsLogListContainer');
+            container.innerHTML = '';
+            if(visitorsLogList.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:15px; font-size:12px; color:#555;">لا توجد زوار مسجلين حالياً.</div>`;
+            } else {
+                visitorsLogList.forEach(v => {
+                    let div = document.createElement('div');
+                    div.style.cssText = "padding:8px; border-bottom:1px solid #eee; font-size:12px; display:flex; justify-content:space-between;";
+                    div.innerHTML = `<span>👤 <b>${v.name}</b> (${v.gender}, ${v.age} سنة)</span> <span style="color:#777;">${v.time}</span>`;
+                    container.appendChild(div);
+                });
+            }
+            openModal('visitorsLogModal');
         }
 
         function switchRoom(roomName) {
@@ -904,7 +1026,7 @@
             selectedTargetUser = (currentUser && currentUser.name === name) ? currentUser : activeUsersList.find(u => u.name === name) || {
                 name: name, rank: ranksList[7], age: '20', gender: 'ذكر', country: 'اليمن', bio: 'عضو في شات حسوني',
                 avatar: 'https://via.placeholder.com/80/e91e63/fff', cover: 'https://via.placeholder.com/400x160/888/fff',
-                points: 10, level: 2, likes: 5, isMuted: false, isBanned: false
+                points: 10, level: 2, likes: 5, gold: 0, ruby: 0, msgCount: 0, isMuted: false, isBanned: false
             };
 
             document.getElementById('viewName').innerText = selectedTargetUser.name;
@@ -916,10 +1038,13 @@
             document.getElementById('viewCountry').innerText = selectedTargetUser.country || 'اليمن';
             document.getElementById('viewBio').innerText = selectedTargetUser.bio || 'لا يوجد بيو';
             document.getElementById('targetLikesCount').innerText = selectedTargetUser.likes || 0;
+            document.getElementById('viewMsgCount').innerText = selectedTargetUser.msgCount || 0;
+            document.getElementById('viewAssets').innerText = `${selectedTargetUser.gold || 0} / ${selectedTargetUser.ruby || 0} / ${selectedTargetUser.points || 0}`;
 
             const canEdit = currentUser && currentUser.name === selectedTargetUser.name;
             document.getElementById('editSelfPen').style.display = canEdit ? 'block' : 'none';
 
+            // صاحب الموقع يستطيع تعديل بروفايل أي عضو
             const isOwnerUser = currentUser && (currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com');
             document.getElementById('adminCmdBtn').style.display = isOwnerUser ? 'block' : 'none';
 
@@ -973,6 +1098,7 @@
 
         function openSelfEdit() {
             closeModal('profileViewModal');
+            document.getElementById('editModalTitle').innerText = "تعديل بروفايلي الشخصي";
             document.getElementById('editName').value = currentUser.name || '';
             document.getElementById('editAge').value = currentUser.age || '';
             document.getElementById('editCountry').value = currentUser.country || '';
@@ -980,23 +1106,38 @@
             openModal('editSelfModal');
         }
 
-        function saveSelfProfile() {
-            currentUser.name = document.getElementById('editName').value;
-            currentUser.age = document.getElementById('editAge').value;
-            currentUser.gender = document.getElementById('editGender').value;
-            currentUser.country = document.getElementById('editCountry').value;
-            currentUser.bio = document.getElementById('editBio').value;
+        // تعديل بيانات أي عضو بواسطة صاحب الموقع
+        function openTargetEditByOwner() {
+            closeModal('adminCmdModal');
+            closeModal('profileViewModal');
+            document.getElementById('editModalTitle').innerText = `تعديل بروفايل العضو: ${selectedTargetUser.name}`;
+            document.getElementById('editName').value = selectedTargetUser.name || '';
+            document.getElementById('editAge').value = selectedTargetUser.age || '';
+            document.getElementById('editCountry').value = selectedTargetUser.country || '';
+            document.getElementById('editBio').value = selectedTargetUser.bio || '';
+            openModal('editSelfModal');
+        }
+
+        function saveEditedProfileData() {
+            let target = (currentUser.name === selectedTargetUser.name) ? currentUser : selectedTargetUser;
+            target.name = document.getElementById('editName').value;
+            target.age = document.getElementById('editAge').value;
+            target.gender = document.getElementById('editGender').value;
+            target.country = document.getElementById('editCountry').value;
+            target.bio = document.getElementById('editBio').value;
 
             const avatarFile = document.getElementById('editAvatarFile').files[0];
             const coverFile = document.getElementById('editCoverFile').files[0];
 
-            if(avatarFile) currentUser.avatar = URL.createObjectURL(avatarFile);
-            if(coverFile) currentUser.cover = URL.createObjectURL(coverFile);
+            if(avatarFile) target.avatar = URL.createObjectURL(avatarFile);
+            if(coverFile) target.cover = URL.createObjectURL(coverFile);
 
-            localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
-            document.getElementById('topNavAvatar').src = currentUser.avatar;
+            if(currentUser.name === target.name) {
+                localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
+                document.getElementById('topNavAvatar').src = currentUser.avatar;
+            }
             closeModal('editSelfModal');
-            alert('تم حفظ الملف الشخصي وتحديث الصور بنجاح!');
+            alert('تم حفظ وتعديل الملف الشخصي بنجاح تام!');
         }
 
         function handleMicClick(slot) {
