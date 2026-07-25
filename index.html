@@ -628,22 +628,36 @@
 
     <!-- ربط Firebase المحدث والمحدث بذكاء واحترافية -->
     <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-      import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
+        import { getDatabase, ref, push, onChildAdded, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
 
-      const firebaseConfig = {
-        apiKey: "AIzaSyA6DkpqUEzzpkbEbOPTx3PxG7RdLdgyFZg",
-        authDomain: "hssoni-59f5c.firebaseapp.com",
-        databaseURL: "https://hssoni-59f5c-default-rtdb.firebaseio.com",
-        projectId: "hssoni-59f5c",
-        storageBucket: "hssoni-59f5c.firebasestorage.app",
-        messagingSenderId: "614244033785",
-        appId: "1:614244033785:web:123cc4cc8f8e759b45ae28",
-        measurementId: "G-N1M4L8JSRN"
-      };
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6DkpqUEzzpkbEbOPTx3PxG7RdLdgyFZg",
+            authDomain: "hssoni-59f5c.firebaseapp.com",
+            databaseURL: "https://hssoni-59f5c-default-rtdb.firebaseio.com",
+            projectId: "hssoni-59f5c",
+            storageBucket: "hssoni-59f5c.firebasestorage.app",
+            messagingSenderId: "614244033785",
+            appId: "1:614244033785:web:123cc4cc8f8e759b45ae28",
+            measurementId: "G-N1M4L8JSRN"
+        };
 
-      const app = initializeApp(firebaseConfig);
-      const analytics = getAnalytics(app);
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getDatabase(app);
+
+        // ربط فايربيس بالكود العادي
+        window.firebaseDB = db;
+        window.dbRef = ref;
+        window.dbPush = push;
+        window.dbOnChildAdded = onChildAdded;
+        window.dbServerTimestamp = serverTimestamp;
+
+        // تشغيل دالة الاستماع بعد تحميل فايربيس
+        if (typeof window.listenToMessages === 'function') {
+            window.listenToMessages();
+        }
     </script>
 
     <script>
@@ -797,7 +811,6 @@
             initSessionUI();
             checkKingArrival(currentUser);
             appendNotice(`📢 انضم إلينا الآن العضو الجديد: [ ${currentUser.name} ] أهلاً بك!`);
-            loadLast10Messages();
         }
 
         function checkKingArrival(user) {
@@ -869,20 +882,36 @@
             `;
         }
 
+        // --- دالة إرسال الرسائل المحدثة لتعمل مع Firebase ---
         function sendMessage() {
             if(!currentUser) { openModal('loginModal'); return; }
             if(currentUser.isMuted) { alert('عذراً، حسابك مكتوم حالياً من قبل الإدارة!'); return; }
 
             const input = document.getElementById('msgInput');
-            if(!input.value.trim()) return;
+            let msgText = input.value.trim();
+            if(!msgText) return;
 
-            const chatArea = document.getElementById('chatArea');
-            const row = document.createElement('div');
-            row.className = 'chat-row';
-            
             let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            let msgText = input.value;
 
+            // تحديد مسار الغرفة العامة في قاعدة البيانات
+            if(window.firebaseDB) {
+                const messagesRef = window.dbRef(window.firebaseDB, 'rooms/public/messages');
+
+                // إرسال الرسالة إلى Firebase
+                window.dbPush(messagesRef, {
+                    sender: currentUser.name,
+                    text: msgText,
+                    time: timeStr,
+                    userObj: currentUser,
+                    quotedText: currentQuotedText || null,
+                    timestamp: window.dbServerTimestamp()
+                });
+            } else {
+                alert("جاري الاتصال بالسيرفر، يرجى المحاولة بعد لحظات...");
+                return;
+            }
+
+            // زيادة عداد الرسائل للترقية 
             currentUser.msgCount = (currentUser.msgCount || 0) + 1;
             if(currentUser.msgCount % 50 === 0) {
                 currentUser.level = (currentUser.level || 1) + 1;
@@ -890,59 +919,54 @@
                 currentUser.ruby = (currentUser.ruby || 0) + 1;
                 currentUser.points = (currentUser.points || 0) + 1;
                 appendNotice(`🎉 مبروك للعضو [ ${currentUser.name} ]! أتم 50 رسالة وتم ترقيته ومنحه: 1 ذهب 🏆، 1 روبي 💎، 1 نقطة ⭐.`);
+                localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
             }
 
-            globalPublicMessages.push({ sender: currentUser.name, text: msgText, time: timeStr, userObj: currentUser });
-
-            let quotedHtml = '';
-            if(currentQuotedText) {
-                quotedHtml = `<div class="quoted-box"><i class="fas fa-quote-right"></i> ${currentQuotedText}</div>`;
-            }
-
-            let userStructuredHtml = renderUserRankStructure(currentUser, `openProfileOf('${currentUser.name}')`);
-
-            row.innerHTML = `
-                ${quotedHtml}
-                <div style="display:flex; flex-direction:column; gap:4px; width:100%;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        ${userStructuredHtml}
-                        <span class="msg-time">${timeStr}</span>
-                    </div>
-                    <div style="padding-right: 40px; word-break:break-word; font-size:13px; color:#111;">${msgText}</div>
-                </div>
-            `;
-
-            row.ondblclick = function() {
-                currentQuotedText = `${currentUser.name}: ${msgText}`;
-                document.getElementById('replyPreviewText').innerText = `اقتباس: ${currentQuotedText}`;
-                document.getElementById('replyPreviewBar').style.display = 'flex';
-            };
-
-            chatArea.appendChild(row);
             input.value = '';
             cancelReply();
-            chatArea.scrollTop = chatArea.scrollHeight;
         }
 
-        function loadLast10Messages() {
+        // --- دالة الاستماع المباشر للرسائل من Firebase ---
+        window.listenToMessages = function() {
             const chatArea = document.getElementById('chatArea');
-            let last10 = globalPublicMessages.slice(-10);
-            last10.forEach(m => {
+            if(!window.firebaseDB) return;
+            const messagesRef = window.dbRef(window.firebaseDB, 'rooms/public/messages');
+            
+            // هذه الدالة تعمل تلقائياً كلما تم إرسال رسالة جديدة للغرفة
+            window.dbOnChildAdded(messagesRef, (snapshot) => {
+                const data = snapshot.val();
+                
                 const row = document.createElement('div');
                 row.className = 'chat-row';
-                let userStructuredHtml = renderUserRankStructure(m.userObj || { name: m.sender, rank: ranksList[24] }, `openProfileOf('${m.sender}')`);
+                
+                let quotedHtml = '';
+                if(data.quotedText) {
+                    quotedHtml = `<div class="quoted-box"><i class="fas fa-quote-right"></i> ${data.quotedText}</div>`;
+                }
+
+                let userObj = data.userObj || { name: data.sender, rank: ranksList[24] };
+                let userStructuredHtml = renderUserRankStructure(userObj, `openProfileOf('${data.sender}')`);
+
                 row.innerHTML = `
+                    ${quotedHtml}
                     <div style="display:flex; flex-direction:column; gap:4px; width:100%;">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             ${userStructuredHtml}
-                            <span class="msg-time">${m.time}</span>
+                            <span class="msg-time">${data.time}</span>
                         </div>
-                        <div style="padding-right: 40px; word-break:break-word; font-size:13px; color:#111;">${m.text}</div>
+                        <div style="padding-right: 40px; word-break:break-word; font-size:13px; color:#111;">${data.text}</div>
                     </div>
                 `;
+
+                row.ondblclick = function() {
+                    currentQuotedText = `${data.sender}: ${data.text}`;
+                    document.getElementById('replyPreviewText').innerText = `اقتباس: ${currentQuotedText}`;
+                    document.getElementById('replyPreviewBar').style.display = 'flex';
+                };
+
                 chatArea.appendChild(row);
+                chatArea.scrollTop = chatArea.scrollHeight;
             });
-            chatArea.scrollTop = chatArea.scrollHeight;
         }
 
         function cancelReply() {
@@ -956,6 +980,7 @@
             ann.className = 'announcement';
             ann.innerHTML = text;
             chatArea.appendChild(ann);
+            chatArea.scrollTop = chatArea.scrollHeight;
         }
 
         function openOnlineList() {
