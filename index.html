@@ -626,7 +626,7 @@
 
     <audio id="globalAudioPlayer" style="display:none;" autoplay></audio>
 
-    <!-- ربط Firebase مع السكربت الكامل -->
+    <!-- ربط Firebase المحدث والمحدث بذكاء واحترافية -->
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
       import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
@@ -638,8 +638,8 @@
         projectId: "hssoni-59f5c",
         storageBucket: "hssoni-59f5c.firebasestorage.app",
         messagingSenderId: "614244033785",
-        appId: "1:614244033785:web:652bce717e1b831945ae28",
-        measurementId: "G-FBBQ71XQVD"
+        appId: "1:614244033785:web:123cc4cc8f8e759b45ae28",
+        measurementId: "G-N1M4L8JSRN"
       };
 
       const app = initializeApp(firebaseConfig);
@@ -736,7 +736,6 @@
 
             if(!name) { alert('يرجى إدخال الاسم أولاً!'); return; }
 
-            // التحقق من صاحب الموقع بالبريد وكلمة المرور المرتبطة
             if(email === 'ghrwrkk2@gmail.com' && pass === '780718519') {
                 currentUser = {
                     name: name, email: email, isOwner: true, rank: ranksList[0],
@@ -766,7 +765,6 @@
                     points: 0, level: 1, likes: 0, gold: 0, ruby: 0, msgCount: 0,
                     isMuted: false, isBanned: false, isBlocked: false
                 };
-                // إضافة الزائر لسجل الزوار
                 visitorsLogList.push({ name: name, time: new Date().toLocaleTimeString(), age: currentUser.age, gender: currentUser.gender });
             }
 
@@ -805,10 +803,9 @@
         function checkKingArrival(user) {
             if(user && (user.isOwner || user.email === 'ghrwrkk2@gmail.com' || (user.rank && user.rank.id === 1))) {
                 const banner = document.getElementById('kingBannerModal');
-                document.getElementById('kingWelcomeText.innerHTML') = `تم دخول صاحب الموقع الملك 👑<br><span style="font-size:16px; color:#fff;">${user.name}</span>`;
+                document.getElementById('kingWelcomeText').innerHTML = `تم دخول صاحب الموقع الملك 👑<br><span style="font-size:16px; color:#fff;">${user.name}</span>`;
                 banner.style.display = 'flex';
 
-                // إطلاق الورود المتساقطة
                 for(let i=0; i<25; i++) {
                     let rose = document.createElement('div');
                     rose.className = 'rose-fall';
@@ -834,7 +831,6 @@
                 document.getElementById('ownerControlPanelBtn').style.display = 'block';
             }
 
-            // تجهيز قائمة المتواجدين مع أحمد اليمن وسارة الشام وصاحب الموقع أولاً
             activeUsersList = [
                 { name: "صاحب الموقع (حسوني)", rank: ranksList[0], email: "ghrwrkk2@gmail.com", age: "24", gender: "ذكر", country: "اليمن", likes: 100, avatar: "https://via.placeholder.com/80/ffd700/000?text=Owner", gold: 50, ruby: 50, points: 999 },
                 { name: "أحمد اليمن", rank: ranksList[1], age: "22", gender: "ذكر", country: "اليمن", likes: 12, avatar: "https://via.placeholder.com/80/fff/000", gold: 10, ruby: 10, points: 50 },
@@ -887,7 +883,6 @@
             let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             let msgText = input.value;
 
-            // تحديث عداد رسائل العضو للوصول إلى 50 رسالة
             currentUser.msgCount = (currentUser.msgCount || 0) + 1;
             if(currentUser.msgCount % 50 === 0) {
                 currentUser.level = (currentUser.level || 1) + 1;
@@ -929,7 +924,6 @@
             chatArea.scrollTop = chatArea.scrollHeight;
         }
 
-        // عرض آخر 10 رسائل عند الدخول
         function loadLast10Messages() {
             const chatArea = document.getElementById('chatArea');
             let last10 = globalPublicMessages.slice(-10);
@@ -968,7 +962,6 @@
             const listDiv = document.getElementById('onlineList');
             listDiv.innerHTML = '';
             
-            // ترتيب المتواجدين: صاحب الموقع أولاً، ثم الرتب تصاعدياً، ثم الزوار في الأخير
             activeUsersList.sort((a, b) => {
                 let rankA = a.rank ? a.rank.id : 99;
                 let rankB = b.rank ? b.rank.id : 99;
@@ -982,7 +975,6 @@
                 item.style.cssText = "display:flex; align-items:center; justify-content:space-between; padding:8px; border-bottom:1px solid #eee; cursor:pointer;";
                 let userStructuredHtml = renderUserRankStructure(u, `openProfileOf('${u.name}')`);
                 
-                // زر عرض سجل الزوار لصاحب الموقع والبرنس والكنج
                 let visitorBtnHtml = '';
                 if(currentUser && (currentUser.isOwner || (currentUser.rank && [1, 2, 3].includes(currentUser.rank.id)))) {
                     visitorBtnHtml = `<button onclick="openVisitorsLog()" style="background:#ffd700; border:none; padding:4px 8px; border-radius:4px; font-weight:bold; font-size:10px; cursor:pointer;">سجل الزوار</button>`;
@@ -1044,7 +1036,6 @@
             const canEdit = currentUser && currentUser.name === selectedTargetUser.name;
             document.getElementById('editSelfPen').style.display = canEdit ? 'block' : 'none';
 
-            // صاحب الموقع يستطيع تعديل بروفايل أي عضو
             const isOwnerUser = currentUser && (currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com');
             document.getElementById('adminCmdBtn').style.display = isOwnerUser ? 'block' : 'none';
 
@@ -1106,7 +1097,6 @@
             openModal('editSelfModal');
         }
 
-        // تعديل بيانات أي عضو بواسطة صاحب الموقع
         function openTargetEditByOwner() {
             closeModal('adminCmdModal');
             closeModal('profileViewModal');
@@ -1352,7 +1342,7 @@
                 ranksList.forEach(r => {
                     listHtml += `<div style="padding:4px; background:#f1f1f1; display:flex; justify-content:space-between; align-items:center;"><span>${r.id}. ${r.name}</span> <button onclick="let newN = prompt('عدل اسم الرتبة:', '${r.name}'); if(newN){ r.name=newN; alert('تم التعديل وحفظه فوراً'); }" style="background:#0d6efd; color:#fff; border:none; padding:2px 6px; border-radius:3px; cursor:pointer;">تعديل</button></div>`;
                 });
-                listHtml += `</div><button onclick="let rn=prompt('اسم الرتبة الجديدة:'); let sh=prompt('شكل الأيقونة (مثلاً fa-star):'); if(rn){ ranksList.push({id:ranksList.length+1, name:rn, icon:sh||'fa-star', color:'#fff', style:'background:#333;color:#fff;'}); alert('تمت إضافة وحفظ الرتبة فوراً!'); }" style="padding:8px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; width:100%;">➕ إضافة رتبة جديدة وحفظها فوراً</button>`;
+                listHtml += `</div><button onclick="let rn=prompt('اسم الرتبة الجديدة:'); let sh=prompt('شكل الأيقونة (مثلاً fa-star):'); if(rn){ ranksList.push({id:ranksList.length+1, name:rn, icon:sh||'fa-star', color:'#fff', style:'background:#333;color:'#fff;'}); alert('تمت إضافة وحفظ الرتبة فوراً!'); }" style="padding:8px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; width:100%;">➕ إضافة رتبة جديدة وحفظها فوراً</button>`;
                 area.innerHTML = listHtml;
             } else if(sectionNum === 4) {
                 area.innerHTML = `
