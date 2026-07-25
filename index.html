@@ -658,6 +658,9 @@
         if (typeof window.listenToMessages === 'function') {
             window.listenToMessages();
         }
+        if (typeof window.listenToOnlineUsers === 'function') {
+            window.listenToOnlineUsers();
+        }
     </script>
 
     <script>
@@ -807,6 +810,13 @@
 
         function saveAndLogin() {
             localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
+            
+            // رفع أو تحديث بيانات العضو في قاعدة بيانات فايربيس للمتواجدين
+            if(window.firebaseDB && window.dbRef && window.dbPush) {
+                const onlineRef = window.dbRef(window.firebaseDB, 'onlineUsers');
+                window.dbPush(onlineRef, currentUser);
+            }
+
             closeModal('loginModal');
             initSessionUI();
             checkKingArrival(currentUser);
@@ -969,6 +979,18 @@
             });
         }
 
+        // --- استماع المتواجدين وتحديثهم من Firebase ---
+        window.listenToOnlineUsers = function() {
+            if(!window.firebaseDB) return;
+            const onlineRef = window.dbRef(window.firebaseDB, 'onlineUsers');
+            window.dbOnChildAdded(onlineRef, (snapshot) => {
+                const user = snapshot.val();
+                if(user && !activeUsersList.some(u => u.name === user.name)) {
+                    activeUsersList.push(user);
+                }
+            });
+        }
+
         function cancelReply() {
             currentQuotedText = null;
             document.getElementById('replyPreviewBar').style.display = 'none';
@@ -987,9 +1009,10 @@
             const listDiv = document.getElementById('onlineList');
             listDiv.innerHTML = '';
             
+            // ترتيب المتواجدين: صاحب الموقع في أعلى القائمة تماماً (Rank ID 1)، ثم بقية الأعضاء تصاعدياً حسب الرتبة
             activeUsersList.sort((a, b) => {
-                let rankA = a.rank ? a.rank.id : 99;
-                let rankB = b.rank ? b.rank.id : 99;
+                let rankA = (a.isOwner || (a.rank && a.rank.id === 1)) ? 0 : (a.rank ? a.rank.id : 99);
+                let rankB = (b.isOwner || (b.rank && b.rank.id === 1)) ? 0 : (b.rank ? b.rank.id : 99);
                 return rankA - rankB;
             });
 
@@ -998,17 +1021,37 @@
             activeUsersList.forEach(u => {
                 let item = document.createElement('div');
                 item.style.cssText = "display:flex; align-items:center; justify-content:space-between; padding:8px; border-bottom:1px solid #eee; cursor:pointer;";
+                
+                // إضافة مفتاح تسجيل الدخول السريع في بروفايل الزوار حصرياً لصاحب الموقع، البرنس، والكنج بمجرد الضغط عليه يتم تسجيل العضو فوراً ويختفي المفتاح
+                let visitorKeyHtml = '';
+                let userRankId = u.rank ? u.rank.id : 99;
+                let isPrivilegedViewer = currentUser && (currentUser.isOwner || (currentUser.rank && [1, 2, 3].includes(currentUser.rank.id)));
+                
+                if(isPrivilegedViewer && userRankId > 3) {
+                    visitorKeyHtml = `<i class="fas fa-key" style="color:#ffd700; cursor:pointer; font-size:16px; padding:4px;" title="تسجيل العضو فوراً وتفعيل المفتاح" onclick="event.stopPropagation(); grantMembershipToUser('${u.name}')"></i>`;
+                }
+
                 let userStructuredHtml = renderUserRankStructure(u, `openProfileOf('${u.name}')`);
                 
                 let visitorBtnHtml = '';
-                if(currentUser && (currentUser.isOwner || (currentUser.rank && [1, 2, 3].includes(currentUser.rank.id)))) {
+                if(isPrivilegedViewer) {
                     visitorBtnHtml = `<button onclick="openVisitorsLog()" style="background:#ffd700; border:none; padding:4px 8px; border-radius:4px; font-weight:bold; font-size:10px; cursor:pointer;">سجل الزوار</button>`;
                 }
 
-                item.innerHTML = `<div style="display:flex; align-items:center; gap:8px;">${userStructuredHtml}</div> ${visitorBtnHtml}`;
+                item.innerHTML = `<div style="display:flex; align-items:center; gap:8px;">${userStructuredHtml} ${visitorKeyHtml}</div> ${visitorBtnHtml}`;
                 listDiv.appendChild(item);
             });
             openModal('onlineModal');
+        }
+
+        // دالة تسجيل العضو فوراً بالضغط على المفتاح واختفاء المفتاح
+        function grantMembershipToUser(userName) {
+            let targetUser = activeUsersList.find(u => u.name === userName);
+            if(targetUser) {
+                targetUser.rank = ranksList[14]; // منحه رتبة عضو مميز كمثال أو ترقيته
+                alert(`تم تسجيل العضو [ ${userName} ] بنجاح وتفعيل عضويته فوراً!`);
+                openOnlineList(); // تحديث القائمة ليختفي المفتاح
+            }
         }
 
         function openVisitorsLog() {
@@ -1107,6 +1150,21 @@
             openModal('privateChatModal');
         }
 
+        // دالة إرسال الرسالة الخاصة مع إصلاح زر الإرسال والاستجابة التامة
+        function sendPrivateMsg() {
+            const input = document.getElementById('privateInput');
+            let text = input.value.trim();
+            if(!text) return;
+
+            const area = document.getElementById('privateMsgArea');
+            let msgDiv = document.createElement('div');
+            msgDiv.style.cssText = "background:#fff; padding:6px 10px; border-radius:6px; font-size:12px; margin-bottom:4px; align-self:flex-end;";
+            msgDiv.innerHTML = `<b>أنت:</b> ${text}`;
+            area.appendChild(msgDiv);
+            area.scrollTop = area.scrollHeight;
+            input.value = '';
+        }
+
         function openTopProfileMenu() {
             if(!currentUser) { openModal('loginModal'); return; }
             openModal('topProfileModal');
@@ -1152,7 +1210,7 @@
                 document.getElementById('topNavAvatar').src = currentUser.avatar;
             }
             closeModal('editSelfModal');
-            alert('تم حفظ وتعديل الملف الشخصي بنجاح تام!');
+            alert('تم حفظ وتعديل الملف الشخصي بنجاح تام وتظهر التعديلات لجميع الأعضاء الآن!');
         }
 
         function handleMicClick(slot) {
@@ -1288,7 +1346,7 @@
                     selectedTargetUser.rank = r;
                     document.getElementById('viewRankTitle').innerText = r.name;
                     appendNotice(`👑 قام صاحب الموقع بمنح العضو [ ${selectedTargetUser.name} ] رتبة [ ${r.name} ] بنجاح تام!`);
-                    alert(`تم منح العضو [ ${selectedTargetUser.name} ] رتبة (${r.name}) بنجاح وتظهر الآن منفصلة برونقها في كل مكان بالشات!`);
+                    alert(`تم منح العضو [ ${selectedTargetUser.name} ] رتبة (${r.name}) بنجاح وتظهر الآن في الشات العام والمتواجدين بكل برونقها!`);
                     closeModal('ranksModal');
                     closeModal('adminCmdModal');
                     closeModal('profileViewModal');
