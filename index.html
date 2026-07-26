@@ -2,7 +2,6 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <!-- إعدادات الشاشة لمنع التكبير التلقائي ودعم النوتش والشاشات الحديثة -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#000000">
     <title>شات حسوني | أحلى دردشة عربية</title>
@@ -11,7 +10,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* إعادة ضبط الشمولية لمنع الاختلافات بين المتصفحات ولتحقيق أقصى خفة وأداء */
         * { 
             margin: 0; 
             padding: 0; 
@@ -87,7 +85,6 @@
         .nav-item.gold { color: #ffd700; }
         .nav-item.yellow { color: #ffeb3b; }
 
-        /* شارة الإشعارات الجديدة للخاص */
         .badge-dot {
             position: absolute;
             top: -2px;
@@ -128,7 +125,6 @@
         .msg-time { font-size: 9px; color: #555; background: rgba(0,0,0,0.05); padding: 2px 5px; border-radius: 4px; margin-right: auto; }
         .quoted-box { background: rgba(0,0,0,0.08); border-right: 3px solid #0d6efd; padding: 3px 6px; font-size: 11px; margin-bottom: 3px; border-radius: 3px; color: #333; }
 
-        /* الأفاتار ورتبة العضو المطورة (أيقونة منفصلة وخلفية فخمة غير متداخلة وتدعم التحديث الفوري) */
         .rank-display-flex { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; cursor: pointer; }
         .user-avatar { width: 34px; height: 34px; border-radius: 50%; border: 1px solid #ffd700; object-fit: cover; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
         .user-avatar:active { transform: scale(1.08); }
@@ -150,8 +146,8 @@
         .rank-bg-box i { font-size: 13px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3)); }
 
         /* شريط الإدخال */
-        .input-bar { display: flex; flex-direction: column; background-color: #c0c0c0; padding: 6px; gap: 4px; border-top: 1px solid #999; flex-shrink: 0; }
-        .input-main-row { display: flex; align-items: center; gap: 6px; width: 100%; }
+        .input-bar { display: flex; flex-direction: column; background-color: #c0c0c0; padding: 6px; gap: 4px; border-top: 1px solid #999; flex-shrink: 0; position: relative; }
+        .input-main-row { display: flex; align-items: center; gap: 6px; width: 100%; position: relative; }
         .send-icon { background-color: #000; color: #fff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
         .send-icon:active { background-color: #0d6efd; }
         .input-box { flex: 1; background-color: #fff; border-radius: 20px; display: flex; align-items: center; padding: 0 10px; height: 36px; border: 1px solid #777; }
@@ -166,6 +162,22 @@
         }
         
         #replyPreviewBar { display: none; background: #e0e0e0; padding: 4px 10px; font-size: 11px; border-radius: 4px; justify-content: space-between; align-items: center; border-right: 3px solid #0d6efd; }
+
+        /* قائمة علامة الزائد الخاصة فوق الزر تماماً */
+        .plus-popup-menu {
+            display: none;
+            position: absolute;
+            bottom: 50px;
+            right: 10px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            border: 1px solid #ddd;
+            animation: popUpUp 0.2s ease-in-out;
+        }
+        @keyframes popUpUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
         /* الشريط السفلي */
         .bottom-nav { display: flex; justify-content: space-around; background-color: #000; padding: 6px 0; color: #fff; border-top: 2px solid #ffd700; flex-shrink: 0; }
@@ -220,13 +232,11 @@
         .info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 12px; }
         .admin-cmd-btn { background: #dc3545; color: #fff; border: none; padding: 10px; border-radius: 5px; width: 100%; margin-top: 10px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.2s; }
 
-        /* لوحة التحكم */
         .admin-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 5px; }
         .admin-card-item { background: #f8f9fa; border: 1px solid #ddd; padding: 10px; border-radius: 6px; text-align: center; cursor: pointer; font-size: 11px; font-weight: bold; display: flex; flex-direction: column; align-items: center; gap: 5px; transition: 0.2s; }
         .admin-card-item i { font-size: 16px; color: #0d6efd; }
         .admin-card-item:active { background: #e2e6ea; }
 
-        /* إشعار دخول الملك المتحرك والورود */
         #kingBannerModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; }
         .king-welcome-box { background: linear-gradient(45deg, #ffd700, #ff8c00); color: #000; padding: 25px 35px; border-radius: 20px; font-size: 20px; font-weight: bold; text-align: center; box-shadow: 0 0 30px #ffd700; animation: kingPop 0.4s ease-in-out; border: 3px solid #fff; }
         @keyframes kingPop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
@@ -236,7 +246,6 @@
 </head>
 <body>
 
-    <!-- إشعار دخول الملك والورود المتساقطة -->
     <div id="kingBannerModal">
         <div class="king-welcome-box" id="kingWelcomeText">تم دخول صاحب الموقع الملك 👑</div>
     </div>
@@ -300,7 +309,27 @@
                 <i class="far fa-smile" style="color:#777; cursor:pointer; padding: 5px;" onclick="alert('قريباً: لوحة الوجوه التعبيرية')"></i>
             </div>
             <i class="fas fa-microphone" style="font-size:18px; color:#555; cursor:pointer; padding: 4px;" onclick="alert('التسجيل الصوتي مفعل')"></i>
-            <i class="fas fa-plus" style="font-size:18px; color:#555; cursor:pointer; padding: 4px;" onclick="openModal('plusMenuModal')"></i>
+            
+            <!-- زر علامة الزائد مع القائمة التي تظهر فوقه مباشرة -->
+            <div style="position:relative;">
+                <i class="fas fa-plus" id="plusBtn" style="font-size:18px; color:#555; cursor:pointer; padding: 4px;" onclick="togglePlusMenu()"></i>
+                
+                <div class="plus-popup-menu" id="plusPopupMenu">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;">
+                        <span style="font-weight:bold; font-size:12px;">مشاركة الوسائط والألعاب</span>
+                        <i class="fas fa-times" onclick="togglePlusMenu()" style="cursor:pointer; font-size:12px; color:#777;"></i>
+                    </div>
+                    <div style="display:flex; gap:12px; align-items:center;">
+                        <div onclick="document.getElementById('fileUploadInput').click(); togglePlusMenu();" style="background:#e3f2fd; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fas fa-cloud-upload-alt" style="color:#0d6efd; font-size:16px;"></i></div>
+                        <input type="file" id="fileUploadInput" style="display:none;" accept="image/*,video/*" onchange="handleFileUpload(this)">
+                        <div onclick="alert('مشاركة فيديو تيك توك'); togglePlusMenu();" style="background:#000; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fab fa-tiktok" style="color:#fff; font-size:16px;"></i></div>
+                        <div onclick="alert('لعبة النرد'); togglePlusMenu();" style="background:#e8f5e9; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fas fa-dice" style="color:#28a745; font-size:16px;"></i></div>
+                        <div onclick="alert('مشاركة فيديو يوتيوب'); togglePlusMenu();" style="background:#ffebee; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fab fa-youtube" style="color:#ff0000; font-size:16px;"></i></div>
+                        <div onclick="alert('لعبة إكس أو'); togglePlusMenu();" style="background:#fff3e0; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fas fa-gamepad" style="color:#ff9800; font-size:16px;"></i></div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -314,24 +343,6 @@
         <div class="bottom-item" onclick="toggleDataSaver()"><i class="fas fa-bolt" style="color:#00e676;"></i><span>توفير النت</span></div>
         <div class="bottom-item" onclick="location.reload()"><i class="fas fa-sync-alt"></i><span>تحديث</span></div>
     </footer>
-
-    <!-- النوافذ والقوائم -->
-    <div class="modal" id="plusMenuModal">
-        <div class="modal-content" style="max-width:350px; background:#fff; border-radius:15px; padding:15px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <span style="font-weight:bold; font-size:13px;">مشاركة الوسائط والألعاب</span>
-                <i class="fas fa-times" onclick="closeModal('plusMenuModal')" style="cursor:pointer; padding:5px;"></i>
-            </div>
-            <div style="display:flex; justify-content:space-around; align-items:center; padding:10px 0;">
-                <div onclick="document.getElementById('fileUploadInput').click(); closeModal('plusMenuModal');" style="background:#e3f2fd; width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fas fa-cloud-upload-alt" style="color:#0d6efd; font-size:18px;"></i></div>
-                <input type="file" id="fileUploadInput" style="display:none;" accept="image/*,video/*" onchange="handleFileUpload(this)">
-                <div onclick="alert('مشاركة فيديو تيك توك')" style="background:#000; width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fab fa-tiktok" style="color:#fff; font-size:18px;"></i></div>
-                <div onclick="alert('لعبة النرد')" style="background:#e8f5e9; width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fas fa-dice" style="color:#28a745; font-size:18px;"></i></div>
-                <div onclick="alert('مشاركة فيديو يوتيوب')" style="background:#ffebee; width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fab fa-youtube" style="color:#ff0000; font-size:18px;"></i></div>
-                <div onclick="alert('لعبة إكس أو')" style="background:#fff3e0; width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fas fa-gamepad" style="color:#ff9800; font-size:18px;"></i></div>
-            </div>
-        </div>
-    </div>
 
     <!-- نافذة أزرار المايك -->
     <div class="modal" id="micControlModal">
@@ -417,7 +428,7 @@
         </div>
     </div>
 
-    <!-- لوحة تسجيل الدخول (لا تظهر للمسجل إلا عند الضغط على خروج نهائي) -->
+    <!-- لوحة تسجيل الدخول -->
     <div class="modal" id="loginModal">
         <div class="modal-content welcome-card">
             <div class="welcome-header-cover" id="loginCoverArea">
@@ -665,7 +676,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
-        import { getDatabase, ref, push, onChildAdded, onValue, set, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+        import { getDatabase, ref, push, query, limitToLast, onChildAdded, onValue, set, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA6DkpqUEzzpkbEbOPTx3PxG7RdLdgyFZg",
@@ -685,6 +696,8 @@
         window.firebaseDB = db;
         window.dbRef = ref;
         window.dbPush = push;
+        window.dbQuery = query;
+        window.dbLimitToLast = limitToLast;
         window.dbSet = set;
         window.dbOnChildAdded = onChildAdded;
         window.dbOnValue = onValue;
@@ -768,6 +781,11 @@
                 document.getElementById('visitorFields').style.display = 'none';
                 document.getElementById('memberFields').style.display = 'flex';
             }
+        }
+
+        function togglePlusMenu() {
+            const menu = document.getElementById('plusPopupMenu');
+            menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
         }
 
         function submitLogin() {
@@ -864,7 +882,6 @@
             appendNotice(`📢 انضم إلينا الآن العضو الجديد: [ ${currentUser.name} ] أهلاً بك!`);
         }
 
-        /* دالة تسجيل الخروج النهائي (تظهر نافذة الدخول فقط عند النقر هنا) */
         function logout() {
             if(window.firebaseDB && window.dbRef && window.dbSet && currentUser) {
                 const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + currentUser.name.replace(/[.#$\/\[\]]/g, '_'));
@@ -908,7 +925,6 @@
             activeUsersList = [currentUser];
         }
 
-        /* دالة هيكلة رتبة العضو وتحديثها فوراً بشكل ذكي غير متداخل */
         function renderUserRankStructure(userObj, nameClickAction) {
             let rankBgHtml = '';
             let avatarUrl = userObj && userObj.avatar ? userObj.avatar : 'https://via.placeholder.com/34';
@@ -1061,26 +1077,27 @@
 
         function loadRoomListeners(roomName) {
             let roomKey = roomName.replace(/[.#$\/\[\]]/g, '_');
-            document.getElementById('chatArea').innerHTML = `<div class="announcement" id="mainRoomNotice">أهلاً وسهلاً بكم في <strong id="currentRoomTitle">${roomName}</strong> 🎉</div>`;
+            const chatArea = document.getElementById('chatArea');
+            chatArea.innerHTML = `<div class="announcement" id="mainRoomNotice">أهلاً وسهلاً بكم في <strong id="currentRoomTitle">${roomName}</strong> 🎉</div>`;
 
             const roomControlRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/controls`);
             window.dbOnValue(roomControlRef, (snapshot) => {
                 const val = snapshot.val();
                 if(val) {
                     if(val.action === 'clean') {
-                        document.getElementById('chatArea').innerHTML = '<div class="announcement">تم تنظيف الروم بنجاح بواسطة صاحب الموقع ✨</div>';
+                        chatArea.innerHTML = '<div class="announcement">تم تنظيف الروم بنجاح بواسطة صاحب الموقع ✨</div>';
                     }
                     if(val.bgUrl) {
-                        document.getElementById('chatArea').style.backgroundImage = `url('${val.bgUrl}')`;
+                        chatArea.style.backgroundImage = `url('${val.bgUrl}')`;
                     }
                 }
             });
 
-            const messagesRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`);
+            // جلب وعرض آخر 10 رسائل فقط عند الدخول وعدم اختفائها عند التحديث
+            const messagesRef = window.dbQuery(window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`), window.dbLimitToLast(10));
             window.dbOnChildAdded(messagesRef, (snapshot) => {
                 const data = snapshot.val();
                 if(!data) return;
-                const chatArea = document.getElementById('chatArea');
                 
                 const row = document.createElement('div');
                 row.className = 'chat-row';
@@ -1104,7 +1121,6 @@
                     </div>
                 `;
 
-                /* إضافة ميزة الاقتباس بذكاء: الضغط على اسم العضو لاقتباس اسمه، والضغط المزدوج على الرسالة لاقتباسها */
                 let rankBox = row.querySelector('.rank-bg-box');
                 if(rankBox) {
                     rankBox.onclick = (e) => {
