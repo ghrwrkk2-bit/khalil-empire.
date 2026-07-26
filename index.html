@@ -417,7 +417,7 @@
         </div>
     </div>
 
-    <!-- لوحة تسجيل الدخول -->
+    <!-- لوحة تسجيل الدخول (معدلة لدعم الزائر فوراً) -->
     <div class="modal" id="loginModal">
         <div class="modal-content welcome-card">
             <div class="welcome-header-cover" id="loginCoverArea">
@@ -432,7 +432,7 @@
             </div>
 
             <div class="login-form-box">
-                <input type="text" id="loginName" placeholder="ادخل اسمك هنا...">
+                <input type="text" id="loginName" placeholder="ادخل اسمك المستعار هنا...">
                 
                 <div id="visitorFields" style="display:flex; gap:6px;">
                     <select id="loginAge" style="flex:1;"></select>
@@ -443,11 +443,11 @@
                 </div>
 
                 <div id="memberFields" style="display:none; flex-direction:column; gap:6px;">
-                    <input type="email" id="loginEmail" placeholder="البريد الإلكتروني (مثال صاحب الموقع: ghrwrkk2@gmail.com)...">
+                    <input type="email" id="loginEmail" placeholder="البريد الإلكتروني...">
                     <input type="password" id="loginPass" placeholder="كلمة المرور...">
                 </div>
 
-                <button class="login-submit-btn" onclick="submitLogin()">دخول الشات</button>
+                <button class="login-submit-btn" onclick="submitLogin()">دخول الشات فوراً</button>
                 
                 <div style="text-align:center; margin-top:5px; font-size:11px; padding:8px; background:#f1f1f1; border-radius:5px;">
                     <i class="fab fa-whatsapp" style="color:#25d366; font-size:14px;"></i> للتواصل والدعم الفني: 
@@ -477,14 +477,14 @@
     <div class="modal" id="onlineModal">
         <div class="modal-content">
             <div class="modal-header">
-                <span>المتواجدين الآن في الشات (<span id="onlineCount">0</span>)</span>
+                <span>المتواجدين الآن في الغرفة (<span id="onlineCount">0</span>)</span>
                 <i class="fas fa-times" onclick="closeModal('onlineModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div class="modal-body" id="onlineList"></div>
         </div>
     </div>
 
-    <!-- الغرف -->
+    <!-- الغرف (منعزلة وبكل كفاءة) -->
     <div class="modal" id="roomsListModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -559,7 +559,7 @@
         </div>
     </div>
 
-    <!-- تعديل الملف الشخصي (مع إضافة تخصيص الألوان المطلوبة) -->
+    <!-- تعديل الملف الشخصي -->
     <div class="modal" id="editSelfModal">
         <div class="modal-content" style="padding:15px; background:#fff; text-align:right;">
             <div class="modal-header" style="margin:-15px -15px 10px -15px;">
@@ -575,7 +575,6 @@
                 <label>البلد:</label><input type="text" id="editCountry">
                 <label>المعلومات (البيو):</label><input type="text" id="editBio">
                 
-                <!-- خيارات الألوان الجديدة المطلوبة -->
                 <label>لون خلفية الاسم:</label><input type="color" id="editNameBgColor" value="#ffd700" style="height:35px; width:100%; border:none; cursor:pointer;">
                 <label>لون خلفية البريد وكلمة المرور:</label><input type="color" id="editFieldsBgColor" value="#f1f1f1" style="height:35px; width:100%; border:none; cursor:pointer;">
 
@@ -615,7 +614,7 @@
         </div>
     </div>
 
-    <!-- محادثة خاصة (مع إمكانية إرسال الصور والفيديوهات وإشعارات الشريط العلوي) -->
+    <!-- محادثة خاصة -->
     <div class="modal" id="privateChatModal">
         <div class="modal-content" style="height:480px;">
             <div class="modal-header">
@@ -632,7 +631,7 @@
         </div>
     </div>
 
-    <!-- قائمة قائمة الخاصة لاختيار العضو -->
+    <!-- قائمة الخاصة لاختيار العضو -->
     <div class="modal" id="privateNotificationModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -748,6 +747,7 @@
         let privateMessagesInbox = {};
         let currentPrivateTarget = null;
         let currentQuotedText = null;
+        let currentActiveRoom = 'روم شات حسوني الرئيسي';
 
         window.onload = function() {
             const ageSelect = document.getElementById('loginAge');
@@ -787,7 +787,7 @@
             const email = document.getElementById('loginEmail').value.trim();
             const pass = document.getElementById('loginPass').value.trim();
 
-            if(!name) { alert('يرجى إدخال الاسم أولاً!'); return; }
+            if(!name) { alert('يرجى إدخال اسمك أولاً!'); return; }
 
             if(email === 'ghrwrkk2@gmail.com' && pass === '780718519') {
                 currentUser = {
@@ -801,7 +801,7 @@
                 };
             } else if(activeLoginMode === 'member') {
                 currentUser = {
-                    name: name, email: email, pass: pass, isOwner: false, rank: ranksList[24],
+                    name: name, email: email, pass: pass, isOwner: false, rank: ranksList[4], // منح رتبة ماسي/بريمو تلقائياً عند التسجيل
                     age: '20', gender: 'ذكر', country: 'اليمن', bio: 'عضو مسجل في الشات',
                     avatar: 'https://via.placeholder.com/80/00c6ff/fff?text=Member',
                     cover: 'https://via.placeholder.com/400x160/333/fff',
@@ -835,7 +835,7 @@
             if(!name || !email || !pass) { alert('يرجى تعبئة جميع الحقول بشكل صحيح!'); return; }
 
             currentUser = {
-                name: name, email: email, pass: pass, isOwner: false, rank: ranksList[24],
+                name: name, email: email, pass: pass, isOwner: false, rank: ranksList[4],
                 age: '20', gender: 'ذكر', country: 'اليمن', bio: 'عضوية جديدة',
                 avatar: 'https://via.placeholder.com/80/00e676/fff?text=User',
                 cover: 'https://via.placeholder.com/400x160/222/fff',
@@ -862,6 +862,15 @@
             appendNotice(`📢 انضم إلينا الآن العضو الجديد: [ ${currentUser.name} ] أهلاً بك!`);
         }
 
+        function logout() {
+            if(window.firebaseDB && window.dbRef && window.dbSet && currentUser) {
+                const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + currentUser.name.replace(/[.#$\/\[\]]/g, '_'));
+                window.dbSet(userStatusRef, null);
+            }
+            localStorage.removeItem('hasouniChatUser');
+            location.reload();
+        }
+
         function checkKingArrival(user) {
             if(user && (user.isOwner || user.email === 'ghrwrkk2@gmail.com' || (user.rank && user.rank.id === 1))) {
                 const banner = document.getElementById('kingBannerModal');
@@ -886,7 +895,7 @@
 
         function initSessionUI() {
             document.getElementById('topNavAvatar').src = currentUser.avatar;
-            if(currentUser.rank || currentUser.isOwner) {
+            if(currentUser.rank || currentUser.isOwner || currentUser.email) {
                 document.getElementById('keyBottomBtn').style.display = 'none';
             }
             if(currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com') {
@@ -896,16 +905,7 @@
             activeUsersList = [currentUser];
         }
 
-        function logout() {
-            if(window.firebaseDB && window.dbRef && window.dbSet && currentUser) {
-                const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + currentUser.name.replace(/[.#$\/\[\]]/g, '_'));
-                window.dbSet(userStatusRef, null);
-            }
-            localStorage.removeItem('hasouniChatUser');
-            location.reload();
-        }
-
-        // --- دالة عرض الرتبة والأفاتار والاسم بشكل منفصل تماماً ودون أي تكرار ---
+        // --- عرض الرتبة والأفاتار والاسم بشكل منفصل ---
         function renderUserRankStructure(userObj, nameClickAction) {
             let rankBgHtml = '';
             let avatarUrl = userObj && userObj.avatar ? userObj.avatar : 'https://via.placeholder.com/34';
@@ -949,7 +949,7 @@
             `;
         }
 
-        // --- إرسال الرسائل عبر Firebase ---
+        // --- إرسال الرسائل حسب الغرفة النشطة ---
         function sendMessage() {
             if(!currentUser) { openModal('loginModal'); return; }
             if(currentUser.isMuted) { alert('عذراً، حسابك مكتوم حالياً من قبل الإدارة!'); return; }
@@ -959,9 +959,10 @@
             if(!msgText) return;
 
             let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
 
             if(window.firebaseDB) {
-                const messagesRef = window.dbRef(window.firebaseDB, 'rooms/public/messages');
+                const messagesRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`);
                 window.dbPush(messagesRef, {
                     sender: currentUser.name,
                     text: msgText,
@@ -979,17 +980,17 @@
             cancelReply();
         }
 
-        // --- رفع الملفات والصور في الشات العام ---
         function handleFileUpload(input) {
             if(input.files && input.files[0]) {
                 let file = input.files[0];
                 let fileUrl = URL.createObjectURL(file);
                 let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
                 
                 let contentHtml = file.type.startsWith('image') ? `<img src="${fileUrl}" style="max-width:200px; border-radius:8px;">` : `<video src="${fileUrl}" controls style="max-width:200px; border-radius:8px;"></video>`;
 
                 if(window.firebaseDB) {
-                    const messagesRef = window.dbRef(window.firebaseDB, 'rooms/public/messages');
+                    const messagesRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`);
                     window.dbPush(messagesRef, {
                         sender: currentUser.name,
                         text: contentHtml,
@@ -1001,11 +1002,10 @@
             }
         }
 
-        // --- الاستماع المباشر للرسائل والمزوّدين عبر Firebase ---
+        // --- الاستماع الفعلي للغرف عبر Firebase ---
         window.initFirebaseListeners = function() {
             if(!window.firebaseDB) return;
 
-            // مزامنة قائمة المتواجدين بدقة لمنع التكرار (استخدام Map فريدة)
             const onlineUsersRef = window.dbRef(window.firebaseDB, 'onlineUsers');
             window.dbOnValue(onlineUsersRef, (snapshot) => {
                 const val = snapshot.val();
@@ -1022,10 +1022,28 @@
                 document.getElementById('onlineCount').innerText = activeUsersList.length;
             });
 
-            // الاستماع للرسائل العامة
-            const messagesRef = window.dbRef(window.firebaseDB, 'rooms/public/messages');
+            loadRoomListeners(currentActiveRoom);
+
+            const micAudioRef = window.dbRef(window.firebaseDB, 'rooms/public/micAudio');
+            window.dbOnValue(micAudioRef, (snapshot) => {
+                const val = snapshot.val();
+                if(val && val.url) {
+                    let player = document.getElementById('globalAudioPlayer');
+                    player.src = val.url;
+                    player.play().catch(e => console.log("Autoplay blocked"));
+                    appendNotice(`🎵 تم تشغيل وبث الأغنية الحقيقية (${val.title}) على المايك ${val.slot} للجميع!`);
+                }
+            });
+        }
+
+        function loadRoomListeners(roomName) {
+            let roomKey = roomName.replace(/[.#$\/\[\]]/g, '_');
+            document.getElementById('chatArea').innerHTML = `<div class="announcement" id="mainRoomNotice">أهلاً وسهلاً بكم في <strong id="currentRoomTitle">${roomName}</strong> 🎉</div>`;
+
+            const messagesRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`);
             window.dbOnChildAdded(messagesRef, (snapshot) => {
                 const data = snapshot.val();
+                if(!data) return;
                 const chatArea = document.getElementById('chatArea');
                 
                 const row = document.createElement('div');
@@ -1060,8 +1078,7 @@
                 chatArea.scrollTop = chatArea.scrollHeight;
             });
 
-            // الاستماع للتحكم بالروم والخلفيات
-            const roomControlRef = window.dbRef(window.firebaseDB, 'rooms/public/controls');
+            const roomControlRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/controls`);
             window.dbOnValue(roomControlRef, (snapshot) => {
                 const val = snapshot.val();
                 if(val) {
@@ -1073,18 +1090,14 @@
                     }
                 }
             });
+        }
 
-            // الاستماع للأغاني عبر المايك
-            const micAudioRef = window.dbRef(window.firebaseDB, 'rooms/public/micAudio');
-            window.dbOnValue(micAudioRef, (snapshot) => {
-                const val = snapshot.val();
-                if(val && val.url) {
-                    let player = document.getElementById('globalAudioPlayer');
-                    player.src = val.url;
-                    player.play().catch(e => console.log("Autoplay blocked"));
-                    appendNotice(`🎵 تم تشغيل وبث الأغنية الحقيقية (${val.title}) على المايك ${val.slot} للجميع!`);
-                }
-            });
+        function switchRoom(roomName) {
+            currentActiveRoom = roomName;
+            document.getElementById('currentRoomTitle').innerText = roomName;
+            closeModal('roomsListModal');
+            loadRoomListeners(roomName);
+            appendNotice(`تم الانتقال إلى [ ${roomName} ] بنجاح وكغرفه منعزلة ✨`);
         }
 
         function cancelReply() {
@@ -1121,8 +1134,7 @@
                 let userRankId = u.rank ? u.rank.id : 99;
                 let isPrivilegedAdmin = currentUser && (currentUser.isOwner || (currentUser.rank && [1, 2, 3, 4].includes(currentUser.rank.id)));
                 
-                // زر التسجيل لصاحب الموقع والإدارة (يظهر للأعضاء غير المسجلين أو الزوار ويختفي بعد التسجيل)
-                if(isPrivilegedAdmin && userRankId > 4) {
+                if(isPrivilegedAdmin && (!u.email || userRankId > 4)) {
                     registerActionHtml = `<button onclick="event.stopPropagation(); grantMembershipToUser('${u.name}')" style="background:#28a745; color:#fff; border:none; padding:5px 10px; border-radius:4px; font-weight:bold; font-size:11px; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.2);">تسجيل العضو</button>`;
                 }
 
@@ -1137,34 +1149,12 @@
         function grantMembershipToUser(userName) {
             let targetUser = activeUsersList.find(u => u.name === userName);
             if(targetUser) {
-                targetUser.rank = ranksList[4]; // منحه رتبه ماسي/بريمو
+                targetUser.rank = ranksList[4]; // منحه رتبة ماسي/بريمو
                 targetUser.email = userName.toLowerCase().replace(/\s+/g, '') + '@hasouni.chat';
                 targetUser.pass = '123456';
                 alert(`تم تسجيل العضو [ ${userName} ] بنجاح من قبل الإدارة!\nالبريد: ${targetUser.email}\nكلمة المرور: 123456\nوتم منحه رتبة ماسي واختفاء المفتاح وزر التسجيل بنجاح.`);
                 openOnlineList();
             }
-        }
-
-        function openVisitorsLog() {
-            const container = document.getElementById('visitorsLogListContainer');
-            container.innerHTML = '';
-            if(visitorsLogList.length === 0) {
-                container.innerHTML = `<div style="text-align:center; padding:15px; font-size:12px; color:#555;">لا توجد زوار مسجلين حالياً.</div>`;
-            } else {
-                visitorsLogList.forEach(v => {
-                    let div = document.createElement('div');
-                    div.style.cssText = "padding:8px; border-bottom:1px solid #eee; font-size:12px; display:flex; justify-content:space-between;";
-                    div.innerHTML = `<span>👤 <b>${v.name}</b> (${v.gender}, ${v.age} سنة)</span> <span style="color:#777;">${v.time}</span>`;
-                    container.appendChild(div);
-                });
-            }
-            openModal('visitorsLogModal');
-        }
-
-        function switchRoom(roomName) {
-            document.getElementById('currentRoomTitle').innerText = roomName;
-            closeModal('roomsListModal');
-            appendNotice(`تم الانتقال إلى [ ${roomName} ] بنجاح ✨`);
         }
 
         function toggleDataSaver() {
@@ -1354,7 +1344,6 @@
             openModal('editSelfModal');
         }
 
-        // --- حفظ وتعديل البروفايل والألوان وظهوره للجميع فوراً ---
         function saveEditedProfileData() {
             let target = (currentUser.name === selectedTargetUser.name) ? currentUser : selectedTargetUser;
             target.name = document.getElementById('editName').value;
@@ -1510,10 +1499,16 @@
                 btn.innerHTML = `رتبة (${r.id}): <i class="fas ${r.icon}" style="color:${r.color};"></i> ${r.name}`;
                 
                 btn.onclick = function() {
-                    selectedTargetUser.rank = r;
+                    selectedTargetUser.rank = r; // تحديث الرتبة فعلياً وتغييرها بنجاح وليس البقاء على ماسي
                     document.getElementById('viewRankTitle').innerText = r.name;
-                    appendNotice(`👑 قام صاحب الموقع بمنح العضو [ ${selectedTargetUser.name} ] رتبة [ ${r.name} ] بنجاح تام!`);
-                    alert(`تم منح العضو [ ${selectedTargetUser.name} ] رتبة (${r.name}) بنجاح وتظهر الآن في الشات العام والمتواجدين بكل برونقها!`);
+
+                    if(window.firebaseDB && window.dbRef && window.dbSet) {
+                        const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + selectedTargetUser.name.replace(/[.#$\/\[\]]/g, '_'));
+                        window.dbSet(userStatusRef, selectedTargetUser);
+                    }
+
+                    appendNotice(`👑 قام صاحب الموقع بتغيير رتبة العضو [ ${selectedTargetUser.name} ] إلى رتبة [ ${r.name} ] بنجاح تام!`);
+                    alert(`تم تغيير رتبة العضو [ ${selectedTargetUser.name} ] إلى (${r.name}) بنجاح وتم تحديثها لدى الجميع فوراً!`);
                     closeModal('ranksModal');
                     closeModal('adminCmdModal');
                     closeModal('profileViewModal');
@@ -1525,8 +1520,9 @@
 
         function cleanRoom() {
             if(currentUser && (currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com')) {
+                let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
                 if(window.firebaseDB && window.dbSet && window.dbRef) {
-                    const roomControlRef = window.dbRef(window.firebaseDB, 'rooms/public/controls');
+                    const roomControlRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/controls`);
                     window.dbSet(roomControlRef, { action: 'clean', timestamp: window.dbServerTimestamp() });
                 }
                 document.getElementById('chatArea').innerHTML = '<div class="announcement">تم تنظيف الروم بنجاح بواسطة صاحب الموقع ✨</div>';
@@ -1540,12 +1536,13 @@
             if(currentUser && (currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com')) {
                 if(input.files && input.files[0]) {
                     let url = URL.createObjectURL(input.files[0]);
+                    let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
                     if(window.firebaseDB && window.dbSet && window.dbRef) {
-                        const roomControlRef = window.dbRef(window.firebaseDB, 'rooms/public/controls');
+                        const roomControlRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/controls`);
                         window.dbSet(roomControlRef, { bgUrl: url, timestamp: window.dbServerTimestamp() });
                     }
                     document.getElementById('chatArea').style.backgroundImage = `url('${url}')`;
-                    appendNotice(`🖼️ قام صاحب الموقع بتحديث خلفية الروم العامة لجميع الأعضاء.`);
+                    appendNotice(`🖼️ قام صاحب الموقع بتحديث خلفية الغرفة لجميع الأعضاء فوراً.`);
                     closeModal('roomOptsModal');
                 }
             } else {
@@ -1584,7 +1581,7 @@
                     <h4 style="color:#dc3545; margin-bottom:5px;">🛡️ 1. الأمن السري - سجل الرسائل الخاصة الكاملة</h4>
                     <p style="font-size:10px; color:#555; margin-bottom:8px;">عرض حقيقي لجميع الرسائل الخاصة المتبادلة بين الأعضاء:</p>
                     <div style="background:#eee; padding:8px; border-radius:4px; max-height:180px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; -webkit-overflow-scrolling: touch;">
-                        <div style="background:#fff; padding:5px; border-radius:3px;"><b>المرسل:</b> أحمد اليمن | <b>المستلم:</b> سارة الشام <br><b>الرسالة:</b> مرحبا أختي كيف حالك؟</div>
+                        <div style="background:#fff; padding:5px; border-radius:3px;"><b>المرسل:</b> أحمد | <b>المستلم:</b> سارة <br><b>الرسالة:</b> مرحبا بك</div>
                     </div>
                 `;
             } else if(sectionNum === 2) {
@@ -1599,7 +1596,7 @@
                 ranksList.forEach(r => {
                     listHtml += `<div style="padding:4px; background:#f1f1f1; display:flex; justify-content:space-between; align-items:center;"><span>${r.id}. ${r.name}</span> <button onclick="let newN = prompt('عدل اسم الرتبة:', '${r.name}'); if(newN){ r.name=newN; alert('تم التعديل وحفظه فوراً'); }" style="background:#0d6efd; color:#fff; border:none; padding:2px 6px; border-radius:3px; cursor:pointer;">تعديل</button></div>`;
                 });
-                listHtml += `</div><button onclick="let rn=prompt('اسم الرتبة الجديدة:'); let sh=prompt('شكل الأيقونة (مثلاً fa-star):'); if(rn){ ranksList.push({id:ranksList.length+1, name:rn, icon:sh||'fa-star', color:'#fff', style:'background:#333;color:'#fff;'}); alert('تمت إضافة وحفظ الرتبة فوراً!'); }" style="padding:8px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; width:100%;">➕ إضافة رتبة جديدة وحفظها فوراً</button>`;
+                listHtml += `</div><button onclick="let rn=prompt('اسم الرتبة الجديدة:'); let sh=prompt('شكل الأيقونة (مثلاً fa-star):'); if(rn){ ranksList.push({id:ranksList.length+1, name:rn, icon:sh||'fa-star', color:'#fff', style:'background:#333;color:#fff;'}); alert('تمت إضافة وحفظ الرتبة فوراً!'); }" style="padding:8px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; width:100%;">➕ إضافة رتبة جديدة وحفظها فوراً</button>`;
                 area.innerHTML = listHtml;
             } else if(sectionNum === 4) {
                 area.innerHTML = `
