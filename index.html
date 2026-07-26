@@ -1005,7 +1005,7 @@
         window.initFirebaseListeners = function() {
             if(!window.firebaseDB) return;
 
-            // مزامنة قائمة المتواجدين بدقة لمنع التكرار
+            // مزامنة قائمة المتواجدين بدقة لمنع التكرار (استخدام Map فريدة)
             const onlineUsersRef = window.dbRef(window.firebaseDB, 'onlineUsers');
             window.dbOnValue(onlineUsersRef, (snapshot) => {
                 const val = snapshot.val();
@@ -1117,22 +1117,18 @@
                 let item = document.createElement('div');
                 item.style.cssText = "display:flex; align-items:center; justify-content:space-between; padding:8px; border-bottom:1px solid #eee; cursor:pointer;";
                 
-                let visitorKeyHtml = '';
+                let registerActionHtml = '';
                 let userRankId = u.rank ? u.rank.id : 99;
-                let isPrivilegedViewer = currentUser && (currentUser.isOwner || (currentUser.rank && [1, 2, 3].includes(currentUser.rank.id)));
+                let isPrivilegedAdmin = currentUser && (currentUser.isOwner || (currentUser.rank && [1, 2, 3, 4].includes(currentUser.rank.id)));
                 
-                if(isPrivilegedViewer && userRankId > 3) {
-                    visitorKeyHtml = `<i class="fas fa-key" style="color:#ffd700; cursor:pointer; font-size:16px; padding:4px;" title="تسجيل العضو فوراً وتفعيل المفتاح" onclick="event.stopPropagation(); grantMembershipToUser('${u.name}')"></i>`;
+                // زر التسجيل لصاحب الموقع والإدارة (يظهر للأعضاء غير المسجلين أو الزوار ويختفي بعد التسجيل)
+                if(isPrivilegedAdmin && userRankId > 4) {
+                    registerActionHtml = `<button onclick="event.stopPropagation(); grantMembershipToUser('${u.name}')" style="background:#28a745; color:#fff; border:none; padding:5px 10px; border-radius:4px; font-weight:bold; font-size:11px; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.2);">تسجيل العضو</button>`;
                 }
 
                 let userStructuredHtml = renderUserRankStructure(u, `openProfileOf('${u.name}')`);
                 
-                let visitorBtnHtml = '';
-                if(isPrivilegedViewer) {
-                    visitorBtnHtml = `<button onclick="openVisitorsLog()" style="background:#ffd700; border:none; padding:4px 8px; border-radius:4px; font-weight:bold; font-size:10px; cursor:pointer;">سجل الزوار</button>`;
-                }
-
-                item.innerHTML = `<div style="display:flex; align-items:center; gap:8px;">${userStructuredHtml} ${visitorKeyHtml}</div> ${visitorBtnHtml}`;
+                item.innerHTML = `<div style="display:flex; align-items:center; gap:8px;">${userStructuredHtml}</div> ${registerActionHtml}`;
                 listDiv.appendChild(item);
             });
             openModal('onlineModal');
@@ -1141,8 +1137,10 @@
         function grantMembershipToUser(userName) {
             let targetUser = activeUsersList.find(u => u.name === userName);
             if(targetUser) {
-                targetUser.rank = ranksList[14];
-                alert(`تم تسجيل العضو [ ${userName} ] بنجاح وتفعيل عضويته فوراً!`);
+                targetUser.rank = ranksList[4]; // منحه رتبه ماسي/بريمو
+                targetUser.email = userName.toLowerCase().replace(/\s+/g, '') + '@hasouni.chat';
+                targetUser.pass = '123456';
+                alert(`تم تسجيل العضو [ ${userName} ] بنجاح من قبل الإدارة!\nالبريد: ${targetUser.email}\nكلمة المرور: 123456\nوتم منحه رتبة ماسي واختفاء المفتاح وزر التسجيل بنجاح.`);
                 openOnlineList();
             }
         }
