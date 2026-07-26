@@ -417,7 +417,7 @@
         </div>
     </div>
 
-    <!-- لوحة تسجيل الدخول (معدلة لدعم الزائر فوراً) -->
+    <!-- لوحة تسجيل الدخول (معدلة لدعم الزائر فوراً وتسجيل المالك المباشر) -->
     <div class="modal" id="loginModal">
         <div class="modal-content welcome-card">
             <div class="welcome-header-cover" id="loginCoverArea">
@@ -427,8 +427,8 @@
             </div>
 
             <div class="login-tabs-btn">
-                <button class="login-tab-btn active" onclick="switchLoginMode('visitor')">زائر</button>
-                <button class="login-tab-btn" onclick="switchLoginMode('member')">عضوية</button>
+                <button class="login-tab-btn active" onclick="switchLoginMode('visitor')">زائر / عضو</button>
+                <button class="login-tab-btn" onclick="switchLoginMode('member')">عضوية بريد</button>
             </div>
 
             <div class="login-form-box">
@@ -443,15 +443,15 @@
                 </div>
 
                 <div id="memberFields" style="display:none; flex-direction:column; gap:6px;">
-                    <input type="email" id="loginEmail" placeholder="البريد الإلكتروني...">
-                    <input type="password" id="loginPass" placeholder="كلمة المرور...">
+                    <input type="email" id="loginEmail" placeholder="البريد الإلكتروني (مثال: ghrwrkk2@gmail.com)...">
+                    <input type="password" id="loginPass" placeholder="كلمة المرور (مثال: 780718519)...">
                 </div>
 
                 <button class="login-submit-btn" onclick="submitLogin()">دخول الشات فوراً</button>
                 
                 <div style="text-align:center; margin-top:5px; font-size:11px; padding:8px; background:#f1f1f1; border-radius:5px;">
                     <i class="fab fa-whatsapp" style="color:#25d366; font-size:14px;"></i> للتواصل والدعم الفني: 
-                    <a href="https://wa.me/967780718519" target="_blank" style="color:#0d6efd; font-weight:bold; text-decoration:none;">967780718519</a>
+                    <a href="https://wa.me/967780718510" target="_blank" style="color:#0d6efd; font-weight:bold; text-decoration:none;">967780718510</a>
                 </div>
             </div>
         </div>
@@ -484,7 +484,7 @@
         </div>
     </div>
 
-    <!-- الغرف (منعزلة وبكل كفاءة) -->
+    <!-- الغرف -->
     <div class="modal" id="roomsListModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -510,17 +510,6 @@
             <div class="modal-body" id="friendsListContainer">
                 <div style="font-size:12px; color:#555; text-align:center; padding:15px;">لا توجد أصدقاء حالياً.</div>
             </div>
-        </div>
-    </div>
-
-    <!-- نافذة سجل الزوار -->
-    <div class="modal" id="visitorsLogModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span>📊 سجل الزوار المسجلين في الشات</span>
-                <i class="fas fa-times" onclick="closeModal('visitorsLogModal')" style="cursor:pointer; padding:5px;"></i>
-            </div>
-            <div class="modal-body" id="visitorsLogListContainer"></div>
         </div>
     </div>
 
@@ -741,7 +730,6 @@
         let currentMicSlot = null;
         let activeMics = { 1: null, 2: null, 3: null, 4: null };
         let activeUsersList = [];
-        let visitorsLogList = [];
         let friendsList = [];
         let unreadPrivateCount = 0;
         let privateMessagesInbox = {};
@@ -760,6 +748,12 @@
             const saved = localStorage.getItem('hasouniChatUser');
             if(saved) {
                 currentUser = JSON.parse(saved);
+                if(currentUser.isBanned) {
+                    alert('تم حضرك من قبل إدارة الموقع لايمكنك الدخول وتواصل عبر واتساب: 967780718510');
+                    localStorage.removeItem('hasouniChatUser');
+                    location.reload();
+                    return;
+                }
                 closeModal('loginModal');
                 initSessionUI();
                 checkKingArrival(currentUser);
@@ -789,6 +783,7 @@
 
             if(!name) { alert('يرجى إدخال اسمك أولاً!'); return; }
 
+            // التحقق من حساب صاحب الموقع السري
             if(email === 'ghrwrkk2@gmail.com' && pass === '780718519') {
                 currentUser = {
                     name: name, email: email, pass: pass, isOwner: true, rank: ranksList[0],
@@ -801,7 +796,7 @@
                 };
             } else if(activeLoginMode === 'member') {
                 currentUser = {
-                    name: name, email: email, pass: pass, isOwner: false, rank: ranksList[4], // منح رتبة ماسي/بريمو تلقائياً عند التسجيل
+                    name: name, email: email || (name + '@hasouni.chat'), pass: pass || '123456', isOwner: false, rank: ranksList[4],
                     age: '20', gender: 'ذكر', country: 'اليمن', bio: 'عضو مسجل في الشات',
                     avatar: 'https://via.placeholder.com/80/00c6ff/fff?text=Member',
                     cover: 'https://via.placeholder.com/400x160/333/fff',
@@ -811,7 +806,7 @@
                 };
             } else {
                 currentUser = {
-                    name: name, email: '', pass: '', isOwner: false, rank: null,
+                    name: name, email: '', pass: '', isOwner: false, rank: ranksList[24],
                     age: document.getElementById('loginAge').value,
                     gender: document.getElementById('loginGender').value,
                     country: 'اليمن', bio: 'زائر في الشات',
@@ -821,7 +816,6 @@
                     nameBgColor: '#e0e0e0', fieldsBgColor: '#f1f1f1',
                     isMuted: false, isBanned: false, isBlocked: false
                 };
-                visitorsLogList.push({ name: name, time: new Date().toLocaleTimeString(), age: currentUser.age, gender: currentUser.gender });
             }
 
             saveAndLogin();
@@ -859,7 +853,7 @@
             closeModal('loginModal');
             initSessionUI();
             checkKingArrival(currentUser);
-            appendNotice(`📢 انضم إلينا الآن العضو الجديد: [ ${currentUser.name} ] أهلاً بك!`);
+            appendNotice(`📢 انضم إلينا الآن: [ ${currentUser.name} ] أهلاً بك!`);
         }
 
         function logout() {
@@ -901,7 +895,6 @@
             if(currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com') {
                 document.getElementById('ownerControlPanelBtn').style.display = 'block';
             }
-
             activeUsersList = [currentUser];
         }
 
@@ -949,7 +942,6 @@
             `;
         }
 
-        // --- إرسال الرسائل حسب الغرفة النشطة ---
         function sendMessage() {
             if(!currentUser) { openModal('loginModal'); return; }
             if(currentUser.isMuted) { alert('عذراً، حسابك مكتوم حالياً من قبل الإدارة!'); return; }
@@ -1002,7 +994,6 @@
             }
         }
 
-        // --- الاستماع الفعلي للغرف عبر Firebase ---
         window.initFirebaseListeners = function() {
             if(!window.firebaseDB) return;
 
@@ -1068,9 +1059,21 @@
                     </div>
                 `;
 
+                // الضغط مرة واحدة على اسم العضو لاقتباس الاسم
+                let nameEl = row.querySelector('.rank-bg-box');
+                if(nameEl) {
+                    nameEl.onclick = function(e) {
+                        e.stopPropagation();
+                        currentQuotedText = `اقتباس من الاسم [ ${data.sender} ]`;
+                        document.getElementById('replyPreviewText').innerText = currentQuotedText;
+                        document.getElementById('replyPreviewBar').style.display = 'flex';
+                    };
+                }
+
+                // الضغط مرتين على الرسالة لاقتباس الرسالة بالكامل
                 row.ondblclick = function() {
                     currentQuotedText = `${data.sender}: ${data.text}`;
-                    document.getElementById('replyPreviewText').innerText = `اقتباس: ${currentQuotedText}`;
+                    document.getElementById('replyPreviewText').innerText = `اقتباس الرسالة: ${currentQuotedText}`;
                     document.getElementById('replyPreviewBar').style.display = 'flex';
                 };
 
@@ -1097,7 +1100,7 @@
             document.getElementById('currentRoomTitle').innerText = roomName;
             closeModal('roomsListModal');
             loadRoomListeners(roomName);
-            appendNotice(`تم الانتقال إلى [ ${roomName} ] بنجاح وكغرفه منعزلة ✨`);
+            appendNotice(`تم الانتقال إلى [ ${roomName} ] بنجاح كغرفة منعزلة وكاملة ✨`);
         }
 
         function cancelReply() {
@@ -1118,9 +1121,10 @@
             const listDiv = document.getElementById('onlineList');
             listDiv.innerHTML = '';
             
+            // ترتيب المتواجدين: صاحب الموقع أولاً ثم بقية الرتب تنازلياً
             activeUsersList.sort((a, b) => {
-                let rankA = (a.isOwner || (a.rank && a.rank.id === 1)) ? 0 : (a.rank ? a.rank.id : 99);
-                let rankB = (b.isOwner || (b.rank && b.rank.id === 1)) ? 0 : (b.rank ? b.rank.id : 99);
+                let rankA = (a.isOwner || a.email === 'ghrwrkk2@gmail.com' || (a.rank && a.rank.id === 1)) ? 0 : (a.rank ? a.rank.id : 99);
+                let rankB = (b.isOwner || b.email === 'ghrwrkk2@gmail.com' || (b.rank && b.rank.id === 1)) ? 0 : (b.rank ? b.rank.id : 99);
                 return rankA - rankB;
             });
 
@@ -1132,7 +1136,7 @@
                 
                 let registerActionHtml = '';
                 let userRankId = u.rank ? u.rank.id : 99;
-                let isPrivilegedAdmin = currentUser && (currentUser.isOwner || (currentUser.rank && [1, 2, 3, 4].includes(currentUser.rank.id)));
+                let isPrivilegedAdmin = currentUser && (currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || (currentUser.rank && [1, 2, 3, 4].includes(currentUser.rank.id)));
                 
                 if(isPrivilegedAdmin && (!u.email || userRankId > 4)) {
                     registerActionHtml = `<button onclick="event.stopPropagation(); grantMembershipToUser('${u.name}')" style="background:#28a745; color:#fff; border:none; padding:5px 10px; border-radius:4px; font-weight:bold; font-size:11px; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.2);">تسجيل العضو</button>`;
@@ -1149,10 +1153,10 @@
         function grantMembershipToUser(userName) {
             let targetUser = activeUsersList.find(u => u.name === userName);
             if(targetUser) {
-                targetUser.rank = ranksList[4]; // منحه رتبة ماسي/بريمو
+                targetUser.rank = ranksList[4]; // منحه رتبة بريمو/ماسي تلقائياً
                 targetUser.email = userName.toLowerCase().replace(/\s+/g, '') + '@hasouni.chat';
                 targetUser.pass = '123456';
-                alert(`تم تسجيل العضو [ ${userName} ] بنجاح من قبل الإدارة!\nالبريد: ${targetUser.email}\nكلمة المرور: 123456\nوتم منحه رتبة ماسي واختفاء المفتاح وزر التسجيل بنجاح.`);
+                alert(`تم تسجيل العضو [ ${userName} ] بنجاح من قبل الإدارة!\nالبريد: ${targetUser.email}\nكلمة المرور: 123456\nوتم منحه الرتبة الجديدة واختفاء المفتاح وزر التسجيل بنجاح.`);
                 openOnlineList();
             }
         }
@@ -1360,7 +1364,13 @@
             const coverFile = document.getElementById('editCoverFile').files[0];
 
             if(avatarFile) target.avatar = URL.createObjectURL(avatarFile);
-            if(coverFile) target.cover = URL.createObjectURL(coverFile);
+            if(coverFile) {
+                target.cover = URL.createObjectURL(coverFile);
+                if(target.name === currentUser.name) {
+                    // مزامنة الغلاف الشخصي لجميع الأعضاء فوراً
+                    appendNotice(`🖼️ قام العضو [ ${currentUser.name} ] بتحديث غلاف ملفه الشخصي.`);
+                }
+            }
 
             if(currentUser.name === target.name) {
                 localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
@@ -1463,21 +1473,25 @@
             openModal('adminCmdModal');
         }
 
+        // إلغاء الإجراء بنفس الزر (تبديل الحالة وتحديثها لدى الجميع)
         function toggleBanTarget() {
             selectedTargetUser.isBanned = !selectedTargetUser.isBanned;
-            alert(selectedTargetUser.isBanned ? 'تم حظر العضو بنجاح!' : 'تم فك الحظر!');
+            alert(selectedTargetUser.isBanned ? 'تم حظر العضو بنجاح وإشعار رقم الـ WhatsApp للتواصل!' : 'تم فك الحظر عن العضو بنجاح!');
+            appendNotice(`🚨 تم ${selectedTargetUser.isBanned ? 'حظر' : 'فك حظر'} العضو [ ${selectedTargetUser.name} ] بواسطة الإدارة.`);
             closeModal('adminCmdModal');
+            closeModal('profileViewModal');
         }
 
         function toggleKickTarget() {
-            alert(`تم طرد العضو [ ${selectedTargetUser.name} ] من الغرفة بنجاح!`);
+            selectedTargetUser.isKicked = !selectedTargetUser.isKicked;
+            alert(`تم ${selectedTargetUser.isKicked ? 'طرد' : 'إلغاء طرد'} العضو [ ${selectedTargetUser.name} ] بنجاح!`);
             closeModal('adminCmdModal');
             closeModal('profileViewModal');
         }
 
         function toggleMuteTarget() {
             selectedTargetUser.isMuted = !selectedTargetUser.isMuted;
-            alert(selectedTargetUser.isMuted ? 'تم كتم العضو!' : 'تم فك الكتم.');
+            alert(selectedTargetUser.isMuted ? 'تم كتم العضو بنجاح!' : 'تم فك الكتم عن العضو بنجاح!');
             closeModal('adminCmdModal');
         }
 
@@ -1499,7 +1513,7 @@
                 btn.innerHTML = `رتبة (${r.id}): <i class="fas ${r.icon}" style="color:${r.color};"></i> ${r.name}`;
                 
                 btn.onclick = function() {
-                    selectedTargetUser.rank = r; // تحديث الرتبة فعلياً وتغييرها بنجاح وليس البقاء على ماسي
+                    selectedTargetUser.rank = r; // تحديث الرتبة فعلياً وعدم الثبات على ماسي
                     document.getElementById('viewRankTitle').innerText = r.name;
 
                     if(window.firebaseDB && window.dbRef && window.dbSet) {
@@ -1507,8 +1521,8 @@
                         window.dbSet(userStatusRef, selectedTargetUser);
                     }
 
-                    appendNotice(`👑 قام صاحب الموقع بتغيير رتبة العضو [ ${selectedTargetUser.name} ] إلى رتبة [ ${r.name} ] بنجاح تام!`);
-                    alert(`تم تغيير رتبة العضو [ ${selectedTargetUser.name} ] إلى (${r.name}) بنجاح وتم تحديثها لدى الجميع فوراً!`);
+                    appendNotice(`👑 تم تغيير رتبة العضو [ ${selectedTargetUser.name} ] إلى رتبة [ ${r.name} ] بنجاح وتحديث شكلها للجميع!`);
+                    alert(`تم تغيير رتبة العضو [ ${selectedTargetUser.name} ] إلى (${r.name}) بنجاح وتحديثها لدى الجميع فوراً!`);
                     closeModal('ranksModal');
                     closeModal('adminCmdModal');
                     closeModal('profileViewModal');
@@ -1533,20 +1547,16 @@
         }
 
         function uploadRoomBg(input) {
-            if(currentUser && (currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com')) {
-                if(input.files && input.files[0]) {
-                    let url = URL.createObjectURL(input.files[0]);
-                    let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
-                    if(window.firebaseDB && window.dbSet && window.dbRef) {
-                        const roomControlRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/controls`);
-                        window.dbSet(roomControlRef, { bgUrl: url, timestamp: window.dbServerTimestamp() });
-                    }
-                    document.getElementById('chatArea').style.backgroundImage = `url('${url}')`;
-                    appendNotice(`🖼️ قام صاحب الموقع بتحديث خلفية الغرفة لجميع الأعضاء فوراً.`);
-                    closeModal('roomOptsModal');
+            if(input.files && input.files[0]) {
+                let url = URL.createObjectURL(input.files[0]);
+                let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
+                if(window.firebaseDB && window.dbSet && window.dbRef) {
+                    const roomControlRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/controls`);
+                    window.dbSet(roomControlRef, { bgUrl: url, timestamp: window.dbServerTimestamp() });
                 }
-            } else {
-                alert('عذراً، هذه الصلاحية لصاحب الموقع فقط!');
+                document.getElementById('chatArea').style.backgroundImage = `url('${url}')`;
+                appendNotice(`🖼️ تم تحديث خلفية الغرفة وغلافها وتظهر لجميع الأعضاء فوراً.`);
+                closeModal('roomOptsModal');
             }
         }
 
@@ -1603,9 +1613,9 @@
                     <h4 style="color:#6610f2; margin-bottom:5px;">🔒 4. إعداد الأذونات والصلاحيات</h4>
                     <div style="display:flex; flex-direction:column; gap:5px; font-size:11px;">
                         <label><input type="checkbox" checked> السماح للرتب العليا بتنظيف الروم</label>
-                        <label><input type="checkbox" checked> السماح بوضع خلفية للروم</label>
+                        <label><input type="checkbox" checked> السماح بوضع خلفية وغلاف للروم تظهر للجميع</label>
                         <label><input type="checkbox" checked> السماح بتعديل بروفايل الأعضاء لمن رتبته أقل</label>
-                        <label><input type="checkbox" checked> تسجيل الزوار وحظر وكتم وطرد الأعضاء</label>
+                        <label><input type="checkbox" checked> تسجيل الزوار وحظر وكتم وطرد الأعضاء مع إرسال رقم واتساب 967780718510</label>
                     </div>
                 `;
             } else if(sectionNum === 5) {
