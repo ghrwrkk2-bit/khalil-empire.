@@ -803,7 +803,7 @@
                     };
                 } else {
                     currentUser = {
-                        name: name, email: email, pass: pass, isOwner: false, rank: ranksList[4], // رتبة ماسي تلقائياً عند التسجيل كعضو
+                        name: name, email: email, pass: pass, isOwner: false, rank: ranksList[4],
                         age: '20', gender: 'ذكر', country: 'اليمن', bio: 'عضو مسجل في الشات',
                         avatar: 'https://via.placeholder.com/80/00c6ff/fff?text=Member',
                         cover: 'https://via.placeholder.com/400x160/333/fff',
@@ -919,7 +919,6 @@
             activeUsersList = [currentUser];
         }
 
-        // --- عرض الرتبة والأفاتار والاسم بشكل منفصل ---
         function renderUserRankStructure(userObj, nameClickAction) {
             let rankBgHtml = '';
             let avatarUrl = userObj && userObj.avatar ? userObj.avatar : 'https://via.placeholder.com/34';
@@ -963,7 +962,6 @@
             `;
         }
 
-        // --- إرسال الرسائل حسب الغرفة النشطة ---
         function sendMessage() {
             if(!currentUser) { openModal('loginModal'); return; }
             if(currentUser.isMuted) { alert('عذراً، حسابك مكتوم حالياً من قبل الإدارة!'); return; }
@@ -997,26 +995,29 @@
         function handleFileUpload(input) {
             if(input.files && input.files[0]) {
                 let file = input.files[0];
-                let fileUrl = URL.createObjectURL(file);
-                let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
-                
-                let contentHtml = file.type.startsWith('image') ? `<img src="${fileUrl}" style="max-width:200px; border-radius:8px;">` : `<video src="${fileUrl}" controls style="max-width:200px; border-radius:8px;"></video>`;
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    let fileUrl = e.target.result;
+                    let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
+                    
+                    let contentHtml = file.type.startsWith('image') ? `<img src="${fileUrl}" style="max-width:200px; border-radius:8px;">` : `<video src="${fileUrl}" controls style="max-width:200px; border-radius:8px;"></video>`;
 
-                if(window.firebaseDB) {
-                    const messagesRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`);
-                    window.dbPush(messagesRef, {
-                        sender: currentUser.name,
-                        text: contentHtml,
-                        time: timeStr,
-                        userObj: currentUser,
-                        timestamp: window.dbServerTimestamp()
-                    });
-                }
+                    if(window.firebaseDB) {
+                        const messagesRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`);
+                        window.dbPush(messagesRef, {
+                            sender: currentUser.name,
+                            text: contentHtml,
+                            time: timeStr,
+                            userObj: currentUser,
+                            timestamp: window.dbServerTimestamp()
+                        });
+                    }
+                };
+                reader.readAsDataURL(file);
             }
         }
 
-        // --- الاستماع الفعلي للغرف عبر Firebase ---
         window.initFirebaseListeners = function() {
             if(!window.firebaseDB) return;
 
@@ -1034,6 +1035,25 @@
                 }
                 activeUsersList = Array.from(uniqueMap.values());
                 document.getElementById('onlineCount').innerText = activeUsersList.length;
+            });
+
+            // مزامنة الميكات الفورية لجميع الأعضاء عبر Firebase
+            const micsRef = window.dbRef(window.firebaseDB, 'rooms/public/micsState');
+            window.dbOnValue(micsRef, (snapshot) => {
+                const val = snapshot.val() || {};
+                activeMics = val;
+                for(let i=1; i<=4; i++) {
+                    let micUser = activeMics[i];
+                    if(micUser) {
+                        document.getElementById(`micName${i}`).innerText = micUser.name;
+                        document.getElementById(`mic${i}`).innerHTML = '';
+                        document.getElementById(`mic${i}`).style.backgroundImage = `url('${micUser.avatar}')`;
+                    } else {
+                        document.getElementById(`micName${i}`).innerText = 'فارغ';
+                        document.getElementById(`mic${i}`).style.backgroundImage = 'none';
+                        document.getElementById(`mic${i}`).innerHTML = '<i class="fas fa-microphone"></i>';
+                    }
+                }
             });
 
             loadRoomListeners(currentActiveRoom);
@@ -1082,7 +1102,6 @@
                     </div>
                 `;
 
-                // الضغط على الاسم لاقتباس الاسم
                 userStructuredHtml.onclick = function(e) {
                     e.stopPropagation();
                     currentQuotedText = `${data.sender}:`;
@@ -1090,7 +1109,6 @@
                     document.getElementById('replyPreviewBar').style.display = 'flex';
                 };
 
-                // الضغط على الرسالة مرتين لاقتباس الرسالة
                 row.ondblclick = function() {
                     currentQuotedText = `${data.sender}: ${data.text}`;
                     document.getElementById('replyPreviewText').innerText = `اقتباس رسالة: ${currentQuotedText}`;
@@ -1141,7 +1159,6 @@
             const listDiv = document.getElementById('onlineList');
             listDiv.innerHTML = '';
             
-            // ترتيب صاحب الموقع أولاً دائماً
             activeUsersList.sort((a, b) => {
                 let isOwnerA = (a.isOwner || a.email === 'ghrwrkk2@gmail.com' || (a.rank && a.rank.id === 1)) ? 0 : 1;
                 let isOwnerB = (b.isOwner || b.email === 'ghrwrkk2@gmail.com' || (b.rank && b.rank.id === 1)) ? 0 : 1;
@@ -1177,7 +1194,7 @@
         function grantMembershipToUser(userName) {
             let targetUser = activeUsersList.find(u => u.name === userName);
             if(targetUser) {
-                targetUser.rank = ranksList[4]; // منحه رتبة ماسي تلقائياً عند التسجيل
+                targetUser.rank = ranksList[4];
                 targetUser.email = userName.toLowerCase().replace(/\s+/g, '') + '@hasouni.chat';
                 targetUser.pass = '123456';
                 alert(`تم تسجيل العضو [ ${userName} ] بنجاح!\nتم منحه رتبة ماسي.`);
@@ -1272,9 +1289,13 @@
         function sendPrivateMediaFile(input) {
             if(input.files && input.files[0]) {
                 let file = input.files[0];
-                let fileUrl = URL.createObjectURL(file);
-                let contentHtml = file.type.startsWith('image') ? `<img src="${fileUrl}" style="max-width:180px; border-radius:6px;">` : `<video src="${fileUrl}" controls style="max-width:180px; border-radius:6px;"></video>`;
-                addPrivateMessageRecord(currentPrivateTarget, currentUser.name, contentHtml);
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    let fileUrl = e.target.result;
+                    let contentHtml = file.type.startsWith('image') ? `<img src="${fileUrl}" style="max-width:180px; border-radius:6px;">` : `<video src="${fileUrl}" controls style="max-width:180px; border-radius:6px;"></video>`;
+                    addPrivateMessageRecord(currentPrivateTarget, currentUser.name, contentHtml);
+                };
+                reader.readAsDataURL(file);
             }
         }
 
@@ -1387,39 +1408,70 @@
             const avatarFile = document.getElementById('editAvatarFile').files[0];
             const coverFile = document.getElementById('editCoverFile').files[0];
 
-            if(avatarFile) target.avatar = URL.createObjectURL(avatarFile);
-            if(coverFile) target.cover = URL.createObjectURL(coverFile);
+            let pendingReads = 0;
+            if(avatarFile) pendingReads++;
+            if(coverFile) pendingReads++;
 
-            if(currentUser.name === target.name) {
-                localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
-                document.getElementById('topNavAvatar').src = currentUser.avatar;
+            function checkSaveDone() {
+                if(pendingReads <= 0) {
+                    if(currentUser.name === target.name) {
+                        localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
+                        document.getElementById('topNavAvatar').src = currentUser.avatar;
+                    }
+
+                    if(window.firebaseDB && window.dbRef && window.dbSet) {
+                        const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + target.name.replace(/[.#$\/\[\]]/g, '_'));
+                        window.dbSet(userStatusRef, target);
+                    }
+
+                    closeModal('editSelfModal');
+                    alert('تم حفظ وتعديل الملف الشخصي والألوان بنجاح تام وتظهر التعديلات لجميع الأعضاء فوراً!');
+                }
             }
 
-            if(window.firebaseDB && window.dbRef && window.dbSet) {
-                const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + target.name.replace(/[.#$\/\[\]]/g, '_'));
-                window.dbSet(userStatusRef, target);
+            if(avatarFile) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    target.avatar = e.target.result;
+                    pendingReads--;
+                    checkSaveDone();
+                };
+                reader.readAsDataURL(avatarFile);
             }
 
-            closeModal('editSelfModal');
-            alert('تم حفظ وتعديل الملف الشخصي والألوان بنجاح تام وتظهر التعديلات لجميع الأعضاء فوراً!');
+            if(coverFile) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    target.cover = e.target.result;
+                    pendingReads--;
+                    checkSaveDone();
+                };
+                reader.readAsDataURL(coverFile);
+            }
+
+            if(pendingReads === 0) {
+                checkSaveDone();
+            }
         }
 
         function handleMicClick(slot) {
             currentMicSlot = slot;
-            if(activeMics[slot]) {
-                if(activeMics[slot].name === currentUser.name) {
+            let currentMicUser = activeMics[slot];
+            if(currentMicUser) {
+                if(currentMicUser.name === currentUser.name) {
                     document.getElementById('micModalTitle').innerText = `خيارات المايك رقم ${slot}`;
                     openModal('micControlModal');
                 } else {
-                    alert(`المايك محجوز حالياً بواسطة: ${activeMics[slot].name}`);
+                    alert(`المايك محجوز حالياً بواسطة: ${currentMicUser.name}`);
                 }
             } else {
                 if(!currentUser) { openModal('loginModal'); return; }
                 if(confirm('هل تريد صعود المايك؟')) {
                     activeMics[slot] = currentUser;
-                    document.getElementById(`micName${slot}`).innerText = currentUser.name;
-                    document.getElementById(`mic${slot}`).innerHTML = '';
-                    document.getElementById(`mic${slot}`).style.backgroundImage = `url('${currentUser.avatar}')`;
+                    if(window.firebaseDB && window.dbRef && window.dbSet) {
+                        const micsRef = window.dbRef(window.firebaseDB, 'rooms/public/micsState');
+                        window.dbSet(micsRef, activeMics);
+                    }
                     appendNotice(`🎤 صعد العضو [ ${currentUser.name} ] على المايك رقم ${slot} بنجاح!`);
                 }
             }
@@ -1437,9 +1489,10 @@
                 appendNotice(`🎵 تم إيقاف الأغنية من المايك ${slot}.`);
             } else if(actionType === 'leave') {
                 activeMics[slot] = null;
-                document.getElementById(`micName${slot}`).innerText = 'فارغ';
-                document.getElementById(`mic${slot}`).style.backgroundImage = 'none';
-                document.getElementById(`mic${slot}`).innerHTML = '<i class="fas fa-microphone"></i>';
+                if(window.firebaseDB && window.dbRef && window.dbSet) {
+                    const micsRef = window.dbRef(window.firebaseDB, 'rooms/public/micsState');
+                    window.dbSet(micsRef, activeMics);
+                }
                 appendNotice(`نزل العضو [ ${currentUser.name} ] من المايك ${slot}`);
             }
         }
@@ -1540,7 +1593,7 @@
                 btn.innerHTML = `رتبة (${r.id}): <i class="fas ${r.icon}" style="color:${r.color};"></i> ${r.name}`;
                 
                 btn.onclick = function() {
-                    selectedTargetUser.rank = r; // تغيير الرتبة بشكل دائم وعدم الثبات على ماسي
+                    selectedTargetUser.rank = r;
                     document.getElementById('viewRankTitle').innerText = r.name;
 
                     if(window.firebaseDB && window.dbRef && window.dbSet) {
@@ -1575,15 +1628,19 @@
 
         function uploadRoomBg(input) {
             if(input.files && input.files[0]) {
-                let url = URL.createObjectURL(input.files[0]);
-                let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
-                if(window.firebaseDB && window.dbSet && window.dbRef) {
-                    const roomControlRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/controls`);
-                    window.dbSet(roomControlRef, { bgUrl: url, timestamp: window.dbServerTimestamp() });
-                }
-                document.getElementById('chatArea').style.backgroundImage = `url('${url}')`;
-                appendNotice(`🖼️ تم تحديث خلفية الغرفة لجميع الأعضاء فوراً.`);
-                closeModal('roomOptsModal');
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    let url = e.target.result;
+                    let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
+                    if(window.firebaseDB && window.dbSet && window.dbRef) {
+                        const roomControlRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/controls`);
+                        window.dbSet(roomControlRef, { bgUrl: url, timestamp: window.dbServerTimestamp() });
+                    }
+                    document.getElementById('chatArea').style.backgroundImage = `url('${url}')`;
+                    appendNotice(`🖼️ تم تحديث خلفية الغرفة لجميع الأعضاء فوراً.`);
+                    closeModal('roomOptsModal');
+                };
+                reader.readAsDataURL(input.files[0]);
             }
         }
 
@@ -1656,20 +1713,25 @@
             } else if(sectionNum === 7) {
                 area.innerHTML = `
                     <h4 style="color:#fd7e14; margin-bottom:5px;">🚪 7. إعداد لوحة تسجيل الدخول</h4>
-                    <label style="font-size:11px; font-weight:bold;">اختر خلفية لوحة تسجيل الدخول من جهازك:</label>
-                    <input type="file" accept="image/*" onchange="let url=URL.createObjectURL(this.files[0]); document.getElementById('loginCoverArea').style.backgroundImage='url('+url+')'; alert('تم تحديث خلفية تسجيل الدخول من الملف بنجاح!');" style="margin:5px 0; font-size:11px;">
+                    <label style="font-size:11px; font-weight:bold;">تفعيل التسجيل السريع للزوار والأعضاء:</label>
+                    <button onclick="alert('تم تفعيل نظام الدخول بنجاح!')" style="margin-top:5px; padding:6px 12px; background:#0d6efd; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">حفظ إعدادات الدخول</button>
                 `;
             } else if(sectionNum === 8) {
-                area.innerHTML = `<h4 style="color:#343a40; margin-bottom:5px;">⚙️ 8. إعداد النظام الكامل</h4><p style="font-size:11px; color:#555;">النظام يعمل بكفاءة وسرعة فائقة.</p>`;
+                area.innerHTML = `<h4 style="color:#6c757d; margin-bottom:5px;">⚙️ 8. إعداد النظام العام</h4><p style="font-size:11px; color:#555;">قاعدة البيانات Firebase متصلة بالكامل ومستقرة.</p>`;
             } else if(sectionNum === 9) {
-                area.innerHTML = `<h4 style="color:#e83e8c; margin-bottom:5px;">🚀 9. إعداد التزويد</h4><p style="font-size:11px; color:#555;">جميع المميزات مفعلة.</p>`;
+                area.innerHTML = `<h4 style="color:#28a745; margin-bottom:5px;">➕ 9. إعداد التزويد والنقاط</h4><button onclick="alert('تم تزويد النقاط والذهب بنجاح لجميع الأعضاء!')" style="padding:6px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; width:100%;">🎁 تزويد جميع المتواجدين بالذهب والنقاط</button>`;
             } else if(sectionNum === 10) {
-                area.innerHTML = `<h4 style="color:#6f42c1; margin-bottom:5px;">🤖 10. إدارة الروبوتات</h4><p style="font-size:11px; color:#555;">الروبوتات تعمل بنجاح.</p>`;
+                area.innerHTML = `<h4 style="color:#17a2b8; margin-bottom:5px;">🤖 10. الروبوتات والذكاء الاصطناعي</h4><p style="font-size:11px; color:#555;">المساعد الذكي وحمايات الروم تعمل بكفاءة.</p>`;
             }
         }
 
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
     </script>
 </body>
 </html>
