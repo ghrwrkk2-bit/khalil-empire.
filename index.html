@@ -146,7 +146,7 @@
         .rank-bg-box i { font-size: 13px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3)); }
 
         /* شريط الإدخال */
-        .input-bar { display: flex; flex-direction: column; background-color: #c0c0c0; padding: 6px; gap: 4px; border-top: 1px solid #999; flex-shrink: 0; position: relative; }
+        .input-bar { display: flex; flex-direction: column; background-color: #c0c0c0; padding: 6px; gap: 4px; border-top: 1px solid #999; flex-shrink: 0; position: relative; z-index: 100; }
         .input-main-row { display: flex; align-items: center; gap: 6px; width: 100%; position: relative; }
         .send-icon { background-color: #000; color: #fff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
         .send-icon:active { background-color: #0d6efd; }
@@ -163,17 +163,17 @@
         
         #replyPreviewBar { display: none; background: #e0e0e0; padding: 4px 10px; font-size: 11px; border-radius: 4px; justify-content: space-between; align-items: center; border-right: 3px solid #0d6efd; }
 
-        /* قائمة علامة الزائد الخاصة فوق الزر تماماً */
+        /* قائمة علامة الزائد تظهر فوق لوحة الكتابة تماماً وغير مخفية */
         .plus-popup-menu {
             display: none;
             position: absolute;
-            bottom: 50px;
+            bottom: 55px;
             right: 10px;
             background: #fff;
             border-radius: 12px;
             padding: 12px;
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.2);
-            z-index: 1000;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+            z-index: 9999;
             border: 1px solid #ddd;
             animation: popUpUp 0.2s ease-in-out;
         }
@@ -186,7 +186,7 @@
         .bottom-item i { font-size: 16px; margin-bottom: 2px; }
 
         /* النوافذ الانبثاقية والقوائم */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; animation: fadeIn 0.2s ease-in-out; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; animation: fadeIn 0.2s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
         .modal-content { 
@@ -237,10 +237,10 @@
         .admin-card-item i { font-size: 16px; color: #0d6efd; }
         .admin-card-item:active { background: #e2e6ea; }
 
-        #kingBannerModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; }
+        #kingBannerModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 99999; justify-content: center; align-items: center; flex-direction: column; }
         .king-welcome-box { background: linear-gradient(45deg, #ffd700, #ff8c00); color: #000; padding: 25px 35px; border-radius: 20px; font-size: 20px; font-weight: bold; text-align: center; box-shadow: 0 0 30px #ffd700; animation: kingPop 0.4s ease-in-out; border: 3px solid #fff; }
         @keyframes kingPop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        .rose-fall { position: absolute; top: -50px; font-size: 24px; animation: fallDown 3s linear infinite; z-index: 10000; }
+        .rose-fall { position: absolute; top: -50px; font-size: 24px; animation: fallDown 3s linear infinite; z-index: 100000; }
         @keyframes fallDown { 0% { transform: translateY(-50px) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
     </style>
 </head>
@@ -289,7 +289,7 @@
         <div class="mic-toggle-btn" onclick="toggleMics()"><i class="fas fa-chevron-up" id="micArrow"></i></div>
     </div>
 
-    <!-- منطقة الشات العام -->
+    <!-- منطقة الشات العام (تعرض آخر 10 رسائل فقط ولا تختفي عند التحديث) -->
     <main class="chat-area" id="chatArea">
         <div class="announcement" id="mainRoomNotice">
             أهلاً وسهلاً بكم في <strong id="currentRoomTitle">شات حسوني | أحلى دردشة عربية</strong> 🎉
@@ -310,7 +310,7 @@
             </div>
             <i class="fas fa-microphone" style="font-size:18px; color:#555; cursor:pointer; padding: 4px;" onclick="alert('التسجيل الصوتي مفعل')"></i>
             
-            <!-- زر علامة الزائد مع القائمة التي تظهر فوقه مباشرة -->
+            <!-- زر علامة الزائد مع القائمة التي تظهر فوقه تماماً بوضوح -->
             <div style="position:relative;">
                 <i class="fas fa-plus" id="plusBtn" style="font-size:18px; color:#555; cursor:pointer; padding: 4px;" onclick="togglePlusMenu()"></i>
                 
@@ -676,7 +676,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
-        import { getDatabase, ref, push, query, limitToLast, onChildAdded, onValue, set, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+        import { getDatabase, ref, push, query, limitToLast, onChildAdded, onValue, set, serverTimestamp, remove } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA6DkpqUEzzpkbEbOPTx3PxG7RdLdgyFZg",
@@ -702,6 +702,7 @@
         window.dbOnChildAdded = onChildAdded;
         window.dbOnValue = onValue;
         window.dbServerTimestamp = serverTimestamp;
+        window.dbRemove = remove;
 
         if (typeof window.initFirebaseListeners === 'function') {
             window.initFirebaseListeners();
@@ -749,6 +750,7 @@
         let currentPrivateTarget = null;
         let currentQuotedText = null;
         let currentActiveRoom = 'روم شات حسوني الرئيسي';
+        let currentLoadedMessagesCount = 0;
 
         window.onload = function() {
             const ageSelect = document.getElementById('loginAge');
@@ -879,7 +881,6 @@
             closeModal('loginModal');
             initSessionUI();
             checkKingArrival(currentUser);
-            appendNotice(`📢 انضم إلينا الآن العضو الجديد: [ ${currentUser.name} ] أهلاً بك!`);
         }
 
         function logout() {
@@ -1070,7 +1071,6 @@
                     let player = document.getElementById('globalAudioPlayer');
                     player.src = val.url;
                     player.play().catch(e => console.log("Autoplay blocked"));
-                    appendNotice(`🎵 تم تشغيل وبث الأغنية الحقيقية (${val.title}) على المايك ${val.slot} للجميع!`);
                 }
             });
         }
@@ -1079,6 +1079,7 @@
             let roomKey = roomName.replace(/[.#$\/\[\]]/g, '_');
             const chatArea = document.getElementById('chatArea');
             chatArea.innerHTML = `<div class="announcement" id="mainRoomNotice">أهلاً وسهلاً بكم في <strong id="currentRoomTitle">${roomName}</strong> 🎉</div>`;
+            currentLoadedMessagesCount = 0;
 
             const roomControlRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/controls`);
             window.dbOnValue(roomControlRef, (snapshot) => {
@@ -1093,12 +1094,13 @@
                 }
             });
 
-            // جلب وعرض آخر 10 رسائل فقط عند الدخول وعدم اختفائها عند التحديث
+            // جلب آخر 10 رسائل فقط عند الدخول وعرضها للمزامنة التامة
             const messagesRef = window.dbQuery(window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`), window.dbLimitToLast(10));
             window.dbOnChildAdded(messagesRef, (snapshot) => {
                 const data = snapshot.val();
                 if(!data) return;
                 
+                currentLoadedMessagesCount++;
                 const row = document.createElement('div');
                 row.className = 'chat-row';
                 
@@ -1150,7 +1152,6 @@
             document.getElementById('currentRoomTitle').innerText = roomName;
             closeModal('roomsListModal');
             loadRoomListeners(roomName);
-            appendNotice(`تم الانتقال إلى [ ${roomName} ] بنجاح وكغرفه منعزلة ✨`);
         }
 
         function cancelReply() {
@@ -1209,7 +1210,7 @@
                 targetUser.rank = ranksList[4];
                 targetUser.email = userName.toLowerCase().replace(/\s+/g, '') + '@hasouni.chat';
                 targetUser.pass = '123456';
-                alert(`تم تسجيل العضو [ ${userName} ] بنجاح!\nتم منحه رتبة ماسي.`);
+                alert(`تم تسجيل العضو [ ${userName} ] بنجاح!\nتم منحه رتبة بريمو.`);
                 openOnlineList();
             }
         }
@@ -1484,7 +1485,6 @@
                         const micsRef = window.dbRef(window.firebaseDB, 'rooms/public/micsState');
                         window.dbSet(micsRef, activeMics);
                     }
-                    appendNotice(`🎤 صعد العضو [ ${currentUser.name} ] على المايك رقم ${slot} بنجاح!`);
                 }
             }
         }
@@ -1498,14 +1498,12 @@
                 openModal('ytSearchModal');
             } else if(actionType === 'stopSong') {
                 document.getElementById('globalAudioPlayer').pause();
-                appendNotice(`🎵 تم إيقاف الأغنية من المايك ${slot}.`);
             } else if(actionType === 'leave') {
                 activeMics[slot] = null;
                 if(window.firebaseDB && window.dbRef && window.dbSet) {
                     const micsRef = window.dbRef(window.firebaseDB, 'rooms/public/micsState');
                     window.dbSet(micsRef, activeMics);
                 }
-                appendNotice(`نزل العضو [ ${currentUser.name} ] من المايك ${slot}`);
             }
         }
 
@@ -1536,7 +1534,6 @@
                 player.src = songUrl;
                 player.play();
                 closeModal('ytSearchModal');
-                appendNotice(`🎵 قام [ ${currentUser.name} ] ببث الصوت الحقيقي لـ (${query}) على المايك ${currentMicSlot} ليسمعه كل الأعضاء!`);
             }, 600);
         }
 
@@ -1559,26 +1556,21 @@
         function toggleBanTarget() {
             selectedTargetUser.isBanned = !selectedTargetUser.isBanned;
             if(selectedTargetUser.isBanned) {
-                alert(`تم حظر العضو [ ${selectedTargetUser.name} ] بنجاح!`);
                 if(window.firebaseDB && window.dbRef && window.dbSet) {
                     const banRef = window.dbRef(window.firebaseDB, 'bannedUsers/' + selectedTargetUser.name.replace(/[.#$\/\[\]]/g, '_'));
                     window.dbSet(banRef, true);
                 }
-            } else {
-                alert('تم فك الحظر!');
             }
             closeModal('adminCmdModal');
         }
 
         function toggleKickTarget() {
-            alert(`تم طرد العضو [ ${selectedTargetUser.name} ] من الغرفة بنجاح!`);
             closeModal('adminCmdModal');
             closeModal('profileViewModal');
         }
 
         function toggleMuteTarget() {
             selectedTargetUser.isMuted = !selectedTargetUser.isMuted;
-            alert(selectedTargetUser.isMuted ? 'تم كتم العضو!' : 'تم فك الكتم.');
             closeModal('adminCmdModal');
         }
 
@@ -1588,7 +1580,6 @@
                     const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + selectedTargetUser.name.replace(/[.#$\/\[\]]/g, '_'));
                     window.dbSet(userStatusRef, null);
                 }
-                alert('تم حذف الحساب نهائياً عند الجميع بنجاح!');
                 closeModal('adminCmdModal');
                 closeModal('profileViewModal');
                 location.reload();
@@ -1613,8 +1604,6 @@
                         window.dbSet(userStatusRef, selectedTargetUser);
                     }
 
-                    appendNotice(`👑 قام صاحب الموقع بتغيير رتبة العضو [ ${selectedTargetUser.name} ] إلى رتبة [ ${r.name} ] بنجاح تام!`);
-                    alert(`تم تغيير رتبة العضو [ ${selectedTargetUser.name} ] إلى (${r.name}) بنجاح وتم تحديثها لدى الجميع فوراً!`);
                     closeModal('ranksModal');
                     closeModal('adminCmdModal');
                     closeModal('profileViewModal');
@@ -1649,7 +1638,6 @@
                         window.dbSet(roomControlRef, { bgUrl: url, timestamp: window.dbServerTimestamp() });
                     }
                     document.getElementById('chatArea').style.backgroundImage = `url('${url}')`;
-                    appendNotice(`🖼️ تم تحديث خلفية الغرفة لجميع الأعضاء فوراً.`);
                     closeModal('roomOptsModal');
                 };
                 reader.readAsDataURL(input.files[0]);
@@ -1665,7 +1653,6 @@
                 newBtn.innerHTML = `⭐ ${optName}`;
                 newBtn.onclick = () => alert(`تم تنفيذ خيار: ${optName} بنجاح!`);
                 container.insertBefore(newBtn, container.lastElementChild);
-                alert(`تمت إضافة الخيار [ ${optName} ] إلى قائمة الخيارات بنجاح تام!`);
             }
         }
 
@@ -1685,29 +1672,17 @@
             if(sectionNum === 1) {
                 area.innerHTML = `
                     <h4 style="color:#dc3545; margin-bottom:5px;">🛡️ 1. الأمن السري - سجل الرسائل الخاصة الكاملة</h4>
-                    <p style="font-size:10px; color:#555; margin-bottom:8px;">عرض حقيقي لجميع الرسائل الخاصة المتبادلة بين الأعضاء:</p>
                     <div style="background:#eee; padding:8px; border-radius:4px; max-height:180px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; -webkit-overflow-scrolling: touch;">
-                        <div style="background:#fff; padding:5px; border-radius:3px;"><b>المرسل:</b> أحمد | <b>المستلم:</b> سارة <br><b>الرسالة:</b> مرحبا بك</div>
+                        <div style="background:#fff; padding:5px; border-radius:3px;">سجل المراقبة مفعل</div>
                     </div>
                 `;
             } else if(sectionNum === 2) {
-                area.innerHTML = `
-                    <h4 style="color:#0d6efd; margin-bottom:5px;">🎤 2. إعداد الميكات والتحكم بها</h4>
-                    <p style="font-size:10px; color:#555; margin-bottom:8px;">عدد الميكات النشطة حالياً: 4 ميكروفونات</p>
-                    <button onclick="alert('تمت زيادة ميكروفون جديد بنجاح وأصبح العدد 5!')" style="padding:8px 12px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">➕ إضافة ميكروفون جديد وزيادة الخيارات</button>
-                `;
+                area.innerHTML = `<h4 style="color:#0d6efd; margin-bottom:5px;">🎤 2. إعداد الميكات</h4>`;
             } else if(sectionNum === 3) {
-                let listHtml = `<h4 style="color:#ffc107; margin-bottom:5px;">👑 3. إعداد الـ 25 رتبة</h4>
-                <div style="max-height:140px; overflow-y:auto; display:flex; flex-direction:column; gap:3px; margin-bottom:8px; -webkit-overflow-scrolling: touch;">`;
-                ranksList.forEach(r => {
-                    listHtml += `<div style="padding:4px; background:#f1f1f1; display:flex; justify-content:space-between; align-items:center;"><span>${r.id}. ${r.name}</span> <button onclick="let newN = prompt('عدل اسم الرتبة:', '${r.name}'); if(newN){ r.name=newN; alert('تم التعديل وحفظه فوراً'); }" style="background:#0d6efd; color:#fff; border:none; padding:2px 6px; border-radius:3px; cursor:pointer;">تعديل</button></div>`;
-                });
-                listHtml += `</div><button onclick="let rn=prompt('اسم الرتبة الجديدة:'); let sh=prompt('شكل الأيقونة (مثلاً fa-star):'); if(rn){ ranksList.push({id:ranksList.length+1, name:rn, icon:sh||'fa-star', color:'#fff', style:'background:#333;color:#fff;'}); alert('تمت إضافة وحفظ الرتبة فوراً!'); }" style="padding:8px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; width:100%;">➕ إضافة رتبة جديدة وحفظها فوراً</button>`;
+                let listHtml = `<h4 style="color:#ffc107; margin-bottom:5px;">👑 3. إعداد الـ 25 رتبة</h4>`;
                 area.innerHTML = listHtml;
-            } else if(sectionNum === 4) {
-                area.innerHTML = `<h4 style="color:#6610f2; margin-bottom:5px;">🛡️ 4. إعداد الأذونات والصلاحيات</h4><p style="font-size:11px; color:#555;">جميع الصلاحيات مرتبطة بحساب صاحب الموقع والإدارة.</p>`;
             } else {
-                area.innerHTML = `<h4 style="color:#333; margin-bottom:5px;">⚙️ إعدادات القسم ${sectionNum}</h4><p style="font-size:11px; color:#555;">هذا القسم جاهز ويعمل بكفاءة عالية ضمن شات حسوني.</p>`;
+                area.innerHTML = `<h4 style="color:#333; margin-bottom:5px;">⚙️ إعدادات القسم ${sectionNum}</h4>`;
             }
         }
 
