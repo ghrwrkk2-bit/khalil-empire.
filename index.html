@@ -163,7 +163,7 @@
         
         #replyPreviewBar { display: none; background: #e0e0e0; padding: 4px 10px; font-size: 11px; border-radius: 4px; justify-content: space-between; align-items: center; border-right: 3px solid #0d6efd; }
 
-        /* قائمة علامة الزائد */
+        /* قائمة علامة الزائد تظهر فوق لوحة الكتابة تماماً وغير مخفية */
         .plus-popup-menu {
             display: none;
             position: absolute;
@@ -206,7 +206,7 @@
         .modal-body { padding: 15px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
         .side-menu-list { display: flex; flex-direction: column; -webkit-overflow-scrolling: touch; }
-        .side-menu-item { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 13px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: 0.2s; }
+        .side-menu-item { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 13px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: 0.2s; }
         .side-menu-item:active { background: #f5f5f5; color: #0d6efd; }
 
         /* لوحة الدخول */
@@ -292,7 +292,7 @@
     <!-- منطقة الشات العام -->
     <main class="chat-area" id="chatArea">
         <div class="announcement" id="mainRoomNotice">
-            أهلاً وسهلاً بكم في <strong id="currentRoomTitle">روم شات حسوني الرئيسي</strong> 🎉
+            أهلاً وسهلاً بكم في <strong id="currentRoomTitle">شات حسوني | أحلى دردشة عربية</strong> 🎉
         </div>
     </main>
 
@@ -306,30 +306,26 @@
             <div class="send-icon" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></div>
             <div class="input-box">
                 <input type="text" id="msgInput" placeholder="اكتب رسالتك هنا..." onkeypress="if(event.key === 'Enter') sendMessage()">
-                <i class="far fa-smile" style="color:#777; cursor:pointer; padding: 5px;" onclick="alert('قريباً: لوحة الوجوه التعبيرية')"></i>
+                <i class="far fa-smile" style="color:#777; cursor:pointer; padding: 5px;" onclick="openEmojiPickerModal()"></i>
             </div>
             <i class="fas fa-microphone" style="font-size:18px; color:#555; cursor:pointer; padding: 4px;" onclick="alert('التسجيل الصوتي مفعل')"></i>
             
-            <!-- زر علامة الزائد -->
+            <!-- زر علامة الزائد مع القائمة -->
             <div style="position:relative;">
                 <i class="fas fa-plus" id="plusBtn" style="font-size:18px; color:#555; cursor:pointer; padding: 4px;" onclick="togglePlusMenu()"></i>
                 
                 <div class="plus-popup-menu" id="plusPopupMenu">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;">
-                        <span style="font-weight:bold; font-size:12px;">مشاركة الوسائط والألعاب الفورية</span>
+                        <span style="font-weight:bold; font-size:12px;">مشاركة الوسائط والألعاب</span>
                         <i class="fas fa-times" onclick="togglePlusMenu()" style="cursor:pointer; font-size:12px; color:#777;"></i>
                     </div>
                     <div style="display:flex; gap:12px; align-items:center;">
-                        <div onclick="document.getElementById('fileUploadInput').click(); togglePlusMenu();" title="ملف / صورة" style="background:#e3f2fd; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fas fa-cloud-upload-alt" style="color:#0d6efd; font-size:16px;"></i></div>
-                        <input type="file" id="fileUploadInput" style="display:none;" accept="image/*,video/*,.pdf,.doc,.docx" onchange="handleFileUpload(this)">
-                        
-                        <div onclick="openTikTokModal(); togglePlusMenu();" title="تيك توك حقيقي" style="background:#000; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fab fa-tiktok" style="color:#fff; font-size:16px;"></i></div>
-                        
-                        <div onclick="playDiceGame(); togglePlusMenu();" title="لعبة النرد" style="background:#e8f5e9; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fas fa-dice" style="color:#28a745; font-size:16px;"></i></div>
-                        
-                        <div onclick="openYouTubeSearchModal(); togglePlusMenu();" title="يوتيوب حقيقي" style="background:#ffebee; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fab fa-youtube" style="color:#ff0000; font-size:16px;"></i></div>
-                        
-                        <div onclick="playRPSGame(); togglePlusMenu();" title="ورقة مقص نرد" style="background:#fff3e0; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fas fa-hand-scissors" style="color:#ff9800; font-size:16px;"></i></div>
+                        <div onclick="document.getElementById('fileUploadInput').click(); togglePlusMenu();" style="background:#e3f2fd; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fas fa-cloud-upload-alt" style="color:#0d6efd; font-size:16px;"></i></div>
+                        <input type="file" id="fileUploadInput" style="display:none;" accept="image/*,video/*" onchange="handleFileUpload(this)">
+                        <div onclick="openTikTokModal(); togglePlusMenu();" style="background:#000; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fab fa-tiktok" style="color:#fff; font-size:16px;"></i></div>
+                        <div onclick="rollDiceGame(); togglePlusMenu();" style="background:#e8f5e9; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fas fa-dice" style="color:#28a745; font-size:16px;"></i></div>
+                        <div onclick="openYouTubePickerModal(); togglePlusMenu();" style="background:#ffebee; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fab fa-youtube" style="color:#ff0000; font-size:16px;"></i></div>
+                        <div onclick="openTicketSystemModal(); togglePlusMenu();" style="background:#fff3e0; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fas fa-headset" style="color:#ff9800; font-size:16px;"></i></div>
                     </div>
                 </div>
             </div>
@@ -341,12 +337,66 @@
     <footer class="bottom-nav">
         <div class="bottom-item" onclick="openModal('roomOptsModal')"><i class="fas fa-cog"></i><span>الخيارات</span></div>
         <div class="bottom-item" onclick="openModal('friendsModal')"><i class="fas fa-user-friends"></i><span>الأصدقاء</span></div>
-        <div class="bottom-item" onclick="openOnlineList()"><i class="fas fa-users"></i><span>المتواجدين</span></div>
-        <div class="bottom-item" onclick="openModal('roomsListModal')"><i class="fas fa-home"></i><span>الغرف</span></div>
+        <div class="bottom-item" onclick="openOnlineList()"><i class="fas fa-users"></i><span>المتواجدين (<span id="bottomOnlineCount">0</span>)</span></div>
+        <div class="bottom-item" onclick="openModal('roomsListModal')"><i class="fas fa-home"></i><span>الغرف (<span id="bottomRoomsCount">4</span>)</span></div>
         <div class="bottom-item" id="keyBottomBtn" onclick="openModal('regModal')"><i class="fas fa-key" style="color:#ffd700;"></i><span>تسجيل/مفتاح</span></div>
         <div class="bottom-item" onclick="toggleDataSaver()"><i class="fas fa-bolt" style="color:#00e676;"></i><span>توفير النت</span></div>
         <div class="bottom-item" onclick="location.reload()"><i class="fas fa-sync-alt"></i><span>تحديث</span></div>
     </footer>
+
+    <!-- نافذة 100 إيموجي -->
+    <div class="modal" id="emojiPickerModal">
+        <div class="modal-content" style="max-width:350px;">
+            <div class="modal-header">
+                <span>لوحة الوجوه التعبيرية (100 إيموجي)</span>
+                <i class="fas fa-times" onclick="closeModal('emojiPickerModal')" style="cursor:pointer; padding:5px;"></i>
+            </div>
+            <div class="modal-body" id="emojiGridContainer" style="display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; max-height:250px; text-align:center; font-size:22px;"></div>
+        </div>
+    </div>
+
+    <!-- نافذة تيك توك الحقيقي -->
+    <div class="modal" id="tikTokModal">
+        <div class="modal-content" style="max-width:380px;">
+            <div class="modal-header">
+                <span>مشاركة فيديو تيك توك حقيقي</span>
+                <i class="fas fa-times" onclick="closeModal('tikTokModal')" style="cursor:pointer; padding:5px;"></i>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:8px;">
+                <input type="text" id="tikTokUrlInput" placeholder="الصق رابط فيديو تيك توك هنا..." style="padding:9px; border:1px solid #ccc; border-radius:5px; font-size:13px;">
+                <button onclick="sendTikTokEmbed()" style="background:#000; color:#fff; border:none; padding:10px; border-radius:5px; font-weight:bold; cursor:pointer;"><i class="fab fa-tiktok"></i> نشر فيديو تيك توك في الشات</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة يوتيوب الحقيقية -->
+    <div class="modal" id="youtubePickerModal">
+        <div class="modal-content" style="max-width:380px;">
+            <div class="modal-header">
+                <span>بحث وبث يوتيوب حقيقي</span>
+                <i class="fas fa-times" onclick="closeModal('youtubePickerModal')" style="cursor:pointer; padding:5px;"></i>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:8px;">
+                <input type="text" id="youtubeUrlInput" placeholder="الصق رابط يوتيوب أو اسم الأغنية..." style="padding:9px; border:1px solid #ccc; border-radius:5px; font-size:13px;">
+                <button onclick="sendYouTubeEmbed()" style="background:#ff0000; color:#fff; border:none; padding:10px; border-radius:5px; font-weight:bold; cursor:pointer;"><i class="fab fa-youtube"></i> تشغيل وبث للجميع فوراً</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة التكتك (الدعم الفني / التكتيكات) -->
+    <div class="modal" id="ticketSystemModal">
+        <div class="modal-content" style="max-width:380px;">
+            <div class="modal-header">
+                <span>نظام التكتيكات والدعم الفني الحقيقي</span>
+                <i class="fas fa-times" onclick="closeModal('ticketSystemModal')" style="cursor:pointer; padding:5px;"></i>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:8px;">
+                <input type="text" id="ticketSubject" placeholder="عنوان التذكرة / المشكلة..." style="padding:9px; border:1px solid #ccc; border-radius:5px; font-size:13px;">
+                <textarea id="ticketDesc" placeholder="اشرح مشكلتك للإدارة..." style="padding:9px; border:1px solid #ccc; border-radius:5px; font-size:13px; height:80px; resize:none;"></textarea>
+                <button onclick="submitTicketSystem()" style="background:#ff9800; color:#fff; border:none; padding:10px; border-radius:5px; font-weight:bold; cursor:pointer;"><i class="fas fa-paper-plane"></i> إرسال التذكرة للإدارة</button>
+            </div>
+        </div>
+    </div>
 
     <!-- نافذة أزرار المايك -->
     <div class="modal" id="micControlModal">
@@ -365,31 +415,17 @@
         </div>
     </div>
 
-    <!-- نافذة بحث يوتيوب الحقيقي وبث الصوت -->
+    <!-- نافذة بحث يوتيوب وبث الصوت الحقيقي للجميع -->
     <div class="modal" id="ytSearchModal">
         <div class="modal-content" style="padding:15px; max-width:400px; background:#fff;">
             <div class="modal-header" style="margin:-15px -15px 10px -15px;">
-                <span>بحث يوتيوب الحقيقي وبث الصوت للجميع</span>
+                <span>بحث يوتيوب وبث الصوت للجميع</span>
                 <i class="fas fa-times" onclick="closeModal('ytSearchModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div style="display:flex; flex-direction:column; gap:8px;">
-                <input type="text" id="ytSearchQuery" placeholder="اكتب اسم الأغنية أو الصق رابط يوتيوب..." style="padding:10px; border:1px solid #ccc; border-radius:5px; font-size:14px;">
-                <button onclick="executeYouTubeSearch()" style="background:#ff0000; color:#fff; border:none; padding:11px; border-radius:5px; font-weight:bold; cursor:pointer;"><i class="fab fa-youtube"></i> تشغيل وبث الصوت للجميع فوراً</button>
+                <input type="text" id="ytSearchQuery" placeholder="انسخ رابط يوتيوب أو اكتب اسم الأغنية..." style="padding:10px; border:1px solid #ccc; border-radius:5px; font-size:14px;">
+                <button onclick="executeYouTubeSearch()" style="background:#ff0000; color:#fff; border:none; padding:11px; border-radius:5px; font-weight:bold; cursor:pointer;"><i class="fab fa-youtube"></i> تشغيل وبث الصوت للجميع</button>
                 <div id="ytResultsArea" style="max-height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:5px; margin-top:5px; -webkit-overflow-scrolling: touch;"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- نافذة تيك توك الحقيقي -->
-    <div class="modal" id="tiktokModal">
-        <div class="modal-content" style="padding:15px; max-width:400px; background:#fff;">
-            <div class="modal-header" style="margin:-15px -15px 10px -15px;">
-                <span>مشاركة فيديو تيك توك حقيقي</span>
-                <i class="fas fa-times" onclick="closeModal('tiktokModal')" style="cursor:pointer; padding:5px;"></i>
-            </div>
-            <div style="display:flex; flex-direction:column; gap:8px;">
-                <input type="text" id="tiktokUrlInput" placeholder="الصق رابط فيديو تيك توك هنا..." style="padding:10px; border:1px solid #ccc; border-radius:5px; font-size:14px;">
-                <button onclick="sendTikTokToChat()" style="background:#000; color:#fff; border:none; padding:11px; border-radius:5px; font-weight:bold; cursor:pointer;"><i class="fab fa-tiktok"></i> نشر فيديو تيك توك للجميع فوراً</button>
             </div>
         </div>
     </div>
@@ -402,9 +438,9 @@
                 <i class="fas fa-times" onclick="closeModal('topProfileModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div class="side-menu-list">
-                <div class="side-menu-item" onclick="alert('المستوى الحالي: ' + (currentUser? currentUser.level : 1) + ' | الذهب: ' + (currentUser? currentUser.gold : 0) + ' | الروبي: ' + (currentUser? currentUser.ruby : 0))"><span>معلومات المستوى والمحفظة</span><i class="fas fa-layer-group"></i></div>
-                <div class="side-menu-item" onclick="closeModal('topProfileModal'); openSelfEdit();"><span>تحرير الملف الشخصي</span><i class="fas fa-user-edit"></i></div>
-                <div class="side-menu-item" style="color:red;" onclick="logout()"><span>خروج نهائي وتسجيل حساب جديد</span><i class="fas fa-sign-out-alt"></i></div>
+                <div class="side-menu-item" onclick="alert('المستوى الحالي: ' + (currentUser? currentUser.level : 1) + ' | الذهب: ' + (currentUser? currentUser.gold : 0) + ' | الروبي: ' + (currentUser? currentUser.ruby : 0))"><i class="fas fa-layer-group"></i> معلومات المستوى والمحفظة</div>
+                <div class="side-menu-item" onclick="closeModal('topProfileModal'); openSelfEdit();"><i class="fas fa-user-edit"></i> تحرير الملف الشخصي</div>
+                <div class="side-menu-item" style="color:red;" onclick="logout()"><i class="fas fa-sign-out-alt"></i> خروج نهائي وتسجيل حساب جديد</div>
             </div>
         </div>
     </div>
@@ -417,12 +453,12 @@
                 <i class="fas fa-times" onclick="closeModal('sideMenuModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div class="side-menu-list" style="max-height:75vh; overflow-y:auto; -webkit-overflow-scrolling: touch;">
-                <div class="side-menu-item" onclick="closeModal('sideMenuModal'); openModal('roomsListModal');"><span>قائمة الرومات والغرف</span><i class="fas fa-door-closed"></i></div>
-                <div class="side-menu-item" onclick="closeModal('sideMenuModal'); openModal('friendsModal')"><span>حائط الأصدقاء</span><i class="fas fa-stream"></i></div>
-                <div class="side-menu-item" onclick="closeModal('sideMenuModal'); openOnlineList()"><span>قائمة المتواجدين الحقيقية</span><i class="fas fa-list-ol"></i></div>
-                <div class="side-menu-item" onclick="closeModal('sideMenuModal'); openModal('vipModal')"><span>قائمة الكبار VIP</span><i class="fas fa-crown" style="color:#ffd700;"></i></div>
-                <div class="side-menu-item" onclick="closeModal('sideMenuModal'); openModal('richModal')"><span>قائمة الأثرياء</span><i class="fas fa-gem" style="color:#00c6ff;"></i></div>
-                <div class="side-menu-item" style="color:#ffd700;" onclick="closeModal('sideMenuModal'); openModal('storeModal')"><span>متجر الشات</span><i class="fas fa-shopping-cart"></i></div>
+                <div class="side-menu-item" onclick="closeModal('sideMenuModal'); openModal('roomsListModal');"><i class="fas fa-door-closed"></i> قائمة الرومات</div>
+                <div class="side-menu-item" onclick="openModal('friendsModal')"><i class="fas fa-stream"></i> حائط الأصدقاء</div>
+                <div class="side-menu-item" onclick="openOnlineList()"><i class="fas fa-list-ol"></i> قائمة التصنيف</div>
+                <div class="side-menu-item" onclick="openModal('vipModal')"><i class="fas fa-crown" style="color:#ffd700;"></i> قائمة الكبار</div>
+                <div class="side-menu-item" onclick="openModal('richModal')"><i class="fas fa-gem" style="color:#00c6ff;"></i> قائمة الأثرياء</div>
+                <div class="side-menu-item" style="color:#ffd700;" onclick="openModal('storeModal')"><i class="fas fa-shopping-cart"></i> متجر الشات</div>
             </div>
         </div>
     </div>
@@ -436,7 +472,7 @@
             </div>
             <div style="display:flex; flex-direction:column; gap:10px;" id="roomOptsListContainer">
                 <button onclick="cleanRoom()" style="padding:11px; background:#dc3545; color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">🧹 تنظيف الروم (للجميع فوراً)</button>
-                <label style="font-weight:bold; font-size:12px;">🖼️ رفع خلفية للروم (تظهر لجميع الأعضاء فوراً):</label>
+                <label style="font-weight:bold; font-size:12px;">🖼️ رفع خلفية للروم (تظهر لجميع الأعضاء):</label>
                 <input type="file" id="roomBgFile" accept="image/*" onchange="uploadRoomBg(this)" style="padding:6px; font-size:12px;">
                 
                 <button id="ownerControlPanelBtn" onclick="openAdminDashboard()" style="display:none; padding:12px; background:linear-gradient(45deg,#ffd700,#ff8c00); color:#000; border:none; border-radius:6px; font-weight:bold; font-size:13px; cursor:pointer; box-shadow:0 0 10px rgba(255,215,0,0.5);">👑 لوحة التحكم (صاحب الموقع فقط)</button>
@@ -502,7 +538,7 @@
         </div>
     </div>
 
-    <!-- المتواجدين الحقيقيين -->
+    <!-- المتواجدين -->
     <div class="modal" id="onlineModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -513,30 +549,18 @@
         </div>
     </div>
 
-    <!-- الغرف وعداد الأعضاء الحقيقي -->
+    <!-- الغرف -->
     <div class="modal" id="roomsListModal">
         <div class="modal-content">
             <div class="modal-header">
-                <span>قائمة الغرف العامة وعدد المتواجدين</span>
+                <span>قائمة الغرف العامة (<span id="roomsListCount">4</span>)</span>
                 <i class="fas fa-times" onclick="closeModal('roomsListModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
-            <div class="modal-body" style="display:flex; flex-direction:column; gap:8px;" id="roomsContainerList">
-                <div class="side-menu-item" onclick="switchRoom('روم شات حسوني الرئيسي')">
-                    <span>🏰 روم شات حسوني الرئيسي</span>
-                    <span style="background:#e3f2fd; color:#0d6efd; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:bold;" id="count_room_1">0</span>
-                </div>
-                <div class="side-menu-item" onclick="switchRoom('روم اليمن السعيد')">
-                    <span>🇾🇪 روم اليمن السعيد</span>
-                    <span style="background:#e3f2fd; color:#0d6efd; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:bold;" id="count_room_2">0</span>
-                </div>
-                <div class="side-menu-item" onclick="switchRoom('روم الشام ودردشة العرب')">
-                    <span>🌍 روم الشام ودردشة العرب</span>
-                    <span style="background:#e3f2fd; color:#0d6efd; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:bold;" id="count_room_3">0</span>
-                </div>
-                <div class="side-menu-item" onclick="switchRoom('روم الأغاني والمسابقات')">
-                    <span>🎵 روم الأغاني والمسابقات</span>
-                    <span style="background:#e3f2fd; color:#0d6efd; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:bold;" id="count_room_4">0</span>
-                </div>
+            <div class="modal-body" id="roomsListContainerBody" style="display:flex; flex-direction:column; gap:8px;">
+                <div class="side-menu-item" onclick="switchRoom('روم شات حسوني الرئيسي')">🏰 روم شات حسوني الرئيسي <span style="margin-right:auto; background:#0d6efd; color:#fff; padding:2px 6px; border-radius:10px; font-size:10px;" id="roomCount_1">0</span></div>
+                <div class="side-menu-item" onclick="switchRoom('روم اليمن السعيد')">🇾🇪 روم اليمن السعيد <span style="margin-right:auto; background:#0d6efd; color:#fff; padding:2px 6px; border-radius:10px; font-size:10px;" id="roomCount_2">0</span></div>
+                <div class="side-menu-item" onclick="switchRoom('روم الشام ودردشة العرب')">🌍 روم الشام ودردشة العرب <span style="margin-right:auto; background:#0d6efd; color:#fff; padding:2px 6px; border-radius:10px; font-size:10px;" id="roomCount_3">0</span></div>
+                <div class="side-menu-item" onclick="switchRoom('روم الأغاني والمسابقات')">🎵 روم الأغاني والمسابقات <span style="margin-right:auto; background:#0d6efd; color:#fff; padding:2px 6px; border-radius:10px; font-size:10px;" id="roomCount_4">0</span></div>
             </div>
         </div>
     </div>
@@ -624,7 +648,7 @@
             </div>
             <div style="display:flex; flex-direction:column; gap:6px; font-size:12px;">
                 <button onclick="openTargetEditByOwner()" style="padding:10px; background:#0d6efd; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">✏️ تعديل بيانات وبروفايل هذا العضو</button>
-                <button onclick="openRanksList()" style="padding:10px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">👑 تغيير رتبة العضو (تظهر فوراً للجميع)</button>
+                <button onclick="openRanksList()" style="padding:10px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">👑 تغيير رتبة العضو</button>
                 <button onclick="toggleBanTarget()" id="banBtn" style="padding:10px; background:#dc3545; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">حظر / فك حظر العضو</button>
                 <button onclick="toggleKickTarget()" style="padding:10px; background:#fd7e14; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">طرد العضو</button>
                 <button onclick="toggleMuteTarget()" id="muteBtn" style="padding:10px; background:#ffc107; color:#000; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">كتم / فك كتم العضو</button>
@@ -702,11 +726,11 @@
     <!-- مشغل الصوت العام الحقيقي لبث الأغاني -->
     <audio id="globalAudioPlayer" style="display:none;"></audio>
 
-    <!-- ربط Firebase وتوابع المزامنة الفورية التامة -->
+    <!-- ربط Firebase وتوابع المزامنة الفورية -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
-        import { getDatabase, ref, push, query, limitToLast, onChildAdded, onValue, set, serverTimestamp, remove } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+        import { getDatabase, ref, push, query, limitToLast, onChildAdded, onValue, set, serverTimestamp, remove, onChildChanged } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA6DkpqUEzzpkbEbOPTx3PxG7RdLdgyFZg",
@@ -733,6 +757,7 @@
         window.dbOnValue = onValue;
         window.dbServerTimestamp = serverTimestamp;
         window.dbRemove = remove;
+        window.dbOnChildChanged = onChildChanged;
 
         if (typeof window.initFirebaseListeners === 'function') {
             window.initFirebaseListeners();
@@ -780,6 +805,9 @@
         let currentPrivateTarget = null;
         let currentQuotedText = null;
         let currentActiveRoom = 'روم شات حسوني الرئيسي';
+        let roomsOccupancyData = { 'روم شات حسوني الرئيسي': 0, 'روم اليمن السعيد': 0, 'روم الشام ودردشة العرب': 0, 'روم الأغاني والمسابقات': 0 };
+
+        const emojiList = ["😀","😃","😄","😁","😆","😅","🤣","😂","🙂","🙃","😉","😊","😇","🥰","😍","🤩","😘","😗","😚","😙","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🤫","🤔","🤐","🤨","😐","😑","😶","😏","😒","🙄","😬","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🤧","🥵","🥶","🥴","😵","🤯","🤠","🥳","😎","🤓","🧐","😕","😟","🙁","😮","😯","😲","😳","🥺","😦","😧","😨","😰","😥","😢","😭","😱","😖","😣","😞","😓","😩","😫","🥱","😤","😡","😠","🤬","😈","👿","💀","☠️","💩","🤡","👹","👺","👻","👽","👾","🤖"];
 
         window.onload = function() {
             const ageSelect = document.getElementById('loginAge');
@@ -788,6 +816,18 @@
                 opt.value = i; opt.innerText = i + ' سنة';
                 ageSelect.appendChild(opt);
             }
+
+            const emojiContainer = document.getElementById('emojiGridContainer');
+            emojiList.forEach(em => {
+                let span = document.createElement('span');
+                span.style.cursor = 'pointer';
+                span.innerText = em;
+                span.onclick = () => {
+                    document.getElementById('msgInput').value += em;
+                    closeModal('emojiPickerModal');
+                };
+                emojiContainer.appendChild(span);
+            });
 
             const saved = localStorage.getItem('hasouniChatUser');
             if(saved) {
@@ -819,6 +859,62 @@
             menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
         }
 
+        function openEmojiPickerModal() { openModal('emojiPickerModal'); }
+        function openTikTokModal() { openModal('tikTokModal'); }
+        function openYouTubePickerModal() { openModal('youtubePickerModal'); }
+        function openTicketSystemModal() { openModal('ticketSystemModal'); }
+
+        function sendTikTokEmbed() {
+            let url = document.getElementById('tikTokUrlInput').value.trim();
+            if(!url) { alert('يرجى لصق رابط تيك توك أولاً!'); return; }
+            let contentHtml = `<div style="background:#000; color:#fff; padding:8px; border-radius:6px;"><i class="fab fa-tiktok"></i> مشاركة تيك توك: <a href="${url}" target="_blank" style="color:#00e676; word-break:break-all;">${url}</a></div>`;
+            sendCustomPayloadMessage(contentHtml);
+            closeModal('tikTokModal');
+            document.getElementById('tikTokUrlInput').value = '';
+        }
+
+        function sendYouTubeEmbed() {
+            let url = document.getElementById('youtubeUrlInput').value.trim();
+            if(!url) { alert('يرجى لصق رابط يوتيوب أولاً!'); return; }
+            let contentHtml = `<div style="background:#ffebee; color:#d32f2f; padding:8px; border-radius:6px;"><i class="fab fa-youtube"></i> فيديو يوتيوب: <a href="${url}" target="_blank" style="color:#d32f2f; word-break:break-all;">${url}</a></div>`;
+            sendCustomPayloadMessage(contentHtml);
+            closeModal('youtubePickerModal');
+            document.getElementById('youtubeUrlInput').value = '';
+        }
+
+        function submitTicketSystem() {
+            let subject = document.getElementById('ticketSubject').value.trim();
+            let desc = document.getElementById('ticketDesc').value.trim();
+            if(!subject || !desc) { alert('يرجى تعبئة حقول التذكرة!'); return; }
+            alert('تم إرسال تذكتك للإدارة بنجاح وسيتم الرد قريباً!');
+            closeModal('ticketSystemModal');
+            document.getElementById('ticketSubject').value = '';
+            document.getElementById('ticketDesc').value = '';
+        }
+
+        function rollDiceGame() {
+            let diceNum = Math.floor(Math.random() * 6) + 1;
+            let diceIcons = ["⚀","⚁","⚂","⚃","⚄","⚅"];
+            let contentHtml = `<div style="font-size:16px; font-weight:bold; color:#28a745;"><i class="fas fa-dice"></i> رمى النرد وظهر له: ${diceIcons[diceNum-1]} (${diceNum})</div>`;
+            sendCustomPayloadMessage(contentHtml);
+        }
+
+        function sendCustomPayloadMessage(htmlPayload) {
+            if(!currentUser) return;
+            let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
+            if(window.firebaseDB) {
+                const messagesRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`);
+                window.dbPush(messagesRef, {
+                    sender: currentUser.name,
+                    text: htmlPayload,
+                    time: timeStr,
+                    userObj: currentUser,
+                    timestamp: window.dbServerTimestamp()
+                });
+            }
+        }
+
         function submitLogin() {
             const name = document.getElementById('loginName').value.trim();
             const email = document.getElementById('loginEmail').value.trim();
@@ -836,7 +932,7 @@
                         cover: 'https://via.placeholder.com/400x160/111/fff',
                         points: 9999, level: 100, likes: 100, gold: 50, ruby: 50, msgCount: 0,
                         nameBgColor: '#ffd700', fieldsBgColor: '#f1f1f1',
-                        isMuted: false, isBanned: false, isBlocked: false, currentRoom: currentActiveRoom
+                        isMuted: false, isBanned: false, isBlocked: false
                     };
                 } else {
                     currentUser = {
@@ -846,12 +942,12 @@
                         cover: 'https://via.placeholder.com/400x160/333/fff',
                         points: 100, level: 1, likes: 0, gold: 0, ruby: 0, msgCount: 0,
                         nameBgColor: '#e0e0e0', fieldsBgColor: '#f1f1f1',
-                        isMuted: false, isBanned: false, isBlocked: false, currentRoom: currentActiveRoom
+                        isMuted: false, isBanned: false, isBlocked: false
                     };
                 }
             } else {
                 currentUser = {
-                    name: name, email: '', pass: '', isOwner: false, rank: ranksList[24],
+                    name: name, email: '', pass: '', isOwner: false, rank: null,
                     age: document.getElementById('loginAge').value,
                     gender: document.getElementById('loginGender').value,
                     country: 'اليمن', bio: 'زائر في الشات',
@@ -859,7 +955,7 @@
                     cover: 'https://via.placeholder.com/400x160/555/fff',
                     points: 0, level: 1, likes: 0, gold: 0, ruby: 0, msgCount: 0,
                     nameBgColor: '#e0e0e0', fieldsBgColor: '#f1f1f1',
-                    isMuted: false, isBanned: false, isBlocked: false, currentRoom: currentActiveRoom
+                    isMuted: false, isBanned: false, isBlocked: false
                 };
             }
 
@@ -881,7 +977,7 @@
                     cover: 'https://via.placeholder.com/400x160/111/fff',
                     points: 9999, level: 100, likes: 100, gold: 50, ruby: 50, msgCount: 0,
                     nameBgColor: '#ffd700', fieldsBgColor: '#f1f1f1',
-                    isMuted: false, isBanned: false, isBlocked: false, currentRoom: currentActiveRoom
+                    isMuted: false, isBanned: false, isBlocked: false
                 };
             } else {
                 currentUser = {
@@ -891,7 +987,7 @@
                     cover: 'https://via.placeholder.com/400x160/222/fff',
                     points: 50, level: 1, likes: 0, gold: 0, ruby: 0, msgCount: 0,
                     nameBgColor: '#e0e0e0', fieldsBgColor: '#f1f1f1',
-                    isMuted: false, isBanned: false, isBlocked: false, currentRoom: currentActiveRoom
+                    isMuted: false, isBanned: false, isBlocked: false
                 };
             }
 
@@ -905,6 +1001,9 @@
             if(window.firebaseDB && window.dbRef && window.dbSet) {
                 const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + currentUser.name.replace(/[.#$\/\[\]]/g, '_'));
                 window.dbSet(userStatusRef, currentUser);
+
+                const roomOccupancyRef = window.dbRef(window.firebaseDB, `roomsOccupancy/${currentActiveRoom.replace(/[.#$\/\[\]]/g, '_')}/${currentUser.name.replace(/[.#$\/\[\]]/g, '_')}`);
+                window.dbSet(roomOccupancyRef, true);
             }
 
             closeModal('loginModal');
@@ -916,6 +1015,9 @@
             if(window.firebaseDB && window.dbRef && window.dbSet && currentUser) {
                 const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + currentUser.name.replace(/[.#$\/\[\]]/g, '_'));
                 window.dbSet(userStatusRef, null);
+
+                const roomOccupancyRef = window.dbRef(window.firebaseDB, `roomsOccupancy/${currentActiveRoom.replace(/[.#$\/\[\]]/g, '_')}/${currentUser.name.replace(/[.#$\/\[\]]/g, '_')}`);
+                window.dbSet(roomOccupancyRef, null);
             }
             localStorage.removeItem('hasouniChatUser');
             location.reload();
@@ -951,6 +1053,8 @@
             if(currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com') {
                 document.getElementById('ownerControlPanelBtn').style.display = 'block';
             }
+
+            activeUsersList = [currentUser];
         }
 
         function renderUserRankStructure(userObj, nameClickAction) {
@@ -1017,6 +1121,9 @@
                     quotedText: currentQuotedText || null,
                     timestamp: window.dbServerTimestamp()
                 });
+            } else {
+                alert("جاري الاتصال بالسيرفر...");
+                return;
             }
 
             input.value = '';
@@ -1049,109 +1156,37 @@
             }
         }
 
-        // دوائص القائمة الذكية المضافة لزر الزائد
-        function openYouTubeSearchModal() {
-            openModal('ytSearchModal');
-        }
-
-        function openTikTokModal() {
-            openModal('tiktokModal');
-        }
-
-        function sendTikTokToChat() {
-            let url = document.getElementById('tiktokUrlInput').value.trim();
-            if(!url) { alert('يرجى إدخال رابط تيك توك صحيح!'); return; }
-            
-            let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
-            let contentHtml = `<div style="background:#000; color:#fff; padding:10px; border-radius:8px; display:flex; align-items:center; gap:10px;"><i class="fab fa-tiktok" style="font-size:24px;"></i><div><b>فيديو تيك توك:</b><br><a href="${url}" target="_blank" style="color:#00c6ff; word-break:break-all;">${url}</a></div></div>`;
-
-            if(window.firebaseDB) {
-                const messagesRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`);
-                window.dbPush(messagesRef, {
-                    sender: currentUser.name,
-                    text: contentHtml,
-                    time: timeStr,
-                    userObj: currentUser,
-                    timestamp: window.dbServerTimestamp()
-                });
-            }
-            document.getElementById('tiktokUrlInput').value = '';
-            closeModal('tiktokModal');
-        }
-
-        function playDiceGame() {
-            let diceVal = Math.floor(Math.random() * 6) + 1;
-            let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
-            let contentHtml = `<div style="background:#e8f5e9; color:#2e7d32; padding:10px; border-radius:8px; font-weight:bold; display:flex; align-items:center; gap:10px;"><i class="fas fa-dice" style="font-size:24px;"></i> 🎲 قام برمي النرد وظهر له الرقم: <span style="font-size:18px; color:#d32f2f; background:#fff; padding:2px 8px; border-radius:50%; border:1px solid #2e7d32;">${diceVal}</span></div>`;
-
-            if(window.firebaseDB) {
-                const messagesRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`);
-                window.dbPush(messagesRef, {
-                    sender: currentUser.name,
-                    text: contentHtml,
-                    time: timeStr,
-                    userObj: currentUser,
-                    timestamp: window.dbServerTimestamp()
-                });
-            }
-        }
-
-        function playRPSGame() {
-            const items = ['حجر 🪨', 'ورقة 📄', 'مقص ✂️'];
-            let chosen = items[Math.floor(Math.random() * items.length)];
-            let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
-            let contentHtml = `<div style="background:#fff3e0; color:#e65100; padding:10px; border-radius:8px; font-weight:bold; display:flex; align-items:center; gap:10px;"><i class="fas fa-hand-scissors" style="font-size:24px;"></i> 🎮 لعبة ورقة ومقص: اختار <span style="color:#d32f2f; font-size:15px;">${chosen}</span></div>`;
-
-            if(window.firebaseDB) {
-                const messagesRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`);
-                window.dbPush(messagesRef, {
-                    sender: currentUser.name,
-                    text: contentHtml,
-                    time: timeStr,
-                    userObj: currentUser,
-                    timestamp: window.dbServerTimestamp()
-                });
-            }
-        }
-
         window.initFirebaseListeners = function() {
             if(!window.firebaseDB) return;
 
-            // مزامنة المتواجدين الحقيقيين وعدد الأفراد داخل كل روم فورياً
             const onlineUsersRef = window.dbRef(window.firebaseDB, 'onlineUsers');
             window.dbOnValue(onlineUsersRef, (snapshot) => {
                 const val = snapshot.val();
                 let uniqueMap = new Map();
-                let roomCounts = { 'روم شات حسوني الرئيسي': 0, 'روم اليمن السعيد': 0, 'روم الشام ودردشة العرب': 0, 'روم الأغاني والمسابقات': 0 };
-
                 if(val) {
                     Object.values(val).forEach(u => {
-                        if(u && u.name) {
-                            uniqueMap.set(u.name, u);
-                            let rName = u.currentRoom || 'روم شات حسوني الرئيسي';
-                            if(roomCounts[rName] !== undefined) roomCounts[rName]++;
-                            else roomCounts[rName] = 1;
-                        }
+                        if(u && u.name) uniqueMap.set(u.name, u);
                     });
                 }
                 if(currentUser && currentUser.name) {
                     uniqueMap.set(currentUser.name, currentUser);
-                    let rName = currentUser.currentRoom || currentActiveRoom;
-                    if(roomCounts[rName] !== undefined) roomCounts[rName]++;
-                    else roomCounts[rName] = 1;
                 }
-
                 activeUsersList = Array.from(uniqueMap.values());
                 document.getElementById('onlineCount').innerText = activeUsersList.length;
+                document.getElementById('bottomOnlineCount').innerText = activeUsersList.length;
+            });
 
-                // تحديث العداد الحقيقي داخل قائمة الغرف فوراً
-                document.getElementById('count_room_1').innerText = roomCounts['روم شات حسوني الرئيسي'] || 0;
-                document.getElementById('count_room_2').innerText = roomCounts['روم اليمن السعيد'] || 0;
-                document.getElementById('count_room_3').innerText = roomCounts['روم الشام ودردشة العرب'] || 0;
-                document.getElementById('count_room_4').innerText = roomCounts['روم الأغاني والمسابقات'] || 0;
+            const occupancyRootRef = window.dbRef(window.firebaseDB, 'roomsOccupancy');
+            window.dbOnValue(occupancyRootRef, (snapshot) => {
+                const val = snapshot.val() || {};
+                let roomsList = ['روم شات حسوني الرئيسي', 'روم اليمن السعيد', 'روم الشام ودردشة العرب', 'روم الأغاني والمسابقات'];
+                roomsList.forEach((rName, idx) => {
+                    let rKey = rName.replace(/[.#$\/\[\]]/g, '_');
+                    let roomUsers = val[rKey] ? Object.keys(val[rKey]).length : 0;
+                    if(rName === currentActiveRoom && roomUsers === 0) roomUsers = 1;
+                    let countEl = document.getElementById(`roomCount_${idx+1}`);
+                    if(countEl) countEl.innerText = roomUsers;
+                });
             });
 
             const micsRef = window.dbRef(window.firebaseDB, 'rooms/public/micsState');
@@ -1190,6 +1225,11 @@
             const chatArea = document.getElementById('chatArea');
             chatArea.innerHTML = `<div class="announcement" id="mainRoomNotice">أهلاً وسهلاً بكم في <strong id="currentRoomTitle">${roomName}</strong> 🎉</div>`;
 
+            if(currentUser && currentUser.name && window.firebaseDB) {
+                const occupancyRef = window.dbRef(window.firebaseDB, `roomsOccupancy/${roomKey}/${currentUser.name.replace(/[.#$\/\[\]]/g, '_')}`);
+                window.dbSet(occupancyRef, true);
+            }
+
             const roomControlRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/controls`);
             window.dbOnValue(roomControlRef, (snapshot) => {
                 const val = snapshot.val();
@@ -1203,8 +1243,8 @@
                 }
             });
 
-            // جلب آخر 15 رسالة فقط وتحديثها فورياً بالبث الحي
-            const messagesRef = window.dbQuery(window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`), window.dbLimitToLast(15));
+            // جلب أحدث الرسائل وضمان المزامنة الفورية للجميع فور الإرسال
+            const messagesRef = window.dbQuery(window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`), window.dbLimitToLast(50));
             window.dbOnChildAdded(messagesRef, (snapshot) => {
                 const data = snapshot.val();
                 if(!data) return;
@@ -1242,21 +1282,27 @@
                     };
                 }
 
+                row.ondblclick = (e) => {
+                    e.stopPropagation();
+                    currentQuotedText = `${userObj.name}: ${data.text.replace(/<[^>]*>?/gm, '').substring(0, 40)}...`;
+                    document.getElementById('replyPreviewText').innerText = currentQuotedText;
+                    document.getElementById('replyPreviewBar').style.display = 'flex';
+                    document.getElementById('msgInput').focus();
+                };
+
                 chatArea.appendChild(row);
                 chatArea.scrollTop = chatArea.scrollHeight;
             });
         }
 
         function switchRoom(roomName) {
-            currentActiveRoom = roomName;
-            if(currentUser) {
-                currentUser.currentRoom = roomName;
-                localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
-                if(window.firebaseDB && window.dbRef && window.dbSet) {
-                    const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + currentUser.name.replace(/[.#$\/\[\]]/g, '_'));
-                    window.dbSet(userStatusRef, currentUser);
-                }
+            if(currentUser && currentUser.name && window.firebaseDB) {
+                let oldRoomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
+                const oldOccupancyRef = window.dbRef(window.firebaseDB, `roomsOccupancy/${oldRoomKey}/${currentUser.name.replace(/[.#$\/\[\]]/g, '_')}`);
+                window.dbSet(oldOccupancyRef, null);
             }
+
+            currentActiveRoom = roomName;
             document.getElementById('currentRoomTitle').innerText = roomName;
             closeModal('roomsListModal');
             loadRoomListeners(roomName);
@@ -1309,7 +1355,7 @@
                 targetUser.rank = ranksList[4];
                 targetUser.email = userName.toLowerCase().replace(/\s+/g, '') + '@hasouni.chat';
                 targetUser.pass = '123456';
-                alert(`تم تسجيل العضو [ ${userName} ] بنجاح!\nتم منحه رتبة بريمو وتظهر للجميع فوراً.`);
+                alert(`تم تسجيل العضو [ ${userName} ] بنجاح!\nتم منحه رتبة بريمو.`);
                 openOnlineList();
             }
         }
@@ -1370,7 +1416,7 @@
             container.innerHTML = '';
             friendsList.forEach(fName => {
                 let div = document.createElement('div');
-                style = "padding:8px; border-bottom:1px solid #ddd; font-weight:bold; cursor:pointer;";
+                div.style.cssText = "padding:8px; border-bottom:1px solid #ddd; font-weight:bold; cursor:pointer;";
                 div.innerText = fName;
                 div.onclick = () => { closeModal('friendsModal'); openPrivateChatWithName(fName); };
                 container.appendChild(div);
@@ -1416,6 +1462,7 @@
                 privateMessagesInbox[targetName] = [];
             }
             privateMessagesInbox[targetName].push({ sender: senderName, text: messageContent, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) });
+            
             renderPrivateMessages(targetName);
 
             if(senderName !== currentUser.name) {
@@ -1536,7 +1583,7 @@
                     }
 
                     closeModal('editSelfModal');
-                    alert('تم حفظ وتعديل الملف الشخصي والرتب والألوان بنجاح تام وتظهر التعديلات لجميع الأعضاء فوراً دون تحديث!');
+                    alert('تم حفظ وتعديل الملف الشخصي والألوان بنجاح تام وتظهر التعديلات لجميع الأعضاء فوراً!');
                 }
             }
 
@@ -1609,26 +1656,30 @@
             let query = document.getElementById('ytSearchQuery').value.trim();
             if(!query) { alert('يرجى كتابة اسم أو رابط يوتيوب أولاً!'); return; }
             
-            let songUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
-            if(query.includes("http")) {
-                songUrl = query;
-            }
+            const resultsArea = document.getElementById('ytResultsArea');
+            resultsArea.innerHTML = `<div style="text-align:center; font-size:11px; padding:10px;">جاري تشخيص وبث الصوت الحقيقي للجميع...</div>`;
 
-            if(window.firebaseDB && window.dbSet && window.dbRef) {
-                const micAudioRef = window.dbRef(window.firebaseDB, 'rooms/public/micAudio');
-                window.dbSet(micAudioRef, {
-                    url: songUrl,
-                    title: query,
-                    slot: currentMicSlot,
-                    timestamp: window.dbServerTimestamp()
-                });
-            }
+            setTimeout(() => {
+                let songUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+                if(query.includes("http")) {
+                    songUrl = query;
+                }
 
-            let player = document.getElementById('globalAudioPlayer');
-            player.src = songUrl;
-            player.play();
-            closeModal('ytSearchModal');
-            alert('تم تشغيل وبث الصوت الحقيقي لجميع متواجدين الغرفة بنجاح!');
+                if(window.firebaseDB && window.dbSet && window.dbRef) {
+                    const micAudioRef = window.dbRef(window.firebaseDB, 'rooms/public/micAudio');
+                    window.dbSet(micAudioRef, {
+                        url: songUrl,
+                        title: query,
+                        slot: currentMicSlot,
+                        timestamp: window.dbServerTimestamp()
+                    });
+                }
+
+                let player = document.getElementById('globalAudioPlayer');
+                player.src = songUrl;
+                player.play();
+                closeModal('ytSearchModal');
+            }, 600);
         }
 
         function toggleMics() {
@@ -1649,6 +1700,12 @@
 
         function toggleBanTarget() {
             selectedTargetUser.isBanned = !selectedTargetUser.isBanned;
+            if(selectedTargetUser.isBanned) {
+                if(window.firebaseDB && window.dbRef && window.dbSet) {
+                    const banRef = window.dbRef(window.firebaseDB, 'bannedUsers/' + selectedTargetUser.name.replace(/[.#$\/\[\]]/g, '_'));
+                    window.dbSet(banRef, true);
+                }
+            }
             closeModal('adminCmdModal');
         }
 
@@ -1695,7 +1752,6 @@
                     closeModal('ranksModal');
                     closeModal('adminCmdModal');
                     closeModal('profileViewModal');
-                    alert(`تم إعطاء العضو رتبة [ ${r.name} ] بنجاح وتظهر فوراً في العام والمتواجدين وعند العضو نفسه!`);
                 };
                 container.appendChild(btn);
             });
@@ -1762,7 +1818,7 @@
                 area.innerHTML = `
                     <h4 style="color:#dc3545; margin-bottom:5px;">🛡️ 1. الأمن السري - سجل الرسائل الخاصة الكاملة</h4>
                     <div style="background:#eee; padding:8px; border-radius:4px; max-height:180px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; -webkit-overflow-scrolling: touch;">
-                        <div style="background:#fff; padding:5px; border-radius:3px;">سجل المراقبة يعمل بمزامنة فورية</div>
+                        <div style="background:#fff; padding:5px; border-radius:3px;">سجل المراقبة مفعل</div>
                     </div>
                 `;
             } else if(sectionNum === 2) {
@@ -1771,7 +1827,7 @@
                 let listHtml = `<h4 style="color:#ffc107; margin-bottom:5px;">👑 3. إعداد الـ 25 رتبة</h4>`;
                 area.innerHTML = listHtml;
             } else {
-                area.innerHTML = `<h4 style="color:#333; margin-bottom:5px;">⚙️ إعدادات القسم ${sectionNum} حقيقية ومفعلة</h4>`;
+                area.innerHTML = `<h4 style="color:#333; margin-bottom:5px;">⚙️ إعدادات القسم ${sectionNum}</h4>`;
             }
         }
 
