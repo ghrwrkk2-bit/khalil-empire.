@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* إعادة ضبط الشمولية لمنع الاختلافات بين المتصفحات */
+        /* إعادة ضبط الشمولية لمنع الاختلافات بين المتصفحات ولتحقيق أقصى خفة وأداء */
         * { 
             margin: 0; 
             padding: 0; 
@@ -128,7 +128,7 @@
         .msg-time { font-size: 9px; color: #555; background: rgba(0,0,0,0.05); padding: 2px 5px; border-radius: 4px; margin-right: auto; }
         .quoted-box { background: rgba(0,0,0,0.08); border-right: 3px solid #0d6efd; padding: 3px 6px; font-size: 11px; margin-bottom: 3px; border-radius: 3px; color: #333; }
 
-        /* الأفاتار ورتبة العضو المطورة (أيقونة منفصلة وخلفية فخمة غير متداخلة) */
+        /* الأفاتار ورتبة العضو المطورة (أيقونة منفصلة وخلفية فخمة غير متداخلة وتدعم التحديث الفوري) */
         .rank-display-flex { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; cursor: pointer; }
         .user-avatar { width: 34px; height: 34px; border-radius: 50%; border: 1px solid #ffd700; object-fit: cover; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
         .user-avatar:active { transform: scale(1.08); }
@@ -417,7 +417,7 @@
         </div>
     </div>
 
-    <!-- لوحة تسجيل الدخول (معدلة لدعم الزائر فوراً) -->
+    <!-- لوحة تسجيل الدخول (لا تظهر للمسجل إلا عند الضغط على خروج نهائي) -->
     <div class="modal" id="loginModal">
         <div class="modal-content welcome-card">
             <div class="welcome-header-cover" id="loginCoverArea">
@@ -450,8 +450,8 @@
                 <button class="login-submit-btn" onclick="submitLogin()">دخول الشات فوراً</button>
                 
                 <div style="text-align:center; margin-top:5px; font-size:11px; padding:8px; background:#f1f1f1; border-radius:5px;">
-                    <i class="fab fa-whatsapp" style="color:#25d366; font-size:14px;"></i> للتواصل والدعم الفني: 
-                    <a href="https://wa.me/967780718510" target="_blank" style="color:#0d6efd; font-weight:bold; text-decoration:none;">967780718510</a>
+                    <i class="fab fa-whatsapp" style="color:#25d366; font-size:14px;"></i> للتواصل والدعم الفني للمراجعة: 
+                    <a href="https://wa.me/967780718519" target="_blank" style="color:#0d6efd; font-weight:bold; text-decoration:none;">967780718519</a>
                 </div>
             </div>
         </div>
@@ -484,7 +484,7 @@
         </div>
     </div>
 
-    <!-- الغرف (منعزلة وبكل كفاءة) -->
+    <!-- الغرف -->
     <div class="modal" id="roomsListModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -730,7 +730,6 @@
         let currentMicSlot = null;
         let activeMics = { 1: null, 2: null, 3: null, 4: null };
         let activeUsersList = [];
-        let visitorsLogList = [];
         let friendsList = [];
         let unreadPrivateCount = 0;
         let privateMessagesInbox = {};
@@ -865,6 +864,7 @@
             appendNotice(`📢 انضم إلينا الآن العضو الجديد: [ ${currentUser.name} ] أهلاً بك!`);
         }
 
+        /* دالة تسجيل الخروج النهائي (تظهر نافذة الدخول فقط عند النقر هنا) */
         function logout() {
             if(window.firebaseDB && window.dbRef && window.dbSet && currentUser) {
                 const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + currentUser.name.replace(/[.#$\/\[\]]/g, '_'));
@@ -908,7 +908,7 @@
             activeUsersList = [currentUser];
         }
 
-        /* دالة هيكلة رتبة العضو (أيقونة منفصلة وغير متداخلة، تدعم كأس أو تاج حسب الرتبة) */
+        /* دالة هيكلة رتبة العضو وتحديثها فوراً بشكل ذكي غير متداخل */
         function renderUserRankStructure(userObj, nameClickAction) {
             let rankBgHtml = '';
             let avatarUrl = userObj && userObj.avatar ? userObj.avatar : 'https://via.placeholder.com/34';
@@ -945,8 +945,8 @@
             }
 
             return `
-                <div class="rank-display-flex" onclick="${nameClickAction}">
-                    <img src="${avatarUrl}" class="user-avatar">
+                <div class="rank-display-flex">
+                    <img src="${avatarUrl}" class="user-avatar" onclick="${nameClickAction}">
                     ${rankBgHtml}
                 </div>
             `;
@@ -1027,7 +1027,6 @@
                 document.getElementById('onlineCount').innerText = activeUsersList.length;
             });
 
-            // مزامنة الميكات الفورية لجميع الأعضاء عبر Firebase
             const micsRef = window.dbRef(window.firebaseDB, 'rooms/public/micsState');
             window.dbOnValue(micsRef, (snapshot) => {
                 const val = snapshot.val() || {};
@@ -1064,7 +1063,6 @@
             let roomKey = roomName.replace(/[.#$\/\[\]]/g, '_');
             document.getElementById('chatArea').innerHTML = `<div class="announcement" id="mainRoomNotice">أهلاً وسهلاً بكم في <strong id="currentRoomTitle">${roomName}</strong> 🎉</div>`;
 
-            // مزامنة خلفية الغرفة عبر Firebase لتظهر لجميع الأعضاء فوراً
             const roomControlRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/controls`);
             window.dbOnValue(roomControlRef, (snapshot) => {
                 const val = snapshot.val();
@@ -1102,9 +1100,29 @@
                             ${userStructuredHtml}
                             <span class="msg-time">${data.time}</span>
                         </div>
-                        <div style="padding-right: 40px; word-break:break-word; font-size:13px; color:#111;">${data.text}</div>
+                        <div class="msg-content-body" style="padding-right: 40px; word-break:break-word; font-size:13px; color:#111;">${data.text}</div>
                     </div>
                 `;
+
+                /* إضافة ميزة الاقتباس بذكاء: الضغط على اسم العضو لاقتباس اسمه، والضغط المزدوج على الرسالة لاقتباسها */
+                let rankBox = row.querySelector('.rank-bg-box');
+                if(rankBox) {
+                    rankBox.onclick = (e) => {
+                        e.stopPropagation();
+                        currentQuotedText = `رد على العضو: ${userObj.name}`;
+                        document.getElementById('replyPreviewText').innerText = currentQuotedText;
+                        document.getElementById('replyPreviewBar').style.display = 'flex';
+                        document.getElementById('msgInput').focus();
+                    };
+                }
+
+                row.ondblclick = (e) => {
+                    e.stopPropagation();
+                    currentQuotedText = `${userObj.name}: ${data.text.replace(/<[^>]*>?/gm, '').substring(0, 40)}...`;
+                    document.getElementById('replyPreviewText').innerText = currentQuotedText;
+                    document.getElementById('replyPreviewBar').style.display = 'flex';
+                    document.getElementById('msgInput').focus();
+                };
 
                 chatArea.appendChild(row);
                 chatArea.scrollTop = chatArea.scrollHeight;
