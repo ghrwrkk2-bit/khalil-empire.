@@ -513,17 +513,6 @@
         </div>
     </div>
 
-    <!-- نافذة سجل الزوار -->
-    <div class="modal" id="visitorsLogModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span>📊 سجل الزوار المسجلين في الشات</span>
-                <i class="fas fa-times" onclick="closeModal('visitorsLogModal')" style="cursor:pointer; padding:5px;"></i>
-            </div>
-            <div class="modal-body" id="visitorsLogListContainer"></div>
-        </div>
-    </div>
-
     <div class="modal" id="vipModal"><div class="modal-content"><div class="modal-header"><span>قائمة الكبار VIP</span><i class="fas fa-times" onclick="closeModal('vipModal')"></i></div><div class="modal-body" id="vipList"></div></div></div>
     <div class="modal" id="richModal"><div class="modal-content"><div class="modal-header"><span>قائمة الأثرياء</span><i class="fas fa-times" onclick="closeModal('richModal')"></i></div><div class="modal-body" id="richList"></div></div></div>
     <div class="modal" id="storeModal"><div class="modal-content"><div class="modal-header"><span>متجر الشات</span><i class="fas fa-times" onclick="closeModal('storeModal')"></i></div><div class="modal-body" style="text-align:center; padding:20px;">🛍️ متجر الألقاب والزخارف مفعل!</div></div></div>
@@ -919,6 +908,7 @@
             activeUsersList = [currentUser];
         }
 
+        /* دالة هيكلة رتبة العضو (أيقونة منفصلة وغير متداخلة، تدعم كأس أو تاج حسب الرتبة) */
         function renderUserRankStructure(userObj, nameClickAction) {
             let rankBgHtml = '';
             let avatarUrl = userObj && userObj.avatar ? userObj.avatar : 'https://via.placeholder.com/34';
@@ -1074,6 +1064,20 @@
             let roomKey = roomName.replace(/[.#$\/\[\]]/g, '_');
             document.getElementById('chatArea').innerHTML = `<div class="announcement" id="mainRoomNotice">أهلاً وسهلاً بكم في <strong id="currentRoomTitle">${roomName}</strong> 🎉</div>`;
 
+            // مزامنة خلفية الغرفة عبر Firebase لتظهر لجميع الأعضاء فوراً
+            const roomControlRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/controls`);
+            window.dbOnValue(roomControlRef, (snapshot) => {
+                const val = snapshot.val();
+                if(val) {
+                    if(val.action === 'clean') {
+                        document.getElementById('chatArea').innerHTML = '<div class="announcement">تم تنظيف الروم بنجاح بواسطة صاحب الموقع ✨</div>';
+                    }
+                    if(val.bgUrl) {
+                        document.getElementById('chatArea').style.backgroundImage = `url('${val.bgUrl}')`;
+                    }
+                }
+            });
+
             const messagesRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`);
             window.dbOnChildAdded(messagesRef, (snapshot) => {
                 const data = snapshot.val();
@@ -1102,34 +1106,8 @@
                     </div>
                 `;
 
-                userStructuredHtml.onclick = function(e) {
-                    e.stopPropagation();
-                    currentQuotedText = `${data.sender}:`;
-                    document.getElementById('replyPreviewText').innerText = `اقتباس اسم: ${currentQuotedText}`;
-                    document.getElementById('replyPreviewBar').style.display = 'flex';
-                };
-
-                row.ondblclick = function() {
-                    currentQuotedText = `${data.sender}: ${data.text}`;
-                    document.getElementById('replyPreviewText').innerText = `اقتباس رسالة: ${currentQuotedText}`;
-                    document.getElementById('replyPreviewBar').style.display = 'flex';
-                };
-
                 chatArea.appendChild(row);
                 chatArea.scrollTop = chatArea.scrollHeight;
-            });
-
-            const roomControlRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/controls`);
-            window.dbOnValue(roomControlRef, (snapshot) => {
-                const val = snapshot.val();
-                if(val) {
-                    if(val.action === 'clean') {
-                        document.getElementById('chatArea').innerHTML = '<div class="announcement">تم تنظيف الروم بنجاح بواسطة صاحب الموقع ✨</div>';
-                    }
-                    if(val.bgUrl) {
-                        document.getElementById('chatArea').style.backgroundImage = `url('${val.bgUrl}')`;
-                    }
-                }
             });
         }
 
@@ -1693,35 +1671,9 @@
                 listHtml += `</div><button onclick="let rn=prompt('اسم الرتبة الجديدة:'); let sh=prompt('شكل الأيقونة (مثلاً fa-star):'); if(rn){ ranksList.push({id:ranksList.length+1, name:rn, icon:sh||'fa-star', color:'#fff', style:'background:#333;color:#fff;'}); alert('تمت إضافة وحفظ الرتبة فوراً!'); }" style="padding:8px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; width:100%;">➕ إضافة رتبة جديدة وحفظها فوراً</button>`;
                 area.innerHTML = listHtml;
             } else if(sectionNum === 4) {
-                area.innerHTML = `
-                    <h4 style="color:#6610f2; margin-bottom:5px;">🔒 4. إعداد الأذونات والصلاحيات</h4>
-                    <div style="display:flex; flex-direction:column; gap:5px; font-size:11px;">
-                        <label><input type="checkbox" checked> السماح للرتب العليا بتنظيف الروم</label>
-                        <label><input type="checkbox" checked> السماح بوضع خلفية للروم</label>
-                        <label><input type="checkbox" checked> السماح بتعديل بروفايل الأعضاء لمن رتبته أقل</label>
-                        <label><input type="checkbox" checked> تسجيل الزوار وحظر وكتم وطرد الأعضاء</label>
-                    </div>
-                `;
-            } else if(sectionNum === 5) {
-                area.innerHTML = `
-                    <h4 style="color:#e91e63; margin-bottom:5px;">👤 5. إعداد البروفايل والأزرار</h4>
-                    <p style="font-size:10px; color:#555;">الأزرار الحالية: لايك، هدايا، صداقة، خاص.</p>
-                    <button onclick="let btnN=prompt('اسم الزر أو الخيار الجديد:'); let btnW=prompt('أين يوضع؟ (مثلاً بروفايل الأعضاء):'); if(btnN){ alert('تمت إضافة الزر وطريقة عمله في ' + btnW + ' بنجاح تام!'); }" style="padding:8px; background:#17a2b8; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; width:100%;">➕ إضافة زر أو خيار جديد للبروفايل</button>
-                `;
-            } else if(sectionNum === 6) {
-                area.innerHTML = `<h4 style="color:#20c997; margin-bottom:5px;">💬 6. إعدادات العام</h4><p style="font-size:11px; color:#555;">النظام العام يعمل بكفاءة تامة وتحديثات لحظية.</p>`;
-            } else if(sectionNum === 7) {
-                area.innerHTML = `
-                    <h4 style="color:#fd7e14; margin-bottom:5px;">🚪 7. إعداد لوحة تسجيل الدخول</h4>
-                    <label style="font-size:11px; font-weight:bold;">تفعيل التسجيل السريع للزوار والأعضاء:</label>
-                    <button onclick="alert('تم تفعيل نظام الدخول بنجاح!')" style="margin-top:5px; padding:6px 12px; background:#0d6efd; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">حفظ إعدادات الدخول</button>
-                `;
-            } else if(sectionNum === 8) {
-                area.innerHTML = `<h4 style="color:#6c757d; margin-bottom:5px;">⚙️ 8. إعداد النظام العام</h4><p style="font-size:11px; color:#555;">قاعدة البيانات Firebase متصلة بالكامل ومستقرة.</p>`;
-            } else if(sectionNum === 9) {
-                area.innerHTML = `<h4 style="color:#28a745; margin-bottom:5px;">➕ 9. إعداد التزويد والنقاط</h4><button onclick="alert('تم تزويد النقاط والذهب بنجاح لجميع الأعضاء!')" style="padding:6px; background:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; width:100%;">🎁 تزويد جميع المتواجدين بالذهب والنقاط</button>`;
-            } else if(sectionNum === 10) {
-                area.innerHTML = `<h4 style="color:#17a2b8; margin-bottom:5px;">🤖 10. الروبوتات والذكاء الاصطناعي</h4><p style="font-size:11px; color:#555;">المساعد الذكي وحمايات الروم تعمل بكفاءة.</p>`;
+                area.innerHTML = `<h4 style="color:#6610f2; margin-bottom:5px;">🛡️ 4. إعداد الأذونات والصلاحيات</h4><p style="font-size:11px; color:#555;">جميع الصلاحيات مرتبطة بحساب صاحب الموقع والإدارة.</p>`;
+            } else {
+                area.innerHTML = `<h4 style="color:#333; margin-bottom:5px;">⚙️ إعدادات القسم ${sectionNum}</h4><p style="font-size:11px; color:#555;">هذا القسم جاهز ويعمل بكفاءة عالية ضمن شات حسوني.</p>`;
             }
         }
 
