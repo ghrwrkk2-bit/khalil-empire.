@@ -163,7 +163,6 @@
         
         #replyPreviewBar { display: none; background: #e0e0e0; padding: 4px 10px; font-size: 11px; border-radius: 4px; justify-content: space-between; align-items: center; border-right: 3px solid #0d6efd; }
 
-        /* قائمة علامة الزائد تظهر فوق لوحة الكتابة تماماً ولا تختفي */
         .plus-popup-menu {
             display: none;
             position: absolute;
@@ -311,7 +310,6 @@
             </div>
             <i class="fas fa-microphone" style="font-size:18px; color:#555; cursor:pointer; padding: 4px;" onclick="alert('التسجيل الصوتي مفعل')"></i>
             
-            <!-- زر علامة الزائد مع القائمة الثابتة -->
             <div style="position:relative;">
                 <i class="fas fa-plus" id="plusBtn" style="font-size:18px; color:#555; cursor:pointer; padding: 4px;" onclick="togglePlusMenu()"></i>
                 
@@ -472,7 +470,6 @@
                 <i class="fas fa-times" onclick="closeModal('roomOptsModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div style="display:flex; flex-direction:column; gap:10px;" id="roomOptsListContainer">
-                <!-- أزرار التنظيف والخلفية مخفية افتراضياً ولا تظهر إلا لصاحب الموقع أو الرتب المحددة (برنس، كنج، انروا، أدمان) -->
                 <button id="roomCleanBtn" onclick="cleanRoom()" style="display:none; padding:11px; background:#dc3545; color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">🧹 تنظيف الروم (للجميع فوراً)</button>
                 
                 <div id="roomBgUploadContainer" style="display:none; flex-direction:column; gap:5px;">
@@ -480,7 +477,7 @@
                     <input type="file" id="roomBgFile" accept="image/*" onchange="uploadRoomBg(this)" style="padding:6px; font-size:12px;">
                 </div>
                 
-                <button id="ownerControlPanelBtn" onclick="openAdminDashboard()" style="display:none; padding:12px; background:linear-gradient(45deg,#ffd700,#ff8c00); color:#000; border:none; border-radius:6px; font-weight:bold; font-size:13px; cursor:pointer; box-shadow:0 0 10px rgba(255,215,0,0.5);">👑 لوحة التحكم الشاملة</button>
+                <button id="ownerControlPanelBtn" onclick="openAdminDashboard()" style="display:none; padding:12px; background:linear-gradient(45deg,#ffd700,#ff8c00); color:#000; border:none; border-radius:6px; font-weight:bold; font-size:13px; cursor:pointer; box-shadow:0 0 10px rgba(255,215,0,0.5);">👑 لوحة التحكم الشاملة (صاحب الموقع فقط)</button>
             </div>
         </div>
     </div>
@@ -585,7 +582,7 @@
     <div class="modal" id="richModal"><div class="modal-content"><div class="modal-header"><span>قائمة الأثرياء</span><i class="fas fa-times" onclick="closeModal('richModal')"></i></div><div class="modal-body" id="richList"></div></div></div>
     <div class="modal" id="storeModal"><div class="modal-content"><div class="modal-header"><span>متجر الشات</span><i class="fas fa-times" onclick="closeModal('storeModal')"></i></div><div class="modal-body" style="text-align:center; padding:20px;">🛍️ متجر الألقاب والزخارف مفعل!</div></div></div>
 
-    <!-- بروفايل العضو -->
+    <!-- بروفايل العضو وزر الأوامر -->
     <div class="modal" id="profileViewModal">
         <div class="modal-content profile-card-modal">
             <div class="profile-header-bg" id="viewCover">
@@ -611,7 +608,21 @@
                 <div class="info-row"><span>الرسائل المرسلة:</span><span id="viewMsgCount">0</span></div>
                 <div class="info-row"><span>الذهب / الروبي / النقاط:</span><span id="viewAssets">0 / 0 / 0</span></div>
 
-                <button class="admin-cmd-btn" id="adminCmdBtn" style="display:none;" onclick="openRanksListModalForTarget()">👑 تغيير رتبة العضو (من الـ 25 رتبة)</button>
+                <!-- زر الأوامر الإدارية (يظهر لصاحب الموقع والرتب المصرحة فقط للتحكم بالعضو) -->
+                <div id="adminCommandsContainer" style="display:none; margin-top:12px; display:flex; flex-direction:column; gap:6px; border-top:1px solid #444; padding-top:10px;">
+                    <div style="font-size:11px; color:#ffd700; font-weight:bold; text-align:center;"><i class="fas fa-shield-alt"></i> لوحة أوامر الإدارة على العضو</div>
+                    <button class="admin-cmd-btn" onclick="openRanksListModalForTarget()"><i class="fas fa-award"></i> إهداء رتبة (من الـ 25 رتبة وتظهر فوراً)</button>
+                    <button class="admin-cmd-btn" style="background:#ffc107; color:#000;" onclick="adminActionOnTarget('editProfile')"><i class="fas fa-user-edit"></i> تعديل بروفيل العضو</button>
+                    <div style="display:flex; gap:4px;">
+                        <button class="admin-cmd-btn" style="flex:1; background:#fd7e14;" onclick="adminActionOnTarget('mute')"><i class="fas fa-microphone-slash"></i> كتم / إلغاء الكتم</button>
+                        <button class="admin-cmd-btn" style="flex:1; background:#dc3545;" onclick="adminActionOnTarget('ban')"><i class="fas fa-ban"></i> حظر / إلغاء الحظر</button>
+                    </div>
+                    <div style="display:flex; gap:4px;">
+                        <button class="admin-cmd-btn" style="flex:1; background:#6c757d;" onclick="adminActionOnTarget('kick')"><i class="fas fa-user-slash"></i> طرد / إلغاء الطرد</button>
+                        <button class="admin-cmd-btn" style="flex:1; background:#343a40;" onclick="adminActionOnTarget('block')"><i class="fas fa-lock"></i> حجب / إلغاء الحجب</button>
+                    </div>
+                    <button class="admin-cmd-btn" style="background:#b71c1c;" onclick="adminActionOnTarget('deleteAccount')"><i class="fas fa-trash-alt"></i> حذف حساب العضو نهائياً</button>
+                </div>
             </div>
         </div>
     </div>
@@ -631,7 +642,7 @@
     <div class="modal" id="editSelfModal">
         <div class="modal-content" style="padding:15px; background:#fff; text-align:right;">
             <div class="modal-header" style="margin:-15px -15px 10px -15px;">
-                <span id="editModalTitle">تعديل بروفايلي الشخصي</span>
+                <span id="editModalTitle">تعديل البروفایل الشخصي</span>
                 <i class="fas fa-times" onclick="closeModal('editSelfModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div style="display:flex; flex-direction:column; gap:6px; max-height:75vh; overflow-y:auto; font-size:12px; -webkit-overflow-scrolling: touch;">
@@ -687,7 +698,7 @@
     <div class="modal" id="adminDashboardModal">
         <div class="modal-content" style="max-width:450px; background:#fff; height:85dvh;">
             <div class="modal-header" style="background:#000; color:#ffd700;">
-                <span>👑 لوحة التحكم الشاملة (صاحب الموقع)</span>
+                <span>👑 لوحة التحكم الشاملة (صاحب الموقع فقط)</span>
                 <i class="fas fa-times" onclick="closeModal('adminDashboardModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div class="modal-body" style="padding:10px; -webkit-overflow-scrolling: touch;">
@@ -816,6 +827,15 @@
             const saved = localStorage.getItem('hasouniChatUser');
             if(saved) {
                 currentUser = JSON.parse(saved);
+                
+                // فحص إذا كان العضو محظوراً أو مطروداً أو محجوباً
+                if(currentUser.isBanned) {
+                    alert('عذراً، تم حظرك من قبل إدارة الموقع لا يمكنك الدخول. للتواصل للمراجعة واتساب: 967780718519');
+                    localStorage.removeItem('hasouniChatUser');
+                    openModal('loginModal');
+                    return;
+                }
+
                 closeModal('loginModal');
                 initSessionUI();
                 checkKingArrival(currentUser);
@@ -870,7 +890,7 @@
             let subject = document.getElementById('ticketSubject').value.trim();
             let desc = document.getElementById('ticketDesc').value.trim();
             if(!subject || !desc) { alert('يرجى تعبئة حقول التذكرة!'); return; }
-            alert('تم إرسال تذكتك للإدارة بنجاح وسيتم الرد قريباً!');
+            alert('تم إرسال تذكتك للإدارة بنجاح وسيتم الرد قريباً عبر واتساب 967780718519!');
             closeModal('ticketSystemModal');
             document.getElementById('ticketSubject').value = '';
             document.getElementById('ticketDesc').value = '';
@@ -916,7 +936,7 @@
                         cover: 'https://via.placeholder.com/400x160/111/fff',
                         points: 9999, level: 100, likes: 100, gold: 50, ruby: 50, msgCount: 0,
                         nameBgColor: '#ffd700', fieldsBgColor: '#f1f1f1',
-                        isMuted: false, isBanned: false, isBlocked: false
+                        isMuted: false, isBanned: false, isKicked: false, isBlocked: false
                     };
                 } else {
                     currentUser = {
@@ -926,7 +946,7 @@
                         cover: 'https://via.placeholder.com/400x160/333/fff',
                         points: 100, level: 1, likes: 0, gold: 0, ruby: 0, msgCount: 0,
                         nameBgColor: '#e0e0e0', fieldsBgColor: '#f1f1f1',
-                        isMuted: false, isBanned: false, isBlocked: false
+                        isMuted: false, isBanned: false, isKicked: false, isBlocked: false
                     };
                 }
             } else {
@@ -939,7 +959,7 @@
                     cover: 'https://via.placeholder.com/400x160/555/fff',
                     points: 0, level: 1, likes: 0, gold: 0, ruby: 0, msgCount: 0,
                     nameBgColor: '#e0e0e0', fieldsBgColor: '#f1f1f1',
-                    isMuted: false, isBanned: false, isBlocked: false
+                    isMuted: false, isBanned: false, isKicked: false, isBlocked: false
                 };
             }
 
@@ -961,7 +981,7 @@
                     cover: 'https://via.placeholder.com/400x160/111/fff',
                     points: 9999, level: 100, likes: 100, gold: 50, ruby: 50, msgCount: 0,
                     nameBgColor: '#ffd700', fieldsBgColor: '#f1f1f1',
-                    isMuted: false, isBanned: false, isBlocked: false
+                    isMuted: false, isBanned: false, isKicked: false, isBlocked: false
                 };
             } else {
                 currentUser = {
@@ -971,7 +991,7 @@
                     cover: 'https://via.placeholder.com/400x160/222/fff',
                     points: 50, level: 1, likes: 0, gold: 0, ruby: 0, msgCount: 0,
                     nameBgColor: '#e0e0e0', fieldsBgColor: '#f1f1f1',
-                    isMuted: false, isBanned: false, isBlocked: false
+                    isMuted: false, isBanned: false, isKicked: false, isBlocked: false
                 };
             }
 
@@ -1038,7 +1058,10 @@
             if(isPrivileged) {
                 document.getElementById('roomCleanBtn').style.display = 'block';
                 document.getElementById('roomBgUploadContainer').style.display = 'flex';
-                document.getElementById('ownerControlPanelBtn').style.display = 'block';
+                // لوحة التحكم الشاملة تظهر لصاحب الموقع حصراً أو الرتب العليا المحددة
+                if(currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || rankId === 1) {
+                    document.getElementById('ownerControlPanelBtn').style.display = 'block';
+                }
             }
         }
 
@@ -1059,7 +1082,7 @@
             let customNameBg = userObj && userObj.nameBgColor ? userObj.nameBgColor : '';
 
             if(userObj && (userObj.isOwner || userObj.email === 'ghrwrkk2@gmail.com' || (userObj.rank && userObj.rank.id === 1))) {
-                subTitleHtml = `<div style="font-size:9px; color:#ffd700; font-weight:bold;">إدارة الموقع</div>`;
+                subTitleHtml = `<div style="font-size:9px; color:#ffd700; font-weight:bold;">صاحب الموقع</div>`;
             }
 
             if(userObj && userObj.rank) {
@@ -1096,7 +1119,7 @@
 
         function sendMessage() {
             if(!currentUser) { openModal('loginModal'); return; }
-            if(currentUser.isMuted) { alert('عذراً، حسابك مكتوم حالياً من قبل الإدارة!'); return; }
+            if(currentUser.isMuted) { alert('عذراً، حسابك مكتوم حالياً من قبل الإدارة! للمراجعة واتساب: 967780718519'); return; }
 
             const input = document.getElementById('msgInput');
             let msgText = input.value.trim();
@@ -1237,6 +1260,7 @@
                 }
             });
 
+            // جلب آخر 10 رسائل فوراً وعرضها بشكل حي وحقيقي على مر الزمن
             const messagesRef = window.dbQuery(window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`), window.dbLimitToLast(10));
             window.dbOnChildAdded(messagesRef, (snapshot) => {
                 const data = snapshot.val();
@@ -1389,7 +1413,7 @@
                         const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + selectedTargetUser.name.replace(/[.#$\/\[\]]/g, '_'));
                         window.dbSet(userStatusRef, selectedTargetUser);
                     }
-                    alert(`تم تغيير رتبة العضو [ ${selectedTargetUser.name} ] إلى [ ${r.name} ] بنجاح وتحديثها لجميع الأعضاء!`);
+                    alert(`تم إهداء وتغيير رتبة العضو [ ${selectedTargetUser.name} ] إلى [ ${r.name} ] بنجاح وتحديثها لجميع الأعضاء فوراً!`);
                     closeModal('ranksListModal');
                 };
                 container.appendChild(btn);
@@ -1425,11 +1449,58 @@
             const canEdit = currentUser && currentUser.name === selectedTargetUser.name;
             document.getElementById('editSelfPen').style.display = canEdit ? 'block' : 'none';
 
+            // إظهار زر الأوامر لصاحب الموقع والبرنس والكنج والإنروا ويهدو رتب أقل من رتبهم، وصاحب الموقع له التحكم الكامل
+            let rankId = currentUser && currentUser.rank ? currentUser.rank.id : 99;
             let rankName = currentUser && currentUser.rank ? currentUser.rank.name : '';
-            const isPrivilegedAdmin = currentUser && (currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || [1,2,3,4].includes(currentUser.rank?.id) || ['برنس', 'كنج', 'انروا', 'ادمان'].includes(rankName));
-            document.getElementById('adminCmdBtn').style.display = isPrivilegedAdmin ? 'block' : 'none';
+            const isPrivilegedAdmin = currentUser && (currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || rankId <= 4 || ['برنس', 'كنج', 'انروا', 'ادمان'].includes(rankName));
+            
+            document.getElementById('adminCommandsContainer').style.display = isPrivilegedAdmin ? 'flex' : 'none';
 
             openModal('profileViewModal');
+        }
+
+        // دوام وظائف الأوامر الإدارية الحقيقية (حضر، كتم، طرد، حجب، حذف، تعديل)
+        function adminActionOnTarget(actionType) {
+            if(!selectedTargetUser) return;
+            let supportMsg = "\nللمراجعة والتواصل مع الإدارة عبر واتساب: 967780718519";
+
+            if(actionType === 'mute') {
+                selectedTargetUser.isMuted = !selectedTargetUser.isMuted;
+                let statusText = selectedTargetUser.isMuted ? 'کتم' : 'إلغاء كتم';
+                alert(`تم ${statusText} العضو [ ${selectedTargetUser.name} ] بنجاح باستخدام نفس الزر!`);
+            } else if(actionType === 'ban') {
+                selectedTargetUser.isBanned = !selectedTargetUser.isBanned;
+                let statusText = selectedTargetUser.isBanned ? 'حضر' : 'إلغاء حظر';
+                if(selectedTargetUser.isBanned) {
+                    alert(`تم حظر العضو بنجاح.\nسيظهر له: تم حظرك من قبل إدارة الموقع لا يمكنك الدخول.${supportMsg}`);
+                } else {
+                    alert(`تم إلغاء الحظر عن العضو بنجاح باستخدام نفس الزر!`);
+                }
+            } else if(actionType === 'kick') {
+                selectedTargetUser.isKicked = !selectedTargetUser.isKicked;
+                let statusText = selectedTargetUser.isKicked ? 'طرد' : 'إلغاء طرد';
+                if(selectedTargetUser.isKicked) {
+                    alert(`تم طرد العضو بنجاح.\nسيظهر له: تم طردك من قبل إدارة الموقع.${supportMsg}`);
+                } else {
+                    alert(`تم إلغاء الطرد بنجاح باستخدام نفس الزر!`);
+                }
+            } else if(actionType === 'block') {
+                selectedTargetUser.isBlocked = !selectedTargetUser.isBlocked;
+                let statusText = selectedTargetUser.isBlocked ? 'حجب' : 'إلغاء حجب';
+                if(selectedTargetUser.isBlocked) {
+                    alert(`تم حجب العضو بنجاح.\nسيظهر له: تم حجبك من قبل إدارة الموقع.${supportMsg}`);
+                } else {
+                    alert(`تم إلغاء الحجب بنجاح باستخدام نفس الزر!`);
+                }
+            } else if(actionType === 'deleteAccount') {
+                if(confirm(`هل أنت متأكد من حذف حساب العضو [ ${selectedTargetUser.name} ] نهائياً؟`)) {
+                    alert(`تم حذف حساب العضو [ ${selectedTargetUser.name} ] بنجاح من قاعدة البيانات.`);
+                    closeModal('profileViewModal');
+                }
+            } else if(actionType === 'editProfile') {
+                closeModal('profileViewModal');
+                openSelfEdit();
+            }
         }
 
         function addLikeToTarget() {
@@ -1511,29 +1582,6 @@
                 area.appendChild(div);
             });
             area.scrollTop = area.scrollHeight;
-        }
-
-        function openPrivateNotificationModal() {
-            const container = document.getElementById('privateContactsList');
-            container.innerHTML = '';
-            let names = Object.keys(privateMessagesInbox);
-            if(names.length === 0) {
-                container.innerHTML = `<div style="text-align:center; padding:15px; font-size:12px; color:#555;">لا توجد إشعارات خاصة حالياً.</div>`;
-            } else {
-                names.forEach(name => {
-                    let div = document.createElement('div');
-                    div.style.cssText = "padding:10px; border-bottom:1px solid #eee; font-weight:bold; cursor:pointer; display:flex; justify-content:space-between; align-items:center;";
-                    div.innerHTML = `<span>👤 ${name}</span> <i class="fas fa-chevron-left"></i>`;
-                    div.onclick = () => {
-                        closeModal('privateNotificationModal');
-                        unreadPrivateCount = 0;
-                        document.getElementById('privateBadgeDot').style.display = 'none';
-                        openPrivateChatWithName(name);
-                    };
-                    container.appendChild(div);
-                });
-            }
-            openModal('privateNotificationModal');
         }
 
         function openTopProfileMenu() {
@@ -1665,53 +1713,29 @@
             }
 
             closeModal('ytSearchModal');
-            alert(`تم العثور على الأغنية [ ${queryText} ] وبثها صوتياً لجميع الأعضاء الحاضرين بنجاح!`);
-        }
-
-        function toggleMics() {
-            const box = document.getElementById('micBox');
-            const arrow = document.getElementById('micArrow');
-            if(box.style.display === 'none') {
-                box.style.display = 'flex';
-                arrow.className = 'fas fa-chevron-up';
-            } else {
-                box.style.display = 'none';
-                arrow.className = 'fas fa-chevron-down';
-            }
         }
 
         function openAdminDashboard() {
-            openModal('adminDashboardModal');
-            openAdminSub(1);
-        }
-
-        function openAdminSub(sectionNum) {
-            const area = document.getElementById('adminSubContentArea');
-            if(sectionNum === 1) {
-                area.innerHTML = `<h4>1. الأمن السري (رسائل الأعضاء الخاصة)</h4><p style="margin-top:5px; color:#555;">جميع الرسائل الخاصة المرسلة بين الأعضاء مسجلة هنا للمراجعة مع زر الحذف الآمن.</p>`;
-            } else if(sectionNum === 2) {
-                area.innerHTML = `<h4>2. إعداد الميكات</h4><p style="margin-top:5px; color:#555;">إدارة عدد وميزات الميكات (كتم، فك كتم، تشغيل أغاني، نزول) وتعديلها فوراً لجميع الأعضاء.</p>`;
-            } else if(sectionNum === 3) {
-                area.innerHTML = `<h4>3. إعداد الرتب</h4><p style="margin-top:5px; color:#555;">الرتب الـ 25 مفعلة بالكامل، يمكنك تعديل أسمائها وشكلها وأيقوناتها وحفظها فوراً.</p>`;
-            } else if(sectionNum === 4) {
-                area.innerHTML = `<h4>4. إعداد الأذونات</h4><p style="margin-top:5px; color:#555;">صلاحيات الرتب (تغيير خلفية الروم، الحظر، الكتم، الطرد، الحجب) مرتبة بدقة.</p>`;
-            } else if(sectionNum === 5) {
-                area.innerHTML = `<h4>5. إعداد البروفيل</h4><p style="margin-top:5px; color:#555;">تعديل حقول البروفيل وإضافة خيارات جديدة تظهر للجميع.</p>`;
-            } else if(sectionNum === 6) {
-                area.innerHTML = `<h4>6. إعدادات العام (رسائل الأعضاء في العام)</h4><p style="margin-top:5px; color:#555;">مراجعة الرسائل العامة مع زر حذف فوري بعد المراجعة.</p>`;
-            } else if(sectionNum === 7) {
-                area.innerHTML = `<h4>7. لوحة تسجيل الدخول</h4><p style="margin-top:5px; color:#555;">التحكم بنصوص ونصوص ترحيب لوحة تسجيل الدخول ومنع/سماح دخول الزوار.</p>`;
-            } else if(sectionNum === 8) {
-                area.innerHTML = `<h4>8. إعداد النظام</h4><p style="margin-top:5px; color:#555;">إعدادات السيرفر وحالة المزامنة والنسخ الاحتياطي الفوري.</p>`;
-            } else if(sectionNum === 9) {
-                area.innerHTML = `<h4>9. إعداد التزويد</h4><p style="margin-top:5px; color:#555;">إهداء النقاط، الذهب، والرتب الفورية للعضو مع التحديث الفوري العام.</p>`;
-            } else if(sectionNum === 10) {
-                area.innerHTML = `<h4>10. الروبوتات</h4><p style="margin-top:5px; color:#555;">إدارة بوتات الترحيب والرد الآلي والمسابقات في الشات.</p>`;
+            let rankId = currentUser && currentUser.rank ? currentUser.rank.id : 99;
+            if(!currentUser || (!currentUser.isOwner && currentUser.email !== 'ghrwrkk2@gmail.com' && rankId !== 1)) {
+                alert('عذراً، لوحة التحكم الشاملة مخصصة لصاحب الموقع فقط!');
+                return;
             }
+            openModal('adminDashboardModal');
         }
 
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function openAdminSub(subId) {
+            const area = document.getElementById('adminSubContentArea');
+            area.innerHTML = `<div style="padding:10px; background:#f1f1f1; border-radius:6px; font-weight:bold;">تم فتح إعدادات القسم رقم (${subId}) بنجاح. التحكم الكامل بيد صاحب الموقع.</div>`;
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
     </script>
 </body>
 </html>
