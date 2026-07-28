@@ -279,7 +279,7 @@
     <div id="ban-screen">
         <div class="ban-box">
             <h2>تم حظرك من الموقع</h2>
-            <p>عذراً، لقد تم حظرك من قبل إدارة الموقع. للمراجعة والاستفسار يرجى التواصل معنا عبر الويبات.</p>
+            <p>عذراً، لقد تم حظرك من قبل إدارة الموقع. للمراجعة والاستفسار يرجى التواصل معنا عبر الواتساب.</p>
             <a href="https://wa.me/967780718519" target="_blank" class="whatsapp-btn"><i class="fab fa-whatsapp"></i> تواصل عبر واتساب</a>
         </div>
     </div>
@@ -502,11 +502,11 @@
                     <button onclick="createNewRoomByOwner()" style="background:#0d6efd; color:#fff; border:none; padding:9px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">حفظ وإنشاء الروم فوراً للجميع</button>
                 </div>
 
-                <!-- زر تنظيف الروم (للأصحاب والبرنس والكنج والإنروا) -->
+                <!-- زر تنظيف الروم -->
                 <button id="roomCleanBtn" onclick="cleanRoom()" style="display:none; padding:11px; background:#dc3545; color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">🧹 تنظيف الروم (للجميع فوراً)</button>
                 
                 <div id="roomBgUploadContainer" style="display:none; flex-direction:column; gap:5px;">
-                    <label style="font-weight:bold; font-size:12px;">🖼️ رفع خلفية للروم (تظهر لصاحب الموقع والبرنس والكنج والإنروا فقط):</label>
+                    <label style="font-weight:bold; font-size:12px;">🖼️ رفع خلفية للروم:</label>
                     <input type="file" id="roomBgFile" accept="image/*" onchange="uploadRoomBg(this)" style="padding:6px; font-size:12px;">
                 </div>
             </div>
@@ -546,7 +546,7 @@
                 <button class="login-submit-btn" onclick="submitLogin()">دخول الشات فوراً</button>
                 
                 <div style="text-align:center; margin-top:5px; font-size:11px; padding:8px; background:#f1f1f1; border-radius:5px;">
-                    <i class="fab fa-whatsapp" style="color:#25d366; font-size:14px;"></i> للتواصل والدعم الفني للمراجعة: 
+                    <i class="fab fa-whatsapp" style="color:#25d366; font-size:14px;"></i> للتواصل والدعم الفني: 
                     <a href="https://wa.me/967780718519" target="_blank" style="color:#0d6efd; font-weight:bold; text-decoration:none;">967780718519</a>
                 </div>
             </div>
@@ -851,7 +851,6 @@
             });
         };
 
-        // دالة إخفاء وإظهار المايكات عند الضغط على السهم الموجود أسفل المايكات
         function toggleMics() {
             const micBox = document.getElementById('micBox');
             const arrowIcon = document.getElementById('micArrow');
@@ -1460,50 +1459,47 @@
                 }
             });
 
-            // جلب آخر 20 رسالة فوراً ودون تأخير عند دخول العضو
-            setTimeout(() => {
-                const messagesRef = window.dbQuery(window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`), window.dbLimitToLast(20));
-                window.dbOnChildAdded(messagesRef, (snapshot) => {
-                    const data = snapshot.val();
-                    if(!data) return;
-                    
-                    const row = document.createElement('div');
-                    row.className = 'chat-row';
-                    
-                    let quotedHtml = '';
-                    if(data.quotedText) {
-                        quotedHtml = `<div class="quoted-box"><i class="fas fa-quote-right"></i> ${data.quotedText}</div>`;
-                    }
+            const messagesRef = window.dbQuery(window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`), window.dbLimitToLast(30));
+            window.dbOnChildAdded(messagesRef, (snapshot) => {
+                const data = snapshot.val();
+                if(!data) return;
+                
+                const row = document.createElement('div');
+                row.className = 'chat-row';
+                
+                let quotedHtml = '';
+                if(data.quotedText) {
+                    quotedHtml = `<div class="quoted-box"><i class="fas fa-quote-right"></i> ${data.quotedText}</div>`;
+                }
 
-                    let userObj = data.userObj || { name: data.sender, rank: ranksList[24] };
-                    let userStructuredHtml = renderUserRankStructure(userObj, `openProfileOf('${data.sender}')`);
+                let userObj = data.userObj || { name: data.sender, rank: ranksList[24] };
+                let userStructuredHtml = renderUserRankStructure(userObj, `openProfileOf('${data.sender}')`);
 
-                    row.innerHTML = `
-                        ${quotedHtml}
-                        <div style="display:flex; flex-direction:column; gap:4px; width:100%;">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                ${userStructuredHtml}
-                                <span class="msg-time">${data.time}</span>
-                            </div>
-                            <div class="msg-content-body" style="padding-right: 40px; word-break:break-word; font-size:13px; color:#111;">${data.text}</div>
+                row.innerHTML = `
+                    ${quotedHtml}
+                    <div style="display:flex; flex-direction:column; gap:4px; width:100%;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            ${userStructuredHtml}
+                            <span class="msg-time">${data.time}</span>
                         </div>
-                    `;
+                        <div class="msg-content-body" style="padding-right: 40px; word-break:break-word; font-size:13px; color:#111;">${data.text}</div>
+                    </div>
+                `;
 
-                    let rankBox = row.querySelector('.rank-bg-box');
-                    if(rankBox) {
-                        rankBox.onclick = (e) => {
-                            e.stopPropagation();
-                            currentQuotedText = `رد على العضو: ${userObj.name}`;
-                            document.getElementById('replyPreviewText').innerText = currentQuotedText;
-                            document.getElementById('replyPreviewBar').style.display = 'flex';
-                            document.getElementById('msgInput').focus();
-                        };
-                    }
+                let rankBox = row.querySelector('.rank-bg-box');
+                if(rankBox) {
+                    rankBox.onclick = (e) => {
+                        e.stopPropagation();
+                        currentQuotedText = `رد على العضو: ${userObj.name}`;
+                        document.getElementById('replyPreviewText').innerText = currentQuotedText;
+                        document.getElementById('replyPreviewBar').style.display = 'flex';
+                        document.getElementById('msgInput').focus();
+                    };
+                }
 
-                    chatArea.appendChild(row);
-                    chatArea.scrollTop = chatArea.scrollHeight;
-                });
-            }, 500);
+                chatArea.appendChild(row);
+                chatArea.scrollTop = chatArea.scrollHeight;
+            });
         }
 
         function switchRoom(roomName) {
@@ -1600,13 +1596,10 @@
             let myRankName = currentUser.rank ? currentUser.rank.name : '';
             let isSupremeOwner = currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || myRankName === 'صاحب الموقع';
             let isAllowedAdmin = isSupremeOwner || ['برنس', 'كنج'].includes(myRankName);
-            
-            // صاحب الموقع يحمي بروفيله بالكامل؛ لا يمكن لأحد تعديل بروفايل صاحب الموقع إطلاقاً
             let isTargetSupremeOwner = target.isOwner || target.email === 'ghrwrkk2@gmail.com' || (target.rank && target.rank.id === 1);
 
             if(isAllowedAdmin) {
                 document.getElementById('ownerAdminCommandsContainer').style.display = 'flex';
-                // زر تعديل بروفيل العضو يظهر فقط للبرنس والكنج وصاحب الموقع، ولكن لا يمكنهم تعديل بروفايل صاحب الموقع نفسه
                 if(isTargetSupremeOwner && !isSupremeOwner) {
                     document.getElementById('adminEditProfileBtn').style.display = 'none';
                 } else if(isAllowedAdmin) {
@@ -1623,7 +1616,7 @@
             if(!selectedTargetUser) return;
             selectedTargetUser.likes = (selectedTargetUser.likes || 0) + 1;
             document.getElementById('targetLikesCount').innerText = selectedTargetUser.likes;
-            alert(`تم وضع لايك للعضو [ ${selectedTargetUser.name} ] بنجاح وحفظه في بروفيله! وصله إشعار فوري.`);
+            alert(`تم وضع لايك للعضو [ ${selectedTargetUser.name} ] بنجاح وحفظه في بروفيله!`);
         }
 
         function openRanksListModalForTarget() {
@@ -1646,7 +1639,7 @@
                         const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + selectedTargetUser.name.replace(/[.#$\/\[\]]/g, '_'));
                         window.dbSet(userStatusRef, selectedTargetUser);
                     }
-                    alert(`تم إهداء رتبة [ ${r.name} ] للعضو [ ${selectedTargetUser.name} ] بنجاح وتثبيتها للأبد وتظهر فوراً لي ولكل الأعضاء!`);
+                    alert(`تم إهداء رتبة [ ${r.name} ] للعضو [ ${selectedTargetUser.name} ] بنجاح وتثبيتها للأبد!`);
                     closeModal('ranksListModal');
                 };
                 container.appendChild(btn);
@@ -1661,7 +1654,7 @@
             let isTargetSupremeOwner = selectedTargetUser.isOwner || selectedTargetUser.email === 'ghrwrkk2@gmail.com' || (selectedTargetUser.rank && selectedTargetUser.rank.id === 1);
 
             if(isTargetSupremeOwner && !isSupremeOwner) {
-                alert('عذراً، صاحب الموقع له السلطة المطلقة على جميع الأعضاء ولا يمكن لأحد التعديل على بروفيله أو التحكم به!');
+                alert('عذراً، صاحب الموقع له السلطة المطلقة ولا يمكن التعديل على بروفيله!');
                 return;
             }
 
@@ -1670,12 +1663,12 @@
                 openSelfEdit();
             } else if(action === 'ban') {
                 selectedTargetUser.isBanned = !selectedTargetUser.isBanned;
-                alert(`تم تحديث حالة الحضر للعضو [ ${selectedTargetUser.name} ]: ${selectedTargetUser.isBanned ? 'محظور' : 'غير محظور'}`);
+                alert(`تم تحديث حالة الحضر للعضو [ ${selectedTargetUser.name} ]`);
             } else if(action === 'mute') {
                 selectedTargetUser.isMuted = !selectedTargetUser.isMuted;
-                alert(`تم تحديث حالة الكتم للعضو [ ${selectedTargetUser.name} ]: ${selectedTargetUser.isMuted ? 'مكتوم' : 'غير مكتوم'}`);
+                alert(`تم تحديث حالة الكتم للعضو [ ${selectedTargetUser.name} ]`);
             } else if(action === 'kick') {
-                alert(`تم طرد العضو [ ${selectedTargetUser.name} ] من الروم بنجاح.`);
+                alert(`تم طرد العضو [ ${selectedTargetUser.name} ] بنجاح.`);
             } else if(action === 'delete') {
                 alert(`تم حذف حساب العضو [ ${selectedTargetUser.name} ] نهائياً.`);
                 closeModal('profileViewModal');
@@ -1699,29 +1692,39 @@
             if(!privateMessagesInbox[currentPrivateTarget]) {
                 privateMessagesInbox[currentPrivateTarget] = [];
             }
-            privateMessagesInbox[currentPrivateTarget].push({ sender: currentUser.name, text: text, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+            privateMessagesInbox[currentPrivateTarget].push({ 
+                sender: currentUser.name, 
+                text: text, 
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+            });
             
             input.value = '';
             renderPrivateMessages();
-            
-            let badge = document.getElementById('privateBadgeDot');
-            badge.style.display = 'block';
-            badge.innerText = parseInt(badge.innerText || '0') + 1;
-            alert(`تم إرسال الرسالة إلى (${currentPrivateTarget}) ووصله إشعار فوري في الشريط العلوي!`);
         }
 
-        function openModal(modalId) { document.getElementById(modalId).style.display = 'flex'; }
-        function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
-        function openTopProfileMenu() { openModal('topProfileModal'); }
-        function openPrivateNotificationModal() { openModal('privateNotificationModal'); document.getElementById('privateBadgeDot').style.display = 'none'; document.getElementById('privateBadgeDot').innerText = '0'; }
-        function toggleDataSaver() { document.body.classList.toggle('saver-mode'); alert('تم تبديل وضع توفير الإنترنت بنجاح.'); }
+        function renderPrivateMessages() {
+            const area = document.getElementById('privateMsgArea');
+            area.innerHTML = '';
+            let msgs = privateMessagesInbox[currentPrivateTarget] || [];
+            msgs.forEach(m => {
+                let div = document.createElement('div');
+                div.style.cssText = `padding:6px 10px; border-radius:6px; max-width:80%; font-size:12px; ${m.sender === currentUser.name ? 'background:#dcf8c6; margin-right:auto;' : 'background:#fff; margin-left:auto;'}`;
+                div.innerHTML = `<div>${m.text}</div><span style="font-size:9px; color:#777; float:left;">${m.time}</span>`;
+                area.appendChild(div);
+            });
+            area.scrollTop = area.scrollHeight;
+        }
+
+        function openPrivateNotificationModal() {
+            openModal('privateNotificationModal');
+        }
 
         function openSelfEdit() {
-            if(!currentUser) return;
-            document.getElementById('editName').value = currentUser.name || '';
+            closeModal('topProfileModal');
+            document.getElementById('editName').value = currentUser.name;
             document.getElementById('editEmailField').value = currentUser.email || '';
             document.getElementById('editPassField').value = currentUser.pass || '';
-            document.getElementById('editAge').value = currentUser.age || '20';
+            document.getElementById('editAge').value = currentUser.age || 20;
             document.getElementById('editGender').value = currentUser.gender || 'ذكر';
             document.getElementById('editCountry').value = currentUser.country || 'اليمن';
             document.getElementById('editBio').value = currentUser.bio || '';
@@ -1730,68 +1733,42 @@
         }
 
         function saveEditedProfileData() {
-            if(!currentUser) return;
             currentUser.name = document.getElementById('editName').value.trim() || currentUser.name;
-            currentUser.email = document.getElementById('editEmailField').value.trim() || currentUser.email;
-            currentUser.pass = document.getElementById('editPassField').value.trim() || currentUser.pass;
-            currentUser.age = document.getElementById('editAge').value.trim() || currentUser.age;
+            currentUser.email = document.getElementById('editEmailField').value.trim();
+            currentUser.pass = document.getElementById('editPassField').value.trim();
+            currentUser.age = document.getElementById('editAge').value;
             currentUser.gender = document.getElementById('editGender').value;
-            currentUser.country = document.getElementById('editCountry').value.trim() || currentUser.country;
-            currentUser.bio = document.getElementById('editBio').value.trim() || currentUser.bio;
+            currentUser.country = document.getElementById('editCountry').value;
+            currentUser.bio = document.getElementById('editBio').value;
             currentUser.nameBgColor = document.getElementById('editNameBgColor').value;
 
-            let avatarFile = document.getElementById('editAvatarFile').files[0];
-            let coverFile = document.getElementById('editCoverFile').files[0];
-
-            if(avatarFile) {
-                let reader = new FileReader();
-                reader.onload = function(e) {
-                    currentUser.avatar = e.target.result;
-                    document.getElementById('topNavAvatar').src = currentUser.avatar;
-                    finalizeProfileSave();
-                };
-                reader.readAsDataURL(avatarFile);
-            } else if(coverFile) {
-                let reader = new FileReader();
-                reader.onload = function(e) {
-                    currentUser.cover = e.target.result;
-                    finalizeProfileSave();
-                };
-                reader.readAsDataURL(coverFile);
-            } else {
-                finalizeProfileSave();
-            }
-        }
-
-        function finalizeProfileSave() {
             localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
+            
             if(window.firebaseDB && window.dbRef && window.dbSet) {
                 const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + currentUser.name.replace(/[.#$\/\[\]]/g, '_'));
                 window.dbSet(userStatusRef, { ...currentUser, lastSeen: 'متصل الآن', isOnline: true });
             }
-            alert('تم حفظ وتحديث بروفايلك الشخصي بنجاح للجميع فوراً!');
+
+            alert('تم حفظ وتحديث بروفايلك بنجاح للجميع فوراً!');
             closeModal('editSelfModal');
+            location.reload();
         }
 
-        function renderPrivateMessages() {
-            const area = document.getElementById('privateMsgArea');
-            area.innerHTML = '';
-            if(!currentPrivateTarget || !privateMessagesInbox[currentPrivateTarget]) {
-                area.innerHTML = '<div style="font-size:12px; color:#777; text-align:center; padding:20px;">لا توجد رسائل سابقة. يبدأ الحديث الخاص هنا.</div>';
-                return;
-            }
-            privateMessagesInbox[currentPrivateTarget].forEach(m => {
-                let d = document.createElement('div');
-                d.style.cssText = `background:${m.sender === currentUser.name ? '#dcf8c6' : '#fff'}; padding:6px 10px; border-radius:6px; font-size:12px; max-width:80%; margin-${m.sender === currentUser.name ? 'right' : 'left'}:auto;`;
-                d.innerHTML = `<b>${m.sender}:</b> ${m.text}`;
-                area.appendChild(d);
-            });
-            area.scrollTop = area.scrollHeight;
+        function toggleDataSaver() {
+            document.body.classList.toggle('saver-mode');
+            alert('تم تبديل وضع توفير النت بنجاح.');
         }
 
-        function addFriendTarget() {
-            if(!selectedTargetUser) return;
-            alert(`تم إرسال طلب صداقة إلى العضو [ ${selectedTargetUser.name} ] بنجاح!`);
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function openTopProfileMenu() {
+            openModal('topProfileModal');
         }
     </script>
 </body>
