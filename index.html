@@ -4,17 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#000000">
-    <title>شات حسوني | أحلى دردشة عربية</title>
+    <title>شات حسوني | أحلى دردشة عربية - النخبة المتطورة</title>
 
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #6366f1;
+            --bg-dark: #0f172a;
+            --panel-bg: #1e293b;
+            --text-color: #f8fafc;
+            --accent-color: #10b981;
+            --danger-color: #ef4444;
+        }
+
         * { 
             margin: 0; 
             padding: 0; 
             box-sizing: border-box; 
-            font-family: tahoma, arial, sans-serif, system-ui, -apple-system; 
+            font-family: tahoma, arial, sans-serif, system-ui, -apple-system, 'Segoe UI'; 
             -webkit-tap-highlight-color: transparent; 
             -webkit-touch-callout: none;
         }
@@ -40,6 +50,17 @@
         }
 
         body.saver-mode { background-color: #222 !important; filter: grayscale(40%); }
+
+        /* شاشة الحظر الكاملة */
+        #ban-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.95); z-index: 99999;
+            display: none; justify-content: center; align-items: center; text-align: center; padding: 20px;
+        }
+        .ban-box { background: var(--panel-bg); padding: 40px; border-radius: 15px; border: 2px solid var(--danger-color); max-width: 500px; width: 100%; color: #fff; }
+        .ban-box h2 { color: var(--danger-color); margin-bottom: 20px; font-size: 24px; }
+        .ban-box p { font-size: 16px; line-height: 1.6; margin-bottom: 30px; }
+        .whatsapp-btn { background: #25d366; color: white; padding: 12px 25px; border-radius: 30px; text-decoration: none; font-weight: bold; display: inline-flex; align-items: center; gap: 10px; }
 
         /* الشريط العلوي Top Nav */
         .top-nav { 
@@ -230,11 +251,6 @@
         .info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 12px; }
         .admin-cmd-btn { background: #dc3545; color: #fff; border: none; padding: 10px; border-radius: 5px; width: 100%; margin-top: 10px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.2s; }
 
-        .admin-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 5px; }
-        .admin-card-item { background: #f8f9fa; border: 1px solid #ddd; padding: 10px; border-radius: 6px; text-align: center; cursor: pointer; font-size: 11px; font-weight: bold; display: flex; flex-direction: column; align-items: center; gap: 5px; transition: 0.2s; }
-        .admin-card-item i { font-size: 16px; color: #0d6efd; }
-        .admin-card-item:active { background: #e2e6ea; }
-
         #kingBannerModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 99999; justify-content: center; align-items: center; flex-direction: column; }
         .king-welcome-box { background: linear-gradient(45deg, #ffd700, #ff8c00); color: #000; padding: 25px 35px; border-radius: 20px; font-size: 20px; font-weight: bold; text-align: center; box-shadow: 0 0 30px #ffd700; animation: kingPop 0.4s ease-in-out; border: 3px solid #fff; }
         @keyframes kingPop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
@@ -243,6 +259,15 @@
     </style>
 </head>
 <body>
+
+    <!-- شاشة الحظر الكاملة -->
+    <div id="ban-screen">
+        <div class="ban-box">
+            <h2>تم حظرك من الموقع</h2>
+            <p>عذراً، لقد تم حظرك من قبل إدارة الموقع. للمراجعة والاستفسار يرجى التواصل معنا عبر الويبات.</p>
+            <a href="https://wa.me/967780718519" target="_blank" class="whatsapp-btn"><i class="fab fa-whatsapp"></i> تواصل عبر واتساب</a>
+        </div>
+    </div>
 
     <div id="kingBannerModal">
         <div class="king-welcome-box" id="kingWelcomeText">تم دخول صاحب الموقع الملك 👑</div>
@@ -342,7 +367,7 @@
         <div class="bottom-item" onclick="location.reload()"><i class="fas fa-sync-alt"></i><span>تحديث</span></div>
     </footer>
 
-    <!-- نافذة صعود المايك (هل تريد صعود المايك؟) -->
+    <!-- نافذة صعود المايك -->
     <div class="modal" id="micJoinConfirmModal">
         <div class="modal-content" style="max-width:300px; padding:20px; text-align:center;">
             <div style="font-size:16px; font-weight:bold; margin-bottom:15px;" id="micJoinPromptText">هل تريد صعود المايك؟</div>
@@ -353,7 +378,7 @@
         </div>
     </div>
 
-    <!-- نافذة أزرار وخيارات المايك الخاصة بالعضو والصجيب -->
+    <!-- نافذة أزرار وخيارات المايك الخاصة -->
     <div class="modal" id="micControlModal">
         <div class="modal-content" style="max-width:320px; padding:15px; text-align:center;">
             <div class="modal-header" style="margin:-15px -15px 15px -15px;">
@@ -370,11 +395,11 @@
         </div>
     </div>
 
-    <!-- نافذة بحث يوتيوب الحقيقية للأغاني -->
+    <!-- نافذة بحث يوتيوب -->
     <div class="modal" id="ytSearchModal">
         <div class="modal-content" style="padding:15px; max-width:400px; background:#fff;">
             <div class="modal-header" style="margin:-15px -15px 10px -15px;">
-                <span>قائمة بحث يوتيوب وبث الصوت الحقيقي للجميع</span>
+                <span>قائمة بحث يوتيوب وبث الصوت للجميع</span>
                 <i class="fas fa-times" onclick="closeModal('ytSearchModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div style="display:flex; flex-direction:column; gap:8px;">
@@ -385,7 +410,7 @@
         </div>
     </div>
 
-    <!-- لوحة رسم (للزر +) -->
+    <!-- لوحة رسم -->
     <div class="modal" id="drawingBoardModal">
         <div class="modal-content" style="max-width:350px; text-align:center;">
             <div class="modal-header">
@@ -590,7 +615,7 @@
                 <div class="info-row"><span>الرسائل المرسلة:</span><span id="viewMsgCount">0</span></div>
                 <div class="info-row"><span>الذهب / الروبي / النقاط:</span><span id="viewAssets">0 / 0 / 0</span></div>
 
-                <!-- أزرار الأوامر والتحكم تظهر لصاحب الموقع والبرنس والكنج وإنروا فقط -->
+                <!-- أزرار الأوامر والتحكم -->
                 <div id="ownerAdminCommandsContainer" style="display:none; flex-direction:column; gap:6px; margin-top:12px;">
                     <button class="admin-cmd-btn" style="background:#0d6efd;" onclick="openRanksListModalForTarget()">👑 إهداء رتبه للعضو (مع تثبيت للأبد)</button>
                     <button class="admin-cmd-btn" style="background:#ffc107; color:#000;" onclick="adminActionTarget('edit')">✏️ تعديل بروفيل العضو</button>
@@ -603,7 +628,7 @@
         </div>
     </div>
 
-    <!-- نافذة اختيار رتبة العضو (الـ 25 رتبة والـ تاج اسود/أحمر/أزرق) -->
+    <!-- نافذة اختيار رتبة العضو -->
     <div class="modal" id="ranksListModal">
         <div class="modal-content" style="background:#fff; padding:15px; max-width:380px;">
             <div class="modal-header" style="margin:-15px -15px 10px -15px;">
@@ -668,7 +693,7 @@
         </div>
     </div>
 
-    <!-- مشغل الصوت العام الحقيقي لبث الأغاني عبر المايك -->
+    <!-- مشغل الصوت العام -->
     <audio id="globalAudioPlayer" style="display:none;"></audio>
 
     <!-- ربط Firebase وتوابع المزامنة الفورية -->
@@ -776,8 +801,7 @@
             if(saved) {
                 currentUser = JSON.parse(saved);
                 if(currentUser.isBanned) {
-                    alert("تم حضرك من قبل إدارة الموقع لايمكنك الدخول في الوقت الحالي ورقمي 967780718519 مرتبط بوتساب للمراجعة");
-                    openModal('loginModal');
+                    document.getElementById('ban-screen').style.display = 'flex';
                     return;
                 }
                 closeModal('loginModal');
@@ -810,7 +834,6 @@
         function openEmojiPickerModal() { openModal('emojiPickerModal'); }
         function openYouTubePickerModal() { openModal('ytSearchModal'); }
 
-        // ألعاب زر + الذكية الحقيقية
         function rollDiceGame() {
             let diceNum = Math.floor(Math.random() * 6) + 1;
             let diceIcons = ["⚀","⚁","⚂","⚃","⚄","⚅"];
@@ -891,7 +914,6 @@
             }
         }
 
-        // تفاصيل الميكات الحقيقية
         function handleMicClick(slotNum) {
             currentMicSlot = slotNum;
             let micOccupant = activeMics[slotNum];
@@ -899,20 +921,16 @@
             let isSupremeAdmin = currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || ['صاحب الموقع', 'برنس', 'كنج'].includes(myRankName);
 
             if(micOccupant) {
-                // إذا الميك مشغول
                 if(micOccupant.name === currentUser.name || isSupremeAdmin) {
-                    // صاحب الموقع أو البرنس أو الكنج أو صاحب المايك يفتحون لوحة التحكم بالمايك
                     document.getElementById('micModalTitle').innerText = `خيارات المايك (${micOccupant.name})`;
                     openModal('micControlModal');
                 } else {
-                    // عضو آخر يضغط على ميك فيه عضو
                     let doMute = confirm(`هل تريد كتم صوت العضو [ ${micOccupant.name} ] عندي؟`);
                     if(doMute) {
                         alert(`تم كتم صوت ${micOccupant.name} لديك بنجاح.`);
                     }
                 }
             } else {
-                // ميك فارغ
                 document.getElementById('micJoinPromptText').innerText = `هل تريد صعود المايك رقم ${slotNum}؟`;
                 openModal('micJoinConfirmModal');
             }
@@ -965,7 +983,6 @@
             let queryText = document.getElementById('ytSearchQuery').value.trim();
             if(!queryText) { alert('يرجى كتابة اسم الأغنية أو لصق رابط يوتيوب!'); return; }
             
-            // محاكاة نتائج بحث يوتيوب حقيقية ودقيقة
             const resultsArea = document.getElementById('ytResultsArea');
             resultsArea.innerHTML = `
                 <div style="display:flex; align-items:center; justify-content:space-between; background:#f9f9f9; padding:8px; border-radius:6px; border:1px solid #ddd;">
@@ -1449,7 +1466,6 @@
             openModal('onlineModal');
         }
 
-        // فتح بروفايل العضو مع التحقق من صلاحيات الأوامر والتحكم
         function openProfileOf(userName) {
             let target = activeUsersList.find(u => u.name === userName);
             if(!target) target = { name: userName, age: '20', gender: 'ذكر', country: 'اليمن', bio: 'عضو نشط', likes: 0, gold: 0, ruby: 0, points: 0, msgCount: 0, avatar: 'https://via.placeholder.com/80', cover: 'https://via.placeholder.com/400x160' };
@@ -1467,7 +1483,6 @@
             document.getElementById('viewAssets').innerText = `${target.gold || 0} / ${target.ruby || 0} / ${target.points || 0}`;
             document.getElementById('targetLikesCount').innerText = target.likes || 0;
 
-            // الأوامر ودخل بروفيل الأعضاء تظهر لصاحب الموقع والبرنس والكنج وإنروا فقط ولا تظهر لبقيت الأعضاء
             let myRankName = currentUser.rank ? currentUser.rank.name : '';
             let isAllowedAdmin = currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || ['صاحب الموقع', 'برنس', 'كنج', 'إنروا'].includes(myRankName);
             
@@ -1489,7 +1504,6 @@
             let isOwnerOrAdmin = currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || myRankName === 'صاحب الموقع';
 
             ranksList.forEach(r => {
-                // صاحب الموقع يتحكم بالكامل ويهدي أي رتبه من 25، بينما البرنس والكنج وإنروا يهدون رتب ببساطة مثل تاج اسود تاج احمر تاج ازرق وبقيت الرتب
                 if(!isOwnerOrAdmin && r.id === 1) return;
 
                 let btn = document.createElement('div');
@@ -1497,7 +1511,6 @@
                 btn.innerHTML = `<i class="fas ${r.icon}"></i> <span>رتبة #${r.id}: ${r.name} (تثبيت للابد)</span>`;
                 btn.onclick = () => {
                     selectedTargetUser.rank = r;
-                    // تثبيت الرتبة الجديدة للعضو فوراً للأبد حتى لو حدث العضو
                     if(window.firebaseDB && window.dbRef && window.dbSet) {
                         const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + selectedTargetUser.name.replace(/[.#$\/\[\]]/g, '_'));
                         window.dbSet(userStatusRef, selectedTargetUser);
@@ -1529,7 +1542,6 @@
             }
         }
 
-        // محادثة خاصة فورية وإشعارات الخاص الذكية
         function openPrivateChat() {
             closeModal('profileViewModal');
             if(!selectedTargetUser) return;
@@ -1552,7 +1564,6 @@
             input.value = '';
             renderPrivateMessages();
             
-            // إظهار إشعار الخاص لدى الطرف الآخر
             let badge = document.getElementById('privateBadgeDot');
             badge.style.display = 'block';
             badge.innerText = parseInt(badge.innerText || '0') + 1;
