@@ -196,7 +196,6 @@
         
         #replyPreviewBar { display: none; background: #e0e0e0; padding: 4px 10px; font-size: 11px; border-radius: 4px; justify-content: space-between; align-items: center; border-right: 3px solid #0d6efd; }
 
-        /* تعديل لوحة زر + لتظهر في وسط الشاشة مع قلم في الزاوية العلوية */
         .plus-popup-menu {
             display: none;
             position: fixed;
@@ -351,7 +350,6 @@
             <div style="position:relative;">
                 <i class="fas fa-plus" id="plusBtn" style="font-size:18px; color:#555; cursor:pointer; padding: 4px;" onclick="togglePlusMenu()"></i>
                 
-                <!-- لوحة زر + في وسط الشاشة ومع قلم في الزاوية العلوية -->
                 <div class="plus-popup-menu" id="plusPopupMenu">
                     <div style="position:absolute; top:8px; left:12px; color:#555;"><i class="fas fa-pen" style="font-size:12px;"></i></div>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:6px;">
@@ -495,16 +493,12 @@
                 <i class="fas fa-times" onclick="closeModal('roomOptsModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div style="display:flex; flex-direction:column; gap:10px;" id="roomOptsListContainer">
-                
                 <div id="createRoomSection" style="display:none; flex-direction:column; gap:6px; background:#f8f9fa; padding:10px; border-radius:6px; border:1px solid #ddd;">
                     <label style="font-weight:bold; font-size:12px; color:#0d6efd;">🏰 إنشاء روم جديدة (صاحب الموقع فقط):</label>
                     <input type="text" id="newRoomNameInput" placeholder="اكتب اسم الغرفة الجديدة..." style="padding:8px; border:1px solid #ccc; border-radius:4px; font-size:13px;">
                     <button onclick="createNewRoomByOwner()" style="background:#0d6efd; color:#fff; border:none; padding:9px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">حفظ وإنشاء الروم فوراً للجميع</button>
                 </div>
-
-                <!-- زر تنظيف الروم -->
                 <button id="roomCleanBtn" onclick="cleanRoom()" style="display:none; padding:11px; background:#dc3545; color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">🧹 تنظيف الروم (للجميع فوراً)</button>
-                
                 <div id="roomBgUploadContainer" style="display:none; flex-direction:column; gap:5px;">
                     <label style="font-weight:bold; font-size:12px;">🖼️ رفع خلفية للروم:</label>
                     <input type="file" id="roomBgFile" accept="image/*" onchange="uploadRoomBg(this)" style="padding:6px; font-size:12px;">
@@ -619,7 +613,8 @@
         <div class="modal-content profile-card-modal">
             <div class="profile-header-bg" id="viewCover">
                 <i class="fas fa-times" onclick="closeModal('profileViewModal')" style="cursor:pointer; background:rgba(0,0,0,0.5); padding:6px 10px; border-radius:50%;"></i>
-                <i class="fas fa-pen" id="editSelfPen" onclick="openSelfEdit()" style="display:none; cursor:pointer; background:rgba(0,0,0,0.5); padding:6px 10px; border-radius:50%; color:#ffd700;"></i>
+                <!-- قلم الزاوية العلوية للبروفايل (يظهر لصاحب البروفيسور أو صاحب الموقع والبرنس والكنج والإنروا فقط) -->
+                <i class="fas fa-pen" id="profileCornerPenBtn" onclick="openSelfEdit()" style="display:none; cursor:pointer; background:rgba(0,0,0,0.6); padding:8px 10px; border-radius:50%; color:#ffd700; font-size:14px;"></i>
                 <img src="" class="profile-user-avatar" id="viewAvatar">
             </div>
             <div class="profile-body-content">
@@ -637,15 +632,16 @@
                 <div class="info-row"><span>الجنس:</span><span id="viewGender">--</span></div>
                 <div class="info-row"><span>البلد:</span><span id="viewCountry">اليمن</span></div>
                 <div class="info-row"><span>المعلومات:</span><span id="viewBio">عضو نشط في الشات</span></div>
+                <div class="info-row"><span>البريد الإلكتروني:</span><span id="viewEmailRow">******</span></div>
+                <div class="info-row"><span>كلمة المرور:</span><span id="viewPassRow">******</span></div>
                 <div class="info-row"><span>آخر ظهور حقيقي:</span><span id="viewLastSeen" style="color:#28a745; font-weight:bold;">متصل الآن 🟢</span></div>
                 <div class="info-row"><span>الرسائل المرسلة:</span><span id="viewMsgCount">0</span></div>
                 <div class="info-row"><span>الذهب / الروبي / النقاط:</span><span id="viewAssets">0 / 0 / 0</span></div>
 
-                <!-- أزرار الأوامر والتحكم -->
                 <div id="ownerAdminCommandsContainer" style="display:none; flex-direction:column; gap:6px; margin-top:12px;">
-                    <button class="admin-cmd-btn" style="background:#0d6efd;" onclick="openRanksListModalForTarget()">👑 إهداء رتبه للعضو (مع تثبيت للأبد)</button>
+                    <button class="admin-cmd-btn" style="background:#0d6efd;" onclick="openRanksListModalForTarget()">👑 إهداء رتبه للعضو (تثبيت فوري للأبد)</button>
                     <button class="admin-cmd-btn" id="adminEditProfileBtn" style="background:#ffc107; color:#000; display:none;" onclick="adminActionTarget('edit')">✏️ تعديل بروفيل العضو</button>
-                    <button class="admin-cmd-btn" style="background:#fd7e14;" onclick="adminActionTarget('ban')">🚫 حضر / إلغاء الحضر</button>
+                    <button class="admin-cmd-btn" style="background:#fd7e14;" onclick="adminActionTarget('ban')">🚫 حظر / إلغاء الحظر</button>
                     <button class="admin-cmd-btn" style="background:#6c757d;" onclick="adminActionTarget('mute')">🔇 كتم / إلغاء الكتم</button>
                     <button class="admin-cmd-btn" style="background:#e83e8c;" onclick="adminActionTarget('kick')">👢 طرد / إلغاء الطرد</button>
                     <button class="admin-cmd-btn" style="background:#dc3545;" onclick="adminActionTarget('delete')">🗑️ حذف الحساب نهائياً</button>
@@ -669,7 +665,7 @@
     <div class="modal" id="editSelfModal">
         <div class="modal-content" style="padding:15px; background:#fff; text-align:right;">
             <div class="modal-header" style="margin:-15px -15px 10px -15px;">
-                <span id="editModalTitle">تعديل بروفايلي الشخصي</span>
+                <span id="editModalTitle">تعديل البروفيسور والتفاصيل</span>
                 <i class="fas fa-times" onclick="closeModal('editSelfModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div style="display:flex; flex-direction:column; gap:6px; max-height:75vh; overflow-y:auto; font-size:12px; -webkit-overflow-scrolling: touch;">
@@ -681,10 +677,11 @@
                 <label>البلد:</label><input type="text" id="editCountry">
                 <label>المعلومات (البيو):</label><input type="text" id="editBio">
                 
+                <label>لون الاسم:</label><input type="color" id="editNameColor" value="#000000" style="height:35px; width:100%; border:none; cursor:pointer;">
                 <label>لون خلفية الاسم:</label><input type="color" id="editNameBgColor" value="#ffd700" style="height:35px; width:100%; border:none; cursor:pointer;">
-                <label>صورة شخصية:</label><input type="file" id="editAvatarFile" accept="image/*">
-                <label>غلاف الملف:</label><input type="file" id="editCoverFile" accept="image/*">
-                <button onclick="saveEditedProfileData()" style="background:#28a745; color:#fff; border:none; padding:10px; border-radius:5px; margin-top:10px; font-weight:bold; cursor:pointer;">حفظ وتحديث للجميع فوراً</button>
+                <label>صورة شخصية (رفع صورة):</label><input type="file" id="editAvatarFile" accept="image/*">
+                <label>غلاف الملف (رفع صورة):</label><input type="file" id="editCoverFile" accept="image/*">
+                <button onclick="saveEditedProfileData()" style="background:#28a745; color:#fff; border:none; padding:10px; border-radius:5px; margin-top:10px; font-weight:bold; cursor:pointer;">حفظ وتحديث فوري للجميع</button>
             </div>
         </div>
     </div>
@@ -1087,7 +1084,7 @@
                         avatar: 'https://via.placeholder.com/80/ffd700/000?text=Owner',
                         cover: 'https://via.placeholder.com/400x160/111/fff',
                         points: 9999, level: 100, likes: 100, gold: 50, ruby: 50, msgCount: 0,
-                        nameBgColor: '#ffd700', fieldsBgColor: '#f1f1f1',
+                        nameBgColor: '#ffd700', nameColor: '#000000',
                         isMuted: false, isBanned: false, isBlocked: false
                     };
                 } else {
@@ -1097,7 +1094,7 @@
                         avatar: 'https://via.placeholder.com/80/00c6ff/fff?text=Member',
                         cover: 'https://via.placeholder.com/400x160/333/fff',
                         points: 100, level: 1, likes: 0, gold: 0, ruby: 0, msgCount: 0,
-                        nameBgColor: '#e0e0e0', fieldsBgColor: '#f1f1f1',
+                        nameBgColor: '#e0e0e0', nameColor: '#000000',
                         isMuted: false, isBanned: false, isBlocked: false
                     };
                 }
@@ -1110,7 +1107,7 @@
                     avatar: 'https://via.placeholder.com/80/888/fff?text=Guest',
                     cover: 'https://via.placeholder.com/400x160/555/fff',
                     points: 0, level: 1, likes: 0, gold: 0, ruby: 0, msgCount: 0,
-                    nameBgColor: '#e0e0e0', fieldsBgColor: '#f1f1f1',
+                    nameBgColor: '#e0e0e0', nameColor: '#000000',
                     isMuted: false, isBanned: false, isBlocked: false
                 };
             }
@@ -1132,7 +1129,7 @@
                     avatar: 'https://via.placeholder.com/80/ffd700/000?text=Owner',
                     cover: 'https://via.placeholder.com/400x160/111/fff',
                     points: 9999, level: 100, likes: 100, gold: 50, ruby: 50, msgCount: 0,
-                    nameBgColor: '#ffd700', fieldsBgColor: '#f1f1f1',
+                    nameBgColor: '#ffd700', nameColor: '#000000',
                     isMuted: false, isBanned: false, isBlocked: false
                 };
             } else {
@@ -1142,7 +1139,7 @@
                     avatar: 'https://via.placeholder.com/80/00e676/fff?text=User',
                     cover: 'https://via.placeholder.com/400x160/222/fff',
                     points: 50, level: 1, likes: 0, gold: 0, ruby: 0, msgCount: 0,
-                    nameBgColor: '#e0e0e0', fieldsBgColor: '#f1f1f1',
+                    nameBgColor: '#e0e0e0', nameColor: '#000000',
                     isMuted: false, isBanned: false, isBlocked: false
                 };
             }
@@ -1228,6 +1225,7 @@
             let displayName = userObj && userObj.name ? userObj.name : 'مستخدم';
             let subTitleHtml = '';
             let customNameBg = userObj && userObj.nameBgColor ? userObj.nameBgColor : '';
+            let customNameColor = userObj && userObj.nameColor ? userObj.nameColor : '';
             let isOnline = userObj && userObj.isOnline !== false ? true : false;
 
             if(userObj && (userObj.isOwner || userObj.email === 'ghrwrkk2@gmail.com' || (userObj.rank && userObj.rank.id === 1))) {
@@ -1237,7 +1235,9 @@
             if(userObj && userObj.rank) {
                 let styleStr = userObj.rank.style;
                 if(customNameBg && userObj.rank.id !== 1) {
-                    styleStr = `background:${customNameBg}; color:#000;`;
+                    styleStr = `background:${customNameBg}; color:${customNameColor || '#000'}; box-shadow:0 0 6px ${customNameBg};`;
+                } else if(customNameColor && userObj.rank.id !== 1) {
+                    styleStr += ` color:${customNameColor};`;
                 }
                 rankBgHtml = `
                     <div style="display:inline-flex; flex-direction:column;">
@@ -1250,7 +1250,7 @@
             } else {
                 rankBgHtml = `
                     <div style="display:inline-flex; flex-direction:column;">
-                        <div class="rank-bg-box" style="background:${customNameBg || '#ddd'}; color:#333;" onclick="${nameClickAction}">
+                        <div class="rank-bg-box" style="background:${customNameBg || '#ddd'}; color:${customNameColor || '#333'};" onclick="${nameClickAction}">
                             <i class="fas fa-user" style="color:#777;"></i>
                             <span>${displayName}</span>
                         </div>
@@ -1459,7 +1459,7 @@
                 }
             });
 
-            const messagesRef = window.dbQuery(window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`), window.dbLimitToLast(30));
+            const messagesRef = window.dbQuery(window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`), window.dbLimitToLast(10));
             window.dbOnChildAdded(messagesRef, (snapshot) => {
                 const data = snapshot.val();
                 if(!data) return;
@@ -1593,16 +1593,35 @@
             document.getElementById('targetLikesCount').innerText = target.likes || 0;
             document.getElementById('viewLastSeen').innerText = target.isOnline !== false ? 'متصل الآن 🟢' : `آخر ظهور: ${target.lastSeen || 'منذ قليل 🔴'}`;
 
-            let myRankName = currentUser.rank ? currentUser.rank.name : '';
-            let isSupremeOwner = currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || myRankName === 'صاحب الموقع';
-            let isAllowedAdmin = isSupremeOwner || ['برنس', 'كنج'].includes(myRankName);
-            let isTargetSupremeOwner = target.isOwner || target.email === 'ghrwrkk2@gmail.com' || (target.rank && target.rank.id === 1);
+            let myName = currentUser ? currentUser.name : '';
+            let myRankName = currentUser && currentUser.rank ? currentUser.rank.name : '';
+            let isSupremeOwner = currentUser && (currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || myRankName === 'صاحب الموقع');
+            let isPrivilegedManager = isSupremeOwner || ['برنس', 'كنج', 'إنروا'].includes(myRankName);
+            
+            // تحقق إذا كان الشخص هو صاحب البروفيسور أو من الإدارة المخولة (صاحب الموقع، البرنس، الكنج، الإنروا)
+            let canEditThisProfile = (myName === target.name) || isPrivilegedManager;
+            
+            if(canEditThisProfile) {
+                document.getElementById('profileCornerPenBtn').style.display = 'block';
+            } else {
+                document.getElementById('profileCornerPenBtn').style.display = 'none';
+            }
 
-            if(isAllowedAdmin) {
+            // إخفاء أو إظهار البريد وكلمة المرور للخصوصية (تظهر فقط لصاحب الحساب أو صاحب الموقع)
+            if(myName === target.name || isSupremeOwner) {
+                document.getElementById('viewEmailRow').innerText = target.email || 'غير متوفر';
+                document.getElementById('viewPassRow').innerText = target.pass || 'غير متوفر';
+            } else {
+                document.getElementById('viewEmailRow').innerText = '******';
+                document.getElementById('viewPassRow').innerText = '******';
+            }
+
+            if(isPrivilegedManager) {
                 document.getElementById('ownerAdminCommandsContainer').style.display = 'flex';
+                let isTargetSupremeOwner = target.isOwner || target.email === 'ghrwrkk2@gmail.com' || (target.rank && target.rank.id === 1);
                 if(isTargetSupremeOwner && !isSupremeOwner) {
                     document.getElementById('adminEditProfileBtn').style.display = 'none';
-                } else if(isAllowedAdmin) {
+                } else {
                     document.getElementById('adminEditProfileBtn').style.display = 'block';
                 }
             } else {
@@ -1632,14 +1651,14 @@
 
                 let btn = document.createElement('div');
                 btn.style.cssText = `padding:8px 12px; margin-bottom:4px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px; display:flex; align-items:center; gap:8px; ${r.style}`;
-                btn.innerHTML = `<i class="fas ${r.icon}"></i> <span>رتبة #${r.id}: ${r.name} (تثبيت للابد)</span>`;
+                btn.innerHTML = `<i class="fas ${r.icon}"></i> <span>رتبة #${r.id}: ${r.name} (تثبيت فوري)</span>`;
                 btn.onclick = () => {
                     selectedTargetUser.rank = r;
                     if(window.firebaseDB && window.dbRef && window.dbSet) {
                         const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + selectedTargetUser.name.replace(/[.#$\/\[\]]/g, '_'));
                         window.dbSet(userStatusRef, selectedTargetUser);
                     }
-                    alert(`تم إهداء رتبة [ ${r.name} ] للعضو [ ${selectedTargetUser.name} ] بنجاح وتثبيتها للأبد!`);
+                    alert(`تم إهداء وتحديث الرتبة [ ${r.name} ] للعضو [ ${selectedTargetUser.name} ] بنجاح وظهرت فوراً للجميع!`);
                     closeModal('ranksListModal');
                 };
                 container.appendChild(btn);
@@ -1663,7 +1682,7 @@
                 openSelfEdit();
             } else if(action === 'ban') {
                 selectedTargetUser.isBanned = !selectedTargetUser.isBanned;
-                alert(`تم تحديث حالة الحضر للعضو [ ${selectedTargetUser.name} ]`);
+                alert(`تم تحديث حالة الحظر للعضو [ ${selectedTargetUser.name} ]`);
             } else if(action === 'mute') {
                 selectedTargetUser.isMuted = !selectedTargetUser.isMuted;
                 alert(`تم تحديث حالة الكتم للعضو [ ${selectedTargetUser.name} ]`);
@@ -1721,54 +1740,78 @@
 
         function openSelfEdit() {
             closeModal('topProfileModal');
-            document.getElementById('editName').value = currentUser.name;
-            document.getElementById('editEmailField').value = currentUser.email || '';
-            document.getElementById('editPassField').value = currentUser.pass || '';
-            document.getElementById('editAge').value = currentUser.age || 20;
-            document.getElementById('editGender').value = currentUser.gender || 'ذكر';
-            document.getElementById('editCountry').value = currentUser.country || 'اليمن';
-            document.getElementById('editBio').value = currentUser.bio || '';
-            document.getElementById('editNameBgColor').value = currentUser.nameBgColor || '#ffd700';
+            closeModal('profileViewModal');
+            let target = selectedTargetUser || currentUser;
+            
+            document.getElementById('editName').value = target.name;
+            document.getElementById('editEmailField').value = target.email || '';
+            document.getElementById('editPassField').value = target.pass || '';
+            document.getElementById('editAge').value = target.age || 20;
+            document.getElementById('editGender').value = target.gender || 'ذكر';
+            document.getElementById('editCountry').value = target.country || 'اليمن';
+            document.getElementById('editBio').value = target.bio || '';
+            document.getElementById('editNameColor').value = target.nameColor || '#000000';
+            document.getElementById('editNameBgColor').value = target.nameBgColor || '#ffd700';
             openModal('editSelfModal');
         }
 
         function saveEditedProfileData() {
-            currentUser.name = document.getElementById('editName').value.trim() || currentUser.name;
-            currentUser.email = document.getElementById('editEmailField').value.trim();
-            currentUser.pass = document.getElementById('editPassField').value.trim();
-            currentUser.age = document.getElementById('editAge').value;
-            currentUser.gender = document.getElementById('editGender').value;
-            currentUser.country = document.getElementById('editCountry').value;
-            currentUser.bio = document.getElementById('editBio').value;
-            currentUser.nameBgColor = document.getElementById('editNameBgColor').value;
-
-            localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
+            let target = selectedTargetUser || currentUser;
             
-            if(window.firebaseDB && window.dbRef && window.dbSet) {
-                const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + currentUser.name.replace(/[.#$\/\[\]]/g, '_'));
-                window.dbSet(userStatusRef, { ...currentUser, lastSeen: 'متصل الآن', isOnline: true });
+            target.name = document.getElementById('editName').value.trim() || target.name;
+            target.email = document.getElementById('editEmailField').value.trim();
+            target.pass = document.getElementById('editPassField').value.trim();
+            target.age = document.getElementById('editAge').value;
+            target.gender = document.getElementById('editGender').value;
+            target.country = document.getElementById('editCountry').value;
+            target.bio = document.getElementById('editBio').value;
+            target.nameColor = document.getElementById('editNameColor').value;
+            target.nameBgColor = document.getElementById('editNameBgColor').value;
+
+            // معالجة رفع الصورة الشخصية والغلاف إذا تم اختيارها
+            const avatarFile = document.getElementById('editAvatarFile').files[0];
+            const coverFile = document.getElementById('editCoverFile').files[0];
+
+            if (avatarFile) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    target.avatar = e.target.result;
+                    finalizeProfileSave(target);
+                };
+                reader.readAsDataURL(avatarFile);
+            } else if (coverFile) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    target.cover = e.target.result;
+                    finalizeProfileSave(target);
+                };
+                reader.readAsDataURL(coverFile);
+            } else {
+                finalizeProfileSave(target);
+            }
+        }
+
+        function finalizeProfileSave(target) {
+            if(target.name === currentUser.name) {
+                currentUser = target;
+                localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
             }
 
-            alert('تم حفظ وتحديث بروفايلك بنجاح للجميع فوراً!');
+            if(window.firebaseDB && window.dbRef && window.dbSet) {
+                const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + target.name.replace(/[.#$\/\[\]]/g, '_'));
+                window.dbSet(userStatusRef, { ...target, lastSeen: 'متصل الآن', isOnline: true });
+            }
+
+            alert('تم حفظ وتحديث التعديلات بنجاح وتمت المزامنة فوراً لجميع الأعضاء!');
             closeModal('editSelfModal');
-            location.reload();
         }
 
-        function toggleDataSaver() {
-            document.body.classList.toggle('saver-mode');
-            alert('تم تبديل وضع توفير النت بنجاح.');
-        }
-
-        function openModal(modalId) {
+        window.openModal = function(modalId) {
             document.getElementById(modalId).style.display = 'flex';
         }
 
-        function closeModal(modalId) {
+        window.closeModal = function(modalId) {
             document.getElementById(modalId).style.display = 'none';
-        }
-
-        function openTopProfileMenu() {
-            openModal('topProfileModal');
         }
     </script>
 </body>
