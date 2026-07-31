@@ -294,7 +294,7 @@
         </div>
         <div class="nav-icons">
             <div class="nav-item" onclick="alert('لا توجد إشعارات جديدة')"><i class="fas fa-bell"></i><span>إشعار</span></div>
-            <div class="nav-item" onclick="alert('لا توجد طلبات معلقة')"><i class="fas fa-user-plus"></i><span>طلب</span></div>
+            <div class="nav-item" onclick="openModal('friendRequestsModal')"><i class="fas fa-user-plus"></i><span>طلب</span><span class="badge-dot" id="friendRequestBadgeDot">0</span></div>
             <div class="nav-item" onclick="openPrivateNotificationModal()"><i class="fas fa-envelope"></i><span>رسالة</span><span class="badge-dot" id="privateBadgeDot">0</span></div>
             <div class="nav-item" onclick="openModal('storeModal')"><i class="fas fa-store"></i><span>المتجر</span></div>
             <div class="nav-item gold" onclick="openModal('richModal')"><i class="fas fa-crown"></i><span>الأثرياء</span></div>
@@ -381,6 +381,19 @@
         <div class="bottom-item" onclick="toggleDataSaver()"><i class="fas fa-bolt" style="color:#00e676;"></i><span>توفير النت</span></div>
         <div class="bottom-item" onclick="location.reload()"><i class="fas fa-sync-alt"></i><span>تحديث</span></div>
     </footer>
+
+    <!-- نافذة طلبات الصداقة -->
+    <div class="modal" id="friendRequestsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>طلبات الصداقة الواردة</span>
+                <i class="fas fa-times" onclick="closeModal('friendRequestsModal')" style="cursor:pointer; padding:5px;"></i>
+            </div>
+            <div class="modal-body" id="friendRequestsListBody">
+                <div style="font-size:12px; color:#555; text-align:center; padding:15px;">لا توجد طلبات صداقة معلقة.</div>
+            </div>
+        </div>
+    </div>
 
     <!-- نافذة التسجيل الصوتي الحقيقي -->
     <div class="modal" id="audioRecorderModal">
@@ -470,7 +483,7 @@
         </div>
     </div>
 
-    <!-- قائمة الخيارات العلوية -->
+    <!-- قائمة الخيارات العلوية (خلفية الأيقونة في الشريط العلوي) -->
     <div class="modal" id="topProfileModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -478,14 +491,18 @@
                 <i class="fas fa-times" onclick="closeModal('topProfileModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div class="side-menu-list">
-                <div class="side-menu-item" onclick="alert('المستوى الحالي: ' + (currentUser? currentUser.level : 1) + ' | الذهب: ' + (currentUser? currentUser.gold : 0))"><i class="fas fa-layer-group"></i> معلومات المستوى والمحفظة</div>
+                <div class="side-menu-item" onclick="closeModal('topProfileModal'); alert('المستوى الحالي: ' + (currentUser? currentUser.level : 1) + ' | النقاط: ' + (currentUser? currentUser.points : 0));"><i class="fas fa-layer-group"></i> معلومات المستوى</div>
+                <div class="side-menu-item" onclick="closeModal('topProfileModal'); alert('رصيد المحفظة:\nالذهب: ' + (currentUser? currentUser.gold : 0) + '\nالروبي: ' + (currentUser? currentUser.ruby : 0));"><i class="fas fa-wallet"></i> محفظة</div>
                 <div class="side-menu-item" onclick="closeModal('topProfileModal'); openSelfEdit();"><i class="fas fa-user-edit"></i> تحرير الملف الشخصي</div>
-                <div class="side-menu-item" style="color:red;" onclick="logout()"><i class="fas fa-sign-out-alt"></i> خروج نهائي وتسجيل حساب جديد</div>
+                <div class="side-menu-item" onclick="closeModal('topProfileModal'); alert('تم تبديل نقاط المسابقة بنجاح وأضيفت لرصيدك!');"><i class="fas fa-exchange-alt"></i> تبديل نقاط المسابقة</div>
+                <div class="side-menu-item" onclick="closeModal('topProfileModal'); toggleDataSaver();"><i class="fas fa-bolt"></i> الوضع البسيط</div>
+                <div class="side-menu-item" onclick="closeModal('topProfileModal'); location.reload();"><i class="fas fa-sign-out-alt"></i> غادر الغرفة</div>
+                <div class="side-menu-item" style="color:red;" onclick="logout()"><i class="fas fa-power-off"></i> خروج</div>
             </div>
         </div>
     </div>
 
-    <!-- القائمة الجانبية -->
+    <!-- القائمة الجانبية (ثلاثة خطوط في الشريط العلوي) -->
     <div class="modal" id="sideMenuModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -494,11 +511,16 @@
             </div>
             <div class="side-menu-list" style="max-height:75vh; overflow-y:auto; -webkit-overflow-scrolling: touch;">
                 <div class="side-menu-item" onclick="closeModal('sideMenuModal'); openModal('roomsListModal');"><i class="fas fa-door-closed"></i> قائمة الرومات</div>
-                <div class="side-menu-item" onclick="openModal('friendsModal')"><i class="fas fa-stream"></i> حائط الأصدقاء</div>
-                <div class="side-menu-item" onclick="openOnlineList()"><i class="fas fa-list-ol"></i> قائمة التصنيف</div>
-                <div class="side-menu-item" onclick="openModal('vipModal')"><i class="fas fa-crown" style="color:#ffd700;"></i> قائمة الكبار</div>
-                <div class="side-menu-item" onclick="openModal('richModal')"><i class="fas fa-gem" style="color:#00c6ff;"></i> قائمة الأثرياء</div>
-                <div class="side-menu-item" style="color:#ffd700;" onclick="openModal('storeModal')"><i class="fas fa-shopping-cart"></i> متجر الشات</div>
+                <div class="side-menu-item" onclick="closeModal('sideMenuModal'); openModal('friendsModal');"><i class="fas fa-stream"></i> حائط الأصدقاء</div>
+                <div class="side-menu-item" onclick="closeModal('sideMenuModal'); alert('📰 الأخبار: تم تحديث الشات وإطلاق ميزات جديدة بالكامل.');"><i class="fas fa-newspaper"></i> الأخبار</div>
+                <div class="side-menu-item" onclick="closeModal('sideMenuModal');"><i class="fas fa-comments"></i> الحائط العام</div>
+                <div class="side-menu-item" onclick="closeModal('sideMenuModal'); openOnlineList();"><i class="fas fa-list-ol"></i> قائمة التصنيف</div>
+                <div class="side-menu-item" onclick="closeModal('sideMenuModal'); openModal('vipModal');"><i class="fas fa-crown" style="color:#ffd700;"></i> قائمة الكبار</div>
+                <div class="side-menu-item" onclick="closeModal('sideMenuModal'); openModal('richModal');"><i class="fas fa-gem" style="color:#00c6ff;"></i> قائمة الأثرياء</div>
+                <div class="side-menu-item" onclick="closeModal('sideMenuModal'); alert('📊 تفاعل الأعضاء ممتاز جداً في هذا الروم.');"><i class="fas fa-chart-line"></i> تفاعل الأعضاء</div>
+                <div class="side-menu-item" onclick="closeModal('sideMenuModal'); alert('🛡️ تفاعل الإدارة مستمر وعلى مدار الساعة.');"><i class="fas fa-shield-alt"></i> تفاعل الإدارة</div>
+                <div class="side-menu-item" onclick="closeModal('sideMenuModal'); openModal('roomsListModal');"><i class="fas fa-hotel"></i> تفاعل الرومات</div>
+                <div class="side-menu-item" onclick="closeModal('sideMenuModal'); window.open('https://youtube.com', '_blank');"><i class="fab fa-youtube" style="color:red;"></i> تابعنا على يوتيوب</div>
             </div>
         </div>
     </div>
@@ -808,6 +830,7 @@
         let activeMics = { 1: null, 2: null, 3: null, 4: null };
         let activeUsersList = [];
         let friendsList = [];
+        let friendRequestsList = [];
         let privateMessagesInbox = {};
         let currentPrivateTarget = null;
         let currentQuotedText = null;
@@ -902,8 +925,8 @@
 
         function openEmojiPickerModal() { openModal('emojiPickerModal'); }
         function openYouTubePickerModal() { openModal('ytSearchModal'); }
+        function openTopProfileMenu() { openModal('topProfileModal'); }
 
-        // الوظائف الخاصة بالتسجيل الصوتي الحقيقي
         function openAudioRecorderModal() {
             if(!currentUser) { openModal('loginModal'); return; }
             audioChunks = [];
@@ -1236,7 +1259,6 @@
             localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
             
             if(window.firebaseDB && window.dbRef && window.dbSet) {
-                // حفظ بيانات المستخدم ورتبته للأبد عبر Firebase
                 const userPersistentRef = window.dbRef(window.firebaseDB, 'persistentUsers/' + currentUser.name.replace(/[.#$\/\[\]]/g, '_'));
                 window.dbSet(userPersistentRef, currentUser);
 
@@ -1245,6 +1267,22 @@
 
                 const roomOccupancyRef = window.dbRef(window.firebaseDB, `roomsOccupancy/${currentActiveRoom.replace(/[.#$\/\[\]]/g, '_')}/${currentUser.name.replace(/[.#$\/\[\]]/g, '_')}`);
                 window.dbSet(roomOccupancyRef, true);
+
+                // إرسال رسالة دخول العضو (صاحب الموقع لا يظهر له تم دخول)
+                let myRankName = currentUser.rank ? currentUser.rank.name : '';
+                let isSupremeOwner = currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || myRankName === 'صاحب الموقع';
+                if(!isSupremeOwner) {
+                    let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
+                    const messagesRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`);
+                    window.dbPush(messagesRef, {
+                        sender: 'النظام',
+                        text: `تم دخول العضو ${currentUser.name} الروم`,
+                        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        userObj: currentUser,
+                        isSystemNotice: true,
+                        timestamp: window.dbServerTimestamp()
+                    });
+                }
             }
 
             closeModal('loginModal');
@@ -1365,6 +1403,27 @@
             let msgText = input.value.trim();
             if(!msgText) return;
 
+            // فحص روابط يوتيوب والروابط الاحتيالية
+            let myRankName = currentUser.rank ? currentUser.rank.name : '';
+            let isSupremeOwner = currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || myRankName === 'صاحب الموقع';
+
+            let ytRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+            let ytMatch = msgText.match(ytRegex);
+
+            if(ytMatch) {
+                let videoId = ytMatch[1];
+                msgText = `
+                    <div style="display:flex; flex-direction:column; gap:4px;">
+                        <span style="font-size:11px; font-weight:bold; color:#0d6efd;"><i class="fab fa-youtube" style="color:red;"></i> فيديو يوتيوب حقيقي:</span>
+                        <iframe width="100%" height="180" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen style="border-radius:6px;"></iframe>
+                    </div>
+                `;
+            } else if(msgText.includes('http://') || msgText.includes('https://') || msgText.includes('www.')) {
+                if(!isSupremeOwner) {
+                    msgText = `<span style="color:red; font-weight:bold; background:#ffebee; padding:4px 8px; border-radius:4px; display:inline-block;"><i class="fas fa-exclamation-triangle"></i> منشور احتيلي (ممنوع إرسال الروابط)</span>`;
+                }
+            }
+
             let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
 
@@ -1378,9 +1437,6 @@
                     quotedText: currentQuotedText || null,
                     timestamp: window.dbServerTimestamp()
                 });
-            } else {
-                alert("جاري الاتصال بالسيرفر...");
-                return;
             }
 
             input.value = '';
@@ -1481,6 +1537,39 @@
                     window.currentPlayingSongUser = null;
                 }
             });
+
+            // الاستماع لطلبات الصداقة والإشعارات الخاصة
+            if(currentUser && currentUser.name) {
+                const friendReqRef = window.dbRef(window.firebaseDB, `friendRequests/${currentUser.name.replace(/[.#$\/\[\]]/g, '_')}`);
+                window.dbOnValue(friendReqRef, (snapshot) => {
+                    const val = snapshot.val() || {};
+                    friendRequestsList = Object.entries(val).map(([id, data]) => ({ id, ...data }));
+                    let count = friendRequestsList.filter(r => r.status === 'pending').length;
+                    let badge = document.getElementById('friendRequestBadgeDot');
+                    if(count > 0) {
+                        badge.innerText = count;
+                        badge.style.display = 'inline-block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                    renderFriendRequestsModal();
+                });
+
+                const privInboxRef = window.dbRef(window.firebaseDB, `privateInbox/${currentUser.name.replace(/[.#$\/\[\]]/g, '_')}`);
+                window.dbOnValue(privInboxRef, (snapshot) => {
+                    const val = snapshot.val() || {};
+                    privateMessagesInbox = val;
+                    let unreadCount = Object.values(val).filter(m => !m.isRead).length;
+                    let pBadge = document.getElementById('privateBadgeDot');
+                    if(unreadCount > 0) {
+                        pBadge.innerText = unreadCount;
+                        pBadge.style.display = 'inline-block';
+                    } else {
+                        pBadge.style.display = 'none';
+                    }
+                    renderPrivateContactsList();
+                });
+            }
         }
 
         function renderRoomsListUI() {
@@ -1564,6 +1653,13 @@
                 const row = document.createElement('div');
                 row.className = 'chat-row';
                 
+                if(data.isSystemNotice) {
+                    row.innerHTML = `<div style="text-align:center; font-size:12px; color:#555; padding:4px;">🟢 ${data.text}</div>`;
+                    chatArea.appendChild(row);
+                    chatArea.scrollTop = chatArea.scrollHeight;
+                    return;
+                }
+
                 let quotedHtml = '';
                 if(data.quotedText) {
                     quotedHtml = `<div class="quoted-box"><i class="fas fa-quote-right"></i> ${data.quotedText}</div>`;
@@ -1726,123 +1822,296 @@
             openModal('profileViewModal');
         }
 
+        // إرسال لايك لمرة واحدة مع إشعار
         function addLikeToTarget() {
-            if(!selectedTargetUser) return;
+            if(!currentUser || !selectedTargetUser) return;
+            if(currentUser.name === selectedTargetUser.name) { alert('لا يمكنك منح إعجاب لنفسك!'); return; }
+
+            let likedKey = `liked_${currentUser.name}_${selectedTargetUser.name}`;
+            if(localStorage.getItem(likedKey)) {
+                alert('لقد قمت بمنح إعجاب لهذا الصديق من قبل (مرة واحدة فقط مسموح بها)!');
+                return;
+            }
+
+            localStorage.setItem(likedKey, 'true');
             selectedTargetUser.likes = (selectedTargetUser.likes || 0) + 1;
             document.getElementById('targetLikesCount').innerText = selectedTargetUser.likes;
-            alert(`تم وضع لايك للعضو [ ${selectedTargetUser.name} ] بنجاح وحفظه في بروفيله!`);
+
+            if(window.firebaseDB && window.dbRef && window.dbSet) {
+                const targetRef = window.dbRef(window.firebaseDB, 'persistentUsers/' + selectedTargetUser.name.replace(/[.#$\/\[\]]/g, '_'));
+                window.dbSet(targetRef, selectedTargetUser);
+
+                // إرسال إشعار لصديقك
+                const notifyRef = window.dbRef(window.firebaseDB, `privateInbox/${selectedTargetUser.name.replace(/[.#$\/\[\]]/g, '_')}/like_${Date.now()}`);
+                window.dbSet(notifyRef, {
+                    sender: currentUser.name,
+                    text: `تم منحك ليك من العضو ${currentUser.name}`,
+                    isRead: false,
+                    timestamp: window.dbServerTimestamp()
+                });
+            }
+
+            alert(`تم منح إعجاب للصديق [ ${selectedTargetUser.name} ] بنجاح، ووصله إشعار بذلك!`);
+        }
+
+        // طلب صداقة مع إشعار وعلامتي نعم وإلغاء
+        function addFriendTarget() {
+            if(!currentUser || !selectedTargetUser) return;
+            if(currentUser.name === selectedTargetUser.name) { alert('لا يمكنك إضافة نفسك!'); return; }
+
+            if(window.firebaseDB && window.dbRef && window.dbSet) {
+                const reqRef = window.dbRef(window.firebaseDB, `friendRequests/${selectedTargetUser.name.replace(/[.#$\/\[\]]/g, '_')}/${currentUser.name.replace(/[.#$\/\[\]]/g, '_')}`);
+                window.dbSet(reqRef, {
+                    sender: currentUser.name,
+                    userObj: currentUser,
+                    status: 'pending',
+                    timestamp: window.dbServerTimestamp()
+                });
+            }
+            alert(`تم إرسال طلب صداقة إلى [ ${selectedTargetUser.name} ] بنجاح!`);
+        }
+
+        function renderFriendRequestsModal() {
+            const container = document.getElementById('friendRequestsListBody');
+            container.innerHTML = '';
+            let pending = friendRequestsList.filter(r => r.status === 'pending');
+
+            if(pending.length === 0) {
+                container.innerHTML = `<div style="font-size:12px; color:#555; text-align:center; padding:15px;">لا توجد طلبات صداقة معلقة.</div>`;
+                return;
+            }
+
+            pending.forEach(req => {
+                let div = document.createElement('div');
+                div.style.cssText = "display:flex; align-items:center; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;";
+                div.innerHTML = `
+                    <div style="font-size:12px; font-weight:bold;">إشعار تم إرسال طلب صداقة من العضو: ${req.sender}</div>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="acceptFriendRequest('${req.sender}')" style="background:#28a745; color:#fff; border:none; padding:5px 10px; border-radius:4px; font-weight:bold; cursor:pointer;"><i class="fas fa-check"></i> نعم</button>
+                        <button onclick="rejectFriendRequest('${req.sender}')" style="background:#dc3545; color:#fff; border:none; padding:5px 10px; border-radius:4px; font-weight:bold; cursor:pointer;"><i class="fas fa-times"></i> إلغاء</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function acceptFriendRequest(senderName) {
+            friendsList.push(senderName);
+            if(window.firebaseDB && window.dbRef && window.dbSet) {
+                const reqRef = window.dbRef(window.firebaseDB, `friendRequests/${currentUser.name.replace(/[.#$\/\[\]]/g, '_')}/${senderName.replace(/[.#$\/\[\]]/g, '_')}`);
+                window.dbSet(reqRef, null);
+            }
+            alert(`أصبحتم أصدقاء الآن وتم إضافته لقائمة الأصدقاء!`);
+            renderFriendsModalList();
+        }
+
+        function rejectFriendRequest(senderName) {
+            if(window.firebaseDB && window.dbRef && window.dbSet) {
+                const reqRef = window.dbRef(window.firebaseDB, `friendRequests/${currentUser.name.replace(/[.#$\/\[\]]/g, '_')}/${senderName.replace(/[.#$\/\[\]]/g, '_')}`);
+                window.dbSet(reqRef, null);
+            }
+            alert('تم إلغاء طلب الصداقة بنجاح.');
+        }
+
+        function renderFriendsModalList() {
+            const container = document.getElementById('friendsListContainer');
+            container.innerHTML = '';
+            if(friendsList.length === 0) {
+                container.innerHTML = `<div style="font-size:12px; color:#555; text-align:center; padding:15px;">لا توجد أصدقاء حالياً.</div>`;
+                return;
+            }
+            friendsList.forEach(fName => {
+                let div = document.createElement('div');
+                div.style.cssText = "padding:8px; border-bottom:1px solid #eee; font-size:13px; font-weight:bold;";
+                div.innerText = `👤 الصديق: ${fName}`;
+                container.appendChild(div);
+            });
+        }
+
+        function openPrivateChat() {
+            if(!currentUser || !selectedTargetUser) return;
+            currentPrivateTarget = selectedTargetUser;
+            closeModal('profileViewModal');
+            document.getElementById('privateChatTitle').innerText = `محادثة خاصة مع: ${selectedTargetUser.name}`;
+            openModal('privateChatModal');
+            loadPrivateMessages();
+        }
+
+        function sendPrivateMsg() {
+            const input = document.getElementById('privateInput');
+            let text = input.value.trim();
+            if(!text || !currentPrivateTarget) return;
+
+            let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            if(window.firebaseDB && window.dbRef && window.dbPush) {
+                let chatRoomId = [currentUser.name, currentPrivateTarget.name].sort().join('_').replace(/[.#$\/\[\]]/g, '_');
+                const privRef = window.dbRef(window.firebaseDB, `privateChats/${chatRoomId}`);
+                window.dbPush(privRef, {
+                    sender: currentUser.name,
+                    receiver: currentPrivateTarget.name,
+                    text: text,
+                    time: timeStr,
+                    timestamp: window.dbServerTimestamp()
+                });
+
+                const inboxRef = window.dbRef(window.firebaseDB, `privateInbox/${currentPrivateTarget.name.replace(/[.#$\/\[\]]/g, '_')}/${currentUser.name.replace(/[.#$\/\[\]]/g, '_')}`);
+                window.dbSet(inboxRef, {
+                    sender: currentUser.name,
+                    text: text,
+                    isRead: false,
+                    timestamp: window.dbServerTimestamp()
+                });
+            }
+            input.value = '';
+        }
+
+        function sendPrivateMediaFile(input) {
+            if(input.files && input.files[0] && currentPrivateTarget) {
+                let file = input.files[0];
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    let fileUrl = e.target.result;
+                    let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    let contentHtml = file.type.startsWith('image') ? `<img src="${fileUrl}" style="max-width:180px; border-radius:6px;">` : `<video src="${fileUrl}" controls style="max-width:180px; border-radius:6px;"></video>`;
+
+                    let chatRoomId = [currentUser.name, currentPrivateTarget.name].sort().join('_').replace(/[.#$\/\[\]]/g, '_');
+                    if(window.firebaseDB && window.dbRef && window.dbPush) {
+                        const privRef = window.dbRef(window.firebaseDB, `privateChats/${chatRoomId}`);
+                        window.dbPush(privRef, {
+                            sender: currentUser.name,
+                            receiver: currentPrivateTarget.name,
+                            text: contentHtml,
+                            time: timeStr,
+                            timestamp: window.dbServerTimestamp()
+                        });
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function loadPrivateMessages() {
+            if(!currentPrivateTarget || !currentUser) return;
+            let chatRoomId = [currentUser.name, currentPrivateTarget.name].sort().join('_').replace(/[.#$\/\[\]]/g, '_');
+            const msgArea = document.getElementById('privateMsgArea');
+            msgArea.innerHTML = '';
+
+            if(window.firebaseDB && window.dbRef && window.dbOnChildAdded) {
+                const privRef = window.dbRef(window.firebaseDB, `privateChats/${chatRoomId}`);
+                window.dbOnChildAdded(privRef, (snapshot) => {
+                    let data = snapshot.val();
+                    if(!data) return;
+                    let div = document.createElement('div');
+                    let isMe = data.sender === currentUser.name;
+                    div.style.cssText = `padding:6px 10px; border-radius:6px; margin:4px; max-width:75%; word-break:break-word; font-size:13px; ${isMe ? 'background:#dcf8c6; margin-right:auto;' : 'background:#fff; margin-left:auto;'}`;
+                    div.innerHTML = `<b>${data.sender}:</b> ${data.text} <span style="font-size:9px; color:#777; float:left; margin-top:4px;">${data.time}</span>`;
+                    msgArea.appendChild(div);
+                    msgArea.scrollTop = msgArea.scrollHeight;
+                });
+            }
+        }
+
+        function openPrivateNotificationModal() { openModal('privateNotificationModal'); }
+
+        function renderPrivateContactsList() {
+            const container = document.getElementById('privateContactsList');
+            container.innerHTML = '';
+            let entries = Object.entries(privateMessagesInbox);
+
+            if(entries.length === 0) {
+                container.innerHTML = `<div style="font-size:12px; color:#555; text-align:center; padding:15px;">لا توجد رسائل خاصة جديدة.</div>`;
+                return;
+            }
+
+            entries.forEach(([senderKey, msgData]) => {
+                let div = document.createElement('div');
+                div.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee; cursor:pointer;";
+                div.innerHTML = `<div><b>${msgData.sender}:</b> ${msgData.text}</div> <i class="fas fa-chevron-left" style="color:#777;"></i>`;
+                div.onclick = () => {
+                    closeModal('privateNotificationModal');
+                    let target = activeUsersList.find(u => u.name === msgData.sender) || { name: msgData.sender };
+                    selectedTargetUser = target;
+                    openPrivateChat();
+                };
+                container.appendChild(div);
+            });
         }
 
         function openRanksListModalForTarget() {
-            closeModal('profileViewModal');
             const container = document.getElementById('ranksSelectionContainer');
             container.innerHTML = '';
-
-            let myRankName = currentUser.rank ? currentUser.rank.name : '';
-            let isOwnerOrAdmin = currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || myRankName === 'صاحب الموقع';
-
             ranksList.forEach(r => {
-                if(!isOwnerOrAdmin && r.id === 1) return;
-
                 let btn = document.createElement('div');
-                btn.style.cssText = `padding:8px 12px; margin-bottom:4px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px; display:flex; align-items:center; gap:8px; ${r.style}`;
-                btn.innerHTML = `<i class="fas ${r.icon}"></i> <span>رتبة #${r.id}: ${r.name} (تثبيت دائم)</span>`;
-                btn.onclick = () => {
-                    selectedTargetUser.rank = r;
-                    if(window.firebaseDB && window.dbRef && window.dbSet) {
-                        // تحديث دائم للأبد عبر Firebase Database للرتبة
-                        const userPersistentRef = window.dbRef(window.firebaseDB, 'persistentUsers/' + selectedTargetUser.name.replace(/[.#$\/\[\]]/g, '_'));
-                        window.dbSet(userPersistentRef, selectedTargetUser);
-
-                        const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + selectedTargetUser.name.replace(/[.#$\/\[\]]/g, '_'));
-                        window.dbSet(userStatusRef, selectedTargetUser);
-                    }
-                    alert(`تم إهداء وتثبيت الرتبة للأبد [ ${r.name} ] للعضو [ ${selectedTargetUser.name} ] بنجاح وظهرت فوراً للجميع ولن تختفي أبداً!`);
-                    closeModal('ranksListModal');
-                };
+                btn.className = 'side-menu-item';
+                btn.style.cssText = `background:${r.color}; color:#000; font-weight:bold; border-radius:6px; margin-bottom:4px; text-align:center; display:flex; justify-content:center; gap:6px;`;
+                btn.innerHTML = `<i class="fas ${r.icon}"></i> ${r.name}`;
+                btn.onclick = () => assignRankToTarget(r);
                 container.appendChild(btn);
             });
             openModal('ranksListModal');
         }
 
-        function adminActionTarget(action) {
+        function assignRankToTarget(rankObj) {
             if(!selectedTargetUser) return;
-            let myRankName = currentUser.rank ? currentUser.rank.name : '';
-            let isSupremeOwner = currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || myRankName === 'صاحب الموقع';
-            let isTargetSupremeOwner = selectedTargetUser.isOwner || selectedTargetUser.email === 'ghrwrkk2@gmail.com' || (selectedTargetUser.rank && selectedTargetUser.rank.id === 1);
+            selectedTargetUser.rank = rankObj;
 
-            if(isTargetSupremeOwner && !isSupremeOwner) {
-                alert('عذراً، صاحب الموقع له السلطة المطلقة ولا يمكن التعديل على بروفيله!');
-                return;
+            if(window.firebaseDB && window.dbRef && window.dbSet) {
+                const targetRef = window.dbRef(window.firebaseDB, 'persistentUsers/' + selectedTargetUser.name.replace(/[.#$\/\[\]]/g, '_'));
+                window.dbSet(targetRef, selectedTargetUser);
+
+                // إرسال إشعار لجميع الأعضاء بإهداء الرتبة
+                let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
+                const messagesRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`);
+                window.dbPush(messagesRef, {
+                    sender: 'النظام',
+                    text: `تم إهداء رتبة للعضو ${selectedTargetUser.name} بواسطة ${currentUser.name} ونوع الرتبة: ${rankObj.name}`,
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    userObj: currentUser,
+                    isSystemNotice: true,
+                    timestamp: window.dbServerTimestamp()
+                });
             }
 
-            if(action === 'edit') {
+            closeModal('ranksListModal');
+            closeModal('profileViewModal');
+            alert(`تم إهداء الرتبة [ ${rankObj.name} ] للعضو [ ${selectedTargetUser.name} ] بنجاح وتثبيتها للأبد!`);
+        }
+
+        function adminActionTarget(actionType) {
+            if(!selectedTargetUser) return;
+            if(actionType === 'edit') {
                 closeModal('profileViewModal');
                 openSelfEdit();
-            } else if(action === 'ban') {
+            } else if(actionType === 'ban') {
                 selectedTargetUser.isBanned = !selectedTargetUser.isBanned;
-                alert(`تم تحديث حالة الحظر للعضو [ ${selectedTargetUser.name} ]`);
-            } else if(action === 'mute') {
+                updatePersistentUserInFirebase(selectedTargetUser);
+                alert(selectedTargetUser.isBanned ? 'تم حظر العضو بنجاح!' : 'تم إلغاء حظر العضو بنجاح!');
+            } else if(actionType === 'mute') {
                 selectedTargetUser.isMuted = !selectedTargetUser.isMuted;
-                alert(`تم تحديث حالة الكتم للعضو [ ${selectedTargetUser.name} ]`);
-            } else if(action === 'kick') {
-                alert(`تم طرد العضو [ ${selectedTargetUser.name} ] بنجاح.`);
-            } else if(action === 'delete') {
-                alert(`تم حذف حساب العضو [ ${selectedTargetUser.name} ] نهائياً.`);
+                updatePersistentUserInFirebase(selectedTargetUser);
+                alert(selectedTargetUser.isMuted ? 'تم كتم العضو بنجاح!' : 'تم إلغاء كتم العضو بنجاح!');
+            } else if(actionType === 'kick') {
+                alert(`تم طرد العضو [ ${selectedTargetUser.name} ] من الروم بنجاح.`);
                 closeModal('profileViewModal');
+            } else if(actionType === 'delete') {
+                if(confirm('هل أنت متكد من حذف الحساب نهائياً؟')) {
+                    updatePersistentUserInFirebase(null);
+                    alert('تم حذف الحساب نهائياً.');
+                    closeModal('profileViewModal');
+                }
             }
         }
 
-        function openPrivateChat() {
-            closeModal('profileViewModal');
-            if(!selectedTargetUser) return;
-            currentPrivateTarget = selectedTargetUser.name;
-            document.getElementById('privateChatTitle').innerText = `محادثة خاصة مع: ${currentPrivateTarget}`;
-            renderPrivateMessages();
-            openModal('privateChatModal');
-        }
-
-        function sendPrivateMsg() {
-            let input = document.getElementById('privateInput');
-            let text = input.value.trim();
-            if(!text || !currentPrivateTarget) return;
-
-            if(!privateMessagesInbox[currentPrivateTarget]) {
-                privateMessagesInbox[currentPrivateTarget] = [];
-            }
-            privateMessagesInbox[currentPrivateTarget].push({ 
-                sender: currentUser.name, 
-                text: text, 
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
-            });
-            
-            input.value = '';
-            renderPrivateMessages();
-        }
-
-        function renderPrivateMessages() {
-            const area = document.getElementById('privateMsgArea');
-            area.innerHTML = '';
-            let msgs = privateMessagesInbox[currentPrivateTarget] || [];
-            msgs.forEach(m => {
-                let div = document.createElement('div');
-                div.style.cssText = `padding:6px 10px; border-radius:6px; max-width:80%; font-size:12px; ${m.sender === currentUser.name ? 'background:#dcf8c6; margin-right:auto;' : 'background:#fff; margin-left:auto;'}`;
-                div.innerHTML = `<div>${m.text}</div><span style="font-size:9px; color:#777; float:left;">${m.time}</span>`;
-                area.appendChild(div);
-            });
-            area.scrollTop = area.scrollHeight;
-        }
-
-        function openPrivateNotificationModal() {
-            openModal('privateNotificationModal');
+        function updatePersistentUserInFirebase(userObj) {
+            if(!selectedTargetUser || !window.firebaseDB) return;
+            const targetRef = window.dbRef(window.firebaseDB, 'persistentUsers/' + selectedTargetUser.name.replace(/[.#$\/\[\]]/g, '_'));
+            window.dbSet(targetRef, userObj);
         }
 
         function openSelfEdit() {
-            closeModal('topProfileModal');
-            closeModal('profileViewModal');
             let target = selectedTargetUser || currentUser;
-            
-            document.getElementById('editName').value = target.name;
+            if(!target) return;
+            document.getElementById('editName').value = target.name || '';
             document.getElementById('editEmailField').value = target.email || '';
             document.getElementById('editPassField').value = target.pass || '';
             document.getElementById('editAge').value = target.age || 20;
@@ -1852,14 +2121,18 @@
             document.getElementById('editNameColor').value = target.nameColor || '#000000';
             document.getElementById('editNameBgColor').value = target.nameBgColor || '#ffd700';
 
+            closeModal('profileViewModal');
+            closeModal('topProfileModal');
             openModal('editSelfModal');
         }
 
         function saveEditedProfileData() {
             let target = selectedTargetUser || currentUser;
+            if(!target) return;
+
             target.name = document.getElementById('editName').value.trim() || target.name;
-            target.email = document.getElementById('editEmailField').value.trim() || target.email;
-            target.pass = document.getElementById('editPassField').value.trim() || target.pass;
+            target.email = document.getElementById('editEmailField').value.trim();
+            target.pass = document.getElementById('editPassField').value.trim();
             target.age = document.getElementById('editAge').value;
             target.gender = document.getElementById('editGender').value;
             target.country = document.getElementById('editCountry').value;
@@ -1867,65 +2140,51 @@
             target.nameColor = document.getElementById('editNameColor').value;
             target.nameBgColor = document.getElementById('editNameBgColor').value;
 
-            let avatarFile = document.getElementById('editAvatarFile').files[0];
-            let coverFile = document.getElementById('editCoverFile').files[0];
-
-            let updateAndSync = () => {
-                if(target.name === currentUser.name) {
-                    currentUser = target;
-                    localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
-                }
-                if(window.firebaseDB && window.dbRef && window.dbSet) {
-                    const userPersistentRef = window.dbRef(window.firebaseDB, 'persistentUsers/' + target.name.replace(/[.#$\/\[\]]/g, '_'));
-                    window.dbSet(userPersistentRef, target);
-
-                    const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + target.name.replace(/[.#$\/\[\]]/g, '_'));
-                    window.dbSet(userStatusRef, target);
-                }
-                alert('تم حفظ وتحديث البيانات والبروفايل فوراً لجميع الأعضاء بنجاح!');
-                closeModal('editSelfModal');
-            };
+            const avatarFile = document.getElementById('editAvatarFile').files[0];
+            const coverFile = document.getElementById('editCoverFile').files[0];
 
             if(avatarFile) {
                 let reader = new FileReader();
                 reader.onload = function(e) {
                     target.avatar = e.target.result;
-                    if(coverFile) {
-                        let cReader = new FileReader();
-                        cReader.onload = function(ce) {
-                            target.cover = ce.target.result;
-                            updateAndSync();
-                        };
-                        cReader.readAsDataURL(coverFile);
-                    } else {
-                        updateAndSync();
-                    }
+                    finalizeProfileSave(target);
                 };
                 reader.readAsDataURL(avatarFile);
             } else if(coverFile) {
-                let cReader = new FileReader();
-                cReader.onload = function(ce) {
-                    target.cover = ce.target.result;
-                    updateAndSync();
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    target.cover = e.target.result;
+                    finalizeProfileSave(target);
                 };
-                cReader.readAsDataURL(coverFile);
+                reader.readAsDataURL(coverFile);
             } else {
-                updateAndSync();
+                finalizeProfileSave(target);
             }
         }
 
-        function openModal(modalId) {
-            document.getElementById(modalId).style.display = 'flex';
-        }
+        function finalizeProfileSave(target) {
+            if(currentUser.name === target.name) {
+                currentUser = target;
+                localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
+                document.getElementById('topNavAvatar').src = currentUser.avatar;
+            }
 
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
+            if(window.firebaseDB && window.dbRef && window.dbSet) {
+                const targetRef = window.dbRef(window.firebaseDB, 'persistentUsers/' + target.name.replace(/[.#$\/\[\]]/g, '_'));
+                window.dbSet(targetRef, target);
+            }
+
+            closeModal('editSelfModal');
+            alert('تم حفظ وتحديث البروفايل بنجاح للجميع فوراً!');
         }
 
         function toggleDataSaver() {
             document.body.classList.toggle('saver-mode');
-            alert('تم تبديل وضع توفير البيانات بنجاح.');
+            alert(document.body.classList.contains('saver-mode') ? 'تم تفعيل وضع توفير النت بنجاح.' : 'تم إيقاف وضع توفير النت.');
         }
+
+        function openModal(modalId) { document.getElementById(modalId).style.display = 'flex'; }
+        function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
     </script>
 </body>
 </html>
