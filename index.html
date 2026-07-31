@@ -345,7 +345,8 @@
                 <input type="text" id="msgInput" placeholder="اكتب رسالتك هنا..." onkeypress="if(event.key === 'Enter') sendMessage()">
                 <i class="far fa-smile" style="color:#777; cursor:pointer; padding: 5px;" onclick="openEmojiPickerModal()"></i>
             </div>
-            <i class="fas fa-microphone" style="font-size:18px; color:#555; cursor:pointer; padding: 4px;" onclick="alert('التسجيل الصوتي مفعل')"></i>
+            <!-- زر الميكروفون الحقيقي للتسجيل الصوتي الفوري -->
+            <i class="fas fa-microphone" id="realMicRecordBtn" style="font-size:18px; color:#555; cursor:pointer; padding: 4px;" onclick="openAudioRecorderModal()" title="تسجيل صوت حقيقي"></i>
             
             <div style="position:relative;">
                 <i class="fas fa-plus" id="plusBtn" style="font-size:18px; color:#555; cursor:pointer; padding: 4px;" onclick="togglePlusMenu()"></i>
@@ -380,6 +381,23 @@
         <div class="bottom-item" onclick="toggleDataSaver()"><i class="fas fa-bolt" style="color:#00e676;"></i><span>توفير النت</span></div>
         <div class="bottom-item" onclick="location.reload()"><i class="fas fa-sync-alt"></i><span>تحديث</span></div>
     </footer>
+
+    <!-- نافذة التسجيل الصوتي الحقيقي -->
+    <div class="modal" id="audioRecorderModal">
+        <div class="modal-content" style="max-width:320px; padding:20px; text-align:center;">
+            <div class="modal-header" style="margin:-20px -20px 15px -20px;">
+                <span>تسجيل صوت حقيقي</span>
+                <i class="fas fa-times" onclick="closeModal('audioRecorderModal')" style="cursor:pointer; padding:5px;"></i>
+            </div>
+            <div style="font-size:35px; color:#dc3545; margin-bottom:10px;"><i class="fas fa-microphone fa-beat"></i></div>
+            <div id="recordingStatusText" style="font-size:13px; font-weight:bold; margin-bottom:15px;">جاهز للتسجيل، اضغط بدء التحدث</div>
+            <div style="display:flex; gap:8px; justify-content:center;">
+                <button id="startRecBtn" onclick="startRealAudioRecording()" style="background:#28a745; color:#fff; border:none; padding:10px 15px; border-radius:6px; font-weight:bold; cursor:pointer; flex:1;">بدء التسجيل</button>
+                <button id="stopRecBtn" onclick="stopAndSendRealAudio()" style="background:#dc3545; color:#fff; border:none; padding:10px 15px; border-radius:6px; font-weight:bold; cursor:pointer; flex:1;" disabled>إرسال عام</button>
+            </div>
+            <button onclick="closeModal('audioRecorderModal')" style="background:#6c757d; color:#fff; border:none; padding:8px; border-radius:6px; width:100%; margin-top:10px; cursor:pointer;">إلغاء</button>
+        </div>
+    </div>
 
     <!-- نافذة صعود المايك -->
     <div class="modal" id="micJoinConfirmModal">
@@ -613,7 +631,6 @@
         <div class="modal-content profile-card-modal">
             <div class="profile-header-bg" id="viewCover">
                 <i class="fas fa-times" onclick="closeModal('profileViewModal')" style="cursor:pointer; background:rgba(0,0,0,0.5); padding:6px 10px; border-radius:50%;"></i>
-                <!-- قلم الزاوية العلوية للبروفايل (يظهر لصاحب البروفيسور أو صاحب الموقع والبرنس والكنج والإنروا فقط) -->
                 <i class="fas fa-pen" id="profileCornerPenBtn" onclick="openSelfEdit()" style="display:none; cursor:pointer; background:rgba(0,0,0,0.6); padding:8px 10px; border-radius:50%; color:#ffd700; font-size:14px;"></i>
                 <img src="" class="profile-user-avatar" id="viewAvatar">
             </div>
@@ -639,7 +656,7 @@
                 <div class="info-row"><span>الذهب / الروبي / النقاط:</span><span id="viewAssets">0 / 0 / 0</span></div>
 
                 <div id="ownerAdminCommandsContainer" style="display:none; flex-direction:column; gap:6px; margin-top:12px;">
-                    <button class="admin-cmd-btn" style="background:#0d6efd;" onclick="openRanksListModalForTarget()">👑 إهداء رتبه للعضو (تثبيت فوري للأبد)</button>
+                    <button class="admin-cmd-btn" style="background:#0d6efd;" onclick="openRanksListModalForTarget()">👑 إهداء رتبه للعضو (تثبيت دائم للأبد)</button>
                     <button class="admin-cmd-btn" id="adminEditProfileBtn" style="background:#ffc107; color:#000; display:none;" onclick="adminActionTarget('edit')">✏️ تعديل بروفيل العضو</button>
                     <button class="admin-cmd-btn" style="background:#fd7e14;" onclick="adminActionTarget('ban')">🚫 حظر / إلغاء الحظر</button>
                     <button class="admin-cmd-btn" style="background:#6c757d;" onclick="adminActionTarget('mute')">🔇 كتم / إلغاء الكتم</button>
@@ -797,6 +814,9 @@
         let currentActiveRoom = 'روم شات حسوني الرئيسي';
         let customRoomsList = [];
         let isMicsHidden = false;
+        
+        let mediaRecorder = null;
+        let audioChunks = [];
 
         const emojiList = ["😀","😃","😄","😁","😆","😅","🤣","😂","🙂","🙃","😉","😊","😇","🥰","😍","🤩","😘","😗","😚","😙","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🤫","🤔","🤐","🤨","😐","😑","😶","😏","😒","🙄","😬","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🤧","🥵","🥶","🥴","😵","🤯","🤠","🥳","😎","🤓","🧐","😕","😟","🙁","😮","😯","😲","😳","🥺","😦","😧","😨","😰","😥","😢","😭","😱","😖","😣","😞","😓","😩","😫","🥱","😤","😡","😠","🤬","😈","👿","💀","☠️","💩","🤡","👹","👺","👻","👽","👾","🤖"];
 
@@ -882,6 +902,70 @@
 
         function openEmojiPickerModal() { openModal('emojiPickerModal'); }
         function openYouTubePickerModal() { openModal('ytSearchModal'); }
+
+        // الوظائف الخاصة بالتسجيل الصوتي الحقيقي
+        function openAudioRecorderModal() {
+            if(!currentUser) { openModal('loginModal'); return; }
+            audioChunks = [];
+            document.getElementById('recordingStatusText').innerText = "جاهز للتسجيل، اضغط بدء التحدث";
+            document.getElementById('startRecBtn').disabled = false;
+            document.getElementById('stopRecBtn').disabled = true;
+            openModal('audioRecorderModal');
+        }
+
+        async function startRealAudioRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.start();
+
+                document.getElementById('recordingStatusText').innerText = "🎙️ يتم تسجيل صوتك الحقيقي الآن... تحدث!";
+                document.getElementById('startRecBtn').disabled = true;
+                document.getElementById('stopRecBtn').disabled = false;
+
+                mediaRecorder.ondataavailable = e => {
+                    audioChunks.push(e.data);
+                };
+            } catch (err) {
+                alert("تعذر الوصول إلى الميكروفون، يرجى السماح للمتصفح بالوصول.");
+            }
+        }
+
+        function stopAndSendRealAudio() {
+            if(!mediaRecorder) return;
+            mediaRecorder.stop();
+            document.getElementById('recordingStatusText').innerText = "جاري معالجة وإرسال الصوت الحقيقي...";
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                const reader = new FileReader();
+                reader.readAsDataURL(audioBlob);
+                reader.onloadend = function() {
+                    const base64Audio = reader.result;
+                    let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
+
+                    let audioHtml = `
+                        <div style="display:flex; flex-direction:column; gap:4px; background:#f1f5f9; padding:6px; border-radius:6px; border:1px solid #cbd5e1;">
+                            <span style="font-size:11px; font-weight:bold; color:#0f172a;"><i class="fas fa-microphone" style="color:#ef4444;"></i> تسجبل صوتي حقيقي:</span>
+                            <audio controls src="${base64Audio}" style="width:100%; height:32px;"></audio>
+                        </div>
+                    `;
+
+                    if(window.firebaseDB) {
+                        const messagesRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`);
+                        window.dbPush(messagesRef, {
+                            sender: currentUser.name,
+                            text: audioHtml,
+                            time: timeStr,
+                            userObj: currentUser,
+                            timestamp: window.dbServerTimestamp()
+                        });
+                    }
+                    closeModal('audioRecorderModal');
+                };
+            };
+        }
 
         function rollDiceGame() {
             let diceNum = Math.floor(Math.random() * 6) + 1;
@@ -1152,6 +1236,10 @@
             localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
             
             if(window.firebaseDB && window.dbRef && window.dbSet) {
+                // حفظ بيانات المستخدم ورتبته للأبد عبر Firebase
+                const userPersistentRef = window.dbRef(window.firebaseDB, 'persistentUsers/' + currentUser.name.replace(/[.#$\/\[\]]/g, '_'));
+                window.dbSet(userPersistentRef, currentUser);
+
                 const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + currentUser.name.replace(/[.#$\/\[\]]/g, '_'));
                 window.dbSet(userStatusRef, { ...currentUser, lastSeen: 'متصل الآن', isOnline: true });
 
@@ -1328,8 +1416,8 @@
         window.initFirebaseListeners = function() {
             if(!window.firebaseDB) return;
 
-            const onlineUsersRef = window.dbRef(window.firebaseDB, 'onlineUsers');
-            window.dbOnValue(onlineUsersRef, (snapshot) => {
+            const persistentUsersRef = window.dbRef(window.firebaseDB, 'persistentUsers');
+            window.dbOnValue(persistentUsersRef, (snapshot) => {
                 const val = snapshot.val();
                 let uniqueMap = new Map();
                 if(val) {
@@ -1337,12 +1425,21 @@
                         if(u && u.name) uniqueMap.set(u.name, u);
                     });
                 }
-                if(currentUser && currentUser.name) {
-                    uniqueMap.set(currentUser.name, currentUser);
-                }
-                activeUsersList = Array.from(uniqueMap.values());
-                document.getElementById('onlineCount').innerText = activeUsersList.length;
-                document.getElementById('bottomOnlineCount').innerText = activeUsersList.length;
+                const onlineUsersRef = window.dbRef(window.firebaseDB, 'onlineUsers');
+                window.dbOnValue(onlineUsersRef, (snapOnline) => {
+                    const onlineVal = snapOnline.val();
+                    if(onlineVal) {
+                        Object.values(onlineVal).forEach(u => {
+                            if(u && u.name) uniqueMap.set(u.name, u);
+                        });
+                    }
+                    if(currentUser && currentUser.name) {
+                        uniqueMap.set(currentUser.name, currentUser);
+                    }
+                    activeUsersList = Array.from(uniqueMap.values());
+                    document.getElementById('onlineCount').innerText = activeUsersList.length;
+                    document.getElementById('bottomOnlineCount').innerText = activeUsersList.length;
+                });
             });
 
             const globalRoomsRef = window.dbRef(window.firebaseDB, 'globalRooms');
@@ -1459,7 +1556,7 @@
                 }
             });
 
-            const messagesRef = window.dbQuery(window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`), window.dbLimitToLast(10));
+            const messagesRef = window.dbQuery(window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`), window.dbLimitToLast(25));
             window.dbOnChildAdded(messagesRef, (snapshot) => {
                 const data = snapshot.val();
                 if(!data) return;
@@ -1598,7 +1695,6 @@
             let isSupremeOwner = currentUser && (currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || myRankName === 'صاحب الموقع');
             let isPrivilegedManager = isSupremeOwner || ['برنس', 'كنج', 'إنروا'].includes(myRankName);
             
-            // تحقق إذا كان الشخص هو صاحب البروفيسور أو من الإدارة المخولة (صاحب الموقع، البرنس، الكنج، الإنروا)
             let canEditThisProfile = (myName === target.name) || isPrivilegedManager;
             
             if(canEditThisProfile) {
@@ -1607,7 +1703,6 @@
                 document.getElementById('profileCornerPenBtn').style.display = 'none';
             }
 
-            // إخفاء أو إظهار البريد وكلمة المرور للخصوصية (تظهر فقط لصاحب الحساب أو صاحب الموقع)
             if(myName === target.name || isSupremeOwner) {
                 document.getElementById('viewEmailRow').innerText = target.email || 'غير متوفر';
                 document.getElementById('viewPassRow').innerText = target.pass || 'غير متوفر';
@@ -1651,14 +1746,18 @@
 
                 let btn = document.createElement('div');
                 btn.style.cssText = `padding:8px 12px; margin-bottom:4px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px; display:flex; align-items:center; gap:8px; ${r.style}`;
-                btn.innerHTML = `<i class="fas ${r.icon}"></i> <span>رتبة #${r.id}: ${r.name} (تثبيت فوري)</span>`;
+                btn.innerHTML = `<i class="fas ${r.icon}"></i> <span>رتبة #${r.id}: ${r.name} (تثبيت دائم)</span>`;
                 btn.onclick = () => {
                     selectedTargetUser.rank = r;
                     if(window.firebaseDB && window.dbRef && window.dbSet) {
+                        // تحديث دائم للأبد عبر Firebase Database للرتبة
+                        const userPersistentRef = window.dbRef(window.firebaseDB, 'persistentUsers/' + selectedTargetUser.name.replace(/[.#$\/\[\]]/g, '_'));
+                        window.dbSet(userPersistentRef, selectedTargetUser);
+
                         const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + selectedTargetUser.name.replace(/[.#$\/\[\]]/g, '_'));
                         window.dbSet(userStatusRef, selectedTargetUser);
                     }
-                    alert(`تم إهداء وتحديث الرتبة [ ${r.name} ] للعضو [ ${selectedTargetUser.name} ] بنجاح وظهرت فوراً للجميع!`);
+                    alert(`تم إهداء وتثبيت الرتبة للأبد [ ${r.name} ] للعضو [ ${selectedTargetUser.name} ] بنجاح وظهرت فوراً للجميع ولن تختفي أبداً!`);
                     closeModal('ranksListModal');
                 };
                 container.appendChild(btn);
@@ -1752,15 +1851,15 @@
             document.getElementById('editBio').value = target.bio || '';
             document.getElementById('editNameColor').value = target.nameColor || '#000000';
             document.getElementById('editNameBgColor').value = target.nameBgColor || '#ffd700';
+
             openModal('editSelfModal');
         }
 
         function saveEditedProfileData() {
             let target = selectedTargetUser || currentUser;
-            
             target.name = document.getElementById('editName').value.trim() || target.name;
-            target.email = document.getElementById('editEmailField').value.trim();
-            target.pass = document.getElementById('editPassField').value.trim();
+            target.email = document.getElementById('editEmailField').value.trim() || target.email;
+            target.pass = document.getElementById('editPassField').value.trim() || target.pass;
             target.age = document.getElementById('editAge').value;
             target.gender = document.getElementById('editGender').value;
             target.country = document.getElementById('editCountry').value;
@@ -1768,50 +1867,64 @@
             target.nameColor = document.getElementById('editNameColor').value;
             target.nameBgColor = document.getElementById('editNameBgColor').value;
 
-            // معالجة رفع الصورة الشخصية والغلاف إذا تم اختيارها
-            const avatarFile = document.getElementById('editAvatarFile').files[0];
-            const coverFile = document.getElementById('editCoverFile').files[0];
+            let avatarFile = document.getElementById('editAvatarFile').files[0];
+            let coverFile = document.getElementById('editCoverFile').files[0];
 
-            if (avatarFile) {
+            let updateAndSync = () => {
+                if(target.name === currentUser.name) {
+                    currentUser = target;
+                    localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
+                }
+                if(window.firebaseDB && window.dbRef && window.dbSet) {
+                    const userPersistentRef = window.dbRef(window.firebaseDB, 'persistentUsers/' + target.name.replace(/[.#$\/\[\]]/g, '_'));
+                    window.dbSet(userPersistentRef, target);
+
+                    const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + target.name.replace(/[.#$\/\[\]]/g, '_'));
+                    window.dbSet(userStatusRef, target);
+                }
+                alert('تم حفظ وتحديث البيانات والبروفايل فوراً لجميع الأعضاء بنجاح!');
+                closeModal('editSelfModal');
+            };
+
+            if(avatarFile) {
                 let reader = new FileReader();
                 reader.onload = function(e) {
                     target.avatar = e.target.result;
-                    finalizeProfileSave(target);
+                    if(coverFile) {
+                        let cReader = new FileReader();
+                        cReader.onload = function(ce) {
+                            target.cover = ce.target.result;
+                            updateAndSync();
+                        };
+                        cReader.readAsDataURL(coverFile);
+                    } else {
+                        updateAndSync();
+                    }
                 };
                 reader.readAsDataURL(avatarFile);
-            } else if (coverFile) {
-                let reader = new FileReader();
-                reader.onload = function(e) {
-                    target.cover = e.target.result;
-                    finalizeProfileSave(target);
+            } else if(coverFile) {
+                let cReader = new FileReader();
+                cReader.onload = function(ce) {
+                    target.cover = ce.target.result;
+                    updateAndSync();
                 };
-                reader.readAsDataURL(coverFile);
+                cReader.readAsDataURL(coverFile);
             } else {
-                finalizeProfileSave(target);
+                updateAndSync();
             }
         }
 
-        function finalizeProfileSave(target) {
-            if(target.name === currentUser.name) {
-                currentUser = target;
-                localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
-            }
-
-            if(window.firebaseDB && window.dbRef && window.dbSet) {
-                const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + target.name.replace(/[.#$\/\[\]]/g, '_'));
-                window.dbSet(userStatusRef, { ...target, lastSeen: 'متصل الآن', isOnline: true });
-            }
-
-            alert('تم حفظ وتحديث التعديلات بنجاح وتمت المزامنة فوراً لجميع الأعضاء!');
-            closeModal('editSelfModal');
-        }
-
-        window.openModal = function(modalId) {
+        function openModal(modalId) {
             document.getElementById(modalId).style.display = 'flex';
         }
 
-        window.closeModal = function(modalId) {
+        function closeModal(modalId) {
             document.getElementById(modalId).style.display = 'none';
+        }
+
+        function toggleDataSaver() {
+            document.body.classList.toggle('saver-mode');
+            alert('تم تبديل وضع توفير البيانات بنجاح.');
         }
     </script>
 </body>
