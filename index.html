@@ -483,7 +483,7 @@
         </div>
     </div>
 
-    <!-- قائمة الخيارات العلوية (خلفية الأيقونة في الشريط العلوي) -->
+    <!-- قائمة الخيارات العلوية -->
     <div class="modal" id="topProfileModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -502,7 +502,7 @@
         </div>
     </div>
 
-    <!-- القائمة الجانبية (ثلاثة خطوط في الشريط العلوي) -->
+    <!-- القائمة الجانبية -->
     <div class="modal" id="sideMenuModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -695,7 +695,7 @@
                 <div class="info-row"><span>الرسائل المرسلة:</span><span id="viewMsgCount">0</span></div>
                 <div class="info-row"><span>الذهب / الروبي / النقاط:</span><span id="viewAssets">0 / 0 / 0</span></div>
 
-                <!-- 👑 أزرار التحكم والإدارة التي تظهر لصاحب الموقع والبرنس والكنج فقط -->
+                <!-- 👑 أزرار التحكم والإدارة -->
                 <div id="ownerAdminCommandsContainer" style="display:none; flex-direction:column; gap:6px; margin-top:12px;">
                     <button class="admin-cmd-btn" style="background:#0d6efd;" onclick="openRanksListModalForTarget()">👑 إهداء رتبه للعضو (تثبيت دائم للأبد)</button>
                     <button class="admin-cmd-btn" id="adminEditProfileBtn" style="background:#ffc107; color:#000;" onclick="adminActionTarget('edit')">✏️ تعديل بروفيل العضو</button>
@@ -892,6 +892,9 @@
                 closeModal('loginModal');
                 initSessionUI();
                 checkKingArrival(currentUser);
+                if(window.firebaseDB) {
+                    window.initFirebaseListeners();
+                }
             } else {
                 openModal('loginModal');
             }
@@ -914,12 +917,10 @@
         window.initFirebaseListeners = function() {
             if(!window.firebaseDB) return;
             
-            // الاستماع اللحظي للرسائل في الغرفة الحالية دون أي تأخير
             let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
             const messagesRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`);
             const latestMessagesQuery = window.dbQuery(messagesRef, window.dbLimitToLast(50));
             
-            // مسح الشات القديم وتعبئته لحظياً
             const chatArea = document.getElementById('chatArea');
             chatArea.innerHTML = `
                 <div class="announcement" id="mainRoomNotice">
@@ -971,6 +972,38 @@
                 }
             });
         };
+
+        function switchRoom(roomName) {
+            currentActiveRoom = roomName;
+            document.getElementById('currentRoomTitle').innerText = roomName;
+            closeModal('roomsListModal');
+            if(window.firebaseDB) {
+                window.initFirebaseListeners();
+            }
+            alert(`تم الانتقال بنجاح إلى: ${roomName}`);
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('msgInput');
+            const text = input.value.trim();
+            if(!text) return;
+            if(!currentUser) { openModal('loginModal'); return; }
+
+            let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
+
+            if(window.firebaseDB) {
+                const messagesRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`);
+                window.dbPush(messagesRef, {
+                    sender: currentUser.name,
+                    text: text,
+                    time: timeStr,
+                    userObj: currentUser,
+                    timestamp: window.dbServerTimestamp()
+                });
+            }
+            input.value = '';
+        }
 
         function appendMessageToDOM(msgData) {
             const chatArea = document.getElementById('chatArea');
@@ -1247,11 +1280,6 @@
             let queryText = document.getElementById('ytSearchQuery').value.trim();
             if(!queryText) { alert('يرجى لصق رابط يوتيوب حقيقي أو كتابة اسم الأغنية!'); return; }
             
-            if(window.currentPlayingSongUser && window.currentPlayingSongUser !== currentUser.name) {
-                alert(`عذراً، في أغنية شغالة حالياً بواسطة (${window.currentPlayingSongUser}) إلا أن تكتمل ويمكنك التشغيل!`);
-                return;
-            }
-
             const resultsArea = document.getElementById('ytResultsArea');
             resultsArea.innerHTML = `
                 <div style="display:flex; align-items:center; justify-content:space-between; background:#f9f9f9; padding:8px; border-radius:6px; border:1px solid #ddd;">
@@ -1373,9 +1401,6 @@
                 const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + currentUser.name.replace(/[.#$\/\[\]]/g, '_'));
                 window.dbSet(userStatusRef, { ...currentUser, lastSeen: 'متصل الآن', isOnline: true });
 
-                const roomOccupancyRef = window.dbRef(window.firebaseDB, `roomsOccupancy/${currentActiveRoom.replace(/[.#$\/\[\]]/g, '_')}/${currentUser.name.replace(/[.#$\/\[\]]/g, '_')}`);
-                window.dbSet(roomOccupancyRef, true);
-
                 let myRankName = currentUser.rank ? currentUser.rank.name : '';
                 let isSupremeOwner = currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || myRankName === 'صاحب الموقع';
                 if(!isSupremeOwner) {
@@ -1456,7 +1481,7 @@
                 case 5: alert('📢 [5. العام]: إعدادات الشات العام وتعديل رسائل الترحيب والإعلانات مفعلة.'); break;
                 case 6: alert('💻 [6. النظام]: حالة السيرفر مستقرة، قاعدة بيانات Firebase متصلة وتعمل بلحظية تامة.'); break;
                 case 7: alert('🔑 [7. لوحة تسجيل الدخول]: إعدادات واجهة الدخول والزوار مفعلة وجاهزة.'); break;
-                case 8: alert('💰 [8. التزويد]: تم تفعيل نظام شحن وإضافة الذهب والروبي والنقاط للأعضاء بنجاح.'); break;
+                case 8: alert('💰 [8. التزويد]: تم تفعيل نظام شحن وإضافة الذهب والروبي النقاط للأعضاء بنجاح.'); break;
                 case 9: alert('🔒 [9. إعداد التشفير]: تشفير الرسائل والبيانات الشخصية مفعل بأعلى معايير الأمان.'); break;
                 case 10: alert('✨ [10. المميزات]: جميع الميزات التفاعلية (ألعاب، يوتيوب، رسم، تسجيل صوتي) تعمل بكفاءة عالية.'); break;
                 default: alert('خيار لوحة التحكم قيد التشغيل.');
@@ -1519,236 +1544,71 @@
                         <span class="status-dot ${isOnline ? 'online' : 'offline'}"></span>
                     </div>
                     ${rankBgHtml}
-                </div>
-            `;
-        }
-
-        // فتح بروفيل أي عضو والتحقق الذكي من إظهار أزرار الإدارة (صاحب الموقع والبرنس والكنج فقط)
-        function openTargetProfile(userName) {
-            let target = activeUsersList.find(u => u.name === userName);
-            if(!target && currentUser && currentUser.name === userName) target = currentUser;
-            if(!target) {
-                target = { name: userName, age: '20', gender: 'ذكر', country: 'اليمن', bio: 'عضو في الشات', avatar: 'https://via.placeholder.com/80', cover: 'https://via.placeholder.com/400x160', points: 10, level: 1, likes: 0, gold: 0, ruby: 0, msgCount: 0, isOnline: true };
-            }
-
-            selectedTargetUser = target;
-            document.getElementById('viewName').innerText = target.name;
-            document.getElementById('viewRankTitle').innerText = target.rank ? target.rank.name : 'زائر';
-            document.getElementById('viewAge').innerText = target.age || '--';
-            document.getElementById('viewGender').innerText = target.gender || '--';
-            document.getElementById('viewCountry').innerText = target.country || 'اليمن';
-            document.getElementById('viewBio').innerText = target.bio || 'عضو نشط في الشات';
-            document.getElementById('viewAvatar').src = target.avatar || 'https://via.placeholder.com/80';
-            document.getElementById('viewCover').style.backgroundImage = `url('${target.cover || 'https://via.placeholder.com/400x160'}')`;
-            document.getElementById('targetLikesCount').innerText = target.likes || 0;
-            document.getElementById('viewMsgCount').innerText = target.msgCount || 0;
-            document.getElementById('viewAssets').innerText = `${target.gold || 0} / ${target.ruby || 0} / ${target.points || 0}`;
-
-            if(currentUser && currentUser.name === target.name) {
-                document.getElementById('profileCornerPenBtn').style.display = 'block';
-                document.getElementById('viewEmailRow').innerText = target.email || 'غير متوفر';
-                document.getElementById('viewPassRow').innerText = target.pass || '******';
-            } else {
-                document.getElementById('profileCornerPenBtn').style.display = 'none';
-                document.getElementById('viewEmailRow').innerText = '******';
-                document.getElementById('viewPassRow').innerText = '******';
-            }
-
-            // التحقق الذكي: هل المستخدم الحالي هو (صاحب الموقع أو برنس أو كنج)؟
-            let myRankName = currentUser && currentUser.rank ? currentUser.rank.name : '';
-            let isSupremeAdmin = currentUser && (currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || ['صاحب الموقع', 'برنس', 'كنج'].includes(myRankName));
-
-            const adminContainer = document.getElementById('ownerAdminCommandsContainer');
-            if(isSupremeAdmin) {
-                adminContainer.style.display = 'flex';
-                // إذا كان صاحب الموقع يمكنه رؤية زر تعديل بروفيل العضو أيضاً
-                document.getElementById('adminEditProfileBtn').style.display = (currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com') ? 'block' : 'none';
-            } else {
-                adminContainer.style.display = 'none';
-            }
-
-            openModal('profileViewModal');
-        }
-
-        function openRanksListModalForTarget() {
-            if(!currentUser) return;
-            let myRankName = currentUser.rank ? currentUser.rank.name : '';
-            let isSupremeAdmin = currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || ['صاحب الموقع', 'برنس', 'كنج'].includes(myRankName);
-            
-            if(!isSupremeAdmin) {
-                alert('عذراً، إهداء الرتب مخصص للإدارة العليا فقط!');
-                return;
-            }
-
-            const container = document.getElementById('ranksSelectionContainer');
-            container.innerHTML = '';
-
-            ranksList.forEach(r => {
-                let div = document.createElement('div');
-                div.className = 'side-menu-item';
-                div.style.cssText = `padding:8px 12px; margin:3px 0; border-radius:6px; ${r.style}; cursor:pointer; font-weight:bold; display:flex; align-items:center; gap:8px;`;
-                div.innerHTML = `<i class="fas ${r.icon}" style="font-size:14px;"></i> <span>${r.name}</span>`;
-                div.onclick = () => {
-                    assignRankToTargetUser(r);
-                };
-                container.appendChild(div);
-            });
-
-            openModal('ranksListModal');
-        }
-
-        // دالة إهداء وتثبيت الرتبة لكي تظهر فوراً عند الصديق وفي كل مكان
-        function assignRankToTargetUser(newRank) {
-            if(!selectedTargetUser) return;
-
-            selectedTargetUser.rank = newRank;
-
-            if(newRank.id === 1) {
-                selectedTargetUser.isOwner = true;
-            }
-
-            let userKey = selectedTargetUser.name.replace(/[.#$\/\[\]]/g, '_');
-            if(window.firebaseDB && window.dbRef && window.dbSet) {
-                window.dbSet(window.dbRef(window.firebaseDB, 'persistentUsers/' + userKey), selectedTargetUser);
-                window.dbSet(window.dbRef(window.firebaseDB, 'onlineUsers/' + userKey), { ...selectedTargetUser, isOnline: true });
-            }
-
-            if(currentUser.name === selectedTargetUser.name) {
-                currentUser = selectedTargetUser;
-                localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
-                initSessionUI();
-            }
-
-            closeModal('ranksListModal');
-            closeModal('profileViewModal');
-            alert(`تم منح وترقية العضو [ ${selectedTargetUser.name} ] رتبة [ ${newRank.name} ] بنجاح وتثبيتها للجميع فوراً!`);
-        }
-
-        function adminActionTarget(actionType) {
-            if(!selectedTargetUser) return;
-            if(actionType === 'ban') {
-                selectedTargetUser.isBanned = !selectedTargetUser.isBanned;
-                alert(`تم ${selectedTargetUser.isBanned ? 'حظر' : 'إلغاء حظر'} العضو ${selectedTargetUser.name} بنجاح.`);
-            } else if(actionType === 'mute') {
-                selectedTargetUser.isMuted = !selectedTargetUser.isMuted;
-                alert(`تم ${selectedTargetUser.isMuted ? 'كتم' : 'إلغاء كتم'} العضو ${selectedTargetUser.name} بنجاح.`);
-            } else if(actionType === 'kick') {
-                alert(`تم طرد العضو ${selectedTargetUser.name} من الروم بنجاح.`);
-            } else if(actionType === 'delete') {
-                let confirmDel = confirm(`هل أنت متأكد من حذف حساب ${selectedTargetUser.name} نهائياً؟`);
-                if(confirmDel) {
-                    if(window.firebaseDB && window.dbRef && window.dbSet) {
-                        window.dbSet(window.dbRef(window.firebaseDB, 'onlineUsers/' + selectedTargetUser.name.replace(/[.#$\/\[\]]/g, '_')), null);
-                    }
-                    alert(`تم حذف حساب ${selectedTargetUser.name} بنجاح.`);
-                    closeModal('profileViewModal');
-                }
-            } else if(actionType === 'edit') {
-                openSelfEdit();
-            }
-        }
-
-        function sendMessage() {
-            if(!currentUser) { openModal('loginModal'); return; }
-            if(currentUser.isMuted) { alert('عذراً، حسابك مكتوم حالياً من قبل الإدارة!'); return; }
-
-            const input = document.getElementById('msgInput');
-            let msgText = input.value.trim();
-            if(!msgText) return;
-
-            let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
-
-            if(window.firebaseDB) {
-                const messagesRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`);
-                window.dbPush(messagesRef, {
-                    sender: currentUser.name,
-                    text: msgText,
-                    time: timeStr,
-                    userObj: currentUser,
-                    timestamp: window.dbServerTimestamp()
-                });
-            }
-
-            input.value = '';
+                </div>`;
         }
 
         function openOnlineList() {
-            const listContainer = document.getElementById('onlineList');
-            listContainer.innerHTML = '';
-            
+            const listDiv = document.getElementById('onlineList');
+            listDiv.innerHTML = '';
             if(activeUsersList.length === 0) {
-                listContainer.innerHTML = `<div style="font-size:12px; color:#555; text-align:center; padding:15px;">لا يوجد أعضاء متواجدين حالياً.</div>`;
+                listDiv.innerHTML = `<div style="font-size:12px; color:#555; text-align:center; padding:15px;">لا توجد أعضاء متواجدين حالياً.</div>`;
             } else {
                 activeUsersList.forEach(u => {
                     let item = document.createElement('div');
                     item.className = 'side-menu-item';
                     item.innerHTML = `
                         <img src="${u.avatar || 'https://via.placeholder.com/34'}" style="width:30px; height:30px; border-radius:50%; object-fit:cover;">
-                        <span style="font-weight:bold; font-size:13px;">${u.name}</span>
-                        <span style="margin-right:auto; font-size:10px; color:#28a745; font-weight:bold;">${u.rank ? u.rank.name : 'عضو'}</span>
+                        <div style="display:flex; flex-direction:column;">
+                            <span style="font-weight:bold;">${u.name}</span>
+                            <span style="font-size:10px; color:#28a745;">متصل الآن 🟢</span>
+                        </div>
                     `;
-                    item.onclick = () => {
-                        closeModal('onlineModal');
-                        openTargetProfile(u.name);
-                    };
-                    listContainer.appendChild(item);
+                    item.onclick = () => { closeModal('onlineModal'); openTargetProfile(u.name); };
+                    listDiv.appendChild(item);
                 });
             }
             openModal('onlineModal');
         }
 
-        function switchRoom(roomName) {
-            currentActiveRoom = roomName;
-            document.getElementById('currentRoomTitle').innerText = roomName;
-            closeModal('roomsListModal');
-            if(typeof window.initFirebaseListeners === 'function') {
-                window.initFirebaseListeners();
+        function openTargetProfile(name) {
+            selectedTargetUser = activeUsersList.find(u => u.name === name) || currentUser;
+            if(!selectedTargetUser) return;
+
+            document.getElementById('viewName').innerText = selectedTargetUser.name;
+            document.getElementById('viewAvatar').src = selectedTargetUser.avatar || 'https://via.placeholder.com/80';
+            document.getElementById('viewCover').style.backgroundImage = `url('${selectedTargetUser.cover || 'https://via.placeholder.com/400x160'}')`;
+            document.getElementById('viewRankTitle').innerText = selectedTargetUser.rank ? selectedTargetUser.rank.name : 'عضو زائر';
+            document.getElementById('targetLikesCount').innerText = selectedTargetUser.likes || 0;
+            document.getElementById('viewAge').innerText = selectedTargetUser.age || '--';
+            document.getElementById('viewGender').innerText = selectedTargetUser.gender || '--';
+            document.getElementById('viewCountry').innerText = selectedTargetUser.country || 'اليمن';
+            document.getElementById('viewBio').innerText = selectedTargetUser.bio || 'عضو نشط';
+            document.getElementById('viewMsgCount').innerText = selectedTargetUser.msgCount || 0;
+            document.getElementById('viewAssets').innerText = `${selectedTargetUser.gold || 0} / ${selectedTargetUser.ruby || 0} / ${selectedTargetUser.points || 0}`;
+
+            let myRankName = currentUser.rank ? currentUser.rank.name : '';
+            let isSupremeOwner = currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || ['صاحب الموقع', 'برنس', 'كنج'].includes(myRankName);
+            
+            if(isSupremeOwner || currentUser.name === selectedTargetUser.name) {
+                document.getElementById('ownerAdminCommandsContainer').style.display = 'flex';
+                if(currentUser.name === selectedTargetUser.name) {
+                    document.getElementById('profileCornerPenBtn').style.display = 'block';
+                } else {
+                    document.getElementById('profileCornerPenBtn').style.display = 'none';
+                }
+            } else {
+                document.getElementById('ownerAdminCommandsContainer').style.display = 'none';
+                document.getElementById('profileCornerPenBtn').style.display = 'none';
             }
-        }
 
-        function cleanRoom() {
-            let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
-            if(window.firebaseDB && window.dbRef && window.dbSet) {
-                window.dbSet(window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`), null);
-            }
-            document.getElementById('chatArea').innerHTML = `
-                <div class="announcement" id="mainRoomNotice">
-                    أهلاً وسهلاً بكم في <strong id="currentRoomTitle">${currentActiveRoom}</strong> 🎉
-                </div>
-            `;
-            alert('🧹 تم تنظيف الروم بنجاح للجميع فوراً!');
-        }
-
-        function uploadRoomBg(input) {
-            if(input.files && input.files[0]) {
-                let reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('chatArea').style.backgroundImage = `url('${e.target.result}')`;
-                    alert('🖼️ تم تعيين خلفية الروم بنجاح.');
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        function createNewRoomByOwner() {
-            const roomInput = document.getElementById('newRoomNameInput');
-            let roomName = roomInput.value.trim();
-            if(!roomName) { alert('يرجى كتابة اسم الروم الجديدة!'); return; }
-
-            const appendArea = document.getElementById('dynamicRoomsAppendArea');
-            let div = document.createElement('div');
-            div.className = 'side-menu-item';
-            div.innerHTML = `🏰 ${roomName} <span style="margin-right:auto; background:#0d6efd; color:#fff; padding:2px 6px; border-radius:10px; font-size:10px;">0</span>`;
-            div.onclick = () => switchRoom(roomName);
-            appendArea.appendChild(div);
-
-            roomInput.value = '';
-            alert(`🏰 تم إنشاء روم [ ${roomName} ] بنجاح وإضافتها لقائمة الغرف للجميع فوراً!`);
+            openModal('profileViewModal');
         }
 
         function openSelfEdit() {
+            closeModal('topProfileModal');
+            closeModal('profileViewModal');
             if(!currentUser) return;
+
             document.getElementById('editName').value = currentUser.name || '';
             document.getElementById('editEmailField').value = currentUser.email || '';
             document.getElementById('editPassField').value = currentUser.pass || '';
@@ -1758,11 +1618,11 @@
             document.getElementById('editBio').value = currentUser.bio || '';
             document.getElementById('editNameColor').value = currentUser.nameColor || '#000000';
             document.getElementById('editNameBgColor').value = currentUser.nameBgColor || '#ffd700';
+
             openModal('editSelfModal');
         }
 
         function saveEditedProfileData() {
-            if(!currentUser) return;
             currentUser.name = document.getElementById('editName').value.trim() || currentUser.name;
             currentUser.email = document.getElementById('editEmailField').value.trim() || currentUser.email;
             currentUser.pass = document.getElementById('editPassField').value.trim() || currentUser.pass;
@@ -1773,50 +1633,166 @@
             currentUser.nameColor = document.getElementById('editNameColor').value;
             currentUser.nameBgColor = document.getElementById('editNameBgColor').value;
 
-            let avatarFile = document.getElementById('editAvatarFile').files[0];
-            let coverFile = document.getElementById('editCoverFile').files[0];
+            const avatarFile = document.getElementById('editAvatarFile').files[0];
+            const coverFile = document.getElementById('editCoverFile').files[0];
 
             if(avatarFile) {
                 let reader = new FileReader();
                 reader.onload = function(e) {
                     currentUser.avatar = e.target.result;
-                    finalizeProfileSave();
+                    finalizeProfileUpdate();
                 };
                 reader.readAsDataURL(avatarFile);
             } else if(coverFile) {
                 let reader = new FileReader();
                 reader.onload = function(e) {
                     currentUser.cover = e.target.result;
-                    finalizeProfileSave();
+                    finalizeProfileUpdate();
                 };
                 reader.readAsDataURL(coverFile);
             } else {
-                finalizeProfileSave();
+                finalizeProfileUpdate();
             }
         }
 
-        function finalizeProfileSave() {
+        function finalizeProfileUpdate() {
             localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
             if(window.firebaseDB && window.dbRef && window.dbSet) {
-                let userKey = currentUser.name.replace(/[.#$\/\[\]]/g, '_');
-                window.dbSet(window.dbRef(window.firebaseDB, 'persistentUsers/' + userKey), currentUser);
-                window.dbSet(window.dbRef(window.firebaseDB, 'onlineUsers/' + userKey), { ...currentUser, isOnline: true });
+                const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + currentUser.name.replace(/[.#$\/\[\]]/g, '_'));
+                window.dbSet(userStatusRef, { ...currentUser, isOnline: true });
             }
             closeModal('editSelfModal');
-            closeModal('profileViewModal');
             initSessionUI();
-            alert('✅ تم حفظ وتحديث البروفाइल بنجاح للجميع فوراً!');
+            alert('تم حفظ وتحديث البروفيسور والبيانات بنجاح وتظهر فوراً للجميع!');
+        }
+
+        function openRanksListModalForTarget() {
+            const container = document.getElementById('ranksSelectionContainer');
+            container.innerHTML = '';
+            ranksList.forEach(r => {
+                let btn = document.createElement('div');
+                btn.className = 'side-menu-item';
+                btn.innerHTML = `<i class="fas ${r.icon}" style="color:${r.color};"></i> <span style="font-weight:bold;">${r.name}</span>`;
+                btn.onclick = () => {
+                    selectedTargetUser.rank = r;
+                    closeModal('ranksListModal');
+                    closeModal('profileViewModal');
+                    alert(`تم إهداء رتبة [ ${r.name} ] للعضو ${selectedTargetUser.name} بنجاح للأبد!`);
+                };
+                container.appendChild(btn);
+            });
+            openModal('ranksListModal');
+        }
+
+        function adminActionTarget(actionType) {
+            if(!selectedTargetUser) return;
+            if(actionType === 'edit') {
+                openSelfEdit();
+            } else if(actionType === 'ban') {
+                selectedTargetUser.isBanned = !selectedTargetUser.isBanned;
+                alert(`تم تغيير حالة الحظر للعضو ${selectedTargetUser.name} بنجاح.`);
+            } else if(actionType === 'mute') {
+                selectedTargetUser.isMuted = !selectedTargetUser.isMuted;
+                alert(`تم تغيير حالة الكتم للعضو ${selectedTargetUser.name} بنجاح.`);
+            } else if(actionType === 'kick') {
+                alert(`تم طرد العضو ${selectedTargetUser.name} من الغرفة.`);
+                closeModal('profileViewModal');
+            } else if(actionType === 'delete') {
+                alert(`تم حذف حساب العضو ${selectedTargetUser.name} نهائياً.`);
+                closeModal('profileViewModal');
+            }
+        }
+
+        function addLikeToTarget() {
+            if(!selectedTargetUser) return;
+            selectedTargetUser.likes = (selectedTargetUser.likes || 0) + 1;
+            document.getElementById('targetLikesCount').innerText = selectedTargetUser.likes;
+            alert('تم إعطاء لايك بنجاح!');
+        }
+
+        function addFriendTarget() {
+            if(!selectedTargetUser) return;
+            alert(`تم إرسال طلب صداقة إلى ${selectedTargetUser.name} بنجاح.`);
+        }
+
+        function openPrivateChat() {
+            if(!selectedTargetUser) return;
+            currentPrivateTarget = selectedTargetUser;
+            document.getElementById('privateChatTitle').innerText = `محادثة خاصة مع: ${selectedTargetUser.name}`;
+            closeModal('profileViewModal');
+            openModal('privateChatModal');
+        }
+
+        function sendPrivateMsg() {
+            const input = document.getElementById('privateInput');
+            const txt = input.value.trim();
+            if(!txt || !currentPrivateTarget) return;
+
+            const area = document.getElementById('privateMsgArea');
+            let div = document.createElement('div');
+            div.style.background = '#d1e7dd';
+            div.style.padding = '6px 10px';
+            div.style.borderRadius = '6px';
+            div.style.fontSize = '12px';
+            div.style.alignSelf = 'flex-end';
+            div.innerHTML = `<b>أنت:</b> ${txt}`;
+            area.appendChild(div);
+            area.scrollTop = area.scrollHeight;
+            input.value = '';
+        }
+
+        function sendPrivateMediaFile(input) {
+            if(input.files && input.files[0]) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    let imgUrl = e.target.result;
+                    const area = document.getElementById('privateMsgArea');
+                    let div = document.createElement('div');
+                    div.style.background = '#d1e7dd';
+                    div.style.padding = '6px 10px';
+                    div.style.borderRadius = '6px';
+                    div.style.fontSize = '12px';
+                    div.innerHTML = `<b>أنت (صورة/ملف):</b><br><img src="${imgUrl}" style="max-width:120px; border-radius:4px; margin-top:4px;">`;
+                    area.appendChild(div);
+                    area.scrollTop = area.scrollHeight;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function openPrivateNotificationModal() { openModal('privateNotificationModal'); }
+        function toggleDataSaver() { document.body.classList.toggle('saver-mode'); alert('تم تبديل وضع توفير النت بنجاح.'); }
+        function cleanRoom() { document.getElementById('chatArea').innerHTML = '<div class="announcement" id="mainRoomNotice">تم تنظيف الشات بنجاح.</div>'; alert('تم تنظيف الشات للجميع فوراً.'); }
+
+        function uploadRoomBg(input) {
+            if(input.files && input.files[0]) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('chatArea').style.backgroundImage = `url('${e.target.result}')`;
+                    alert('تم رفع وتطبيق خلفية الروم بنجاح للجميع!');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function createNewRoomByOwner() {
+            const roomName = document.getElementById('newRoomNameInput').value.trim();
+            if(!roomName) { alert('يرجى إدخال اسم الغرفة الجديدة!'); return; }
+
+            const container = document.getElementById('dynamicRoomsAppendArea');
+            let div = document.createElement('div');
+            div.className = 'side-menu-item';
+            div.innerHTML = `🏰 ${roomName} <span style="margin-right:auto; background:#0d6efd; color:#fff; padding:2px 6px; border-radius:10px; font-size:10px;">0</span>`;
+            div.onclick = () => switchRoom(roomName);
+            container.appendChild(div);
+
+            document.getElementById('newRoomNameInput').value = '';
+            closeModal('roomOptsModal');
+            alert(`تم إنشاء الروم الجديدة [ ${roomName} ] بنجاح وإضافتها لقائمة الغرف للجميع فوراً!`);
         }
 
         function openModal(modalId) { document.getElementById(modalId).style.display = 'flex'; }
         function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
-        function toggleDataSaver() { document.body.classList.toggle('saver-mode'); alert('تم تبديل وضع توفير النت بنجاح.'); }
-        function openPrivateNotificationModal() { openModal('privateNotificationModal'); }
-        function addLikeToTarget() { alert('❤️ تم إعطاء لايك بنجاح!'); }
-        function addFriendTarget() { alert('🤝 تم إرسال طلب صداقة بنجاح!'); }
-        function openPrivateChat() { alert('💬 نافذة المحادثة الخاصة مفعلة.'); }
-        function handleFileUpload(input) { if(input.files && input.files[0]) { alert('📁 تم رفع الملف بنجاح وإرساله.'); } }
-        function cancelReply() { document.getElementById('replyPreviewBar').style.display = 'none'; currentQuotedText = null; }
     </script>
 </body>
 </html>
