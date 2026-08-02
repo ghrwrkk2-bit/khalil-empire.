@@ -312,7 +312,7 @@
                 <i class="fas fa-plus" id="plusBtn" style="font-size:18px; color:#555; cursor:pointer; padding: 4px;" onclick="togglePlusMenu()"></i>
                 
                 <!-- قائمة زر + الوسطى -->
-                <div class="plus-popup-menu" id="plusPopupMenu">
+                <div class="plus-popup-menu" id="plusPopupMenu" style="display:none; position:absolute; bottom:40px; right:0; background:#fff; border-radius:10px; padding:10px; box-shadow:0 4px 15px rgba(0,0,0,0.3); z-index:99999; width:220px; border:1px solid #ccc;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:4px;">
                         <span style="font-weight:bold; font-size:12px;">قائمة الألعاب والخدمات</span>
                         <i class="fas fa-times" onclick="togglePlusMenu()" style="cursor:pointer; font-size:12px; color:#777;"></i>
@@ -622,7 +622,7 @@
                 <div class="info-row"><span>الرسائل المرسلة:</span><span id="viewMsgCount">0</span></div>
                 <div class="info-row"><span>الذهب / الروبي / النقاط:</span><span id="viewAssets">0 / 0 / 0</span></div>
 
-                <!-- أزرار الأوامر والتحكم تظهر لصاحب الموقع والرتب المخولة للشخص المستهدف باستثناء صاحب الموقع نفسه -->
+                <!-- أزرار الأوامر والتحكم تظهر لصاحب الموقع والبرنس والكنج حصراً -->
                 <div id="ownerAdminCommandsContainer" style="display:none; flex-direction:column; gap:6px; margin-top:12px;">
                     <button class="admin-cmd-btn" style="background:#0d6efd;" onclick="openRanksListModalForTarget()">👑 إهداء رتبه للعضو (من الـ 25 رتبه)</button>
                     <button class="admin-cmd-btn" style="background:#ffc107; color:#000;" onclick="adminActionTarget('edit')">✏️ تعديل بروفيل العضو</button>
@@ -841,6 +841,7 @@
                 emojiContainer.appendChild(span);
             });
 
+            // التحقق من وجود حساب مخزن للخروج والرجوع بالبريد وكلمة المرور
             const saved = localStorage.getItem('hasouniChatUser');
             if(saved) {
                 currentUser = JSON.parse(saved);
@@ -880,7 +881,6 @@
         function openYouTubePickerModal() { openModal('youtubePickerModal'); }
         function openVoiceRecordModal() { openModal('voiceRecordModal'); }
 
-        // وظائف ألعاب وخدمات زر +
         function playRpsGame() {
             let choices = ['حجر ✊', 'ورقة ✋', 'مقص ✌️'];
             let botChoice = choices[Math.floor(Math.random() * choices.length)];
@@ -942,7 +942,6 @@
                 document.getElementById('startVoiceBtn').innerText = "إيقاف التسجيل";
                 document.getElementById('startVoiceBtn').onclick = () => { mediaRecorder.stop(); };
             }).catch(e => {
-                // محاكاة تسجيل صوتي حقيقي في حال عدم توفر المايك المتصفح
                 window.recordedAudioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
                 document.getElementById('voiceStatusText').innerText = "✅ تم تسجيل الصوت الحقيقي بنجاح (وضع محاكي المايك)!";
                 document.getElementById('sendVoiceBtn').style.display = 'inline-block';
@@ -970,7 +969,6 @@
             let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
             
-            // فحص الروابط الاحتيالية (الروابط الخارجية غير الموثوقة مسموحة لصاحب الموقع فقط)
             if(!currentUser.isOwner && currentUser.email !== 'ghrwrkk2@gmail.com' && (htmlPayload.includes('http://') || htmlPayload.includes('https://'))) {
                 htmlPayload = `<div style="color:#dc3545; font-weight:bold;"><i class="fas fa-exclamation-triangle"></i> منشور احتيالي (تم حجب الرابط للأمان)</div>`;
             }
@@ -987,6 +985,7 @@
             }
         }
 
+        // عند دخول زائر أو عضو بمجرد ضغط زر المفتاح وإدخال البريد وكلمة المرور يتم التحقق وتسجيل الدخول بنجاح دون رتبة حتى يهديه صاحب الموقع أو البرنس أو الكنج
         function submitLogin() {
             const name = document.getElementById('loginName').value.trim();
             const email = document.getElementById('loginEmail').value.trim();
@@ -996,7 +995,14 @@
 
             if(activeLoginMode === 'member') {
                 if(!email || !pass) { alert('يرجى إدخال البريد الإلكتروني وكلمة المرور!'); return; }
-                if(email === 'ghrwrkk2@gmail.com' && pass === '780718519') {
+                
+                // البحث عما إذا كان الحساب مخزناً مسبقاً للرجوع بنفس بياناته السابقة بدون تغيير
+                let registeredAccounts = JSON.parse(localStorage.getItem('hasouniRegisteredAccounts') || '{}');
+                let foundAcc = registeredAccounts[email];
+
+                if(foundAcc && foundAcc.pass === pass) {
+                    currentUser = foundAcc;
+                } else if(email === 'ghrwrkk2@gmail.com' && pass === '780718519') {
                     currentUser = {
                         name: name, email: email, pass: pass, isOwner: true, rank: ranksList[0],
                         age: '24', gender: 'ذكر', country: 'اليمن', bio: 'صاحب موقع شات حسوني الرسمي',
@@ -1006,14 +1012,17 @@
                         nameBgColor: '#ffd700', isMuted: false, isBanned: false, isBlocked: false
                     };
                 } else {
+                    // عضو مسجل جديد بدون رتبة تماماً حتى يهديه صاحب الموقع أو البرنس أو الكنج
                     currentUser = {
-                        name: name, email: email, pass: pass, isOwner: false, rank: ranksList[4],
-                        age: '20', gender: 'ذكر', country: 'اليمن', bio: 'عضو مسجل في الشات',
+                        name: name, email: email, pass: pass, isOwner: false, rank: null,
+                        age: '20', gender: 'ذكر', country: 'اليمن', bio: 'عضو جديد في الشات',
                         avatar: 'https://via.placeholder.com/80/00c6ff/fff?text=Member',
                         cover: 'https://via.placeholder.com/400x160/333/fff',
                         points: 100, level: 1, likes: 0, gold: 0, ruby: 0, msgCount: 0,
                         nameBgColor: '#e0e0e0', isMuted: false, isBanned: false, isBlocked: false
                     };
+                    registeredAccounts[email] = currentUser;
+                    localStorage.setItem('hasouniRegisteredAccounts', JSON.stringify(registeredAccounts));
                 }
             } else {
                 currentUser = {
@@ -1031,12 +1040,15 @@
             saveAndLogin();
         }
 
+        // تسجيل مفتاح وعضوية جديدة عبر زر المفتاح أو قائمة التسجيل
         function registerKey() {
             const name = document.getElementById('regName').value.trim();
             const email = document.getElementById('regEmail').value.trim();
             const pass = document.getElementById('regPass').value.trim();
 
             if(!name || !email || !pass) { alert('يرجى تعبئة جميع الحقول بشكل صحيح!'); return; }
+
+            let registeredAccounts = JSON.parse(localStorage.getItem('hasouniRegisteredAccounts') || '{}');
 
             if(email === 'ghrwrkk2@gmail.com' && pass === '780718519') {
                 currentUser = {
@@ -1048,9 +1060,10 @@
                     nameBgColor: '#ffd700', isMuted: false, isBanned: false, isBlocked: false
                 };
             } else {
+                // العضو الجديد يسجل بدون رتبه حتا يهديه صاحب الموقع أو البرنس أو الكنج
                 currentUser = {
-                    name: name, email: email, pass: pass, isOwner: false, rank: ranksList[4],
-                    age: '20', gender: 'ذكر', country: 'اليمن', bio: 'عضوية جديدة',
+                    name: name, email: email, pass: pass, isOwner: false, rank: null,
+                    age: '20', gender: 'ذكر', country: 'اليمن', bio: 'عضوية مسجلة',
                     avatar: 'https://via.placeholder.com/80/00e676/fff?text=User',
                     cover: 'https://via.placeholder.com/400x160/222/fff',
                     points: 50, level: 1, likes: 0, gold: 0, ruby: 0, msgCount: 0,
@@ -1058,12 +1071,23 @@
                 };
             }
 
-            closeModal('regModal'); saveAndLogin();
+            registeredAccounts[email] = currentUser;
+            localStorage.setItem('hasouniRegisteredAccounts', JSON.stringify(registeredAccounts));
+
+            closeModal('regModal'); 
+            saveAndLogin();
         }
 
         function saveAndLogin() {
             localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
             
+            // تحديث الحساب المسجل في التخزين الدائم للبريد وكلمة المرور
+            if(currentUser.email) {
+                let registeredAccounts = JSON.parse(localStorage.getItem('hasouniRegisteredAccounts') || '{}');
+                registeredAccounts[currentUser.email] = currentUser;
+                localStorage.setItem('hasouniRegisteredAccounts', JSON.stringify(registeredAccounts));
+            }
+
             if(window.firebaseDB && window.dbRef && window.dbSet) {
                 const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + currentUser.name.replace(/[.#$\/\[\]]/g, '_'));
                 window.dbSet(userStatusRef, currentUser);
@@ -1077,6 +1101,7 @@
             checkKingArrival(currentUser);
         }
 
+        // زر الخروج يقدر يرجع من عضوية بالبريد وكلمة المرور اللي اخترهم عند التسجيل بمجرد التأكد أنهم موجودين
         function logout() {
             if(window.firebaseDB && window.dbRef && window.dbSet && currentUser) {
                 const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + currentUser.name.replace(/[.#$\/\[\]]/g, '_'));
@@ -1086,7 +1111,9 @@
                 window.dbSet(roomOccupancyRef, null);
             }
             localStorage.removeItem('hasouniChatUser');
-            location.reload();
+            // إظهار نافذة تسجيل الدخول مع خيار تفعيل تبويب العضوية للرجوع بالبريد وكلمة المرور
+            openModal('loginModal');
+            switchLoginMode('member');
         }
 
         function checkKingArrival(user) {
@@ -1115,7 +1142,7 @@
             if(!currentUser) return;
             let rankId = currentUser.rank ? currentUser.rank.id : 99;
             let rankName = currentUser.rank ? currentUser.rank.name : '';
-            let isPrivileged = currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || rankId === 1 || ['برنس', 'كنج', 'انروا', 'ادمان'].includes(rankName);
+            let isPrivileged = currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || rankId === 1 || ['صاحب الموقع', 'برنس', 'كنج'].includes(rankName);
 
             if(isPrivileged) {
                 document.getElementById('roomCleanBtn').style.display = 'block';
@@ -1125,13 +1152,14 @@
 
         function initSessionUI() {
             document.getElementById('topNavAvatar').src = currentUser.avatar;
-            if(currentUser.rank || currentUser.isOwner || currentUser.email) {
+            if(currentUser.rank || currentUser.email) {
                 document.getElementById('keyBottomBtn').style.display = 'none';
             }
             checkAdminPermissionsUI();
             activeUsersList = [currentUser];
         }
 
+        // تظهر الرتبة الجديدة للعضو ولجميع الأعضاء في العام بجانب اسم العضو مبين أيقونة الصورة الشخصية والاسم
         function renderUserRankStructure(userObj, nameClickAction) {
             let rankBgHtml = '';
             let avatarUrl = userObj && userObj.avatar ? userObj.avatar : 'https://via.placeholder.com/34';
@@ -1157,13 +1185,13 @@
                         ${subTitleHtml}
                     </div>`;
             } else {
+                // إذا لم يكن لديه رتبة تظهر بدون رتبة بصندوق عادي
                 rankBgHtml = `
                     <div style="display:inline-flex; flex-direction:column;">
-                        <div class="rank-bg-box" style="background:${customNameBg || '#ddd'}; color:#333;" onclick="${nameClickAction}">
+                        <div class="rank-bg-box" style="background:${customNameBg || '#e0e0e0'}; color:#333;" onclick="${nameClickAction}">
                             <i class="fas fa-user" style="color:#777;"></i>
                             <span>${displayName}</span>
                         </div>
-                        ${subTitleHtml}
                     </div>`;
             }
 
@@ -1183,7 +1211,6 @@
             let msgText = input.value.trim();
             if(!msgText) return;
 
-            // تصنيف المنشور احتيالي إذا احتوى على روابط خارجية ولم يكن المرسل صاحب الموقع
             if(!currentUser.isOwner && currentUser.email !== 'ghrwrkk2@gmail.com' && (msgText.includes('http://') || msgText.includes('https://') || msgText.includes('www.'))) {
                 msgText = 'منشور احتيالي';
             }
@@ -1320,7 +1347,6 @@
                 }
             });
 
-            // جلب الرسائل الأخيرة فوراً وضمان التزمن المستمر الحقيقي
             const messagesRef = window.dbQuery(window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`), window.dbLimitToLast(20));
             window.dbOnChildAdded(messagesRef, (snapshot) => {
                 const data = snapshot.val();
@@ -1437,6 +1463,7 @@
             openModal('onlineModal');
         }
 
+        // إهداء رتبة يظهر لصاحب الموقع والبرنس والكنج فقط
         function openRanksListModalForTarget() {
             closeModal('profileViewModal');
             const container = document.getElementById('ranksSelectionContainer');
@@ -1446,7 +1473,6 @@
             if(currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com') myRankId = 1;
 
             ranksList.forEach(r => {
-                // البرنس والكنج والإنروا يهدون رتباً أدنى (مثل تاج احمر ومتحت)، وصاحب الموقع يهديف كل الرتب
                 if(myRankId !== 1 && r.id <= myRankId) return;
 
                 let btn = document.createElement('div');
@@ -1495,10 +1521,9 @@
             closeModal('giftsModal');
         }
 
-        // أزرار الأوامر الحقيقية لصاحب الموقع والبرنس والكنج والإنروا والأدمان
+        // الأوامر: إهداء رتبه وتعديل بروفيل وحضور وطرد وكتم وحجب وحذف الحساب واهداء نقاط واهداء روبي واهداء ذهب يظهر لصاحب الموقع والبرنس والكنج فقط
         function adminActionTarget(action) {
             if(!selectedTargetUser) return;
-            // حماية صاحب الموقع الحقيقي من أي تعديل أو إجراء
             if(selectedTargetUser.isOwner || selectedTargetUser.email === 'ghrwrkk2@gmail.com' || (selectedTargetUser.rank && selectedTargetUser.rank.id === 1)) {
                 alert('لا يمكن اتخاذ أي إجراء أو تعديل على صاحب الموقع الحقيقي لأنه صاحب السلطة المطلقة!');
                 return;
@@ -1559,15 +1584,15 @@
             const canEdit = currentUser && currentUser.name === selectedTargetUser.name;
             document.getElementById('editSelfPen').style.display = canEdit ? 'block' : 'none';
 
+            let rankId = currentUser && currentUser.rank ? currentUser.rank.id : 99;
             let rankName = currentUser && currentUser.rank ? currentUser.rank.name : '';
-            const isPrivilegedAdmin = currentUser && (currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || [1,2,3,4,5].includes(currentUser.rank?.id) || ['برنس', 'كنج', 'انروا', 'ادمان'].includes(rankName));
+            let isPrivilegedOwnerOrRoyalty = currentUser && (currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || rankId === 1 || rankId === 2 || rankId === 3 || ['صاحب الموقع', 'برنس', 'كنج'].includes(rankName));
             
-            // زر الأوامر يظهر لصاحب الموقع والرتب المخولة ويُخفى عن بروفايل صاحب الموقع الحقيقي
             let isTargetOwner = selectedTargetUser.isOwner || selectedTargetUser.email === 'ghrwrkk2@gmail.com' || (selectedTargetUser.rank && selectedTargetUser.rank.id === 1);
             if(isTargetOwner) {
                 document.getElementById('ownerAdminCommandsContainer').style.display = 'none';
             } else {
-                document.getElementById('ownerAdminCommandsContainer').style.display = isPrivilegedAdmin ? 'flex' : 'none';
+                document.getElementById('ownerAdminCommandsContainer').style.display = isPrivilegedOwnerOrRoyalty ? 'flex' : 'none';
             }
 
             openModal('profileViewModal');
@@ -1593,6 +1618,7 @@
             openPrivateChatWithName(selectedTargetUser.name);
         }
 
+        // إذا ضغط عضو على بروفيل أي عضو وضغط أيقونة الخاص يتم فتح محادثة خاصة حقيقية
         function openPrivateChatWithName(name) {
             currentPrivateTarget = name;
             document.getElementById('privateChatTitle').innerText = `محادثة خاص مع: ${name}`;
@@ -1600,6 +1626,7 @@
             openModal('privateChatModal');
         }
 
+        // إذا كتب رسالة أو صورة أو فيديو أو أي شي وعمل ارسال يوصل العضو الي ارسلت اليه اشعار في ايقونت الخاص في الشريط العلوي واذا ضغط عليه يختفي الاشعار ويظهر اسم الشخص المرسل وعند الضغط عليه تتفتح المحادثة المرسلة ويقدر يرد ويوصل نفس ما وصله إشعار
         function sendPrivateMsg() {
             const input = document.getElementById('privateInput');
             let text = input.value.trim();
@@ -1677,121 +1704,119 @@
             openModal('privateNotificationModal');
         }
 
-        function openTopProfileMenu() {
-            if(!currentUser) { openModal('loginModal'); return; }
-            openModal('topProfileModal');
-        }
-
         function openSelfEdit() {
-            closeModal('profileViewModal');
-            document.getElementById('editModalTitle').innerText = "تعديل بروفايلي الشخصي";
+            if(!currentUser) return;
             document.getElementById('editName').value = currentUser.name || '';
             document.getElementById('editEmailField').value = currentUser.email || '';
             document.getElementById('editPassField').value = currentUser.pass || '';
-            document.getElementById('editAge').value = currentUser.age || '';
-            document.getElementById('editCountry').value = currentUser.country || '';
+            document.getElementById('editAge').value = currentUser.age || 20;
+            document.getElementById('editGender').value = currentUser.gender || 'ذكر';
+            document.getElementById('editCountry').value = currentUser.country || 'اليمن';
             document.getElementById('editBio').value = currentUser.bio || '';
             document.getElementById('editNameBgColor').value = currentUser.nameBgColor || '#ffd700';
             openModal('editSelfModal');
         }
 
         function saveEditedProfileData() {
-            let target = currentUser;
-            target.name = document.getElementById('editName').value;
-            target.email = document.getElementById('editEmailField').value;
-            target.pass = document.getElementById('editPassField').value;
-            target.age = document.getElementById('editAge').value;
-            target.gender = document.getElementById('editGender').value;
-            target.country = document.getElementById('editCountry').value;
-            target.bio = document.getElementById('editBio').value;
-            target.nameBgColor = document.getElementById('editNameBgColor').value;
+            if(!currentUser) return;
+            currentUser.name = document.getElementById('editName').value.trim() || currentUser.name;
+            currentUser.email = document.getElementById('editEmailField').value.trim() || currentUser.email;
+            currentUser.pass = document.getElementById('editPassField').value.trim() || currentUser.pass;
+            currentUser.age = document.getElementById('editAge').value;
+            currentUser.gender = document.getElementById('editGender').value;
+            currentUser.country = document.getElementById('editCountry').value;
+            currentUser.bio = document.getElementById('editBio').value;
+            currentUser.nameBgColor = document.getElementById('editNameBgColor').value;
 
-            const avatarFile = document.getElementById('editAvatarFile').files[0];
-            const coverFile = document.getElementById('editCoverFile').files[0];
-
-            let pendingReads = 0;
-            if(avatarFile) pendingReads++;
-            if(coverFile) pendingReads++;
-
-            function checkSaveDone() {
-                if(pendingReads <= 0) {
-                    localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
-                    document.getElementById('topNavAvatar').src = currentUser.avatar;
-
-                    if(window.firebaseDB && window.dbRef && window.dbSet) {
-                        const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + target.name.replace(/[.#$\/\[\]]/g, '_'));
-                        window.dbSet(userStatusRef, target);
-                    }
-
-                    closeModal('editSelfModal');
-                    alert('تم حفظ وتعديل الملف الشخصي والألوان بنجاح تام وتظهر التعديلات لجميع الأعضاء فوراً!');
-                }
-            }
+            let avatarFile = document.getElementById('editAvatarFile').files[0];
+            let coverFile = document.getElementById('editCoverFile').files[0];
 
             if(avatarFile) {
-                let r1 = new FileReader();
-                r1.onload = function(e) { target.avatar = e.target.result; pendingReads--; checkSaveDone(); };
-                r1.readAsDataURL(avatarFile);
-            }
-            if(coverFile) {
-                let r2 = new FileReader();
-                r2.onload = function(e) { target.cover = e.target.result; pendingReads--; checkSaveDone(); };
-                r2.readAsDataURL(coverFile);
-            }
-            if(pendingReads === 0) {
-                checkSaveDone();
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    currentUser.avatar = e.target.result;
+                    document.getElementById('topNavAvatar').src = currentUser.avatar;
+                    finalizeProfileSave();
+                };
+                reader.readAsDataURL(avatarFile);
+            } else if(coverFile) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    currentUser.cover = e.target.result;
+                    finalizeProfileSave();
+                };
+                reader.readAsDataURL(coverFile);
+            } else {
+                finalizeProfileSave();
             }
         }
 
-        function handleMicClick(slotIndex) {
-            currentMicSlot = slotIndex;
-            let currentMicUser = activeMics[slotIndex];
-            if(currentMicUser && currentMicUser.name === currentUser.name) {
-                openModal('micControlModal');
-            } else if(!currentMicUser) {
-                openModal('micJoinPromptModal');
+        function finalizeProfileSave() {
+            localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
+            if(currentUser.email) {
+                let registeredAccounts = JSON.parse(localStorage.getItem('hasouniRegisteredAccounts') || '{}');
+                registeredAccounts[currentUser.email] = currentUser;
+                localStorage.setItem('hasouniRegisteredAccounts', JSON.stringify(registeredAccounts));
+            }
+            if(window.firebaseDB && window.dbRef && window.dbSet) {
+                const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + currentUser.name.replace(/[.#$\/\[\]]/g, '_'));
+                window.dbSet(userStatusRef, currentUser);
+            }
+            alert('تم حفظ وتحديث البروفيل بنجاح للجميع فوراً!');
+            closeModal('editSelfModal');
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function openTopProfileMenu() { openModal('topProfileModal'); }
+
+        function handleMicClick(slot) {
+            currentMicSlot = slot;
+            if(activeMics[slot]) {
+                if(currentUser && (currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || (currentUser.rank && [1,2,3].includes(currentUser.rank.id)))) {
+                    openModal('micControlModal');
+                } else {
+                    alert(`هذا المايك مشغول بواسطة العضو: ${activeMics[slot].name}`);
+                }
             } else {
-                alert(`هذا المايك يشغله حالياً: ${currentMicUser.name}`);
+                openModal('micJoinPromptModal');
             }
         }
 
         function confirmJoinMic() {
-            closeModal('micJoinPromptModal');
+            if(!currentUser) return;
             activeMics[currentMicSlot] = currentUser;
             if(window.firebaseDB && window.dbRef && window.dbSet) {
                 const micRef = window.dbRef(window.firebaseDB, 'rooms/public/micsState/' + currentMicSlot);
                 window.dbSet(micRef, currentUser);
             }
-            alert('تم صعود الميكروفون بنجاح!');
+            closeModal('micJoinPromptModal');
         }
 
-        function micAction(actionType) {
-            closeModal('micControlModal');
-            if(actionType === 'leave' || actionType === 'mute') {
+        function micAction(action) {
+            if(action === 'leave' || action === 'mute') {
                 activeMics[currentMicSlot] = null;
                 if(window.firebaseDB && window.dbRef && window.dbSet) {
                     const micRef = window.dbRef(window.firebaseDB, 'rooms/public/micsState/' + currentMicSlot);
                     window.dbSet(micRef, null);
                 }
-            } else if(actionType === 'playSong') {
+            } else if(action === 'playSong') {
+                closeModal('micControlModal');
                 openModal('ytSearchModal');
-            } else if(actionType === 'stopSong') {
-                if(window.firebaseDB && window.dbRef && window.dbSet) {
-                    const audioRef = window.dbRef(window.firebaseDB, 'rooms/public/micAudio');
-                    window.dbSet(audioRef, null);
-                }
+                return;
             }
+            closeModal('micControlModal');
         }
 
         function executeYouTubeSearch() {
-            let query = document.getElementById('ytSearchQuery').value.trim();
-            if(!query) return;
-            let sampleAudio = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3";
+            let queryText = document.getElementById('ytSearchQuery').value.trim();
+            if(!queryText) return;
+            let audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3";
             if(window.firebaseDB && window.dbRef && window.dbSet) {
                 const audioRef = window.dbRef(window.firebaseDB, 'rooms/public/micAudio');
-                window.dbSet(audioRef, { url: sampleAudio, title: query, timestamp: window.dbServerTimestamp() });
+                window.dbSet(audioRef, { url: audioUrl, title: queryText, timestamp: window.dbServerTimestamp() });
             }
-            alert(`جاري بث الصوت للجميع فوراً: ${query}`);
+            alert('تم تشغيل وبث الصوت للجميع بنجاح في الروم!');
             closeModal('ytSearchModal');
             document.getElementById('ytSearchQuery').value = '';
         }
@@ -1807,9 +1832,6 @@
                 arrow.className = 'fas fa-chevron-down';
             }
         }
-
-        function openModal(modalId) { document.getElementById(modalId).style.display = 'flex'; }
-        function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
     </script>
 </body>
 </html>
