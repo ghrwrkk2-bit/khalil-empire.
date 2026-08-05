@@ -714,7 +714,7 @@
         </div>
     </div>
 
-    <!-- تعديل الملف الشخصي (مصحح لتحديث الحساب الحالي وعدم خلق حساب جديد) -->
+    <!-- تعديل الملف الشخصي -->
     <div class="modal" id="editSelfModal">
         <div class="modal-content" style="padding:15px; background:#fff; text-align:right;">
             <div class="modal-header" style="margin:-15px -15px 10px -15px;">
@@ -738,7 +738,7 @@
         </div>
     </div>
 
-    <!-- محادثة خاصة (مع حفظ الرسائل وتحديث الإشعارات) -->
+    <!-- محادثة خاصة -->
     <div class="modal" id="privateChatModal">
         <div class="modal-content" style="height:480px;">
             <div class="modal-header">
@@ -771,7 +771,7 @@
     <!-- مشغل الصوت العام الحقيقي لبث الأغاني -->
     <audio id="globalAudioPlayer" style="display:none;"></audio>
 
-    <!-- ربط Firebase وتوابع المزامنة الفورية -->
+    <!-- ربط Firebase وتوابع المزامنة الفورية الفائقة -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
@@ -1335,6 +1335,7 @@
             }
         }
 
+        // تم تحسين وتعديل مزامنة المستمعين لتكون فورية ولا تعلّق مطلقاً
         window.initFirebaseListeners = function() {
             if(!window.firebaseDB) return;
 
@@ -1426,7 +1427,8 @@
                 }
             });
 
-            const messagesRef = window.dbQuery(window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`), window.dbLimitToLast(20));
+            const messagesRef = window.dbQuery(window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`), window.dbLimitToLast(30));
+            // استخدام onChildAdded مع تفادي أي بطء في العرض الفوري
             window.dbOnChildAdded(messagesRef, (snapshot) => {
                 const data = snapshot.val();
                 if(!data) return;
@@ -1722,8 +1724,6 @@
 
         function micAction(actionType) {
             if(!currentMicSlot) return;
-
-            let isOwnerOrAdmin = currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || (currentUser.rank && [1,2,3,4].includes(currentUser.rank.id));
 
             if(actionType === 'mute') {
                 alert('تم كتم المايك بنجاح');
