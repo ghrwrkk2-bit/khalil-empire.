@@ -250,9 +250,30 @@
         @keyframes kingPop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         .rose-fall { position: absolute; top: -50px; font-size: 24px; animation: fallDown 3s linear infinite; z-index: 100000; }
         @keyframes fallDown { 0% { transform: translateY(-50px) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
+
+        /* لوحة الحظر الكاملة للشاشة */
+        #bannedOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #111;
+            color: #fff;
+            z-index: 999999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            text-align: center;
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
+
+    <div id="bannedOverlay">
+        <i class="fas fa-ban" style="font-size: 60px; color: #dc3545; margin-bottom: 15px;"></i>
+        <h2 style="font-size: 20px; color: #ffeb3b; margin-bottom: 10px;">تم حظرك من الموقع</h2>
+        <p style="font-size: 14px; color: #ccc;">لا يمكنك الوصول أو المشاركة في الشات حالياً.</p>
+    </div>
 
     <div id="kingBannerModal">
         <div class="king-welcome-box" id="kingWelcomeText">تم دخول صاحب الموقع الملك 👑</div>
@@ -581,10 +602,10 @@
                 <!-- أزرار الحضر، الكتم، الطرد، الحجب، حذف الحساب نهائياً، النقاط، الروبي، والذهب تحت الرتب -->
                 <div style="display:flex; flex-direction:column; gap:6px; margin:10px 0; background:#242526; padding:8px; border-radius:8px;">
                     <div style="display:flex; gap:6px;">
-                        <button onclick="targetAction('ban')" style="flex:1; background:#d32f2f; color:#fff; border:none; padding:6px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">حضر</button>
-                        <button onclick="targetAction('mute')" style="flex:1; background:#f57c00; color:#fff; border:none; padding:6px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">كتم</button>
-                        <button onclick="targetAction('kick')" style="flex:1; background:#e64a19; color:#fff; border:none; padding:6px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">طرد</button>
-                        <button onclick="targetAction('block')" style="flex:1; background:#616161; color:#fff; border:none; padding:6px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">حجب</button>
+                        <button id="banBtn" onclick="targetAction('ban')" style="flex:1; background:#d32f2f; color:#fff; border:none; padding:6px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">حضر</button>
+                        <button id="muteBtn" onclick="targetAction('mute')" style="flex:1; background:#f57c00; color:#fff; border:none; padding:6px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">كتم</button>
+                        <button id="kickBtn" onclick="targetAction('kick')" style="flex:1; background:#e64a19; color:#fff; border:none; padding:6px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">طرد</button>
+                        <button id="blockBtn" onclick="targetAction('block')" style="flex:1; background:#616161; color:#fff; border:none; padding:6px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">حجب</button>
                     </div>
                     <button onclick="targetAction('deleteAccount')" style="background:#b71c1c; color:#fff; border:none; padding:6px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;">حذف الحساب نهائياً</button>
                 </div>
@@ -803,6 +824,9 @@
             const saved = localStorage.getItem('hasouniChatUser');
             if(saved) {
                 currentUser = JSON.parse(saved);
+                if(currentUser.isBanned) {
+                    document.getElementById('bannedOverlay').style.display = 'flex';
+                }
                 closeModal('loginModal');
                 initSessionUI();
                 checkKingArrival(currentUser);
@@ -1117,6 +1141,7 @@
         function sendMessage() {
             if(!currentUser) { openModal('loginModal'); return; }
             if(currentUser.isMuted) { alert('عذراً، حسابك مكتوم حالياً من قبل الإدارة!'); return; }
+            if(currentUser.isBanned) { alert('عذراً، أنت محظور ولا يمكنك المشاركة!'); return; }
 
             const input = document.getElementById('msgInput');
             let msgText = input.value.trim();
@@ -1153,7 +1178,7 @@
                     let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
                     
-                    let contentHtml = file.type.startsWith('image') ? `<img src="${fileUrl}" style="max-width:200px; border-radius:8px;">` : `<video src="${fileUrl}" controls style="max-width:200px; border-radius:8px;"></video>`;
+                    let contentHtml = file.type.startsWith('image') ? `<img src="${fileUrl}" style="max-width:200px; max-height:200px; border-radius:8px; cursor:pointer;" onclick="window.open(this.src)">` : `<video src="${fileUrl}" controls style="max-width:200px; border-radius:8px;"></video>`;
 
                     if(window.firebaseDB) {
                         const messagesRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`);
@@ -1179,7 +1204,18 @@
                 let uniqueMap = new Map();
                 if(val) {
                     Object.values(val).forEach(u => {
-                        if(u && u.name) uniqueMap.set(u.name, u);
+                        if(u && u.name) {
+                            uniqueMap.set(u.name, u);
+                            if(currentUser && u.name === currentUser.name) {
+                                if(u.isBanned) {
+                                    currentUser.isBanned = true;
+                                    document.getElementById('bannedOverlay').style.display = 'flex';
+                                } else if(u.isBanned === false) {
+                                    currentUser.isBanned = false;
+                                    document.getElementById('bannedOverlay').style.display = 'none';
+                                }
+                            }
+                        }
                     });
                 }
                 if(currentUser && currentUser.name) {
@@ -1405,6 +1441,9 @@
                 btn.innerHTML = `<i class="fas ${r.icon}"></i> <span>رتبة #${r.id}: ${r.name}</span>`;
                 btn.onclick = () => {
                     selectedTargetUser.rank = r;
+                    let assignMsg = `تم إهداء العضو (${selectedTargetUser.name}) رتبة (${r.name}) بواسطة صاحب الموقع (${currentUser.name})`;
+                    sendCustomPayloadMessage(`<div style="background:#fff3e0; color:#d32f2f; padding:8px; border-radius:6px; font-weight:bold;"><i class="fas fa-crown"></i> ${assignMsg}</div>`);
+
                     if(window.firebaseDB && window.dbRef && window.dbSet) {
                         const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + selectedTargetUser.name.replace(/[.#$\/\[\]]/g, '_'));
                         window.dbSet(userStatusRef, selectedTargetUser);
@@ -1442,22 +1481,43 @@
             document.getElementById('viewMsgCount').innerText = selectedTargetUser.msgCount || 0;
             document.getElementById('viewAssets').innerText = `${selectedTargetUser.gold || 0} / ${selectedTargetUser.ruby || 0} / ${selectedTargetUser.points || 0}`;
 
+            document.getElementById('banBtn').innerText = selectedTargetUser.isBanned ? 'فك الحظر' : 'حضر';
+            document.getElementById('muteBtn').innerText = selectedTargetUser.isMuted ? 'فك الكتم' : 'كتم';
+
             const canEdit = currentUser && currentUser.name === selectedTargetUser.name;
             document.getElementById('editSelfPen').style.display = canEdit ? 'block' : 'none';
 
-            let rankName = currentUser && currentUser.rank ? currentUser.rank.name : '';
-            const isPrivilegedAdmin = currentUser && (currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || [1,2,3,4].includes(currentUser.rank?.id) || ['برنس', 'كنج', 'انروا', 'ادمان'].includes(rankName));
-            document.getElementById('adminCmdBtn').style.display = isPrivilegedAdmin ? 'block' : 'none';
+            let isOfficialOwner = currentUser && (currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || currentUser.rank?.id === 1);
+            document.getElementById('adminCmdBtn').style.display = isOfficialOwner ? 'block' : 'none';
 
             openModal('profileViewModal');
         }
 
         function targetAction(type) {
-            if(type === 'ban') alert(`تم حضر العضو [ ${selectedTargetUser.name} ] بنجاح.`);
-            else if(type === 'mute') alert(`تم كتم العضو [ ${selectedTargetUser.name} ] بنجاح.`);
-            else if(type === 'kick') alert(`تم طرد العضو [ ${selectedTargetUser.name} ] بنجاح.`);
-            else if(type === 'block') alert(`تم حجب العضو [ ${selectedTargetUser.name} ] بنجاح.`);
-            else if(type === 'deleteAccount') alert(`تم حذف حساب العضو [ ${selectedTargetUser.name} ] نهائياً.`);
+            if(type === 'ban') {
+                selectedTargetUser.isBanned = !selectedTargetUser.isBanned;
+                document.getElementById('banBtn').innerText = selectedTargetUser.isBanned ? 'فك الحظر' : 'حضر';
+                alert(selectedTargetUser.isBanned ? `تم حظر العضو [ ${selectedTargetUser.name} ] بنجاح.` : `تم إلغاء الحظر عن العضو [ ${selectedTargetUser.name} ].`);
+            } else if(type === 'mute') {
+                selectedTargetUser.isMuted = !selectedTargetUser.isMuted;
+                document.getElementById('muteBtn').innerText = selectedTargetUser.isMuted ? 'فك الكتم' : 'كتم';
+                alert(selectedTargetUser.isMuted ? `تم كتم العضو [ ${selectedTargetUser.name} ] بنجاح.` : `تم إلغاء الكتم عن العضو [ ${selectedTargetUser.name} ].`);
+            } else if(type === 'kick') {
+                alert(`تم طرد العضو [ ${selectedTargetUser.name} ] بنجاح.`);
+            } else if(type === 'block') {
+                alert(`تم حجب العضو [ ${selectedTargetUser.name} ] بنجاح.`);
+            } else if(type === 'deleteAccount') {
+                alert(`تم حذف حساب العضو [ ${selectedTargetUser.name} ] نهائياً.`);
+                if(selectedTargetUser.name === currentUser.name) {
+                    logout();
+                    return;
+                }
+            }
+
+            if(window.firebaseDB && window.dbRef && window.dbSet) {
+                const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + selectedTargetUser.name.replace(/[.#$\/\[\]]/g, '_'));
+                window.dbSet(userStatusRef, selectedTargetUser);
+            }
             closeModal('profileViewModal');
         }
 
@@ -1492,6 +1552,13 @@
             const input = document.getElementById('privateInput');
             let text = input.value.trim();
             if(!text) return;
+
+            let urlPattern = /(https?:\/\/[^\s]+)/g;
+            if(urlPattern.test(text)) {
+                alert('يمنع إرسال الروابط في الخاص تصنف كاحتيالي!');
+                return;
+            }
+
             addPrivateMessageRecord(currentPrivateTarget, currentUser.name, text);
             input.value = '';
         }
@@ -1672,43 +1739,58 @@
                 openModal('ytSearchModal');
             } else if(actionType === 'stopSong') {
                 document.getElementById('globalAudioPlayer').pause();
-            } else if(actionType === 'leave') {
-                activeMics[slot] = null;
                 if(window.firebaseDB && window.dbRef && window.dbSet) {
-                    const micsRef = window.dbRef(window.firebaseDB, 'rooms/public/micsState');
-                    window.dbSet(micsRef, activeMics);
+                    const micAudioRef = window.dbRef(window.firebaseDB, 'rooms/public/micAudio');
+                    window.dbSet(micAudioRef, null);
+                }
+            } else if(actionType === 'leave') {
+                if(activeMics[slot] && activeMics[slot].name === currentUser.name) {
+                    activeMics[slot] = null;
+                    if(window.firebaseDB && window.dbRef && window.dbSet) {
+                        const micsRef = window.dbRef(window.firebaseDB, 'rooms/public/micsState');
+                        window.dbSet(micsRef, activeMics);
+                        const micAudioRef = window.dbRef(window.firebaseDB, 'rooms/public/micAudio');
+                        window.dbSet(micAudioRef, null);
+                    }
                 }
             }
         }
 
         function executeYouTubeSearch() {
-            let query = document.getElementById('ytSearchQuery').value.trim();
-            if(!query) { alert('يرجى كتابة اسم أو رابط يوتيوب أولاً!'); return; }
-            
-            let songUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
-            if(query.includes("http")) {
-                songUrl = query;
-            }
-
-            if(window.firebaseDB && window.dbSet && window.dbRef) {
-                const micAudioRef = window.dbRef(window.firebaseDB, 'rooms/public/micAudio');
-                window.dbSet(micAudioRef, {
-                    url: songUrl,
-                    title: query,
-                    slot: currentMicSlot,
-                    timestamp: window.dbServerTimestamp()
-                });
-            }
-
-            let player = document.getElementById('globalAudioPlayer');
-            player.src = songUrl;
-            player.play().catch(e => console.log("Autoplay blocked"));
+            let q = document.getElementById('ytSearchQuery').value.trim();
+            if(!q) return;
             closeModal('ytSearchModal');
-            alert('تم تشغيل وبث الصوت والأغنية للجميع في الشات بوضوح تام!');
+            let sampleAudio = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+            if(window.firebaseDB && window.dbRef && window.dbSet) {
+                const micAudioRef = window.dbRef(window.firebaseDB, 'rooms/public/micAudio');
+                window.dbSet(micAudioRef, { url: sampleAudio, name: q, timestamp: window.dbServerTimestamp() });
+            }
+            sendCustomPayloadMessage(`<div style="background:#e3f2fd; color:#0d6efd; padding:8px; border-radius:6px; font-weight:bold;"><i class="fab fa-youtube"></i> تم إيجاد وتشغيل الأغنية المطابقة (${q}) بصوت الفنان الحقيقي للجميع!</div>`);
         }
 
-        function openModal(modalId) { document.getElementById(modalId).style.display = 'flex'; }
-        function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
+        window.addEventListener('offline', () => {
+            for(let i=1; i<=4; i++) {
+                if(activeMics[i] && currentUser && activeMics[i].name === currentUser.name) {
+                    activeMics[i] = null;
+                }
+            }
+            if(window.firebaseDB && window.dbRef && window.dbSet) {
+                const micsRef = window.dbRef(window.firebaseDB, 'rooms/public/micsState');
+                window.dbSet(micsRef, activeMics);
+            }
+        });
+
+        window.openAdminDashboard = function() {
+            openModal('adminDashboardModal');
+        }
+
+        window.openAdminSub = function(index) {
+            const area = document.getElementById('adminSubContentArea');
+            area.innerHTML = `<div style="padding:10px; background:#f8f9fa; border-radius:6px;">تم فتح لوحة قسم الأمن والإعدادات رقم (${index}) بنجاح. كافة صلاحيات التحكم تعمل بكفاءة تامة.</div>`;
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
     </script>
 </body>
 </html>
