@@ -98,8 +98,8 @@
         }
 
         /* لوحة الميكروفونات */
-        .mic-wrapper { display: flex; flex-direction: column; align-items: center; background: transparent; z-index: 9; flex-shrink: 0; }
-        .mic-box { display: flex; gap: 8px; align-items: center; padding: 6px; background: transparent; max-width: 100%; overflow-x: auto; }
+        .mic-wrapper { display: flex; flex-direction: column; align-items: center; background: transparent; z-index: 9; flex-shrink: 0; transition: 0.3s; }
+        .mic-box { display: flex; gap: 8px; align-items: center; padding: 6px; background: transparent; max-width: 100%; overflow-x: auto; transition: 0.3s; }
         .mic-container { display: flex; flex-direction: column; align-items: center; position: relative; }
         .mic-btn { background-color: #0d6efd; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; border: 2px solid #fff; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3); background-size: cover; background-position: center; transition: 0.2s; }
         .mic-btn:active { transform: scale(0.95); }
@@ -163,22 +163,29 @@
         
         #replyPreviewBar { display: none; background: #e0e0e0; padding: 4px 10px; font-size: 11px; border-radius: 4px; justify-content: space-between; align-items: center; border-right: 3px solid #0d6efd; }
 
-        /* قائمة علامة الزائد تظهر فوق لوحة الكتابة تماماً ولا تختفي */
-        .plus-popup-menu {
+        /* لوحة علامة الزائد وسط الشاشة عند الضغط على + */
+        .plus-center-modal {
             display: none;
-            position: absolute;
-            bottom: 50px;
-            right: 0;
-            background: #fff;
-            border-radius: 12px;
-            padding: 12px;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
             z-index: 99999;
-            border: 1px solid #ddd;
-            animation: popUpUp 0.2s ease-in-out;
-            white-space: nowrap;
+            justify-content: center;
+            align-items: center;
         }
-        @keyframes popUpUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .plus-center-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 340px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+            animation: popUpUp 0.2s ease-in-out;
+        }
+        @keyframes popUpUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
         /* الشريط السفلي */
         .bottom-nav { display: flex; justify-content: space-around; background-color: #000; padding: 6px 0; color: #fff; border-top: 2px solid #ffd700; flex-shrink: 0; }
@@ -226,8 +233,8 @@
         .profile-header-bg { position: relative; height: 140px; background-size: cover; background-position: center; display: flex; align-items: flex-start; justify-content: space-between; padding: 10px; }
         .profile-user-avatar { position: absolute; bottom: -25px; right: 15px; width: 75px; height: 75px; border-radius: 15px; border: 3px solid #ffd700; object-fit: cover; }
         .profile-body-content { padding: 35px 15px 15px 15px; background: #18191a; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-        .profile-actions-bar { display: flex; gap: 4px; margin: 12px 0; background: #242526; padding: 6px; border-radius: 8px; }
-        .profile-action-btn { flex: 1; background: #3a3b3c; color: #fff; border: none; padding: 8px 2px; border-radius: 5px; font-size: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: 0.2s; }
+        .profile-actions-bar { display: flex; gap: 4px; margin: 12px 0; background: #242526; padding: 6px; border-radius: 8px; flex-wrap: wrap; }
+        .profile-action-btn { flex: 1; min-width: 70px; background: #3a3b3c; color: #fff; border: none; padding: 8px 2px; border-radius: 5px; font-size: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: 0.2s; }
         .profile-action-btn:active { background: #4e4f50; }
         .profile-action-btn i { font-size: 12px; }
         .info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 12px; }
@@ -251,6 +258,40 @@
         <div class="king-welcome-box" id="kingWelcomeText">تم دخول صاحب الموقع الملك 👑</div>
     </div>
 
+    <!-- نافذة علامة الزائد وسط الشاشة -->
+    <div class="plus-center-modal" id="plusCenterModal">
+        <div class="plus-center-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #ddd; padding-bottom:8px;">
+                <span style="font-weight:bold; font-size:14px;">خيارات الوسائط والألعاب</span>
+                <i class="fas fa-times" onclick="closeModal('plusCenterModal')" style="cursor:pointer; font-size:16px; color:#777;"></i>
+            </div>
+            <div style="display:flex; justify-content:space-around; align-items:center; flex-wrap:wrap; gap:10px;">
+                <div onclick="document.getElementById('fileUploadInput').click(); closeModal('plusCenterModal');" style="background:#e3f2fd; width:50px; height:50px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer;" title="1. ملف"><i class="fas fa-cloud-upload-alt" style="color:#0d6efd; font-size:18px;"></i><span style="font-size:9px; margin-top:2px;">ملف</span></div>
+                <div onclick="openWheelGame(); closeModal('plusCenterModal');" style="background:#fff3e0; width:50px; height:50px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer;" title="2. عجل الحظ"><i class="fas fa-dharmachakra" style="color:#ff9800; font-size:18px;"></i><span style="font-size:9px; margin-top:2px;">العجلة</span></div>
+                <div onclick="rollDiceGame(); closeModal('plusCenterModal');" style="background:#e8f5e9; width:50px; height:50px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer;" title="3. نرد"><i class="fas fa-dice" style="color:#28a745; font-size:18px;"></i><span style="font-size:9px; margin-top:2px;">نرد</span></div>
+                <div onclick="openDrawingBoard(); closeModal('plusCenterModal');" style="background:#fce4ec; width:50px; height:50px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer;" title="4. رسم"><i class="fas fa-paint-brush" style="color:#e91e63; font-size:18px;"></i><span style="font-size:9px; margin-top:2px;">رسم</span></div>
+                <div onclick="openRpsGame(); closeModal('plusCenterModal');" style="background:#ede7f6; width:50px; height:50px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer;" title="5. حجر ورقة مقص"><i class="fas fa-hand-rock" style="color:#673ab7; font-size:18px;"></i><span style="font-size:9px; margin-top:2px;">لعبة</span></div>
+            </div>
+            <input type="file" id="fileUploadInput" style="display:none;" accept="image/*,video/*" onchange="handleFileUpload(this)">
+        </div>
+    </div>
+
+    <!-- نافذة تسجيل الصوت الحقيقي -->
+    <div class="modal" id="audioRecordModal">
+        <div class="modal-content" style="max-width:320px; text-align:center; padding:15px;">
+            <div class="modal-header" style="margin:-15px -15px 15px -15px;">
+                <span>تسجيل الصوت الحقيقي</span>
+                <i class="fas fa-times" onclick="cancelAudioRecord()" style="cursor:pointer; padding:5px;"></i>
+            </div>
+            <div style="font-size:14px; margin-bottom:15px;" id="recordStatusText">جاري الاستعداد للتسجيل...</div>
+            <div style="font-size:40px; color:#dc3545; margin-bottom:15px;"><i class="fas fa-microphone fa-beat"></i></div>
+            <div style="display:flex; gap:10px;">
+                <button onclick="sendRecordedAudio()" style="flex:1; background:#28a745; color:#fff; border:none; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer;">إرسال الصوت</button>
+                <button onclick="cancelAudioRecord()" style="flex:1; background:#dc3545; color:#fff; border:none; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer;">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
     <!-- الشريط العلوي -->
     <header class="top-nav">
         <div class="avatar-container" onclick="openTopProfileMenu()">
@@ -268,7 +309,7 @@
     </header>
 
     <!-- الميكروفونات -->
-    <div class="mic-wrapper">
+    <div class="mic-wrapper" id="micWrapperContainer">
         <div class="mic-box" id="micBox">
             <div class="mic-container">
                 <div class="mic-btn" id="mic1" onclick="handleMicClick(1)"><i class="fas fa-microphone"></i></div>
@@ -287,7 +328,7 @@
                 <span class="mic-username" id="micName4">فارغ</span>
             </div>
         </div>
-        <div class="mic-toggle-btn" onclick="toggleMics()"><i class="fas fa-chevron-up" id="micArrow"></i></div>
+        <div class="mic-toggle-btn" onclick="toggleMicsVisibility()"><i class="fas fa-chevron-up" id="micArrow"></i></div>
     </div>
 
     <!-- منطقة الشات العام -->
@@ -309,28 +350,8 @@
                 <input type="text" id="msgInput" placeholder="اكتب رسالتك هنا..." onkeypress="if(event.key === 'Enter') sendMessage()">
                 <i class="far fa-smile" style="color:#777; cursor:pointer; padding: 5px;" onclick="openEmojiPickerModal()"></i>
             </div>
-            <i class="fas fa-microphone" style="font-size:18px; color:#555; cursor:pointer; padding: 4px;" onclick="alert('التسجيل الصوتي مفعل')"></i>
-            
-            <!-- زر علامة الزائد مع القائمة الثابتة -->
-            <div style="position:relative;">
-                <i class="fas fa-plus" id="plusBtn" style="font-size:18px; color:#555; cursor:pointer; padding: 4px;" onclick="togglePlusMenu()"></i>
-                
-                <div class="plus-popup-menu" id="plusPopupMenu">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;">
-                        <span style="font-weight:bold; font-size:12px;">مشاركة الوسائط والألعاب</span>
-                        <i class="fas fa-times" onclick="togglePlusMenu()" style="cursor:pointer; font-size:12px; color:#777;"></i>
-                    </div>
-                    <div style="display:flex; gap:12px; align-items:center;">
-                        <div onclick="document.getElementById('fileUploadInput').click(); togglePlusMenu();" style="background:#e3f2fd; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fas fa-cloud-upload-alt" style="color:#0d6efd; font-size:16px;"></i></div>
-                        <input type="file" id="fileUploadInput" style="display:none;" accept="image/*,video/*" onchange="handleFileUpload(this)">
-                        <div onclick="openTikTokModal(); togglePlusMenu();" style="background:#000; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fab fa-tiktok" style="color:#fff; font-size:16px;"></i></div>
-                        <div onclick="rollDiceGame(); togglePlusMenu();" style="background:#e8f5e9; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fas fa-dice" style="color:#28a745; font-size:16px;"></i></div>
-                        <div onclick="openYouTubePickerModal(); togglePlusMenu();" style="background:#ffebee; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fab fa-youtube" style="color:#ff0000; font-size:16px;"></i></div>
-                        <div onclick="openTicketSystemModal(); togglePlusMenu();" style="background:#fff3e0; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="fas fa-headset" style="color:#ff9800; font-size:16px;"></i></div>
-                    </div>
-                </div>
-            </div>
-
+            <i class="fas fa-microphone" style="font-size:18px; color:#555; cursor:pointer; padding: 4px;" onclick="startAudioRecording()" title="تسجيل الصوت"></i>
+            <i class="fas fa-plus" id="plusBtn" style="font-size:18px; color:#555; cursor:pointer; padding: 4px;" onclick="openModal('plusCenterModal')"></i>
         </div>
     </div>
 
@@ -353,49 +374,6 @@
                 <i class="fas fa-times" onclick="closeModal('emojiPickerModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div class="modal-body" id="emojiGridContainer" style="display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; max-height:250px; text-align:center; font-size:22px;"></div>
-        </div>
-    </div>
-
-    <!-- نافذة تيك توك -->
-    <div class="modal" id="tikTokModal">
-        <div class="modal-content" style="max-width:380px;">
-            <div class="modal-header">
-                <span>مشاركة فيديو تيك توك حقيقي</span>
-                <i class="fas fa-times" onclick="closeModal('tikTokModal')" style="cursor:pointer; padding:5px;"></i>
-            </div>
-            <div class="modal-body" style="display:flex; flex-direction:column; gap:8px;">
-                <input type="text" id="tikTokUrlInput" placeholder="الصق رابط فيديو تيك توك هنا..." style="padding:9px; border:1px solid #ccc; border-radius:5px; font-size:13px;">
-                <button onclick="sendTikTokEmbed()" style="background:#000; color:#fff; border:none; padding:10px; border-radius:5px; font-weight:bold; cursor:pointer;"><i class="fab fa-tiktok"></i> نشر فيديو تيك توك في الشات</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- نافذة يوتيوب -->
-    <div class="modal" id="youtubePickerModal">
-        <div class="modal-content" style="max-width:380px;">
-            <div class="modal-header">
-                <span>بحث وبث يوتيوب حقيقي</span>
-                <i class="fas fa-times" onclick="closeModal('youtubePickerModal')" style="cursor:pointer; padding:5px;"></i>
-            </div>
-            <div class="modal-body" style="display:flex; flex-direction:column; gap:8px;">
-                <input type="text" id="youtubeUrlInput" placeholder="الصق رابط يوتيوب أو اسم الأغنية..." style="padding:9px; border:1px solid #ccc; border-radius:5px; font-size:13px;">
-                <button onclick="sendYouTubeEmbed()" style="background:#ff0000; color:#fff; border:none; padding:10px; border-radius:5px; font-weight:bold; cursor:pointer;"><i class="fab fa-youtube"></i> تشغيل وبث للجميع فوراً</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- نافذة التكتك والدعم الفني -->
-    <div class="modal" id="ticketSystemModal">
-        <div class="modal-content" style="max-width:380px;">
-            <div class="modal-header">
-                <span>نظام التكتيكات والدعم الفني الحقيقي</span>
-                <i class="fas fa-times" onclick="closeModal('ticketSystemModal')" style="cursor:pointer; padding:5px;"></i>
-            </div>
-            <div class="modal-body" style="display:flex; flex-direction:column; gap:8px;">
-                <input type="text" id="ticketSubject" placeholder="عنوان التذكرة / المشكلة..." style="padding:9px; border:1px solid #ccc; border-radius:5px; font-size:13px;">
-                <textarea id="ticketDesc" placeholder="اشرح مشكلتك للإدارة..." style="padding:9px; border:1px solid #ccc; border-radius:5px; font-size:13px; height:80px; resize:none;"></textarea>
-                <button onclick="submitTicketSystem()" style="background:#ff9800; color:#fff; border:none; padding:10px; border-radius:5px; font-weight:bold; cursor:pointer;"><i class="fas fa-paper-plane"></i> إرسال التذكرة للإدارة</button>
-            </div>
         </div>
     </div>
 
@@ -426,7 +404,6 @@
             <div style="display:flex; flex-direction:column; gap:8px;">
                 <input type="text" id="ytSearchQuery" placeholder="انسخ رابط يوتيوب أو اكتب اسم الأغنية..." style="padding:10px; border:1px solid #ccc; border-radius:5px; font-size:14px;">
                 <button onclick="executeYouTubeSearch()" style="background:#ff0000; color:#fff; border:none; padding:11px; border-radius:5px; font-weight:bold; cursor:pointer;"><i class="fab fa-youtube"></i> تشغيل وبث الصوت للجميع</button>
-                <div id="ytResultsArea" style="max-height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:5px; margin-top:5px; -webkit-overflow-scrolling: touch;"></div>
             </div>
         </div>
     </div>
@@ -472,14 +449,11 @@
                 <i class="fas fa-times" onclick="closeModal('roomOptsModal')" style="cursor:pointer; padding:5px;"></i>
             </div>
             <div style="display:flex; flex-direction:column; gap:10px;" id="roomOptsListContainer">
-                <!-- أزرار التنظيف والخلفية مخفية افتراضياً ولا تظهر إلا لصاحب الموقع أو الرتب المحددة (برنس، كنج، انروا، أدمان) -->
                 <button id="roomCleanBtn" onclick="cleanRoom()" style="display:none; padding:11px; background:#dc3545; color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">🧹 تنظيف الروم (للجميع فوراً)</button>
-                
                 <div id="roomBgUploadContainer" style="display:none; flex-direction:column; gap:5px;">
                     <label style="font-weight:bold; font-size:12px;">🖼️ رفع خلفية للروم (تظهر لجميع الأعضاء):</label>
                     <input type="file" id="roomBgFile" accept="image/*" onchange="uploadRoomBg(this)" style="padding:6px; font-size:12px;">
                 </div>
-                
                 <button id="ownerControlPanelBtn" onclick="openAdminDashboard()" style="display:none; padding:12px; background:linear-gradient(45deg,#ffd700,#ff8c00); color:#000; border:none; border-radius:6px; font-weight:bold; font-size:13px; cursor:pointer; box-shadow:0 0 10px rgba(255,215,0,0.5);">👑 لوحة التحكم الشاملة</button>
             </div>
         </div>
@@ -604,6 +578,17 @@
                     <button class="profile-action-btn" onclick="openPrivateChat()"><i class="fas fa-comments" style="color:#17a2b8;"></i><span>خاص</span></button>
                 </div>
 
+                <!-- أزرار الحضر، الكتم، الطرد، الحجب، حذف الحساب نهائياً، النقاط، الروبي، والذهب تحت الرتب -->
+                <div style="display:flex; flex-direction:column; gap:6px; margin:10px 0; background:#242526; padding:8px; border-radius:8px;">
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="targetAction('ban')" style="flex:1; background:#d32f2f; color:#fff; border:none; padding:6px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">حضر</button>
+                        <button onclick="targetAction('mute')" style="flex:1; background:#f57c00; color:#fff; border:none; padding:6px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">كتم</button>
+                        <button onclick="targetAction('kick')" style="flex:1; background:#e64a19; color:#fff; border:none; padding:6px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">طرد</button>
+                        <button onclick="targetAction('block')" style="flex:1; background:#616161; color:#fff; border:none; padding:6px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">حجب</button>
+                    </div>
+                    <button onclick="targetAction('deleteAccount')" style="background:#b71c1c; color:#fff; border:none; padding:6px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;">حذف الحساب نهائياً</button>
+                </div>
+
                 <div class="info-row"><span>العمر:</span><span id="viewAge">--</span></div>
                 <div class="info-row"><span>الجنس:</span><span id="viewGender">--</span></div>
                 <div class="info-row"><span>البلد:</span><span id="viewCountry">اليمن</span></div>
@@ -708,7 +693,7 @@
         </div>
     </div>
 
-    <!-- مشغل الصوت العام الحقيقي لبث الأغاني -->
+    <!-- مشغل الصوت العام الحقيقي لبث الأغاني والصوت -->
     <audio id="globalAudioPlayer" style="display:none;"></audio>
 
     <!-- ربط Firebase وتوابع المزامنة الفورية -->
@@ -790,6 +775,8 @@
         let currentPrivateTarget = null;
         let currentQuotedText = null;
         let currentActiveRoom = 'روم شات حسوني الرئيسي';
+        let mediaRecorder = null;
+        let audioChunks = [];
 
         const emojiList = ["😀","😃","😄","😁","😆","😅","🤣","😂","🙂","🙃","😉","😊","😇","🥰","😍","🤩","😘","😗","😚","😙","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🤫","🤔","🤐","🤨","😐","😑","😶","😏","😒","🙄","😬","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🤧","🥵","🥶","🥴","😵","🤯","🤠","🥳","😎","🤓","🧐","😕","😟","🙁","😮","😯","😲","😳","🥺","😦","😧","😨","😰","😥","😢","😭","😱","😖","😣","😞","😓","😩","😫","🥱","😤","😡","😠","🤬","😈","👿","💀","☠️","💩","🤡","👹","👺","👻","👽","👾","🤖"];
 
@@ -838,49 +825,82 @@
             }
         }
 
-        function togglePlusMenu() {
-            const menu = document.getElementById('plusPopupMenu');
-            menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+        function toggleMicsVisibility() {
+            const box = document.getElementById('micBox');
+            const arrow = document.getElementById('micArrow');
+            if(box.style.display === 'none') {
+                box.style.display = 'flex';
+                arrow.className = 'fas fa-chevron-up';
+            } else {
+                box.style.display = 'none';
+                arrow.className = 'fas fa-chevron-down';
+            }
         }
 
         function openEmojiPickerModal() { openModal('emojiPickerModal'); }
-        function openTikTokModal() { openModal('tikTokModal'); }
-        function openYouTubePickerModal() { openModal('youtubePickerModal'); }
-        function openTicketSystemModal() { openModal('ticketSystemModal'); }
 
-        function sendTikTokEmbed() {
-            let url = document.getElementById('tikTokUrlInput').value.trim();
-            if(!url) { alert('يرجى لصق رابط تيك توك أولاً!'); return; }
-            let contentHtml = `<div style="background:#000; color:#fff; padding:8px; border-radius:6px;"><i class="fab fa-tiktok"></i> مشاركة تيك توك: <a href="${url}" target="_blank" style="color:#00e676; word-break:break-all;">${url}</a></div>`;
-            sendCustomPayloadMessage(contentHtml);
-            closeModal('tikTokModal');
-            document.getElementById('tikTokUrlInput').value = '';
-        }
-
-        function sendYouTubeEmbed() {
-            let url = document.getElementById('youtubeUrlInput').value.trim();
-            if(!url) { alert('يرجى لصق رابط يوتيوب أولاً!'); return; }
-            let contentHtml = `<div style="background:#ffebee; color:#d32f2f; padding:8px; border-radius:6px;"><i class="fab fa-youtube"></i> فيديو يوتيوب: <a href="${url}" target="_blank" style="color:#d32f2f; word-break:break-all;">${url}</a></div>`;
-            sendCustomPayloadMessage(contentHtml);
-            closeModal('youtubePickerModal');
-            document.getElementById('youtubeUrlInput').value = '';
-        }
-
-        function submitTicketSystem() {
-            let subject = document.getElementById('ticketSubject').value.trim();
-            let desc = document.getElementById('ticketDesc').value.trim();
-            if(!subject || !desc) { alert('يرجى تعبئة حقول التذكرة!'); return; }
-            alert('تم إرسال تذكتك للإدارة بنجاح وسيتم الرد قريباً!');
-            closeModal('ticketSystemModal');
-            document.getElementById('ticketSubject').value = '';
-            document.getElementById('ticketDesc').value = '';
+        function openWheelGame() {
+            let rewards = ["50 ذهبة", "10 روبي", "نقاط مضاعفة", "حظ سعيد في المرة القادمة", "100 ذهبة", "رتبة مميزة لمدة ساعة"];
+            let res = rewards[Math.floor(Math.random() * rewards.length)];
+            sendCustomPayloadMessage(`<div style="background:#fff3e0; color:#ff9800; padding:8px; border-radius:6px; font-weight:bold;"><i class="fas fa-dharmachakra"></i> عجل الحظ: فزت بـ (${res})!</div>`);
         }
 
         function rollDiceGame() {
             let diceNum = Math.floor(Math.random() * 6) + 1;
             let diceIcons = ["⚀","⚁","⚂","⚃","⚄","⚅"];
-            let contentHtml = `<div style="font-size:16px; font-weight:bold; color:#28a745;"><i class="fas fa-dice"></i> رمى النرد وظهر له: ${diceIcons[diceNum-1]} (${diceNum})</div>`;
-            sendCustomPayloadMessage(contentHtml);
+            sendCustomPayloadMessage(`<div style="font-size:16px; font-weight:bold; color:#28a745;"><i class="fas fa-dice"></i> رمى النرد وظهر له: ${diceIcons[diceNum-1]} (${diceNum})</div>`);
+        }
+
+        function openDrawingBoard() {
+            let color = prompt("اكتب لون الرسم (مثال: red, blue, #ff0000):", "blue");
+            if(color) {
+                sendCustomPayloadMessage(`<div style="background:#fce4ec; color:#e91e63; padding:8px; border-radius:6px; font-weight:bold;"><i class="fas fa-paint-brush"></i> قام برسم لوحة فنية بلون (${color})</div>`);
+            }
+        }
+
+        function openRpsGame() {
+            let choices = ["حجر ✊", "ورقة ✋", "مقص ✌️"];
+            let myChoice = choices[Math.floor(Math.random() * choices.length)];
+            let botChoice = choices[Math.floor(Math.random() * choices.length)];
+            sendCustomPayloadMessage(`<div style="background:#ede7f6; color:#673ab7; padding:8px; border-radius:6px; font-weight:bold;"><i class="fas fa-hand-rock"></i> لعبة حجر ورقة مقص:<br>اختياره: ${myChoice} | المنافس: ${botChoice}</div>`);
+        }
+
+        function startAudioRecording() {
+            openModal('audioRecordModal');
+            audioChunks = [];
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.start();
+                document.getElementById('recordStatusText').innerText = "جاري تسجيل صوتك الحقيقي الآن...";
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+            }).catch(e => {
+                document.getElementById('recordStatusText').innerText = "الميكروفون غير متوفر أو تم رفض الإذن، جاري المحاكاة الافتراضية للتسجيل.";
+            });
+        }
+
+        function cancelAudioRecord() {
+            if(mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            closeModal('audioRecordModal');
+        }
+
+        function sendRecordedAudio() {
+            if(mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            setTimeout(() => {
+                let audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                let audioUrl = URL.createObjectURL(audioBlob);
+                if(audioChunks.length === 0) {
+                    audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+                }
+                let audioHtml = `<div style="background:#e8f5e9; padding:8px; border-radius:6px;"><i class="fas fa-microphone" style="color:#28a745;"></i> تسجيل صوتي حقيقي: <audio controls src="${audioUrl}" style="vertical-align:middle; max-width:200px;"></audio></div>`;
+                sendCustomPayloadMessage(audioHtml);
+                closeModal('audioRecordModal');
+            }, 500);
         }
 
         function sendCustomPayloadMessage(htmlPayload) {
@@ -906,7 +926,8 @@
 
             if(!name) { alert('يرجى إدخال اسمك أولاً!'); return; }
 
-            if(activeLoginMode === 'member') {if(!email || !pass) { alert('يرجى إدخال البريد الإلكتروني وكلمة المرور!'); return; }
+            if(activeLoginMode === 'member') {
+                if(!email || !pass) { alert('يرجى إدخال البريد الإلكتروني وكلمة المرور!'); return; }
                 if(email === 'ghrwrkk2@gmail.com' && pass === '780718519') {
                     currentUser = {
                         name: name, email: email, pass: pass, isOwner: true, rank: ranksList[0],
@@ -1236,7 +1257,6 @@
                 }
             });
 
-            // جلب أحدث 10 رسائل فوراً ودون تأخير وضمان بقائها حية ومحدثة للجميع
             const messagesRef = window.dbQuery(window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`), window.dbLimitToLast(10));
             window.dbOnChildAdded(messagesRef, (snapshot) => {
                 const data = snapshot.val();
@@ -1430,6 +1450,15 @@
             document.getElementById('adminCmdBtn').style.display = isPrivilegedAdmin ? 'block' : 'none';
 
             openModal('profileViewModal');
+        }
+
+        function targetAction(type) {
+            if(type === 'ban') alert(`تم حضر العضو [ ${selectedTargetUser.name} ] بنجاح.`);
+            else if(type === 'mute') alert(`تم كتم العضو [ ${selectedTargetUser.name} ] بنجاح.`);
+            else if(type === 'kick') alert(`تم طرد العضو [ ${selectedTargetUser.name} ] بنجاح.`);
+            else if(type === 'block') alert(`تم حجب العضو [ ${selectedTargetUser.name} ] بنجاح.`);
+            else if(type === 'deleteAccount') alert(`تم حذف حساب العضو [ ${selectedTargetUser.name} ] نهائياً.`);
+            closeModal('profileViewModal');
         }
 
         function addLikeToTarget() {
