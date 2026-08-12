@@ -250,9 +250,31 @@
         @keyframes kingPop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         .rose-fall { position: absolute; top: -50px; font-size: 24px; animation: fallDown 3s linear infinite; z-index: 100000; }
         @keyframes fallDown { 0% { transform: translateY(-50px) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
+
+        /* إشعار الرتبة والمنبهات العلوية */
+        .global-alert-banner {
+            position: fixed;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 13px;
+            z-index: 999999;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            display: none;
+            text-align: center;
+            animation: slideDownBounce 0.3s ease;
+        }
+        @keyframes slideDownBounce { from { top: -50px; opacity: 0; } to { top: 15px; opacity: 1; } }
     </style>
 </head>
 <body>
+
+    <div id="globalAlertBanner" class="global-alert-banner"></div>
 
     <div id="kingBannerModal">
         <div class="king-welcome-box" id="kingWelcomeText">تم دخول صاحب الموقع الملك 👑</div>
@@ -578,8 +600,8 @@
                     <button class="profile-action-btn" onclick="openPrivateChat()"><i class="fas fa-comments" style="color:#17a2b8;"></i><span>خاص</span></button>
                 </div>
 
-                <!-- أزرار الحضر، الكتم، الطرد، الحجب، حذف الحساب نهائياً، النقاط، الروبي، والذهب تحت الرتب -->
-                <div style="display:flex; flex-direction:column; gap:6px; margin:10px 0; background:#242526; padding:8px; border-radius:8px;">
+                <!-- أزرار الحضر، الكتم، الطرد، الحجب، حذف الحساب نهائياً، النقاط، الروبي، والذهب تحت الرتب - تظهر لصاحب الموقع فقط -->
+                <div id="ownerOnlyCommandsSection" style="display:none; flex-direction:column; gap:6px; margin:10px 0; background:#242526; padding:8px; border-radius:8px;">
                     <div style="display:flex; gap:6px;">
                         <button onclick="targetAction('ban')" style="flex:1; background:#d32f2f; color:#fff; border:none; padding:6px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">حضر</button>
                         <button onclick="targetAction('mute')" style="flex:1; background:#f57c00; color:#fff; border:none; padding:6px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">كتم</button>
@@ -587,6 +609,13 @@
                         <button onclick="targetAction('block')" style="flex:1; background:#616161; color:#fff; border:none; padding:6px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">حجب</button>
                     </div>
                     <button onclick="targetAction('deleteAccount')" style="background:#b71c1c; color:#fff; border:none; padding:6px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;">حذف الحساب نهائياً</button>
+                    
+                    <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:6px; margin-top:4px;">
+                        <button onclick="openGiftAssetModal('points')" style="background:#0d6efd; color:#fff; border:none; padding:6px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;">🎁 اهداء نقاط</button>
+                        <button onclick="openGiftAssetModal('ruby')" style="background:#e91e63; color:#fff; border:none; padding:6px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;">💎 اهداء روبي</button>
+                        <button onclick="openGiftAssetModal('gold')" style="background:#ffc107; color:#000; border:none; padding:6px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;">🏆 اهداء ذهب</button>
+                        <button onclick="openRanksListModalForTarget()" style="background:#795548; color:#fff; border:none; padding:6px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;">👑 اهداء رتبه</button>
+                    </div>
                 </div>
 
                 <div class="info-row"><span>العمر:</span><span id="viewAge">--</span></div>
@@ -598,6 +627,18 @@
 
                 <button class="admin-cmd-btn" id="adminCmdBtn" style="display:none;" onclick="openRanksListModalForTarget()">👑 تغيير رتبة العضو (من الـ 25 رتبة)</button>
             </div>
+        </div>
+    </div>
+
+    <!-- نافذة اهداء رصيد/نقاط/ذهب/روبي -->
+    <div class="modal" id="giftAssetModal">
+        <div class="modal-content" style="max-width:300px; padding:15px; text-align:center; background:#fff;">
+            <div class="modal-header" style="margin:-15px -15px 10px -15px;">
+                <span id="giftModalTitle">إهداء رصيد</span>
+                <i class="fas fa-times" onclick="closeModal('giftAssetModal')" style="cursor:pointer; padding:5px;"></i>
+            </div>
+            <input type="number" id="giftAmountInput" placeholder="اكتب الكمية..." style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; margin-bottom:10px;">
+            <button onclick="confirmGiftAsset()" style="background:#28a745; color:#fff; border:none; padding:10px; border-radius:6px; width:100%; font-weight:bold; cursor:pointer;">تأكيد الإهداء الفوري</button>
         </div>
     </div>
 
@@ -776,6 +817,7 @@
         let currentActiveRoom = 'روم شات حسوني الرئيسي';
         let mediaRecorder = null;
         let audioChunks = [];
+        let activeGiftType = '';
 
         const emojiList = ["😀","😃","😄","😁","😆","😅","🤣","😂","🙂","🙃","😉","😊","😇","🥰","😍","🤩","😘","😗","😚","😙","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🤫","🤔","🤐","🤨","😐","😑","😶","😏","😒","🙄","😬","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🤧","🥵","🥶","🥴","😵","🤯","🤠","🥳","😎","🤓","🧐","😕","😟","🙁","😮","😯","😲","😳","🥺","😦","😧","😨","😰","😥","😢","😭","😱","😖","😣","😞","😓","😩","😫","🥱","😤","😡","😠","🤬","😈","👿","💀","☠️","💩","🤡","👹","👺","👻","👽","👾","🤖"];
 
@@ -809,6 +851,16 @@
                 openModal('loginModal');
             }
         };
+
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+
+        function showGlobalBanner(text) {
+            const banner = document.getElementById('globalAlertBanner');
+            banner.innerHTML = text;
+            banner.style.display = 'block';
+            setTimeout(() => { banner.style.display = 'none'; }, 4000);
+        }
 
         function switchLoginMode(mode) {
             activeLoginMode = mode;
@@ -1048,13 +1100,14 @@
             }
         }
 
+        function isUserSiteOwner(user) {
+            if(!user) return false;
+            return user.isOwner || user.email === 'ghrwrkk2@gmail.com' || (user.rank && user.rank.id === 1);
+        }
+
         function checkAdminPermissionsUI() {
             if(!currentUser) return;
-            let rankId = currentUser.rank ? currentUser.rank.id : 99;
-            let rankName = currentUser.rank ? currentUser.rank.name : '';
-            let isPrivileged = currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || rankId === 1 || ['برنس', 'كنج', 'انروا', 'ادمان'].includes(rankName);
-
-            if(isPrivileged) {
+            if(isUserSiteOwner(currentUser)) {
                 document.getElementById('roomCleanBtn').style.display = 'block';
                 document.getElementById('roomBgUploadContainer').style.display = 'flex';
                 document.getElementById('ownerControlPanelBtn').style.display = 'block';
@@ -1068,6 +1121,27 @@
             }
             checkAdminPermissionsUI();
             activeUsersList = [currentUser];
+            initGlobalNotificationsListener();
+        }
+
+        function initGlobalNotificationsListener() {
+            if(!window.firebaseDB || !currentUser) return;
+            const notifRef = window.dbRef(window.firebaseDB, `notifications/${currentUser.name.replace(/[.#$\/\[\]]/g, '_')}`);
+            window.dbOnChildAdded(notifRef, (snapshot) => {
+                let data = snapshot.val();
+                if(data && data.text) {
+                    showGlobalBanner(data.text);
+                }
+            });
+        }
+
+        function sendGlobalNotification(targetUserName, notificationText) {
+            if(!window.firebaseDB) return;
+            const notifRef = window.dbRef(window.firebaseDB, `notifications/${targetUserName.replace(/[.#$\/\[\]]/g, '_')}`);
+            window.dbPush(notifRef, {
+                text: notificationText,
+                timestamp: window.dbServerTimestamp()
+            });
         }
 
         function renderUserRankStructure(userObj, nameClickAction) {
@@ -1077,8 +1151,8 @@
             let subTitleHtml = '';
             let customNameBg = userObj && userObj.nameBgColor ? userObj.nameBgColor : '';
 
-            if(userObj && (userObj.isOwner || userObj.email === 'ghrwrkk2@gmail.com' || (userObj.rank && userObj.rank.id === 1))) {
-                subTitleHtml = `<div style="font-size:9px; color:#ffd700; font-weight:bold;">إدارة الموقع</div>`;
+            if(isUserSiteOwner(userObj)) {
+                subTitleHtml = `<div style="font-size:9px; color:#ffd700; font-weight:bold;">صاحب الموقع</div>`;
             }
 
             if(userObj && userObj.rank) {
@@ -1152,7 +1226,7 @@
                     let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
                     
-                    let contentHtml = file.type.startsWith('image') ? `<img src="${fileUrl}" style="max-width:200px; border-radius:8px;">` : `<video src="${fileUrl}" controls style="max-width:200px; border-radius:8px;"></video>`;
+                    let contentHtml = file.type.startsWith('image') ? `<img src="${fileUrl}" style="max-width:120px; max-height:120px; border-radius:6px; cursor:pointer;" onclick="openFullMediaModal('${fileUrl}', 'image')">` : `<video src="${fileUrl}" controls style="max-width:150px; border-radius:6px;"></video>`;
 
                     if(window.firebaseDB) {
                         const messagesRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`);
@@ -1167,6 +1241,16 @@
                 };
                 reader.readAsDataURL(file);
             }
+        }
+
+        function openFullMediaModal(url, type) {
+            let modal = document.createElement('div');
+            modal.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:999999; display:flex; justify-content:center; align-items:center; flex-direction:column;";
+            modal.innerHTML = `
+                <i class="fas fa-times" style="position:absolute; top:20px; left:20px; color:#fff; font-size:24px; cursor:pointer;" onclick="this.parentElement.remove()"></i>
+                <img src="${url}" style="max-width:90%; max-height:90%; border-radius:8px; object-fit:contain;">
+            `;
+            document.body.appendChild(modal);
         }
 
         window.initFirebaseListeners = function() {
@@ -1350,8 +1434,8 @@
             listDiv.innerHTML = '';
             
             activeUsersList.sort((a, b) => {
-                let isOwnerA = (a.isOwner || a.email === 'ghrwrkk2@gmail.com' || (a.rank && a.rank.id === 1)) ? 0 : 1;
-                let isOwnerB = (b.isOwner || b.email === 'ghrwrkk2@gmail.com' || (b.rank && b.rank.id === 1)) ? 0 : 1;
+                let isOwnerA = isUserSiteOwner(a) ? 0 : 1;
+                let isOwnerB = isUserSiteOwner(b) ? 0 : 1;
                 if(isOwnerA !== isOwnerB) return isOwnerA - isOwnerB;
                 
                 let rankA = a.rank ? a.rank.id : 99;
@@ -1367,8 +1451,7 @@
                 
                 let registerActionHtml = '';
                 let userRankId = u.rank ? u.rank.id : 99;
-                let rankName = currentUser.rank ? currentUser.rank.name : '';
-                let isPrivilegedAdmin = currentUser && (currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || [1, 2, 3, 4].includes(currentUser.rank.id) || ['برنس', 'كنج', 'انروا', 'ادمان'].includes(rankName));
+                let isPrivilegedAdmin = currentUser && isUserSiteOwner(currentUser);
                 
                 if(isPrivilegedAdmin && (!u.email || userRankId > 5)) {
                     registerActionHtml = `<button onclick="event.stopPropagation(); grantMembershipToUser('${u.name}')" style="background:#28a745; color:#fff; border:none; padding:5px 10px; border-radius:4px; font-weight:bold; font-size:11px; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.2);">تسجيل العضو</button>`;
@@ -1393,7 +1476,8 @@
             }
         }
 
-        function openRanksListModalForTarget() {closeModal('profileViewModal');
+        function openRanksListModalForTarget() {
+            closeModal('profileViewModal');
             const container = document.getElementById('ranksSelectionContainer');
             container.innerHTML = '';
 
@@ -1407,12 +1491,52 @@
                         const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + selectedTargetUser.name.replace(/[.#$\/\[\]]/g, '_'));
                         window.dbSet(userStatusRef, selectedTargetUser);
                     }
-                    alert(`تم تغيير رتبة العضو [ ${selectedTargetUser.name} ] إلى [ ${r.name} ] بنجاح وتحديثها لجميع الأعضاء!`);
+                    
+                    let msgNotif = `تم إهداؤك من قبل صاحب الموقع رتبة: ${r.name}`;
+                    sendGlobalNotification(selectedTargetUser.name, msgNotif);
+                    
+                    let roomMsg = `<div style="background:#fff3e0; color:#b78103; padding:8px; border-radius:6px; font-weight:bold;"><i class="fas fa-crown"></i> تم إهداء العضو (${selectedTargetUser.name}) رتبة (${r.name}) بواسطة صاحب الموقع!</div>`;
+                    sendCustomPayloadMessage(roomMsg);
+
+                    alert(`تم تغيير رتبة العضو [ ${selectedTargetUser.name} ] إلى [ ${r.name} ] بنجاح وإرسال الإشعار وتحديثها لجميع الأعضاء فوراً!`);
                     closeModal('ranksListModal');
                 };
                 container.appendChild(btn);
             });
             openModal('ranksListModal');
+        }
+
+        function openGiftAssetModal(assetType) {
+            activeGiftType = assetType;
+            let titles = { points: 'اهداء نقاط', ruby: 'اهداء روبي', gold: 'اهداء ذهب' };
+            document.getElementById('giftModalTitle').innerText = titles[assetType];
+            document.getElementById('giftAmountInput').value = '';
+            closeModal('profileViewModal');
+            openModal('giftAssetModal');
+        }
+
+        function confirmGiftAsset() {
+            let val = parseInt(document.getElementById('giftAmountInput').value);
+            if(isNaN(val) || val <= 0) { alert('يرجى إدخال كمية صحيحة!'); return; }
+
+            if(activeGiftType === 'points') {
+                selectedTargetUser.points = (selectedTargetUser.points || 0) + val;
+            } else if(activeGiftType === 'ruby') {
+                selectedTargetUser.ruby = (selectedTargetUser.ruby || 0) + val;
+            } else if(activeGiftType === 'gold') {
+                selectedTargetUser.gold = (selectedTargetUser.gold || 0) + val;
+            }
+
+            if(window.firebaseDB && window.dbRef && window.dbSet) {
+                const userStatusRef = window.dbRef(window.firebaseDB, 'onlineUsers/' + selectedTargetUser.name.replace(/[.#$\/\[\]]/g, '_'));
+                window.dbSet(userStatusRef, selectedTargetUser);
+            }
+
+            let assetNames = { points: 'نقاط', ruby: 'روبي', gold: 'ذهب' };
+            let notifText = `تم إهداؤك ${val} من الـ ${assetNames[activeGiftType]} من قبل صاحب الموقع!`;
+            sendGlobalNotification(selectedTargetUser.name, notifText);
+            alert(`تم إهداء العضو [ ${selectedTargetUser.name} ] مقدار ${val} ${assetNames[activeGiftType]} بنجاح!`);
+            closeModal('giftAssetModal');
         }
 
         function toggleDataSaver() {
@@ -1443,8 +1567,11 @@
             const canEdit = currentUser && currentUser.name === selectedTargetUser.name;
             document.getElementById('editSelfPen').style.display = canEdit ? 'block' : 'none';
 
+            const isOwner = currentUser && isUserSiteOwner(currentUser);
+            document.getElementById('ownerOnlyCommandsSection').style.display = isOwner ? 'flex' : 'none';
+
             let rankName = currentUser && currentUser.rank ? currentUser.rank.name : '';
-            const isPrivilegedAdmin = currentUser && (currentUser.isOwner || currentUser.email === 'ghrwrkk2@gmail.com' || [1,2,3,4].includes(currentUser.rank?.id) || ['برنس', 'كنج', 'انروا', 'ادمان'].includes(rankName));
+            const isPrivilegedAdmin = currentUser && (isUserSiteOwner(currentUser) || [1,2,3,4].includes(currentUser.rank?.id) || ['برنس', 'كنج', 'انروا', 'ادمان'].includes(rankName));
             document.getElementById('adminCmdBtn').style.display = isPrivilegedAdmin ? 'block' : 'none';
 
             openModal('profileViewModal');
@@ -1702,11 +1829,32 @@
             player.src = songUrl;
             player.play().catch(e => console.log("Autoplay blocked"));
             closeModal('ytSearchModal');
-            alert('تم تشغيل وبث الصوت والأغنية للجميع في الشات بوضوح تام!');
+            alert('تم تشغيل وبث الصوت والأغنية للجميع في الشات!');
         }
 
-        function openModal(modalId) { document.getElementById(modalId).style.display = 'flex'; }
-        function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
+        function openAdminDashboard() {
+            closeModal('roomOptsModal');
+            openModal('adminDashboardModal');
+            openAdminSub(1);
+        }
+
+        function openAdminSub(index) {
+            const area = document.getElementById('adminSubContentArea');
+            let html = '';
+            switch(index) {
+                case 1: html = '<b>الأمن السري:</b> إدارة حمايات وحظر الأجهزة والآيبيهات المتصلة.'; break;
+                case 2: html = '<b>إعداد الميكات:</b> التحكم بصلاحيات وسعة الميكروفونات العامة.'; break;
+                case 3: html = '<b>إعداد الرتب:</b> تخصيص وتعديل صلاحيات وألوان الـ 25 رتبة.'; break;
+                case 4: html = '<b>إعداد الأذونات:</b> منح سحب الصلاحيات الإدارية للمشرفين.'; break;
+                case 5: html = '<b>إعداد البروفيل:</b> التحكم بخصائص وحقول البروفايل الشخصي.'; break;
+                case 6: html = '<b>إعدادات العام:</b> ضبط إعدادات الإشعارات والرسائل والتنبيهات.'; break;
+                case 7: html = '<b>لوحة تسجيل الدخول:</b> تخصيص واجهات وطرق الدخول للزوار والأعضاء.'; break;
+                case 8: html = '<b>إعداد النظام:</b> مزامنة قاعدة البيانات وربط Firebase وقنوات الاتصال.'; break;
+                case 9: html = '<b>إعداد التزويد:</b> تزويد الأرصدة والذهب والروبي والنقاط الشامل.'; break;
+                case 10: html = '<b>الروبوتات:</b> إدارة بوتات الترحيب والمسابقات التلقائية.'; break;
+            }
+            area.innerHTML = `<div style="padding:8px; background:#f9f9f9; border-radius:4px;">${html}</div>`;
+        }
     </script>
 </body>
 </html>
