@@ -48,6 +48,15 @@
         #chatBox { height: calc(100vh - 190px); overflow-y: auto; padding: 135px 15px 85px; display: flex; flex-direction: column; gap: 12px; background: #0f0f0f url('https://i.ibb.co/6wXbYm2/butterflies.jpg') center center/cover no-repeat; }
         
         .msg-wrap { display: flex; flex-direction: column; align-self: flex-start; width: 95%; max-width: 420px; background: rgba(18, 22, 28, 0.94); padding: 12px; border-radius: 18px; border: 1.5px solid rgba(255, 215, 0, 0.4); box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .msg-wrap.system-gold-gift {
+            background: linear-gradient(135deg, rgba(255,215,0,0.25), rgba(184,134,11,0.35)) !important;
+            border: 2px solid #ffd700 !important;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6) !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            text-align: center;
+        }
+        
         .msg-header { display: flex; align-items: center; gap: 10px; width: 100%; }
         
         .pfp-main-frame { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--gold); box-shadow: 0 0 8px var(--gold); display: flex; align-items: center; justify-content: center; background: #000; flex-shrink: 0; }
@@ -141,6 +150,67 @@
         .profile-grid-row span:first-child { color: #aaa; }
         .profile-grid-row span:last-child { color: var(--gold); font-weight: bold; }
 
+        /* تعديلات خليل: أشكال قائمة المتواجدين مع إظهار الخلفيات والخاص المتزامن */
+        .online-user-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            border: 1px solid #222;
+        }
+        .online-user-left { display: flex; align-items: center; gap: 10px; }
+        .online-user-avatar { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 1px solid var(--gold); }
+        .online-user-bg-btn {
+            font-size: 14px;
+            color: var(--gold);
+            cursor: pointer;
+            padding: 4px 8px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 6px;
+            border: 1px solid rgba(255,215,0,0.3);
+        }
+        
+        .private-chat-box {
+            display: flex;
+            flex-direction: column;
+            height: 320px;
+            background: #0a0a0a;
+            border: 1px solid var(--gold);
+            border-radius: 10px;
+            padding: 10px;
+            overflow: hidden;
+        }
+        .private-msg-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .private-msg-bubble {
+            max-width: 80%;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            word-break: break-word;
+        }
+        .private-msg-mine {
+            align-self: flex-end;
+            background: var(--gold);
+            color: #000;
+            font-weight: bold;
+        }
+        .private-msg-other {
+            align-self: flex-start;
+            background: #222;
+            color: #fff;
+            border: 1px solid #444;
+        }
+
         #hiddenAudioNode { display: none; }
         #youtubeVideoFrameContainer { position: fixed; top: -9999px; left: -9999px; width: 1px; height: 1px; overflow: hidden; opacity: 0; }
     </style>
@@ -195,7 +265,7 @@
 <div class="header-bar">
     <div class="header-btn" onclick="alert('لا توجد إشعارات جديدة')"><i class="fas fa-bell"></i>إشعارات</div>
     <div class="header-btn" onclick="alert('لوحة البلاغات فارغة')"><i class="fas fa-flag"></i>بلاغات</div>
-    <div class="header-btn" onclick="alert('الخاص مشفر ومحمي')"><i class="fas fa-comments"></i>الخاص</div>
+    <div class="header-btn" onclick="ui.openPrivateConversationsList()"><i class="fas fa-comments"></i>الخاص</div>
     <div class="header-btn" onclick="ui.openVIPList('الأثرياء')"><i class="fas fa-gem"></i>الأثرياء</div>
     <div class="header-btn" onclick="ui.openVIPList('الكبار')"><i class="fas fa-crown"></i>الكبار</div>
 </div>
@@ -241,7 +311,6 @@
 </div>
 
 <script>
-    // تم تحديث الإعدادات هنا بالكامل لمشروعك الجديد OSKAR بنجاح وبشكل متوافق ومستقر
     const firebaseConfig = {
         apiKey: "AIzaSyC6m8083RtFHgah8RuiRWULsCBl_54Ul3I",
         authDomain: "oskar-a937e.firebaseapp.com",
@@ -303,6 +372,7 @@
     window.activeRoomSettingsListener = null;
     window.activeSessionListener = null;
     window.activeOnlineUsersListener = null;
+    window.activePrivateListener = null;
 
     window.tempUploadedCover = "";
     window.tempUploadedPfp = "";
@@ -321,12 +391,32 @@
         return (match && match[2].length === 11) ? match[2] : null;
     }
 
+    function generateChatroomId(uid1, uid2) {
+        return uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
+    }
+
     window.ui = {
         switchBranch: (id) => {
             document.querySelectorAll('.branch-content').forEach(c => c.style.display = 'none');
             document.querySelectorAll('.row-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(id).style.display = 'block';
             document.getElementById('btn_' + id).classList.add('active');
+        },
+        updateRoyalKeyButtonVisibility: () => {
+            let authBtn = document.getElementById('authBtn');
+            if(authBtn) {
+                if(window.currentUser && window.currentUser.role !== 'guest') {
+                    if(window.currentUser.role === 'owner') {
+                        authBtn.style.display = 'block';
+                        authBtn.querySelector('span').innerText = "لوحة المالك";
+                    } else {
+                        authBtn.style.display = 'none'; // إخفاء المفتاح الملكي فوراً للأعضاء المسجلين
+                    }
+                } else {
+                    authBtn.style.display = 'block';
+                    authBtn.querySelector('span').innerText = "المفتاح الملكي";
+                }
+            }
         },
         showAuthBranchDirect: () => {
             if(window.currentUser && window.currentUser.role === 'owner') {
@@ -461,6 +551,7 @@
         enterChat: () => {
             document.getElementById('welcomeOverlay').style.display = 'none';
             ui.updateUserOnlineStatus(true);
+            ui.updateRoyalKeyButtonVisibility();
             ui.clearAllListeners();
             ui.listenToGlobalMessages();
             ui.listenToActiveMics();
@@ -474,6 +565,7 @@
             if(window.activeRoomSettingsListener) window.activeRoomSettingsListener();
             if(window.activeSessionListener) window.activeSessionListener();
             if(window.activeOnlineUsersListener) window.activeOnlineUsersListener();
+            if(window.activePrivateListener) window.activePrivateListener();
         },
         listenToSessionSecurity: () => {
             if(!window.currentUser || !window.currentUser.uid) return;
@@ -482,6 +574,7 @@
                     let data = doc.data();
                     window.currentUser = data;
                     localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser));
+                    ui.updateRoyalKeyButtonVisibility();
                     if(window.currentUser.sessionToken && data.sessionToken && data.sessionToken !== window.currentUser.sessionToken) {
                         alert("تم تسجيل الدخول إلى هذا الحساب من هاتف آخر.");
                         ui.logoutBackToWelcome();
@@ -509,7 +602,7 @@
         listenToGlobalMessages: () => {
             window.activeMessagesListener = db.collection("rooms").doc(window.currentRoom).collection("messages")
               .orderBy("timestamp", "asc")
-              .limitToLast(50)
+              .limitToLast(60)
               .onSnapshot((snapshot) => {
                   let chatBox = document.getElementById('chatBox');
                   chatBox.innerHTML = "";
@@ -528,7 +621,9 @@
                   
                   snapshot.forEach((doc) => {
                       let mData = doc.data();
-                      if (mData.user) {
+                      if (mData.isSystemGold) {
+                          ui.renderSystemGoldMsg(mData.text);
+                      } else if (mData.user) {
                           ui.renderMsg(mData.user, mData.text);
                       }
                   });
@@ -579,9 +674,19 @@
                 let usersHtml = list.map(u => {
                     let rObj = window.chatRanksData[u.role] || { icon: "fas fa-user", color: "#fff" };
                     return `
-                        <div class="menu-item" onclick="ui.viewProfileCard('${u.uid}')">
-                            <span style="color:${rObj.color}; font-weight: bold;"><i class="${rObj.icon}" style="margin-left:5px;"></i> ${u.name}</span>
-                            <span style="font-size:11px; color:${rObj.color}; background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 10px; border: 1px solid ${rObj.color};">${rObj.text}</span>
+                        <div class="online-user-item">
+                            <div class="online-user-left" onclick="ui.viewProfileCard('${u.uid}')" style="cursor:pointer;">
+                                <img src="${u.img || 'https://cdn-icons-png.flaticon.com/512/1042/1042291.png'}" class="online-user-avatar">
+                                <div>
+                                    <div style="color:${rObj.color}; font-weight: bold; font-size:13px;">
+                                        <i class="${rObj.icon}"></i> ${u.name}
+                                    </div>
+                                    <span style="font-size:10px; color:${rObj.color}; border:1px solid ${rObj.color}; padding:1px 5px; border-radius:8px;">${rObj.text}</span>
+                                </div>
+                            </div>
+                            <div class="online-user-bg-btn" title="عرض خلفية العضو" onclick="ui.previewUserBgCover('${u.cover || ''}')">
+                                <i class="fas fa-image"></i>
+                            </div>
                         </div>
                     `;
                 }).join('');
@@ -589,6 +694,16 @@
                 let bodyEl = document.getElementById('onlineUsersListBody');
                 if(bodyEl) bodyEl.innerHTML = usersHtml;
             });
+        },
+        previewUserBgCover: (coverUrl) => {
+            if(!coverUrl) { alert("هذا العضو لم يقم بوضع صورة خلفية بعد."); return; }
+            document.getElementById('featureModalTitle').innerText = "🌄 خلفية العضو";
+            document.getElementById('featureModalBody').innerHTML = `
+                <div style="text-align:center;">
+                    <img src="${coverUrl}" style="width:100%; max-height:300px; border-radius:10px; border:2px solid var(--gold); object-fit:cover;">
+                </div>
+            `;
+            document.getElementById('featureModal').style.display = 'flex';
         },
         refreshChatWindowOnly: () => {
             ui.enterChat();
@@ -660,6 +775,23 @@
                 box.scrollTop = box.scrollHeight;
             }
         },
+
+        renderSystemGoldMsg: (text) => {
+            let div = document.createElement('div');
+            div.className = 'msg-wrap system-gold-gift';
+            div.innerHTML = `
+                <div style="color:var(--gold); font-weight:bold; font-size:14px; text-shadow:0 0 5px rgba(255,215,0,0.8);">
+                    👑 إعلان إمبراطوري ملفت 👑
+                </div>
+                <div style="color:#fff; font-size:13px; font-weight:bold; margin-top:5px;">${text}</div>
+            `;
+            let box = document.getElementById('chatBox');
+            if (box) {
+                box.appendChild(div);
+                box.scrollTop = box.scrollHeight;
+            }
+        },
+
         clickMicSlot: (num) => {
             window.selectedMicNum = num;
             let slot = document.getElementById(`mic_${num}`);
@@ -810,19 +942,80 @@
                         
                         <div class="profile-action-bar">
                             <div class="profile-bar-btn" onclick="ui.likeProfile('${uid}')"><i class="fas fa-heart"></i> <span id="likeCountText">${u.likes || 0}</span> لاف</div>
-                            <div class="profile-bar-btn" onclick="alert('فتح الخاص')"><i class="fas fa-paper-plane"></i> الخاص</div>
+                            <div class="profile-bar-btn" onclick="ui.startPrivateChatWith('${u.uid}', '${u.name}')"><i class="fas fa-paper-plane"></i> الخاص</div>
                             <div class="profile-bar-btn"><i class="fas fa-chart-line"></i> ليفل ${u.level || 1}</div>
                         </div>
 
                         <div class="profile-details-grid">
-                            <div class="profile-grid-row"><span>العمر:</span><span>${u.age || 'غير مححدد'}</span></div>
-                            <div class="profile-grid-row"><span>الجنس:</span><span>${u.gender || 'غير مححدد'}</span></div>
+                            <div class="profile-grid-row"><span>العمر:</span><span>${u.age || 'غير محدد'}</span></div>
+                            <div class="profile-grid-row"><span>الجنس:</span><span>${u.gender || 'غير محدد'}</span></div>
                             <div class="profile-grid-row"><span>البلد:</span><span>${u.country || 'اليمن'}</span></div>
                         </div>
                         ${adminOptionsBtn}
                     </div>
                 `;
                 document.getElementById('featureModal').style.display = 'flex';
+            });
+        },
+
+        /* نظام الدردشة الخاصة المتزامن بين الأعضاء */
+        openPrivateConversationsList: () => {
+            document.getElementById('featureModalTitle').innerText = "💬 الرسائل الخاصة المتزامنة";
+            document.getElementById('featureModalBody').innerHTML = `
+                <div style="text-align:center; padding:10px;">
+                    <p style="font-size:13px; color:#ccc;">يمكنك إرسال محادثة خاصة متزامنة عبر فتح بروفايل أي عضو بالضغط عليه ثم اختيار "الخاص".</p>
+                </div>
+            `;
+            document.getElementById('featureModal').style.display = 'flex';
+        },
+
+        startPrivateChatWith: (targetUid, targetName) => {
+            if(window.currentUser.uid === targetUid) { alert("لا يمكنك مراسلة نفسك."); return; }
+            let chatId = generateChatroomId(window.currentUser.uid, targetUid);
+            
+            document.getElementById('featureModalTitle').innerText = `🔒 خاص مع: ${targetName}`;
+            document.getElementById('featureModalBody').innerHTML = `
+                <div class="private-chat-box">
+                    <div class="private-msg-list" id="privateMsgContainer"></div>
+                    <div style="display:flex; gap:5px;">
+                        <input type="text" id="privateInp" class="chat-input" style="height:36px; font-size:12px;" placeholder="اكتب للخاص...">
+                        <button class="send-btn" style="height:36px; padding:0 12px; font-size:12px;" onclick="ui.sendPrivateMessage('${chatId}')">إرسال</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('featureModal').style.display = 'flex';
+
+            if(window.activePrivateListener) window.activePrivateListener();
+
+            window.activePrivateListener = db.collection("private_chats").doc(chatId).collection("messages")
+                .orderBy("timestamp", "asc")
+                .onSnapshot(snap => {
+                    let box = document.getElementById('privateMsgContainer');
+                    if(!box) return;
+                    box.innerHTML = "";
+                    snap.forEach(doc => {
+                        let data = doc.data();
+                        let isMine = data.senderUid === window.currentUser.uid;
+                        let msgDiv = document.createElement('div');
+                        msgDiv.className = `private-msg-bubble ${isMine ? 'private-msg-mine' : 'private-msg-other'}`;
+                        msgDiv.innerText = data.text;
+                        box.appendChild(msgDiv);
+                    });
+                    box.scrollTop = box.scrollHeight;
+                });
+        },
+
+        sendPrivateMessage: (chatId) => {
+            let inp = document.getElementById('privateInp');
+            let t = inp.value.trim();
+            if(!t) return;
+            inp.value = '';
+
+            db.collection("private_chats").doc(chatId).collection("messages").add({
+                senderUid: window.currentUser.uid,
+                senderName: window.currentUser.name,
+                text: t,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
         },
 
@@ -878,6 +1071,12 @@
                         <label style="font-size:12px; color:var(--gold);">العمر:</label>
                         <input type="number" id="editAge" class="form-control" value="${u.age || ''}">
                         
+                        <label style="font-size:12px; color:var(--gold);">الجنس:</label>
+                        <select id="editGender" class="form-select">
+                            <option value="ذكر" ${u.gender === 'ذكر' ? 'selected' : ''}>ذكر</option>
+                            <option value="أنثى" ${u.gender === 'أنثى' ? 'selected' : ''}>أنثى</option>
+                        </select>
+
                         <label style="font-size:12px; color:var(--gold);">البلد:</label>
                         <input type="text" id="editCountry" class="form-control" value="${u.country || ''}">
                         
@@ -893,11 +1092,12 @@
                 img: window.tempUploadedPfp,
                 name: document.getElementById('editName').value.trim(),
                 age: document.getElementById('editAge').value.trim(),
+                gender: document.getElementById('editGender').value,
                 country: document.getElementById('editCountry').value.trim()
             };
 
             db.collection("users").doc(uid).update(updated).then(() => {
-                alert("تم تحديث البيانات المزامنة بنجاح!");
+                alert("تم تحديث البيانات المزامنة بنجاح لجميع الأعضاء!");
                 if(window.currentUser.uid === uid) {
                     window.currentUser = { ...window.currentUser, ...updated };
                     localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser));
@@ -912,8 +1112,8 @@
                 document.getElementById('featureModalTitle').innerText = `إدارة حساب: ${u.name}`;
                 document.getElementById('featureModalBody').innerHTML = `
                     <div style="text-align:right;">
-                        <label style="font-size:12px; color:var(--gold);">تغيير الرتبة الإمبراطورية:</label>
-                        <select id="changeRoleSelect" class="form-select" onchange="ui.changeUserRole('${uid}', this.value)">
+                        <label style="font-size:12px; color:var(--gold);">تغيير وإهداء الرتبة الإمبراطورية:</label>
+                        <select id="changeRoleSelect" class="form-select" onchange="ui.changeUserRole('${uid}', '${u.name}', this.value)">
                             <option value="owner" ${u.role === 'owner' ? 'selected' : ''}>1- البرنس الأصلي (الكأس 🏆)</option>
                             <option value="prince" ${u.role === 'prince' ? 'selected' : ''}>1- برنس إمبراطوري 🏆🖤</option>
                             <option value="king" ${u.role === 'king' ? 'selected' : ''}>2- كنج الملك الملكي 👑❤️</option>
@@ -937,13 +1137,20 @@
             });
         },
 
-        changeUserRole: (uid, newRole) => {
+        changeUserRole: (uid, targetUserName, newRole) => {
             db.collection("users").doc(uid).update({ role: newRole }).then(() => {
-                alert("تم تحديث رتبة العضو بنجاح وتثبيتها سحابياً!");
-                if (window.currentUser && window.currentUser.uid === uid) {
-                    window.currentUser.role = newRole;
-                    localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser));
-                }
+                let rankObj = window.chatRanksData[newRole] || { text: newRole };
+                let systemNotice = `🎉 تم إهداء العضو [ ${targetUserName} ] رتبة [ ${rankObj.text} ] بواسطة [ ${window.currentUser.name} ] 👑`;
+                
+                // إرسال الرسالة الذهبية فوراً في العام عبر النظام
+                db.collection("rooms").doc(window.currentRoom).collection("messages").add({
+                    isSystemGold: true,
+                    text: systemNotice,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                alert("تم إهداء وتحديث رتبة العضو بنجاح ونشر الإعلان الذهبي في الشات العام!");
+                document.getElementById('featureModal').style.display = 'none';
             });
         },
         toggleUserMute: (uid, state) => {
