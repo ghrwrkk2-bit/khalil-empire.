@@ -1608,7 +1608,11 @@
                 btn.onclick = () => {
                     if(selectedTargetUser) {
                         selectedTargetUser.rank = r;
-                        alert(`👑 تم إهداء رتبة [ ${r.name} ] للعضو ${selectedTargetUser.name} بنجاح وتحديثها للجميع!`);
+                        
+                        let rankMsgHtml = `<div style="background:#fff3cd; color:#856404; padding:8px; border-radius:6px; font-weight:bold; border:1px solid #ffeeba;"><i class="fas fa-crown"></i> تم إهداء رتبة [ ${r.name} ] (${r.id === 1 ? 'صاحب الموقع' : r.id <= 3 ? 'برنس/كنج' : 'رتبة مميزة'}) إلى العضو ${selectedTargetUser.name} بواسطة ${currentUser.name}</div>`;
+                        sendCustomPayloadMessage(rankMsgHtml);
+
+                        alert(`👑 تم إهداء رتبة [ ${r.name} ] للعضو ${selectedTargetUser.name} بنجاح وتحديثها للجميع وإرسال إشعار بالنظام في العام!`);
                         closeModal('ranksListModal');
                         closeModal('profileViewModal');
                     }
