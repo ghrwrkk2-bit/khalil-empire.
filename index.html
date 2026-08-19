@@ -235,12 +235,46 @@
         @keyframes kingPop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         .rose-fall { position: absolute; top: -50px; font-size: 24px; animation: fallDown 3s linear infinite; z-index: 100000; }
         @keyframes fallDown { 0% { transform: translateY(-50px) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
+
+        /* تعديلات الميديا والوسائط المصغرة وتكبيرها عند الضغط */
+        .media-thumb {
+            max-width: 90px;
+            max-height: 90px;
+            object-fit: cover;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .media-thumb:hover { transform: scale(1.03); }
+
+        #mediaViewerModal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.92);
+            z-index: 999999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        #mediaViewerContent {
+            max-width: 95vw;
+            max-height: 90vh;
+            border-radius: 8px;
+            object-fit: contain;
+        }
     </style>
 </head>
 <body>
 
     <div id="kingBannerModal">
         <div class="king-welcome-box" id="kingWelcomeText">تم دخول صاحب الموقع الملك 👑</div>
+    </div>
+
+    <!-- نافذة عرض الوسائط بالحجم الكامل (صور، فيديوهات، رسم، يوتيوب) -->
+    <div id="mediaViewerModal" onclick="closeMediaViewer()">
+        <i class="fas fa-times" style="position: absolute; top: 20px; left: 20px; color: #fff; font-size: 24px; cursor: pointer; background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 50%;"></i>
+        <div id="mediaViewerContainer" onclick="event.stopPropagation()"></div>
     </div>
 
     <!-- الشريط العلوي -->
@@ -259,7 +293,7 @@
         </div>
     </header>
 
-    <!-- الميكروفونات (تم إلغاء 3 غرف والإبقاء على غرفة العام فقط، وعرض آخر رسالتين فقط عند الدخول للمزامنة الفورية بدون تأخير) -->
+    <!-- الميكروفونات -->
     <div class="mic-wrapper">
         <div class="mic-box" id="micBox">
             <div class="mic-container">
@@ -282,7 +316,7 @@
         <div class="mic-toggle-btn" onclick="toggleMics()"><i class="fas fa-chevron-up" id="micArrow"></i></div>
     </div>
 
-    <!-- منطقة الشات العام (غرفة العام فقط مع المزامنة الفورية وآخر رسالتين) -->
+    <!-- منطقة الشات العام -->
     <main class="chat-area" id="chatArea">
         <div class="announcement" id="mainRoomNotice">
             أهلاً وسهلاً بكم في <strong id="currentRoomTitle">روم شات حسوني العام</strong> 🎉
@@ -314,18 +348,18 @@
                     </div>
                     <div style="display:flex; flex-direction:column; gap:5px; font-size:12px; font-weight:bold;">
                         <div onclick="openYouTubePickerModal(); togglePlusMenu();" style="background:#ffebee; padding:6px; border-radius:5px; cursor:pointer; display:flex; align-items:center; gap:6px;"><i class="fab fa-youtube" style="color:#ff0000;"></i> 1. يوتيوب</div>
-                        <div onclick="document.getElementById('fileUploadInput').click(); togglePlusMenu();" style="background:#e3f2fd; padding:6px; border-radius:5px; cursor:pointer; display:flex; align-items:center; gap:6px;"><i class="fas fa-file-alt" style="color:#0d6efd;"></i> 2. ملف</div>
+                        <div onclick="document.getElementById('fileUploadInput').click(); togglePlusMenu();" style="background:#e3f2fd; padding:6px; border-radius:5px; cursor:pointer; display:flex; align-items:center; gap:6px;"><i class="fas fa-file-alt" style="color:#0d6efd;"></i> 2. ملف/صورة/فيديو</div>
                         <div onclick="playRpsGame(); togglePlusMenu();" style="background:#e8f5e9; padding:6px; border-radius:5px; cursor:pointer; display:flex; align-items:center; gap:6px;"><i class="fas fa-hand-rock" style="color:#28a745;"></i> 3. ورقة حجر مقص</div>
                         <div onclick="openDrawingBoardModal(); togglePlusMenu();" style="background:#fff3e0; padding:6px; border-radius:5px; cursor:pointer; display:flex; align-items:center; gap:6px;"><i class="fas fa-paint-brush" style="color:#ff9800;"></i> 4. رسم</div>
                         <div onclick="spinLuckyWheel(); togglePlusMenu();" style="background:#f3e5f5; padding:6px; border-radius:5px; cursor:pointer; display:flex; align-items:center; gap:6px;"><i class="fas fa-dharmachakra" style="color:#9c27b0;"></i> 5. عجلة الحظ</div>
                     </div>
                 </div>
-                <input type="file" id="fileUploadInput" style="display:none;" accept="image/*,video/*,.pdf,.doc,.docx" onchange="handleFileUpload(this)">
+                <input type="file" id="fileUploadInput" style="display:none;" accept="image/*,video/*,audio/*,.pdf,.doc,.docx" onchange="handleFileUpload(this)">
             </div>
         </div>
     </div>
 
-    <!-- الشريط السفلي (مع الحفاظ الكامل على كافة الخيارات والإعدادات الأصلية) -->
+    <!-- الشريط السفلي -->
     <footer class="bottom-nav">
         <div class="bottom-item" onclick="openModal('roomOptsModal')"><i class="fas fa-cog"></i><span>الخيارات</span></div>
         <div class="bottom-item" onclick="openModal('friendsModal')"><i class="fas fa-user-friends"></i><span>الأصدقاء</span></div>
@@ -544,7 +578,7 @@
         </div>
     </div>
 
-    <!-- الغرف (غرفة العام فقط بناءً على طلبك إلغاء 3 غرف) -->
+    <!-- الغرف -->
     <div class="modal" id="roomsListModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -689,7 +723,7 @@
         </div>
     </div>
 
-    <!-- قائمة الخاصة لاختيار العضو -->
+    <!-- قائمة الخاصة لاختيار العضو أو الإشعارات -->
     <div class="modal" id="privateNotificationModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -885,7 +919,7 @@
         function sendDrawingAsMessage() {
             let canvas = document.getElementById('paintCanvas');
             let dataUrl = canvas.toDataURL();
-            let contentHtml = `<img src="${dataUrl}" style="max-width:180px; border-radius:6px;">`;
+            let contentHtml = `<img src="${dataUrl}" class="media-thumb" onclick="openMediaViewer(this.src, 'image')">`;
             sendCustomPayloadMessage(contentHtml);
             closeModal('drawingBoardModal');
         }
@@ -924,10 +958,47 @@
         function sendYouTubeEmbed() {
             let url = document.getElementById('youtubeUrlInput').value.trim();
             if(!url) { alert('يرجى لصق رابط يوتيوب أولاً!'); return; }
-            let contentHtml = `<div style="background:#ffebee; color:#d32f2f; padding:8px; border-radius:6px;"><i class="fab fa-youtube"></i> فيديو يوتيوب: <a href="${url}" target="_blank" style="color:#d32f2f; word-break:break-all;">${url}</a></div>`;
+            
+            let videoId = '';
+            if (url.includes('youtu.be/')) {
+                videoId = url.split('youtu.be/')[1].split('?')[0];
+            } else if (url.includes('watch?v=')) {
+                videoId = url.split('watch?v=')[1].split('&')[0];
+            }
+
+            let contentHtml = '';
+            if(videoId) {
+                let embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                contentHtml = `<div style="position:relative; width:140px; height:90px; border-radius:6px; overflow:hidden; cursor:pointer;" onclick="openMediaViewer('${embedUrl}', 'iframe')">
+                    <iframe src="${embedUrl}" style="width:100%; height:100%; pointer-events:none; border:none;"></iframe>
+                    <div style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.1); display:flex; align-items:center; justify-content:center;"><i class="fab fa-youtube" style="font-size:24px; color:#ff0000; background:#fff; border-radius:50%; padding:4px;"></i></div>
+                </div>`;
+            } else {
+                contentHtml = `<div style="background:#ffebee; color:#d32f2f; padding:8px; border-radius:6px;"><i class="fab fa-youtube"></i> فيديو يوتيوب: <a href="${url}" target="_blank" style="color:#d32f2f; word-break:break-all;">${url}</a></div>`;
+            }
+
             sendCustomPayloadMessage(contentHtml);
             closeModal('youtubePickerModal');
             document.getElementById('youtubeUrlInput').value = '';
+        }
+
+        function openMediaViewer(sourceUrl, type) {
+            let viewer = document.getElementById('mediaViewerModal');
+            let container = document.getElementById('mediaViewerContainer');
+            container.innerHTML = '';
+            if(type === 'image') {
+                container.innerHTML = `<img src="${sourceUrl}" style="max-width:95vw; max-height:90vh; border-radius:8px;">`;
+            } else if(type === 'video') {
+                container.innerHTML = `<video src="${sourceUrl}" controls autoplay style="max-width:95vw; max-height:90vh; border-radius:8px;"></video>`;
+            } else if(type === 'iframe') {
+                container.innerHTML = `<iframe src="${sourceUrl}" style="width:90vw; height:70vh; border:none; border-radius:8px;" allow="autoplay" allowfullscreen></iframe>`;
+            }
+            viewer.style.display = 'flex';
+        }
+
+        function closeMediaViewer() {
+            document.getElementById('mediaViewerModal').style.display = 'none';
+            document.getElementById('mediaViewerContainer').innerHTML = '';
         }
 
         function sendCustomPayloadMessage(htmlPayload) {
@@ -935,7 +1006,7 @@
             let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
             
-            if(!currentUser.isOwner && currentUser.email !== 'ghrwrkk2@gmail.com' && (htmlPayload.includes('http://') || htmlPayload.includes('https://'))) {
+            if(!currentUser.isOwner && currentUser.email !== 'ghrwrkk2@gmail.com' && (htmlPayload.includes('http://') || htmlPayload.includes('https://')) && !htmlPayload.includes('youtube.com') && !htmlPayload.includes('youtu.be')) {
                 htmlPayload = `<div style="color:#dc3545; font-weight:bold;"><i class="fas fa-exclamation-triangle"></i> منشور احتيالي (تم حجب الرابط للأمان)</div>`;
             }
 
@@ -1054,6 +1125,17 @@
 
                 const roomOccupancyRef = window.dbRef(window.firebaseDB, `roomsOccupancy/${currentActiveRoom.replace(/[.#$\/\[\]]/g, '_')}/${currentUser.name.replace(/[.#$\/\[\]]/g, '_')}`);
                 window.dbSet(roomOccupancyRef, true);
+
+                // إرسال رسالة نظام دخول العضو للعام
+                const messagesRef = window.dbRef(window.firebaseDB, `rooms/${currentActiveRoom.replace(/[.#$\/\[\]]/g, '_')}/messages`);
+                let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                window.dbPush(messagesRef, {
+                    sender: 'النظام',
+                    text: `<div style="color:#28a745; font-weight:bold; text-align:center;"><i class="fas fa-sign-in-alt"></i> انضم للغرفة: ${currentUser.name}</div>`,
+                    time: timeStr,
+                    userObj: { name: 'النظام', rank: { name: 'النظام', icon: 'fa-robot', color: '#28a745', style: 'background:#28a745; color:#fff;' } },
+                    timestamp: window.dbServerTimestamp()
+                });
             }
 
             closeModal('loginModal');
@@ -1181,7 +1263,22 @@
                 alert(`🎉 مبروك! وصلت إلى المستوى ${currentUser.level} وتم منحك 1 نقاط، 1 ذهب، 1 روبي لتخطي 40 رسالة!`);
             }
 
-            if(!currentUser.isOwner && currentUser.email !== 'ghrwrkk2@gmail.com' && (msgText.includes('http://') || msgText.includes('https://') || msgText.includes('www.'))) {
+            // معالجة روابط يوتيوب التلقائية في رسائل النص
+            if(msgText.includes('youtube.com') || msgText.includes('youtu.be')) {
+                let videoId = '';
+                if (msgText.includes('youtu.be/')) {
+                    videoId = msgText.split('youtu.be/')[1].split('?')[0];
+                } else if (msgText.includes('watch?v=')) {
+                    videoId = msgText.split('watch?v=')[1].split('&')[0];
+                }
+                if(videoId) {
+                    let embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                    msgText = `<div style="position:relative; width:140px; height:90px; border-radius:6px; overflow:hidden; cursor:pointer;" onclick="openMediaViewer('${embedUrl}', 'iframe')">
+                        <iframe src="${embedUrl}" style="width:100%; height:100%; pointer-events:none; border:none;"></iframe>
+                        <div style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.1); display:flex; align-items:center; justify-content:center;"><i class="fab fa-youtube" style="font-size:24px; color:#ff0000; background:#fff; border-radius:50%; padding:4px;"></i></div>
+                    </div>`;
+                }
+            } else if(!currentUser.isOwner && currentUser.email !== 'ghrwrkk2@gmail.com' && (msgText.includes('http://') || msgText.includes('https://') || msgText.includes('www.'))) {
                 msgText = 'منشور احتيالي';
             }
 
@@ -1213,7 +1310,16 @@
                     let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     let roomKey = currentActiveRoom.replace(/[.#$\/\[\]]/g, '_');
                     
-                    let contentHtml = file.type.startsWith('image') ? `<img src="${fileUrl}" style="max-width:200px; border-radius:8px;">` : `<video src="${fileUrl}" controls style="max-width:200px; border-radius:8px;"></video>`;
+                    let contentHtml = '';
+                    if(file.type.startsWith('image')) {
+                        contentHtml = `<img src="${fileUrl}" class="media-thumb" onclick="openMediaViewer(this.src, 'image')">`;
+                    } else if(file.type.startsWith('video')) {
+                        contentHtml = `<video src="${fileUrl}" class="media-thumb" style="background:#000;" onclick="openMediaViewer(this.src, 'video')"></video>`;
+                    } else if(file.type.startsWith('audio')) {
+                        contentHtml = `<audio src="${fileUrl}" controls style="max-width:200px;"></audio>`;
+                    } else {
+                        contentHtml = `<a href="${fileUrl}" download="${file.name}" style="color:#0d6efd; font-weight:bold;"><i class="fas fa-file-alt"></i> ${file.name}</a>`;
+                    }
 
                     if(window.firebaseDB) {
                         const messagesRef = window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`);
@@ -1316,7 +1422,7 @@
                 }
             });
 
-            // جلب آخر رسالتين فقط عند الدخول لضمان السرعة وعدم التأخير في الجلب الفوري
+            // جلب آخر رسالتين فقط عند الدخول لحفظ السرعة والتشغيل الفوري بدون بطء
             const messagesRef = window.dbQuery(window.dbRef(window.firebaseDB, `rooms/${roomKey}/messages`), window.dbLimitToLast(2));
             window.dbOnChildAdded(messagesRef, (snapshot) => {
                 const data = snapshot.val();
@@ -1541,6 +1647,10 @@
 
         function addLikeToTarget() {
             if(!selectedTargetUser) return;
+            if(currentUser && currentUser.name === selectedTargetUser.name) {
+                alert('لا يمكنك إعطاء لايك لنفسك!');
+                return;
+            }
             selectedTargetUser.likes = (selectedTargetUser.likes || 0) + 1;
             document.getElementById('targetLikesCount').innerText = selectedTargetUser.likes;
             alert('❤️ تمت إضافة إعجاب بنجاح للعضو!');
@@ -1554,11 +1664,37 @@
 
         function openPrivateChat() {
             if(!selectedTargetUser) return;
+            if(currentUser && currentUser.name === selectedTargetUser.name) {
+                alert('لا يمكنك مراسلة نفسك!');
+                return;
+            }
             currentPrivateTarget = selectedTargetUser.name;
             document.getElementById('privateChatTitle').innerText = `محادثة خاصة مع: ${currentPrivateTarget}`;
-            document.getElementById('privateMsgArea').innerHTML = `<div style="text-align:center; font-size:11px; color:#666; padding:10px;">بدء المحادثة الخاصة الآمنة الفورية مع ${currentPrivateTarget}</div>`;
+            
+            let key = [currentUser.name, currentPrivateTarget].sort().join('_');
+            if(!privateMessagesInbox[key]) privateMessagesInbox[key] = [];
+            renderPrivateMessages(key);
+
             closeModal('profileViewModal');
             openModal('privateChatModal');
+        }
+
+        function renderPrivateMessages(key) {
+            let area = document.getElementById('privateMsgArea');
+            area.innerHTML = '';
+            let msgs = privateMessagesInbox[key] || [];
+            if(msgs.length === 0) {
+                area.innerHTML = `<div style="text-align:center; font-size:11px; color:#666; padding:10px;">بدء المحادثة الخاصة الآمنة الفورية مع ${currentPrivateTarget}</div>`;
+                return;
+            }
+            msgs.forEach(m => {
+                let div = document.createElement('div');
+                let isMe = m.sender === currentUser.name;
+                div.style.cssText = `background:${isMe ? '#dcf8c6' : '#fff'}; padding:6px 10px; border-radius:6px; font-size:12px; margin:2px 5px; max-width:80%; align-self:${isMe ? 'flex-end' : 'flex-start'};`;
+                div.innerHTML = `<b>${m.sender}:</b> ${m.text}`;
+                area.appendChild(div);
+            });
+            area.scrollTop = area.scrollHeight;
         }
 
         function sendPrivateMsg() {
@@ -1566,31 +1702,75 @@
             let txt = input.value.trim();
             if(!txt || !currentPrivateTarget) return;
 
-            let area = document.getElementById('privateMsgArea');
-            let div = document.createElement('div');
-            div.style.cssText = "background:#fff; padding:6px 10px; border-radius:6px; font-size:12px; margin:2px 5px; max-width:80%; align-self:flex-end;";
-            div.innerText = `أنا: ${txt}`;
-            area.appendChild(div);
-            area.scrollTop = area.scrollHeight;
+            let key = [currentUser.name, currentPrivateTarget].sort().join('_');
+            if(!privateMessagesInbox[key]) privateMessagesInbox[key] = [];
+            privateMessagesInbox[key].push({ sender: currentUser.name, text: txt });
+
+            renderPrivateMessages(key);
+            input.value;
             input.value = '';
+
+            // زيادة العداد وتنبيه الإشعار للشريط العلوي
+            unreadPrivateCount++;
+            document.getElementById('privateBadgeDot').style.display = 'block';
+            document.getElementById('privateBadgeDot').innerText = unreadPrivateCount;
+
+            updatePrivateContactsList();
         }
 
         function sendPrivateMediaFile(input) {
             if(input.files && input.files[0] && currentPrivateTarget) {
+                let file = input.files[0];
                 let reader = new FileReader();
                 reader.onload = function(e) {
-                    let area = document.getElementById('privateMsgArea');
-                    let div = document.createElement('div');
-                    div.style.cssText = "padding:6px; margin:2px 5px; max-width:80%; align-self:flex-end;";
-                    div.innerHTML = `<img src="${e.target.result}" style="max-width:150px; border-radius:6px;">`;
-                    area.appendChild(div);
-                    area.scrollTop = area.scrollHeight;
+                    let contentHtml = file.type.startsWith('image') ? `<img src="${e.target.result}" class="media-thumb" onclick="openMediaViewer(this.src, 'image')">` : `<video src="${e.target.result}" class="media-thumb" controls></video>`;
+                    let key = [currentUser.name, currentPrivateTarget].sort().join('_');
+                    if(!privateMessagesInbox[key]) privateMessagesInbox[key] = [];
+                    privateMessagesInbox[key].push({ sender: currentUser.name, text: contentHtml });
+                    renderPrivateMessages(key);
+
+                    unreadPrivateCount++;
+                    document.getElementById('privateBadgeDot').style.display = 'block';
+                    document.getElementById('privateBadgeDot').innerText = unreadPrivateCount;
+                    updatePrivateContactsList();
                 };
-                reader.readAsDataURL(input.files[0]);
+                reader.readAsDataURL(file);
             }
         }
 
+        function updatePrivateContactsList() {
+            let contactsListDiv = document.getElementById('privateContactsList');
+            contactsListDiv.innerHTML = '';
+            
+            let partners = Object.keys(privateMessagesInbox);
+            if(partners.length === 0) {
+                contactsListDiv.innerHTML = `<div style="font-size:12px; color:#555; text-align:center; padding:15px;">لا توجد رسائل خاصة جديدة.</div>`;
+                return;
+            }
+
+            partners.forEach(key => {
+                let msgs = privateMessagesInbox[key];
+                if(msgs && msgs.length > 0) {
+                    let lastMsg = msgs[msgs.length - 1];
+                    let partnerName = key.split('_').find(n => n !== currentUser.name) || 'مستخدم';
+                    
+                    let item = document.createElement('div');
+                    item.className = 'side-menu-item';
+                    item.innerHTML = `<div><i class="fas fa-envelope" style="color:#0d6efd;"></i> <b>${partnerName}</b><br><span style="font-size:10px; color:#666;">${lastMsg.text.substring(0, 30)}</span></div>`;
+                    item.onclick = () => {
+                        currentPrivateTarget = partnerName;
+                        document.getElementById('privateChatTitle').innerText = `محادثة خاصة مع: ${currentPrivateTarget}`;
+                        renderPrivateMessages(key);
+                        closeModal('privateNotificationModal');
+                        openModal('privateChatModal');
+                    };
+                    contactsListDiv.appendChild(item);
+                }
+            });
+        }
+
         function openPrivateNotificationModal() {
+            updatePrivateContactsList();
             openModal('privateNotificationModal');
         }
 
@@ -1608,11 +1788,11 @@
                 btn.onclick = () => {
                     if(selectedTargetUser) {
                         selectedTargetUser.rank = r;
-                        
-                        let rankMsgHtml = `<div style="background:#fff3cd; color:#856404; padding:8px; border-radius:6px; font-weight:bold; border:1px solid #ffeeba;"><i class="fas fa-crown"></i> تم إهداء رتبة [ ${r.name} ] (${r.id === 1 ? 'صاحب الموقع' : r.id <= 3 ? 'برنس/كنج' : 'رتبة مميزة'}) إلى العضو ${selectedTargetUser.name} بواسطة ${currentUser.name}</div>`;
-                        sendCustomPayloadMessage(rankMsgHtml);
+                        let rankType = r.id <= 3 ? 'تاج' : 'كاساو/رتبة';
+                        let noticeHtml = `<div style="background:#fff3cd; color:#856404; padding:8px; border-radius:6px; text-align:center; font-weight:bold;"><i class="fas fa-crown"></i> تم إهداء العضو (${selectedTargetUser.name}) الرتبة (${r.name}) ونوعها (${rankType}) بواسطة المهدي (${currentUser.name})</div>`;
+                        sendCustomPayloadMessage(noticeHtml);
 
-                        alert(`👑 تم إهداء رتبة [ ${r.name} ] للعضو ${selectedTargetUser.name} بنجاح وتحديثها للجميع وإرسال إشعار بالنظام في العام!`);
+                        alert(`👑 تم إهداء رتبة [ ${r.name} ] للعضو ${selectedTargetUser.name} بنجاح وتحديثها للجميع!`);
                         closeModal('ranksListModal');
                         closeModal('profileViewModal');
                     }
@@ -1686,7 +1866,7 @@
                     window.dbSet(micRef, null);
                 }
             } else if(action === 'playSong') {
-                let url = prompt('أدخل رابط الأغنية الصوتي المباشر (MP3 أو يوتيوب):', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
+                let url = prompt('أدخل رابط الأغنية الصوتي المباشر أو اليوتيوب الحقيقي لتشغيله على المايك للجميع:', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
                 if(url && window.firebaseDB && window.dbRef && window.dbSet) {
                     const micAudioRef = window.dbRef(window.firebaseDB, `rooms/public/micAudio`);
                     window.dbSet(micAudioRef, { url: url, timestamp: window.dbServerTimestamp() });
