@@ -1886,7 +1886,29 @@
         function toggleDataSaver() {
             document.body.classList.toggle('saver-mode');
             alert(document.body.classList.contains('saver-mode') ? '⚡ تم تفعيل وضع توفير النت بنجاح.' : '⚡ تم إيقاف وضع توفير النت.');
+        }// --- كود الاستماع لتحديثات الرتب والبيانات من الفايربيز ---
+if (window.firebaseDB && window.dbRef && window.dbOnChildChanged) {
+    const onlineUsersRef = window.dbRef(window.firebaseDB, 'onlineUsers');
+    window.dbOnChildChanged(onlineUsersRef, (snapshot) => {
+        const updatedUser = snapshot.val();
+        if (updatedUser && updatedUser.name) {
+            // إذا كان المستخدم الحالي هو نفسه الذي تم تعديل بياناته/رتبته
+            if (typeof currentUser !== 'undefined' && currentUser && currentUser.name === updatedUser.name) {
+                currentUser = updatedUser;
+                localStorage.setItem('hasouniChatUser', JSON.stringify(currentUser));
+                
+                // تحديث الواجهة إذا كانت الدالة موجودة
+                if (typeof initSessionUI === 'function') {
+                    initSessionUI();
+                }
+            }
+            // تحديث قائمة المتواجدين إن وجدت
+            if (typeof updateOnlineUI === 'function') {
+                updateOnlineUI(updatedUser);
+            }
         }
+    });
+}
     </script>
 </body>
 </html>
