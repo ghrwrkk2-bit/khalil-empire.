@@ -543,6 +543,12 @@ onclick="showAuth('register')">
 تسجيل
 </button>
 
+<button
+id="guestTab"
+onclick="showAuth('guest')">
+👤 زائر
+</button>
+
 </div>
 
 <div id="loginForm" class="authForm active">
@@ -559,10 +565,6 @@ placeholder="كلمة المرور">
 
 <button class="authBtn" onclick="login()">
 تسجيل الدخول
-</button>
-
-<button class="guestBtn" onclick="guestLogin()">
-👤 دخول كزائر
 </button>
 
 </div>
@@ -585,6 +587,31 @@ placeholder="كلمة المرور">
 
 <button class="authBtn" onclick="register()">
 إنشاء حساب
+</button>
+
+</div>
+
+<div id="guestForm" class="authForm">
+
+<input
+id="guestName"
+placeholder="الاسم المستعار">
+
+<input
+id="guestAge"
+type="number"
+min="1"
+max="120"
+placeholder="العمر">
+
+<select id="guestGender">
+<option value="">اختر الجنس</option>
+<option value="ذكر">ذكر</option>
+<option value="أنثى">أنثى</option>
+</select>
+
+<button class="authBtn" onclick="guestLogin()">
+👤 دخول كزائر
 </button>
 
 </div>
@@ -931,12 +958,22 @@ document
 .remove("active");
 
 document
+.getElementById("guestForm")
+.classList
+.remove("active");
+
+document
 .getElementById("loginTab")
 .classList
 .remove("active");
 
 document
 .getElementById("registerTab")
+.classList
+.remove("active");
+
+document
+.getElementById("guestTab")
 .classList
 .remove("active");
 
@@ -953,7 +990,7 @@ document
 .classList
 .add("active");
 
-}else{
+}else if(type === "register"){
 
 document
 .getElementById("registerForm")
@@ -962,6 +999,18 @@ document
 
 document
 .getElementById("registerTab")
+.classList
+.add("active");
+
+}else if(type === "guest"){
+
+document
+.getElementById("guestForm")
+.classList
+.add("active");
+
+document
+.getElementById("guestTab")
 .classList
 .add("active");
 
@@ -1104,13 +1153,63 @@ error.message);
 window.guestLogin =
 async function(){
 
+const name =
+document
+.getElementById("guestName")
+.value
+.trim();
+
+const age =
+document
+.getElementById("guestAge")
+.value
+.trim();
+
+const gender =
+document
+.getElementById("guestGender")
+.value;
+
+if(!name || !age || !gender){
+
+alert("أكمل الاسم المستعار والعمر والجنس");
+
+return;
+
+}
+
+if(name.length < 2){
+
+alert("الاسم المستعار يجب أن يكون حرفين أو أكثر");
+
+return;
+
+}
+
+if(Number(age) < 1 || Number(age) > 120){
+
+alert("أدخل عمرًا صحيحًا");
+
+return;
+
+}
+
 try{
+
+sessionStorage.setItem(
+"hassoniGuestData",
+JSON.stringify({
+name:name,
+age:Number(age),
+gender:gender
+})
+);
 
 await signInAnonymously(auth);
 
 }catch(error){
 
-alert(error.message);
+alert("تعذر دخول الزائر: " + error.message);
 
 }
 
@@ -1151,16 +1250,41 @@ document
 
 if(firebaseUser.isAnonymous){
 
+let guestData = {};
+
+try{
+
+guestData =
+JSON.parse(
+sessionStorage.getItem(
+"hassoniGuestData"
+)
+) || {};
+
+}catch(error){
+
+guestData = {};
+
+}
+
 currentUser = {
 
 uid:firebaseUser.uid,
 
 name:
+guestData.name ||
 "زائر " +
 Math.floor(
 Math.random()*9999
 ),
 
+age:
+guestData.age ||
+"",
+
+gender:
+guestData.gender ||
+"",
 rank:"👤 زائر",
 
 role:"guest",
@@ -2130,6 +2254,10 @@ document
 window.logout =
 async function(){
 
+sessionStorage.removeItem(
+"hassoniGuestData"
+);
+
 await signOut(auth);
 
 };
@@ -2156,4 +2284,4 @@ return String(text)
 </script>
 
 </body>
-</html>
+</html>    
