@@ -862,7 +862,13 @@ import {
 initializeApp
 }
 from
-"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+"https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+
+import {
+getAnalytics
+}
+from
+"https://www.gstatic.com/firebasejs/12.18.0/firebase-analytics.js";
 
 import {
 getAuth,
@@ -873,7 +879,7 @@ signOut,
 onAuthStateChanged
 }
 from
-"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+"https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 
 import {
 getFirestore,
@@ -891,7 +897,7 @@ serverTimestamp,
 getDocs
 }
 from
-"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+"https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 
 /* =====================================
@@ -899,19 +905,13 @@ from
 ===================================== */
 
 const firebaseConfig = {
-
-apiKey: "FIREBASE_CONFIG_HERE",
-
-authDomain: "FIREBASE_CONFIG_HERE",
-
-projectId: "FIREBASE_CONFIG_HERE",
-
-storageBucket: "FIREBASE_CONFIG_HERE",
-
-messagingSenderId: "FIREBASE_CONFIG_HERE",
-
-appId: "FIREBASE_CONFIG_HERE"
-
+  apiKey: "AIzaSyAFjspoGwJJeowjEZrcmJCO99iiTcBR5Is",
+  authDomain: "hassouni-chat-51234.firebaseapp.com",
+  projectId: "hassouni-chat-51234",
+  storageBucket: "hassouni-chat-51234.firebasestorage.app",
+  messagingSenderId: "519124989339",
+  appId: "1:519124989339:web:7e2dcb2fe886f813d89d3e",
+  measurementId: "G-9NMZYF2P3N"
 };
 
 
@@ -923,6 +923,14 @@ const OWNER_EMAIL =
 
 const app =
 initializeApp(firebaseConfig);
+
+let analytics = null;
+
+try{
+analytics = getAnalytics(app);
+}catch(error){
+console.log("Analytics غير متاح:", error);
+}
 
 const auth =
 getAuth(app);
@@ -1285,6 +1293,7 @@ guestData.age ||
 gender:
 guestData.gender ||
 "",
+
 rank:"👤 زائر",
 
 role:"guest",
@@ -1961,11 +1970,7 @@ document
 
 
 await updateDoc(
-doc(
-db,
-"users",
-currentUser.uid
-),
+doc(db,"users",currentUser.uid),
 {
 
 avatar:avatar,
@@ -2284,4 +2289,4 @@ return String(text)
 </script>
 
 </body>
-</html>    
+</html>
