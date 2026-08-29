@@ -77,8 +77,8 @@
       projectId: "hassouni-chat-51234",
       storageBucket: "hassouni-chat-51234.firebasestorage.app",
       messagingSenderId: "519124989339",
-      appId: "1:519124989339:web:2619c6d8c0488cdbd89d3e",
-      measurementId: "G-E4QVC93P2R"
+      appId: "1:519124989339:web:3039954b61ef6f6dd89d3e",
+      measurementId: "G-R3EEG7F2P2"
     };
 
     let auth = null;
@@ -198,6 +198,9 @@
       const [isPlayingMusic, setIsPlayingMusic] = useState(false);
       const [musicTitle, setMusicTitle] = useState('Ramy Gamal - Btedeny Wahsh 🎵');
 
+      // Mic Capsule Visibility Toggle State (Controlled by the Arrow)
+      const [showMicCapsule, setShowMicCapsule] = useState(true);
+
       // Mic Slots (Real live slots)
       const [micSlots, setMicSlots] = useState([
         { slot: 1, user: null, isSpeaking: false, isMuted: false, isMusicPlaying: false },
@@ -241,7 +244,6 @@
       const [adminGold, setAdminGold] = useState(5000);
       const [adminRubies, setAdminRubies] = useState(100);
       const [adminBroadcast, setAdminBroadcast] = useState('');
-      const [adminNewRoomName, setAdminNewRoomName] = useState('');
 
       const chatEndRef = useRef(null);
       const currentRoom = rooms.find(r => r.id === currentRoomId) || rooms[0];
@@ -251,8 +253,8 @@
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, [messages]);
 
-      // ==================== 5. FIREBASE SYNC LISTENERS ====================
-      // A. Real-time Messages Sync (Specific to current room)
+      // ==================== 5. FIREBASE LISTENERS ====================
+      // A. Real-time Messages Sync (Specific to room)
       useEffect(() => {
         if (!db) return;
         try {
@@ -277,7 +279,7 @@
           const unsub = db.collection('users').onSnapshot((snapshot) => {
             if (snapshot) {
               const liveUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-              // Sort: Owner first, then online status, then join date
+              // Sort: Owner first, then online status
               const sorted = liveUsers.sort((a, b) => {
                 if (a.role === 'owner' || a.cupType === 'white_glowing') return -1;
                 if (b.role === 'owner' || b.cupType === 'white_glowing') return 1;
@@ -321,7 +323,7 @@
         } catch (e) {}
       }, [currentUser, currentRoomId]);
 
-      // Check if currentUser was banned or muted remotely
+      // Ban/Jail listener
       useEffect(() => {
         if (!currentUser) return;
         const fresh = users.find(u => u.id === currentUser.id);
@@ -438,7 +440,7 @@
         }
       };
 
-      // Real Mic Audio Stream Activation
+      // Mic Audio Streams
       const startLiveMicrophone = async () => {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -455,27 +457,23 @@
         }
       };
 
-      // Mic Step 1: Take Mic Confirm
+      // Mic Slot Click
       const handleMicSlotClick = (slotObj) => {
         if (!currentUser) return setShowLogin(true);
 
-        // If slot is empty, ask user if they want to climb up
         if (!slotObj.user) {
           setConfirmMicSlot(slotObj.slot);
           return;
         }
 
-        // If current user is already on this mic, open the 5-options control menu
         if (slotObj.user.id === currentUser.id) {
           setActiveMicMenuSlot(slotObj.slot);
         } else {
-          // If another user is on the mic, open their profile
           setSelectedUser(slotObj.user);
           setShowProfile(true);
         }
       };
 
-      // Mic Step 2: Confirm Climbing
       const confirmTakeMic = async (slotNumber) => {
         await startLiveMicrophone();
         const updatedSlots = micSlots.map(s => s.slot === slotNumber ? {
@@ -492,7 +490,6 @@
         playAudio('crown');
       };
 
-      // Mic Step 3: Menu Option Handlers
       const handleMicMenuAction = (action) => {
         if (!activeMicMenuSlot) return;
 
@@ -657,7 +654,7 @@
         >
           {currentRoom.bgImage && <div className="absolute inset-0 bg-black/60 pointer-events-none z-0" />}
 
-          {/* ================= FIXED TOP HEADER ================= */}
+          {/* ================= FIXED TOP HEADER (Screenshot Match) ================= */}
           <header className="bg-[#0c0d12]/95 backdrop-blur-md border-b border-zinc-800/80 px-2 py-2 flex items-center justify-between sticky top-0 z-40 shrink-0">
             <div className="flex items-center gap-1.5">
               {currentUser?.role === 'owner' ? (
@@ -708,50 +705,74 @@
             </div>
           </header>
 
-          {/* ================= FIXED TOP MIC & DJ PLAYER ================= */}
-          <div className="p-2.5 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-850 sticky top-[49px] z-30 shrink-0">
-            <div className="grid grid-cols-4 gap-2">
-              {micSlots.map(s => (
-                <div 
-                  key={s.slot} 
-                  onClick={() => handleMicSlotClick(s)}
-                  className={`flex flex-col items-center p-2 rounded-2xl border cursor-pointer transition-all ${s.user ? 'bg-zinc-900 border-amber-500/60 shadow' : 'bg-zinc-900/40 border-dashed border-zinc-800 hover:border-amber-400/50'}`}
-                >
-                  {s.user ? (
-                    <div className="relative">
-                      <img src={s.user.avatar} className={`w-11 h-11 rounded-full object-cover border-2 border-amber-400 ${s.isSpeaking && !s.isMuted ? 'speaking-active' : ''}`} />
-                      {s.isMuted && <span className="absolute -top-1 -left-1 bg-red-600 text-white rounded-full text-[8px] p-0.5">🔇</span>}
-                      {s.isMusicPlaying && <span className="absolute -top-1 -right-1 bg-purple-600 text-white rounded-full text-[8px] p-0.5">🎵</span>}
-                      {s.isSpeaking && !s.isMuted && <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center text-[8px]">🎙️</span>}
-                    </div>
-                  ) : (
-                    <div className="w-11 h-11 rounded-full border border-zinc-700 bg-zinc-800/80 flex items-center justify-center text-zinc-400 hover:text-amber-400">
-                      🎙️
-                    </div>
-                  )}
-                  <span className="text-[10px] font-bold text-zinc-300 mt-1 truncate max-w-full">
-                    {s.user ? s.user.name : `مايك ${s.slot}`}
-                  </span>
-                </div>
-              ))}
-            </div>
+          {/* ================= FLOATING MIC CAPSULE (Exact Match to Image with Toggle Arrow) ================= */}
+          <div className="relative z-30 flex justify-center px-4 pt-2 shrink-0 pointer-events-none">
+            <div className="pointer-events-auto transition-all duration-300 ease-in-out">
+              {showMicCapsule ? (
+                /* Expanded Capsule */
+                <div className="bg-[#12131a]/95 backdrop-blur-lg border border-zinc-700/80 rounded-[28px] px-3 pt-2.5 pb-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.85)] flex flex-col items-center gap-1.5">
+                  {/* The 4 Mics in a Row */}
+                  <div className="flex items-center gap-2.5">
+                    {micSlots.map(s => (
+                      <div 
+                        key={s.slot} 
+                        onClick={() => handleMicSlotClick(s)}
+                        className="flex flex-col items-center cursor-pointer group"
+                      >
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all relative ${s.user ? 'bg-zinc-800 border-2 border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.5)]' : 'bg-black/90 border-2 border-zinc-700 hover:border-amber-400'}`}>
+                          {s.user ? (
+                            <img src={s.user.avatar} className={`w-full h-full rounded-full object-cover ${s.isSpeaking && !s.isMuted ? 'speaking-active' : ''}`} />
+                          ) : (
+                            <div className="flex flex-col items-center justify-center text-white">
+                              <span className="text-base">🎙️</span>
+                            </div>
+                          )}
+                          {s.isMuted && <span className="absolute -top-1 -left-1 bg-red-600 text-white rounded-full text-[8px] p-0.5">🔇</span>}
+                          {s.isMusicPlaying && <span className="absolute -top-1 -right-1 bg-purple-600 text-white rounded-full text-[8px] p-0.5">🎵</span>}
+                          {s.isSpeaking && !s.isMuted && <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center text-[8px]">🎙️</span>}
+                        </div>
+                        <span className="text-[10px] font-bold text-zinc-300 mt-1">
+                          {s.user ? s.user.name.slice(0, 5) : s.slot}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
 
-            {/* Audio Player */}
-            <div className="mt-2 bg-zinc-900/90 border border-zinc-800 rounded-xl p-2 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <button onClick={() => setIsPlayingMusic(!isPlayingMusic)} className="w-7 h-7 bg-amber-500 text-black font-black rounded-lg">
-                  {isPlayingMusic ? '⏸' : '▶'}
-                </button>
-                <div>
-                  <span className="text-white font-bold block text-[11px] truncate max-w-[200px]">{musicTitle}</span>
-                  <span className="text-[9px] text-zinc-400">الراديو الصوتي لشات حسوني</span>
+                  {/* Bottom Controls inside capsule: Settings & Toggle Arrow */}
+                  <div className="flex items-center gap-2 pt-0.5">
+                    <button 
+                      onClick={() => alert('إعدادات الصوت: حساسية المايك 100%، مانع الصدى مفعل ⚙️')}
+                      className="w-6 h-6 rounded-full bg-black/80 border border-zinc-700 flex items-center justify-center text-[10px] text-zinc-300 hover:text-white"
+                      title="إعدادات الصوت"
+                    >
+                      ⚙️
+                    </button>
+
+                    {/* Collapse / Hide Mics Arrow */}
+                    <button 
+                      onClick={() => setShowMicCapsule(false)}
+                      className="w-7 h-7 rounded-full bg-black border border-zinc-600 flex items-center justify-center text-xs text-amber-400 hover:bg-zinc-800 shadow-md font-bold transition-transform active:scale-95"
+                      title="إخفاء المايكات"
+                    >
+                      ▲
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <span className="text-cyan-400 animate-pulse text-[11px] font-bold">📻 راديو مباشر</span>
+              ) : (
+                /* Collapsed Floating Toggle Button */
+                <button 
+                  onClick={() => setShowMicCapsule(true)}
+                  className="bg-[#12131a]/95 backdrop-blur-lg border border-amber-500/60 rounded-full px-4 py-1.5 shadow-2xl flex items-center gap-1.5 text-xs text-amber-400 font-bold hover:bg-zinc-900 transition-all active:scale-95"
+                  title="إظهار المايكات"
+                >
+                  <span>🎙️ المايكات</span>
+                  <span className="text-[11px] text-white">▼</span>
+                </button>
+              )}
             </div>
           </div>
 
-          {/* ================= SCROLLABLE CHAT AREA ================= */}
+          {/* ================= SCROLLABLE CHAT AREA (Messages pass underneath floating mics) ================= */}
           <div className="flex-1 overflow-y-auto p-3 space-y-3 relative z-10">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center text-zinc-500 text-xs space-y-2">
@@ -965,7 +986,7 @@
             </div>
           )}
 
-          {/* ================= MODAL: ONLINE USERS (Owner first, real only) ================= */}
+          {/* ================= MODAL: ONLINE USERS ================= */}
           {showUsersModal && (
             <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-3">
               <div className="bg-zinc-950 border border-zinc-800 rounded-3xl w-full max-w-sm p-4 space-y-3 text-xs shadow-2xl">
@@ -1505,7 +1526,7 @@
                   </div>
                 </div>
                 <div className="border-t border-zinc-800 pt-3 text-[10px] text-zinc-500 text-center font-mono">
-                  Hassouni Chat v5.0.0
+                  Hassouni Chat v5.2.0
                 </div>
               </div>
             </div>
