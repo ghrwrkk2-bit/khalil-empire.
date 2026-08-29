@@ -40,17 +40,35 @@
       background: #27272a;
       border-radius: 4px;
     }
-    @keyframes pulseGlow {
-      0%, 100% { 
-        box-shadow: 0 0 15px rgba(255, 255, 255, 0.95), 0 0 30px rgba(245, 158, 11, 0.7); 
-      }
-      50% { 
-        box-shadow: 0 0 25px rgba(255, 255, 255, 1), 0 0 50px rgba(245, 158, 11, 0.95); 
-      }
+    
+    /* Glowing Rank Animations */
+    @keyframes glowWhite {
+      0%, 100% { box-shadow: 0 0 10px rgba(255, 255, 255, 0.9), 0 0 20px rgba(245, 158, 11, 0.6); }
+      50% { box-shadow: 0 0 20px rgba(255, 255, 255, 1), 0 0 35px rgba(245, 158, 11, 0.9); }
     }
-    .white-glowing-cup {
-      animation: pulseGlow 1.8s infinite ease-in-out;
+    @keyframes glowRed {
+      0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.8); }
+      50% { box-shadow: 0 0 22px rgba(239, 68, 68, 1); }
     }
+    @keyframes glowBlue {
+      0%, 100% { box-shadow: 0 0 10px rgba(59, 130, 246, 0.8); }
+      50% { box-shadow: 0 0 22px rgba(59, 130, 246, 1); }
+    }
+    @keyframes glowPurple {
+      0%, 100% { box-shadow: 0 0 10px rgba(168, 85, 247, 0.8); }
+      50% { box-shadow: 0 0 22px rgba(168, 85, 247, 1); }
+    }
+    @keyframes glowGold {
+      0%, 100% { box-shadow: 0 0 10px rgba(234, 179, 8, 0.8); }
+      50% { box-shadow: 0 0 22px rgba(234, 179, 8, 1); }
+    }
+
+    .rank-white-cup { animation: glowWhite 1.8s infinite ease-in-out; }
+    .rank-red-cup { animation: glowRed 1.8s infinite ease-in-out; }
+    .rank-blue-crown { animation: glowBlue 1.8s infinite ease-in-out; }
+    .rank-purple { animation: glowPurple 1.8s infinite ease-in-out; }
+    .rank-gold { animation: glowGold 1.8s infinite ease-in-out; }
+    
     @keyframes speakingRipple {
       0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
       70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
@@ -94,7 +112,62 @@
       console.warn("Firebase initialization notice:", e);
     }
 
-    // ==================== 2. AUDIO UTILITY ====================
+    // ==================== 2. 30 DISTINCTIVE RANKS SYSTEM ====================
+    const RANKS_LIST = [
+      { id: 'white_glowing', name: 'صاحب الموقع (كأس أبيض لامع)', icon: '👑', css: 'rank-white-cup bg-gradient-to-tr from-white via-slate-100 to-amber-200 text-amber-600 border-2 border-white', badge: 'صاحب الموقع' },
+      { id: 'red_cup', name: 'برنس (كأس أحمر لامع)', icon: '🏆', css: 'rank-red-cup bg-gradient-to-tr from-red-600 to-rose-400 text-white border border-rose-300', badge: 'برنس' },
+      { id: 'white_crown', name: 'كنج (تاج أبيض لامع)', icon: '👑', css: 'rank-white-cup bg-gradient-to-tr from-slate-200 to-white text-yellow-600 border border-yellow-200', badge: 'كنج' },
+      { id: 'blue_crown', name: 'أنروا (تاج أزرق لامع)', icon: '👑', css: 'rank-blue-crown bg-gradient-to-tr from-blue-600 to-cyan-400 text-white border border-cyan-300', badge: 'أنروا' },
+      { id: 'black_crown', name: 'أدمان (تاج أسود لامع)', icon: '👑', css: 'bg-gradient-to-tr from-black via-zinc-900 to-zinc-800 text-amber-400 border border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)]', badge: 'أدمان' },
+      { id: 'emperor_gold', name: 'الإمبراطور (تاج ذهبي ملكي)', icon: '👑', css: 'rank-gold bg-gradient-to-tr from-amber-600 via-yellow-400 to-amber-300 text-black border border-yellow-200', badge: 'الإمبراطور' },
+      { id: 'purple_legend', name: 'أسطورة الشات (كأس بنفسجي)', icon: '🏆', css: 'rank-purple bg-gradient-to-tr from-purple-700 to-fuchsia-500 text-white border border-fuchsia-300', badge: 'الأسطورة' },
+      { id: 'diamond_ambassador', name: 'السفير الماسي (ماسة زرقاء)', icon: '💎', css: 'rank-blue-crown bg-gradient-to-tr from-cyan-600 to-blue-500 text-white border border-cyan-200', badge: 'السفير' },
+      { id: 'general_shield', name: 'الجنرال (درع ذهبي)', icon: '🛡️', css: 'rank-gold bg-gradient-to-tr from-amber-700 to-yellow-500 text-black border border-yellow-400', badge: 'الجنرال' },
+      { id: 'vip_star', name: 'كبار الشخصيات (نجمة VIP)', icon: '🌟', css: 'rank-gold bg-gradient-to-tr from-yellow-500 to-amber-300 text-black border border-white', badge: 'VIP' },
+      { id: 'premium_member', name: 'بريميم Premium (وسام الذهب)', icon: '🏵️', css: 'rank-gold bg-gradient-to-tr from-amber-500 to-yellow-400 text-black border border-yellow-300', badge: 'Premium' },
+      { id: 'elite_leader', name: 'قائد النخبة (تاج ياقوتي)', icon: '👑', css: 'rank-red-cup bg-gradient-to-tr from-rose-700 to-red-500 text-white border border-rose-300', badge: 'قائد النخبة' },
+      { id: 'emerald_duke', name: 'دوق الزمرد (ماسة خضراء)', icon: '💎', css: 'bg-gradient-to-tr from-emerald-600 to-teal-400 text-white border border-teal-300 shadow-[0_0_12px_rgba(16,185,129,0.8)]', badge: 'دوق الزمرد' },
+      { id: 'marshal_rank', name: 'المارشال (صقر ذهبي)', icon: '🦅', css: 'rank-gold bg-gradient-to-tr from-stone-800 to-amber-600 text-yellow-300 border border-yellow-400', badge: 'المارشال' },
+      { id: 'minister_rank', name: 'وزير الشات (ختم فضي)', icon: '🏛️', css: 'bg-gradient-to-tr from-slate-400 to-slate-200 text-black border border-white shadow', badge: 'الوزير' },
+      { id: 'royal_knight', name: 'الفارس الملكي (سيف ذهبي)', icon: '⚔️', css: 'rank-gold bg-gradient-to-tr from-amber-600 to-yellow-500 text-black border border-yellow-300', badge: 'فارس ملكي' },
+      { id: 'shining_star', name: 'النجم الساطع (شعلة نارية)', icon: '🔥', css: 'rank-red-cup bg-gradient-to-tr from-orange-600 to-amber-500 text-white border border-amber-300', badge: 'النجم الساطع' },
+      { id: 'advisor_rank', name: 'المستشار العام (ميزان العدل)', icon: '⚖️', css: 'bg-gradient-to-tr from-indigo-700 to-blue-500 text-white border border-blue-300', badge: 'المستشار' },
+      { id: 'dean_rank', name: 'عميد الأعضاء (كتاب الحكمة)', icon: '📜', css: 'bg-gradient-to-tr from-stone-700 to-amber-800 text-amber-300 border border-amber-500', badge: 'العميد' },
+      { id: 'ruby_prince', name: 'أمير الروبي (ياقوت أحمر)', icon: '♦️', css: 'rank-red-cup bg-gradient-to-tr from-red-700 to-pink-600 text-white border border-pink-300', badge: 'أمير الروبي' },
+      { id: 'lord_rank', name: 'اللورد (تاج فضي برّاق)', icon: '👑', css: 'bg-gradient-to-tr from-gray-300 to-slate-100 text-blue-900 border border-white shadow-[0_0_15px_rgba(255,255,255,0.7)]', badge: 'اللورد' },
+      { id: 'governor_rank', name: 'حاكم الغرف (مفتاح الذهب)', icon: '🗝️', css: 'rank-gold bg-gradient-to-tr from-yellow-600 to-amber-500 text-black border border-yellow-200', badge: 'الحاكم' },
+      { id: 'super_admin_rank', name: 'إدارة عليا (درع بلاتيني)', icon: '🛡️', css: 'bg-gradient-to-tr from-cyan-800 to-blue-600 text-cyan-200 border border-cyan-400', badge: 'إدارة عليا' },
+      { id: 'supervisor_rank', name: 'المشرف العام (عين الرقابة)', icon: '👁️', css: 'bg-gradient-to-tr from-teal-700 to-emerald-600 text-white border border-teal-300', badge: 'مشرف عام' },
+      { id: 'golden_voice', name: 'الصوت الذهبي (ميكروفون ذهب)', icon: '🎙️', css: 'rank-gold bg-gradient-to-tr from-amber-500 to-yellow-300 text-black border border-yellow-200', badge: 'صوت ذهبي' },
+      { id: 'room_star', name: 'نجم الغرفة (قلب مشع)', icon: '💖', css: 'bg-gradient-to-tr from-pink-600 to-rose-400 text-white border border-rose-200 shadow-[0_0_12px_rgba(244,63,94,0.7)]', badge: 'نجم الغرفة' },
+      { id: 'loyal_member', name: 'عضو وفيّ (وردة ماسية)', icon: '🌹', css: 'bg-gradient-to-tr from-red-600 to-purple-600 text-white border border-pink-300', badge: 'عضو وفي' },
+      { id: 'active_member', name: 'عضو نشط (برق سريع)', icon: '⚡', css: 'bg-gradient-to-tr from-amber-500 to-yellow-400 text-black border border-yellow-300', badge: 'عضو نشط' },
+      { id: 'registered_member', name: 'عضو مسجل (نجمة برونز)', icon: '⭐', css: 'bg-zinc-800 text-amber-400 border border-zinc-700', badge: 'عضو مسجل' },
+      { id: 'guest_rank', name: 'زائر الشات (زهرة بيضاء)', icon: '🌸', css: 'bg-zinc-900 text-zinc-300 border border-zinc-700', badge: 'زائر' }
+    ];
+
+    // --- Separate Rank Badge Component (Placed between Avatar and Name) ---
+    function RankBadge({ rankId, level = 1, size = "md" }) {
+      const r = RANKS_LIST.find(x => x.id === rankId) || RANKS_LIST[RANKS_LIST.length - 2];
+      
+      return (
+        <div className="flex items-center gap-0.5 shrink-0 select-none">
+          {/* Level Circle */}
+          <span className="bg-amber-500 text-black text-[9px] font-black px-1.5 py-0.5 rounded-full border border-white shadow-sm leading-none">
+            {level}
+          </span>
+          {/* Rank Icon Box */}
+          <div 
+            className={`inline-flex items-center justify-center rounded-full w-5 h-5 text-[10px] shadow-md ${r.css}`} 
+            title={r.name}
+          >
+            {r.icon}
+          </div>
+        </div>
+      );
+    }
+
+    // ==================== 3. AUDIO UTILITY ====================
     const playAudio = (type) => {
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -127,7 +200,7 @@
       } catch (e) {}
     };
 
-    // ==================== 3. CONSTANTS ====================
+    // ==================== 4. DEFAULT ROOMS & STORE ====================
     const DEFAULT_ROOMS = [
       { id: 'general', name: 'الغرفـــة || العـامـــة 🌸', desc: 'الروم الرئيسي لجميع الأعضاء والزوار', icon: '👑', bgImage: '' },
       { id: 'elite', name: 'ملتقى النخبه 💎', desc: 'غرفة أصحاب الكؤوس الذهبية', icon: '💎', bgImage: '' },
@@ -146,40 +219,14 @@
     ];
 
     const NAME_PALETTES = [
-      { id: 'p1', name: 'الملكي الذهبي', class: 'from-amber-500 via-yellow-400 to-amber-600' },
-      { id: 'p2', name: 'الياقوت الأزرق', class: 'from-blue-600 via-cyan-500 to-indigo-700' },
-      { id: 'p3', name: 'الوردي الفاخر', class: 'from-pink-600 via-rose-500 to-purple-600' },
-      { id: 'p4', name: 'الزمرد الأخضر', class: 'from-emerald-600 via-teal-500 to-green-700' },
-      { id: 'p5', name: 'الليلي الفحمي', class: 'from-zinc-900 via-stone-800 to-zinc-900' }
+      { id: 'p1', name: 'الليلي الفحمي', class: 'bg-[#181a20] text-white border border-zinc-700' },
+      { id: 'p2', name: 'الملكي الذهبي', class: 'bg-gradient-to-r from-amber-500 to-yellow-400 text-black border border-yellow-200' },
+      { id: 'p3', name: 'الياقوت الأزرق', class: 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white border border-cyan-300' },
+      { id: 'p4', name: 'الوردي الفاخر', class: 'bg-gradient-to-r from-pink-600 to-rose-400 text-white border border-pink-300' },
+      { id: 'p5', name: 'الزمرد الأخضر', class: 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white border border-teal-300' }
     ];
 
-    function CupBadge({ type }) {
-      if (type === 'none' || !type) return null;
-      if (type === 'white_glowing') {
-        return (
-          <div className="white-glowing-cup inline-flex items-center justify-center rounded-full bg-gradient-to-tr from-white via-slate-100 to-slate-200 text-amber-500 border-2 border-white w-5 h-5 text-[10px] shadow-lg shrink-0" title="الكأس الأبيض اللامع - صاحب الموقع">
-            👑
-          </div>
-        );
-      }
-      if (type === 'gold') {
-        return (
-          <div className="inline-flex items-center justify-center rounded-full bg-gradient-to-tr from-amber-600 via-yellow-400 to-amber-200 text-black border border-yellow-300 w-5 h-5 text-[9px] shadow shrink-0" title="كأس الذهب">
-            🏆
-          </div>
-        );
-      }
-      if (type === 'diamond') {
-        return (
-          <div className="inline-flex items-center justify-center rounded-full bg-gradient-to-tr from-cyan-600 to-blue-500 text-white border border-cyan-300 w-5 h-5 text-[9px] shadow shrink-0" title="الرتبة الماسية">
-            💎
-          </div>
-        );
-      }
-      return null;
-    }
-
-    // ==================== 4. MAIN APP ====================
+    // ==================== 5. MAIN APP COMPONENT ====================
     function App() {
       const getSavedUser = () => {
         try {
@@ -195,13 +242,9 @@
       const [messages, setMessages] = useState([]);
       const [currentRoomId, setCurrentRoomId] = useState('general');
       const [inputText, setInputText] = useState('');
-      const [isPlayingMusic, setIsPlayingMusic] = useState(false);
-      const [musicTitle, setMusicTitle] = useState('Ramy Gamal - Btedeny Wahsh 🎵');
-
-      // Mic Capsule Visibility Toggle State (Controlled by the Arrow)
       const [showMicCapsule, setShowMicCapsule] = useState(true);
 
-      // Mic Slots (Real live slots)
+      // Mic Slots
       const [micSlots, setMicSlots] = useState([
         { slot: 1, user: null, isSpeaking: false, isMuted: false, isMusicPlaying: false },
         { slot: 2, user: null, isSpeaking: false, isMuted: false, isMusicPlaying: false },
@@ -209,12 +252,11 @@
         { slot: 4, user: null, isSpeaking: false, isMuted: false, isMusicPlaying: false },
       ]);
 
-      // Mic Interaction Modals
       const [confirmMicSlot, setConfirmMicSlot] = useState(null);
       const [activeMicMenuSlot, setActiveMicMenuSlot] = useState(null);
       const [audioStream, setAudioStream] = useState(null);
 
-      // Other Modals
+      // Modals
       const [showLogin, setShowLogin] = useState(!currentUser);
       const [showProfile, setShowProfile] = useState(false);
       const [selectedUser, setSelectedUser] = useState(null);
@@ -224,6 +266,9 @@
       const [showAdmin, setShowAdmin] = useState(false);
       const [showUsersModal, setShowUsersModal] = useState(false);
       const [showDrawer, setShowDrawer] = useState(false);
+
+      // Super Admin Rank Assignment State
+      const [selectedRankToGift, setSelectedRankToGift] = useState('white_glowing');
 
       // Login form states (EMPTY by default)
       const [loginEmail, setLoginEmail] = useState('');
@@ -237,7 +282,7 @@
 
       // Customization Profile
       const [customName, setCustomName] = useState('');
-      const [customPalette, setCustomPalette] = useState('from-amber-500 via-yellow-400 to-amber-600');
+      const [customPalette, setCustomPalette] = useState('bg-[#181a20] text-white border border-zinc-700');
 
       // Admin Management States
       const [adminTargetId, setAdminTargetId] = useState('');
@@ -248,13 +293,12 @@
       const chatEndRef = useRef(null);
       const currentRoom = rooms.find(r => r.id === currentRoomId) || rooms[0];
 
-      // Auto-scroll to bottom whenever messages update
+      // Auto-scroll on new message
       useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, [messages]);
 
-      // ==================== 5. FIREBASE LISTENERS ====================
-      // A. Real-time Messages Sync (Specific to room)
+      // Firebase Messages Listener
       useEffect(() => {
         if (!db) return;
         try {
@@ -272,17 +316,16 @@
         } catch (e) {}
       }, [currentRoomId]);
 
-      // B. Real-time Online Users Sync (Real users only, Owner first)
+      // Firebase Online Users Listener (Owner first, real only)
       useEffect(() => {
         if (!db) return;
         try {
           const unsub = db.collection('users').onSnapshot((snapshot) => {
             if (snapshot) {
               const liveUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-              // Sort: Owner first, then online status
               const sorted = liveUsers.sort((a, b) => {
-                if (a.role === 'owner' || a.cupType === 'white_glowing') return -1;
-                if (b.role === 'owner' || b.cupType === 'white_glowing') return 1;
+                if (a.role === 'owner' || a.rankId === 'white_glowing' || a.cupType === 'white_glowing') return -1;
+                if (b.role === 'owner' || b.rankId === 'white_glowing' || b.cupType === 'white_glowing') return 1;
                 return (b.isOnline ? 1 : 0) - (a.isOnline ? 1 : 0);
               });
               setUsers(sorted);
@@ -293,7 +336,7 @@
         } catch (e) {}
       }, []);
 
-      // C. Real-time Room Mic Slots Sync
+      // Mic Slots Listener
       useEffect(() => {
         if (!db) return;
         try {
@@ -310,7 +353,7 @@
         } catch (e) {}
       }, [currentRoomId]);
 
-      // D. User Presence Heartbeat
+      // Presence Sync
       useEffect(() => {
         if (!currentUser || !db) return;
         try {
@@ -323,29 +366,13 @@
         } catch (e) {}
       }, [currentUser, currentRoomId]);
 
-      // Ban/Jail listener
-      useEffect(() => {
-        if (!currentUser) return;
-        const fresh = users.find(u => u.id === currentUser.id);
-        if (fresh) {
-          if (fresh.isBanned) {
-            alert('تم حظرك من الشات بواسطة إدارة الموقع.');
-            localStorage.removeItem('hassouni_chat_user');
-            setCurrentUser(null);
-            setShowLogin(true);
-          }
-          if (fresh.isJailed && currentRoomId !== 'jail') {
-            setCurrentRoomId('jail');
-            alert('تم تحويلك إلى السجن التأديبي من قِبل الإدارة.');
-          }
-        }
-      }, [users]);
-
       // ==================== 6. HANDLERS ====================
       const handleSendMessage = () => {
         if (!inputText.trim()) return;
         if (!currentUser) return setShowLogin(true);
-        if (currentUser.isMuted) return alert('أنت مكتوم حالياً من الكتابة بواسطة الإدارة!');
+        if (currentUser.isMuted) return alert('أنت مكتوم حالياً من الكتابة!');
+
+        const userRank = currentUser.rankId || (currentUser.role === 'owner' ? 'white_glowing' : 'registered_member');
 
         const newMsg = {
           roomId: currentRoomId,
@@ -354,10 +381,10 @@
           userDecoratedName: currentUser.decoratedName,
           userAvatar: currentUser.avatar,
           userLevel: currentUser.level || 1,
-          userCup: currentUser.cupType || 'none',
+          rankId: userRank,
+          userCup: userRank,
           userRole: currentUser.role || 'member',
-          nameBgGradient: currentUser.nameBgGradient || 'from-amber-600 to-yellow-600',
-          textColor: currentUser.nameTextColor || '#ffffff',
+          namePalette: currentUser.namePalette || 'bg-[#181a20] text-white border border-zinc-700',
           content: inputText.trim(),
           timestamp: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
           type: 'text',
@@ -385,69 +412,29 @@
         }
       };
 
-      // Room Cleansing
-      const handleClearRoomMessages = async () => {
+      // Owner Gives Rank to Member
+      const handleGiftRankToUser = (targetUserId, rankId) => {
         if (currentUser?.role !== 'owner') return;
-        if (!confirm('هل أنت متأكد من رغبتك في تنظيف وحذف جميع رسائل الغرفة الحالية؟')) return;
-        
-        if (db) {
-          try {
-            const snapshot = await db.collection('rooms').doc(currentRoomId).collection('messages').get();
-            const batch = db.batch();
-            snapshot.docs.forEach((doc) => batch.delete(doc.ref));
-            await batch.commit();
-            playAudio('crown');
-            alert('تم تنظيف الغرفة وحذف جميع الرسائل بنجاح! 🧹✨');
-          } catch (e) {
-            alert('حدث خطأ أثناء تنظيف الغرفة');
-          }
-        }
+        const targetRank = RANKS_LIST.find(r => r.id === rankId);
+        if (!targetRank) return;
+
+        handleUpdateUser(targetUserId, {
+          rankId: rankId,
+          cupType: rankId,
+          roleTitle: targetRank.name
+        });
+
+        playAudio('crown');
+        if (window.confetti) window.confetti({ particleCount: 120, spread: 80 });
+        alert(`تم إهداء رتبة [${targetRank.name}] للعضو بنجاح! 👑✨`);
       };
 
-      // Room Background Upload
-      const handleRoomBackgroundUpload = (e) => {
-        const file = e.target.files?.[0];
-        if (file && currentUser?.role === 'owner') {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            const bgData = event.target?.result;
-            if (bgData) {
-              if (db) {
-                db.collection('rooms').doc(currentRoomId).set({ bgImage: bgData }, { merge: true });
-              }
-              setRooms(prev => prev.map(r => r.id === currentRoomId ? { ...r, bgImage: bgData } : r));
-              alert('تم تعيين خلفية الغرفة بنجاح! 🖼️✨');
-            }
-          };
-          reader.readAsDataURL(file);
-        }
-      };
-
-      // File upload for profile/cover
-      const handleFileChange = (e, field) => {
-        const file = e.target.files?.[0];
-        if (file && currentUser) {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            const res = event.target?.result;
-            if (res) {
-              handleUpdateUser(currentUser.id, { [field]: res });
-              if (window.confetti) window.confetti({ particleCount: 70, spread: 60 });
-              alert('تم تحديث الصورة بنجاح! ✨');
-            }
-          };
-          reader.readAsDataURL(file);
-        }
-      };
-
-      // Mic Audio Streams
+      // Real Mic Audio Stream
       const startLiveMicrophone = async () => {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
           setAudioStream(stream);
-        } catch (err) {
-          console.warn('Microphone access notice:', err);
-        }
+        } catch (err) {}
       };
 
       const stopLiveMicrophone = () => {
@@ -457,15 +444,12 @@
         }
       };
 
-      // Mic Slot Click
       const handleMicSlotClick = (slotObj) => {
         if (!currentUser) return setShowLogin(true);
-
         if (!slotObj.user) {
           setConfirmMicSlot(slotObj.slot);
           return;
         }
-
         if (slotObj.user.id === currentUser.id) {
           setActiveMicMenuSlot(slotObj.slot);
         } else {
@@ -492,35 +476,21 @@
 
       const handleMicMenuAction = (action) => {
         if (!activeMicMenuSlot) return;
-
         let updatedSlots = [...micSlots];
 
         if (action === 'mute') {
           updatedSlots = updatedSlots.map(s => s.slot === activeMicMenuSlot ? { ...s, isMuted: true, isSpeaking: false } : s);
           if (audioStream) audioStream.getAudioTracks().forEach(t => t.enabled = false);
-          alert('تم كتم المايك الخاص بك 🔇');
         } else if (action === 'unmute') {
           updatedSlots = updatedSlots.map(s => s.slot === activeMicMenuSlot ? { ...s, isMuted: false, isSpeaking: true } : s);
           if (audioStream) audioStream.getAudioTracks().forEach(t => t.enabled = true);
-          alert('تم فتح المايك الخاص بك 🎙️');
         } else if (action === 'play_music') {
           updatedSlots = updatedSlots.map(s => s.slot === activeMicMenuSlot ? { ...s, isMusicPlaying: true } : s);
-          setIsPlayingMusic(true);
-          alert('تم تشغيل الأغنية على المايك 🎵');
         } else if (action === 'stop_music') {
           updatedSlots = updatedSlots.map(s => s.slot === activeMicMenuSlot ? { ...s, isMusicPlaying: false } : s);
-          setIsPlayingMusic(false);
-          alert('تم إيقاف تشغيل الأغنية ⏹️');
         } else if (action === 'leave') {
           stopLiveMicrophone();
-          updatedSlots = updatedSlots.map(s => s.slot === activeMicMenuSlot ? {
-            ...s,
-            user: null,
-            isSpeaking: false,
-            isMuted: false,
-            isMusicPlaying: false
-          } : s);
-          alert('تم النزول من المايك بنجاح 🔻');
+          updatedSlots = updatedSlots.map(s => s.slot === activeMicMenuSlot ? { ...s, user: null, isSpeaking: false, isMuted: false, isMusicPlaying: false } : s);
         }
 
         setMicSlots(updatedSlots);
@@ -528,7 +498,7 @@
         setActiveMicMenuSlot(null);
       };
 
-      // Super Owner Login Detection
+      // Super Owner Login
       const handleAuth = async (e) => {
         e.preventDefault();
         setLoginError('');
@@ -537,7 +507,6 @@
         const cleanEmail = loginEmail.trim().toLowerCase();
         const cleanPass = loginPassword.trim();
 
-        // 1. Check Owner Credentials
         if ((cleanEmail === 'ghrwrkk2@gmamil.com' || cleanEmail === 'ghrwrkk2@gmail.com') && cleanPass === '780718519') {
           const ownerUser = {
             id: 'owner_primary',
@@ -548,13 +517,18 @@
             coverImage: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800',
             role: 'owner',
             roleTitle: '👑 صاحب الموقع والتحكم الكامل',
+            rankId: 'white_glowing',
             cupType: 'white_glowing',
             level: 999,
             gold: 999999,
             rubies: 99999,
             status: 'المالك والمؤسس العام - جميع الصلاحيات مفعلة ⚡👑',
             likes: 9999,
-            nameBgGradient: 'from-amber-500 via-yellow-400 to-amber-600',
+            namePalette: 'bg-gradient-to-r from-amber-600 to-yellow-500 text-black border border-yellow-200',
+            age: '24',
+            gender: 'ذكر',
+            country: 'السعودية',
+            language: 'عربي',
             isOnline: true,
             currentRoomId: currentRoomId
           };
@@ -570,7 +544,7 @@
           return;
         }
 
-        // 2. Member Login / Register
+        // Standard Member
         try {
           let uid = 'user_' + Date.now();
           if (auth) {
@@ -592,13 +566,18 @@
             avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
             role: 'member',
             roleTitle: 'عضو مسجل 🌸',
-            cupType: 'none',
+            rankId: 'registered_member',
+            cupType: 'registered_member',
             level: 1,
             gold: 500,
             rubies: 10,
             status: 'أهلاً بكم في شات حسوني 🌹',
             likes: 1,
-            nameBgGradient: 'from-indigo-900 to-purple-900',
+            namePalette: 'bg-[#181a20] text-white border border-zinc-700',
+            age: '22',
+            gender: 'عضو',
+            country: 'العالم العربي',
+            language: 'عربي',
             isOnline: true,
             currentRoomId: currentRoomId
           };
@@ -628,13 +607,18 @@
           avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
           role: 'guest',
           roleTitle: 'زائر في الشات 🌸',
-          cupType: 'none',
+          rankId: 'guest_rank',
+          cupType: 'guest_rank',
           level: 1,
           gold: 200,
           rubies: 5,
           status: 'مرحباً بكم جميعاً 🌹',
           likes: 1,
-          nameBgGradient: 'from-zinc-800 to-zinc-900',
+          namePalette: 'bg-zinc-900 text-zinc-300 border border-zinc-800',
+          age: '20',
+          gender: 'زائر',
+          country: 'العالم العربي',
+          language: 'عربي',
           isOnline: true,
           currentRoomId: currentRoomId
         };
@@ -654,7 +638,7 @@
         >
           {currentRoom.bgImage && <div className="absolute inset-0 bg-black/60 pointer-events-none z-0" />}
 
-          {/* ================= FIXED TOP HEADER (Screenshot Match) ================= */}
+          {/* ================= FIXED TOP HEADER (Exact Screenshot Match) ================= */}
           <header className="bg-[#0c0d12]/95 backdrop-blur-md border-b border-zinc-800/80 px-2 py-2 flex items-center justify-between sticky top-0 z-40 shrink-0">
             <div className="flex items-center gap-1.5">
               {currentUser?.role === 'owner' ? (
@@ -705,13 +689,11 @@
             </div>
           </header>
 
-          {/* ================= FLOATING MIC CAPSULE (Exact Match to Image with Toggle Arrow) ================= */}
+          {/* ================= FLOATING MIC CAPSULE (Exact Match to Screenshot with Arrow) ================= */}
           <div className="relative z-30 flex justify-center px-4 pt-2 shrink-0 pointer-events-none">
             <div className="pointer-events-auto transition-all duration-300 ease-in-out">
               {showMicCapsule ? (
-                /* Expanded Capsule */
                 <div className="bg-[#12131a]/95 backdrop-blur-lg border border-zinc-700/80 rounded-[28px] px-3 pt-2.5 pb-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.85)] flex flex-col items-center gap-1.5">
-                  {/* The 4 Mics in a Row */}
                   <div className="flex items-center gap-2.5">
                     {micSlots.map(s => (
                       <div 
@@ -738,32 +720,25 @@
                     ))}
                   </div>
 
-                  {/* Bottom Controls inside capsule: Settings & Toggle Arrow */}
                   <div className="flex items-center gap-2 pt-0.5">
                     <button 
-                      onClick={() => alert('إعدادات الصوت: حساسية المايك 100%، مانع الصدى مفعل ⚙️')}
+                      onClick={() => alert('إعدادات الصوت: حساسية المايك 100% ⚙️')}
                       className="w-6 h-6 rounded-full bg-black/80 border border-zinc-700 flex items-center justify-center text-[10px] text-zinc-300 hover:text-white"
-                      title="إعدادات الصوت"
                     >
                       ⚙️
                     </button>
-
-                    {/* Collapse / Hide Mics Arrow */}
                     <button 
                       onClick={() => setShowMicCapsule(false)}
-                      className="w-7 h-7 rounded-full bg-black border border-zinc-600 flex items-center justify-center text-xs text-amber-400 hover:bg-zinc-800 shadow-md font-bold transition-transform active:scale-95"
-                      title="إخفاء المايكات"
+                      className="w-7 h-7 rounded-full bg-black border border-zinc-600 flex items-center justify-center text-xs text-amber-400 hover:bg-zinc-800 shadow-md font-bold"
                     >
                       ▲
                     </button>
                   </div>
                 </div>
               ) : (
-                /* Collapsed Floating Toggle Button */
                 <button 
                   onClick={() => setShowMicCapsule(true)}
-                  className="bg-[#12131a]/95 backdrop-blur-lg border border-amber-500/60 rounded-full px-4 py-1.5 shadow-2xl flex items-center gap-1.5 text-xs text-amber-400 font-bold hover:bg-zinc-900 transition-all active:scale-95"
-                  title="إظهار المايكات"
+                  className="bg-[#12131a]/95 backdrop-blur-lg border border-amber-500/60 rounded-full px-4 py-1.5 shadow-2xl flex items-center gap-1.5 text-xs text-amber-400 font-bold hover:bg-zinc-900"
                 >
                   <span>🎙️ المايكات</span>
                   <span className="text-[11px] text-white">▼</span>
@@ -772,7 +747,7 @@
             </div>
           </div>
 
-          {/* ================= SCROLLABLE CHAT AREA (Messages pass underneath floating mics) ================= */}
+          {/* ================= SCROLLABLE CHAT AREA (Rank is Separate between Avatar & Name) ================= */}
           <div className="flex-1 overflow-y-auto p-3 space-y-3 relative z-10">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center text-zinc-500 text-xs space-y-2">
@@ -782,7 +757,7 @@
               </div>
             ) : (
               messages.map(msg => {
-                const isOwnerMsg = msg.userRole === 'owner' || msg.userCup === 'white_glowing';
+                const isOwnerMsg = msg.userRole === 'owner' || msg.rankId === 'white_glowing' || msg.userCup === 'white_glowing';
 
                 if (msg.type === 'admin_announcement') {
                   return (
@@ -809,37 +784,41 @@
                     <div 
                       className="relative cursor-pointer shrink-0" 
                       onClick={() => {
-                        const targetUser = users.find(u => u.id === msg.userId) || { id: msg.userId, name: msg.userName, avatar: msg.userAvatar, level: msg.userLevel, cupType: msg.userCup, roleTitle: msg.userRole === 'owner' ? 'صاحب الموقع' : 'عضو' };
+                        const targetUser = users.find(u => u.id === msg.userId) || { id: msg.userId, name: msg.userName, avatar: msg.userAvatar, level: msg.userLevel, rankId: msg.rankId, cupType: msg.userCup, roleTitle: msg.userRole === 'owner' ? 'صاحب الموقع' : 'عضو' };
                         setSelectedUser(targetUser);
                         setShowProfile(true);
                       }}
                     >
-                      <div className="absolute -top-1.5 -right-1 bg-amber-500 text-black text-[9px] font-black px-1.5 py-0.2 rounded-full shadow border border-white">
-                        {msg.userLevel || 1}
-                      </div>
-                      <img src={msg.userAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200'} className={`w-11 h-11 rounded-full object-cover border-2 ${isOwnerMsg ? 'border-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.6)]' : 'border-amber-400'}`} />
-                      <div className="absolute -bottom-1 -left-1">
-                        <CupBadge type={msg.userCup} />
-                      </div>
+                      <img 
+                        src={msg.userAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200'} 
+                        className={`w-11 h-11 rounded-full object-cover border-2 ${isOwnerMsg ? 'border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.8)]' : 'border-zinc-700'}`} 
+                      />
                     </div>
 
                     <div className="flex-1 text-right">
-                      {/* Name Header Click */}
-                      <div className="flex items-center gap-1 mb-1">
+                      {/* Name Header with SEPARATE Rank in Between */}
+                      <div className="flex items-center gap-1.5 mb-1 justify-start">
+                        {/* 1. SEPARATE RANK BADGE (Level + Glowing Cup/Crown) */}
+                        <RankBadge rankId={msg.rankId || msg.userCup} level={msg.userLevel || 1} />
+
+                        {/* 2. SEPARATE CUSTOMIZED NAME BOX */}
                         <div 
                           onClick={() => {
-                            const targetUser = users.find(u => u.id === msg.userId) || { id: msg.userId, name: msg.userName, avatar: msg.userAvatar, level: msg.userLevel, cupType: msg.userCup, roleTitle: msg.userRole === 'owner' ? 'صاحب الموقع' : 'عضو' };
+                            const targetUser = users.find(u => u.id === msg.userId) || { id: msg.userId, name: msg.userName, avatar: msg.userAvatar, level: msg.userLevel, rankId: msg.rankId, cupType: msg.userCup, roleTitle: msg.userRole === 'owner' ? 'صاحب الموقع' : 'عضو' };
                             setSelectedUser(targetUser);
                             setShowProfile(true);
                           }}
-                          className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-xl bg-gradient-to-r ${msg.nameBgGradient || 'from-amber-600 to-yellow-600'} text-white font-black text-xs shadow cursor-pointer hover:brightness-110`}
+                          className={`px-3 py-0.5 rounded-lg text-xs font-black shadow-sm cursor-pointer hover:brightness-110 ${msg.namePalette || 'bg-[#181a20] text-white border border-zinc-700'}`}
                         >
-                          {isOwnerMsg && <span className="bg-white text-black text-[9px] px-1.5 py-0.2 rounded font-black">المالك</span>}
+                          {isOwnerMsg && <span className="text-[10px] ml-1 font-extrabold text-amber-300">👑</span>}
                           <span>{msg.userDecoratedName || msg.userName}</span>
                         </div>
+
+                        {/* Timestamp */}
                         <span className="text-[10px] text-zinc-500 font-mono">{msg.timestamp}</span>
                       </div>
 
+                      {/* Message Content Bubble */}
                       <div className={`p-3 rounded-2xl text-xs font-semibold leading-relaxed inline-block max-w-[85%] ${isOwnerMsg ? 'bg-[#181a2e]/95 text-white border border-indigo-900/60 shadow' : 'bg-[#121318]/95 text-zinc-200 border border-zinc-800 shadow'}`}>
                         {msg.content}
                       </div>
@@ -891,7 +870,7 @@
               </button>
             </div>
 
-            {/* Bottom 5 Main Navigation Tabs */}
+            {/* 5 Bottom Tabs */}
             <div className="flex items-center justify-around text-xs text-zinc-400 pt-1 border-t border-zinc-850">
               <button onClick={() => {
                 if (currentUser) { setSelectedUser(currentUser); setShowProfile(true); }
@@ -924,152 +903,118 @@
             </div>
           </div>
 
-          {/* ================= MODAL: CONFIRM CLIMBING MIC ================= */}
-          {confirmMicSlot && (
-            <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-zinc-950 border border-amber-500/60 rounded-3xl w-full max-w-xs p-5 text-center space-y-4 shadow-2xl">
-                <span className="text-3xl block">🎙️</span>
-                <h3 className="font-black text-sm text-white">صعود المايك {confirmMicSlot}</h3>
-                <p className="text-xs text-zinc-300">هل تريد صعود المايك وبث صوتك لجميع الأعضاء في الغرفة؟</p>
-                <div className="grid grid-cols-2 gap-2 pt-2">
-                  <button 
-                    onClick={() => confirmTakeMic(confirmMicSlot)}
-                    className="py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black rounded-xl shadow active:scale-95"
-                  >
-                    نعم، صعود 🎙️
-                  </button>
-                  <button 
-                    onClick={() => setConfirmMicSlot(null)}
-                    className="py-2.5 bg-zinc-800 text-zinc-300 font-bold rounded-xl border border-zinc-700 active:scale-95"
-                  >
-                    إلغاء ✕
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ================= MODAL: 5 MIC CONTROL OPTIONS ================= */}
-          {activeMicMenuSlot && (
-            <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-zinc-950 border border-zinc-800 rounded-3xl w-full max-w-xs p-4 space-y-2 text-xs shadow-2xl text-right">
-                <div className="flex items-center justify-between border-b border-zinc-800 pb-2 mb-2">
-                  <button onClick={() => setActiveMicMenuSlot(null)} className="text-zinc-400">✕</button>
-                  <h3 className="font-black text-amber-300">إدارة المايك الخاص بك 🎙️</h3>
-                </div>
-
-                <button onClick={() => handleMicMenuAction('mute')} className="w-full p-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 flex items-center justify-between text-white font-bold">
-                  <span>1. كتم المايك</span>
-                  <span>🔇</span>
-                </button>
-
-                <button onClick={() => handleMicMenuAction('unmute')} className="w-full p-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 flex items-center justify-between text-emerald-400 font-bold">
-                  <span>2. فتح كتم المايك</span>
-                  <span>🎙️</span>
-                </button>
-
-                <button onClick={() => handleMicMenuAction('play_music')} className="w-full p-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 flex items-center justify-between text-purple-400 font-bold">
-                  <span>3. تشغيل أغنية على المايك</span>
-                  <span>🎵</span>
-                </button>
-
-                <button onClick={() => handleMicMenuAction('stop_music')} className="w-full p-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 flex items-center justify-between text-yellow-400 font-bold">
-                  <span>4. إيقاف الأغنية</span>
-                  <span>⏹️</span>
-                </button>
-
-                <button onClick={() => handleMicMenuAction('leave')} className="w-full p-2.5 rounded-xl bg-red-950/60 hover:bg-red-900/60 border border-red-800 text-red-300 font-black flex items-center justify-between">
-                  <span>5. نزول من المايك</span>
-                  <span>🔻</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ================= MODAL: ONLINE USERS ================= */}
-          {showUsersModal && (
-            <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-3">
-              <div className="bg-zinc-950 border border-zinc-800 rounded-3xl w-full max-w-sm p-4 space-y-3 text-xs shadow-2xl">
-                <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
-                  <button onClick={() => setShowUsersModal(false)} className="text-zinc-400">✕</button>
-                  <h3 className="font-black text-sm text-amber-300">المتواجدين حالياً ({onlineCount}) 👥</h3>
-                </div>
-
-                <div className="space-y-2 max-h-72 overflow-y-auto">
-                  {users.length === 0 ? (
-                    <div className="py-8 text-center text-zinc-500">
-                      <p className="font-bold text-zinc-400">لا يوجد أعضاء متصلين حالياً</p>
-                      <p className="text-[10px] mt-1">ستظهر أسماء المتصلين فور دخولهم الشات</p>
-                    </div>
-                  ) : (
-                    users.map(u => (
-                      <div 
-                        key={u.id} 
-                        onClick={() => { setSelectedUser(u); setShowUsersModal(false); setShowProfile(true); }} 
-                        className={`p-2.5 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${u.role === 'owner' ? 'bg-amber-950/40 border-amber-500/70 shadow-lg' : 'bg-zinc-900 border-zinc-800'}`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <img src={u.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200'} className="w-10 h-10 rounded-full object-cover border-2 border-amber-400" />
-                          <div className="text-right">
-                            <span className="font-black block text-white text-xs">{u.name}</span>
-                            <span className="text-[10px] text-amber-400 font-bold">{u.roleTitle}</span>
-                          </div>
-                        </div>
-                        <CupBadge type={u.cupType} />
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ================= MODAL: USER PROFILE CARD ================= */}
+          {/* ================= MODAL: USER PROFILE CARD (Exact Match to Screenshot) ================= */}
           {showProfile && selectedUser && (
-            <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-3">
-              <div className="bg-zinc-950 border border-zinc-800 rounded-3xl w-full max-w-sm overflow-hidden text-white shadow-2xl">
-                <div 
-                  className="h-24 w-full bg-cover bg-center relative"
-                  style={{ backgroundImage: selectedUser.coverImage ? `url(${selectedUser.coverImage})` : 'linear-gradient(to right, #1e1b4b, #312e81)' }}
-                >
-                  <button onClick={() => setShowProfile(false)} className="absolute top-2 left-2 p-1 bg-black/60 rounded-full text-zinc-300">✕</button>
-                  {selectedUser.id === currentUser?.id && (
-                    <label className="absolute top-2 right-2 px-2 py-1 bg-black/70 border border-amber-500/50 rounded-xl text-[10px] text-amber-300 font-bold cursor-pointer">
-                      📷 رفع غلاف
-                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e, 'coverImage')} />
-                    </label>
-                  )}
+            <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3">
+              <div className="bg-[#12131a] border border-zinc-800 rounded-3xl w-full max-w-sm overflow-hidden text-white shadow-2xl">
+                {/* Header with Close */}
+                <div className="p-3 flex items-center justify-between border-b border-zinc-800">
+                  <button onClick={() => setShowProfile(false)} className="text-zinc-400 hover:text-white text-lg">✕</button>
+                  <span className="text-xs font-bold text-zinc-400">الملف الشخصي</span>
                 </div>
 
-                <div className="px-4 pb-4 pt-1 space-y-3">
-                  <div className="flex items-end justify-between -mt-9">
-                    <div className="bg-zinc-900 px-2 py-0.5 rounded-lg border border-zinc-800 text-[10px] text-amber-400 font-bold">
-                      {selectedUser.roleTitle}
+                {/* Avatar & Rank */}
+                <div className="p-4 flex flex-col items-center text-center">
+                  <div className="relative mb-2">
+                    <img 
+                      src={selectedUser.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200'} 
+                      className="w-20 h-20 rounded-full object-cover border-4 border-zinc-800 shadow-xl" 
+                    />
+                    <span className="absolute bottom-0 right-1 w-4 h-4 bg-emerald-500 border-2 border-zinc-900 rounded-full" />
+                  </div>
+
+                  <div className="flex items-center gap-1 text-sm font-bold text-amber-400 mb-0.5">
+                    <span>{selectedUser.roleTitle || 'عضو مسجل'}</span>
+                    <RankBadge rankId={selectedUser.rankId || selectedUser.cupType} level={selectedUser.level || 1} />
+                  </div>
+                  <h3 className="font-black text-base text-white">{selectedUser.name}</h3>
+                  <p className="text-xs text-zinc-400 mt-0.5">{selectedUser.status || 'التمادي يُسقط الاحترام.'}</p>
+
+                  {/* Likes & Star Pills */}
+                  <div className="flex items-center gap-3 mt-3">
+                    <div className="px-3 py-1 bg-zinc-900 border border-zinc-800 rounded-full text-xs font-bold flex items-center gap-1 text-yellow-400">
+                      <span>⭐</span>
+                      <span>7</span>
                     </div>
-                    <div className="relative">
-                      <img src={selectedUser.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200'} className="w-16 h-16 rounded-full object-cover border-2 border-amber-400 bg-zinc-900" />
-                      {selectedUser.id === currentUser?.id && (
-                        <label className="absolute -bottom-1 -right-1 p-1 bg-zinc-900 border border-amber-400 rounded-full text-[10px] text-amber-400 cursor-pointer">
-                          📷
-                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e, 'avatar')} />
-                        </label>
-                      )}
+                    <div className="px-3 py-1 bg-zinc-900 border border-zinc-800 rounded-full text-xs font-bold flex items-center gap-1 text-emerald-400">
+                      <span>👍</span>
+                      <span>3</span>
                     </div>
                   </div>
 
-                  <div className="text-right">
-                    <div className="flex items-center justify-end gap-1.5">
-                      <h3 className="font-black text-sm">{selectedUser.name}</h3>
-                      <CupBadge type={selectedUser.cupType} />
-                    </div>
-                    <p className="text-xs text-zinc-400">{selectedUser.status || 'مرحباً بكم في شات حسوني 🌸'}</p>
-                    <div className="text-[10px] text-zinc-500 mt-1">المستوى: {selectedUser.level || 1} | الذهب: {selectedUser.gold || 0} 🪙 | الروبي: {selectedUser.rubies || 0} 💎</div>
+                  {/* 4 Action Buttons from Screenshot */}
+                  <div className="grid grid-cols-4 gap-2 w-full mt-4">
+                    <button onClick={() => alert('إبلاغ عن العضو')} className="p-2.5 bg-amber-600 text-white rounded-xl flex items-center justify-center shadow">
+                      🚩
+                    </button>
+                    <button onClick={() => alert('تجاهل/حظر العضو')} className="p-2.5 bg-red-600 text-white rounded-xl flex items-center justify-center shadow">
+                      🚫
+                    </button>
+                    <button onClick={() => alert('إضافة إلى قائمة الأصدقاء')} className="p-2.5 bg-emerald-600 text-white rounded-xl flex items-center justify-center shadow">
+                      👤+
+                    </button>
+                    <button onClick={() => alert('فتح محادثة خاصة')} className="p-2.5 bg-cyan-600 text-white rounded-xl flex items-center justify-center shadow">
+                      💬
+                    </button>
+                  </div>
+                </div>
+
+                {/* Profile Tabs */}
+                <div className="flex items-center justify-around border-y border-zinc-800 bg-zinc-900/60 text-xs text-zinc-400 font-bold">
+                  <button className="py-2.5 text-white border-b-2 border-amber-500">🪪 المعلومات</button>
+                  <button onClick={() => alert('قائمة الأصدقاء')} className="py-2.5 hover:text-white">👥 الأصدقاء</button>
+                  <button onClick={() => alert('أوامر العضو')} className="py-2.5 hover:text-white">⚡ الأوامر</button>
+                  <button onClick={() => { setShowProfile(false); setShowGifts(true); }} className="py-2.5 hover:text-white">🎁 الهدايا</button>
+                </div>
+
+                {/* Info List */}
+                <div className="p-4 space-y-2 text-xs text-right max-h-48 overflow-y-auto">
+                  <div className="flex items-center justify-between border-b border-zinc-850 pb-1.5">
+                    <span className="text-amber-400 font-mono text-[11px]">https://chat.hassouni.net/#{selectedUser.id.slice(0, 6)}</span>
+                    <span className="text-zinc-400">🔗 رابط الملف:</span>
+                  </div>
+                  <div className="flex items-center justify-between border-b border-zinc-850 pb-1.5">
+                    <span className="text-white font-bold">{selectedUser.age || '23 سنة'}</span>
+                    <span className="text-zinc-400">📅 العمر:</span>
+                  </div>
+                  <div className="flex items-center justify-between border-b border-zinc-850 pb-1.5">
+                    <span className="text-white font-bold">{selectedUser.gender || 'ذكر'}</span>
+                    <span className="text-zinc-400">🚻 الجنس:</span>
+                  </div>
+                  <div className="flex items-center justify-between border-b border-zinc-850 pb-1.5">
+                    <span className="text-white font-bold">{selectedUser.country || 'Saudi Arabia'}</span>
+                    <span className="text-zinc-400">🌐 البلد:</span>
                   </div>
 
-                  {selectedUser.id === currentUser?.id ? (
-                    <div className="space-y-2 pt-2 border-t border-zinc-800 text-right text-xs">
+                  {/* Super Owner Rank Gifting Option inside Member Profile */}
+                  {currentUser?.role === 'owner' && selectedUser.id !== currentUser.id && (
+                    <div className="pt-3 border-t border-zinc-800 space-y-2">
+                      <label className="text-amber-400 font-black block">👑 إهداء رتبة للعضو من بين 30 رتبة:</label>
+                      <div className="flex items-center gap-2">
+                        <select 
+                          value={selectedRankToGift}
+                          onChange={(e) => setSelectedRankToGift(e.target.value)}
+                          className="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl p-2 text-xs text-white"
+                        >
+                          {RANKS_LIST.map(r => (
+                            <option key={r.id} value={r.id}>{r.icon} {r.name}</option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => handleGiftRankToUser(selectedUser.id, selectedRankToGift)}
+                          className="px-3 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black rounded-xl text-xs shadow"
+                        >
+                          إهداء الرتبة 👑
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Self Profile Settings */}
+                  {selectedUser.id === currentUser?.id && (
+                    <div className="pt-2 border-t border-zinc-800 space-y-2">
                       <div>
-                        <label className="text-[11px] text-zinc-400 block mb-1 font-bold">الاسم المزخرف:</label>
+                        <label className="text-zinc-400 block mb-1 font-bold">الاسم المزخرف:</label>
                         <input 
                           type="text" 
                           value={customName || currentUser.decoratedName} 
@@ -1077,31 +1022,15 @@
                           className="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-2 text-white" 
                         />
                       </div>
-                      <div>
-                        <label className="text-[11px] text-zinc-400 block mb-1 font-bold">لون خلفية الاسم الملكي:</label>
-                        <div className="grid grid-cols-5 gap-1.5">
-                          {NAME_PALETTES.map(p => (
-                            <button
-                              key={p.id}
-                              onClick={() => setCustomPalette(p.class)}
-                              className={`h-7 rounded-lg bg-gradient-to-r ${p.class} border-2 ${customPalette === p.class ? 'border-white' : 'border-transparent'}`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-
                       <button
                         onClick={() => {
-                          handleUpdateUser(currentUser.id, { decoratedName: customName || currentUser.decoratedName, nameBgGradient: customPalette });
-                          playAudio('crown');
-                          alert('تم حفظ التعديلات بنجاح! ✨');
-                          setShowProfile(false);
+                          handleUpdateUser(currentUser.id, { decoratedName: customName || currentUser.decoratedName });
+                          alert('تم حفظ تعديل الاسم! ✨');
                         }}
-                        className="w-full py-2.5 bg-amber-500 text-black font-black rounded-xl shadow"
+                        className="w-full py-2 bg-amber-500 text-black font-black rounded-xl"
                       >
                         حفظ التعديلات 💾
                       </button>
-
                       <button
                         onClick={() => {
                           localStorage.removeItem('hassouni_chat_user');
@@ -1112,18 +1041,6 @@
                         className="w-full py-2 bg-red-950/60 text-red-400 border border-red-800 rounded-xl font-bold"
                       >
                         تسجيل الخروج 🚪
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="pt-2 border-t border-zinc-800">
-                      <button
-                        onClick={() => {
-                          setShowProfile(false);
-                          setShowGifts(true);
-                        }}
-                        className="w-full py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold rounded-xl text-xs"
-                      >
-                        إرسال هدية للعضو 🎁
                       </button>
                     </div>
                   )}
@@ -1141,49 +1058,56 @@
                   <h3 className="font-black text-sm text-amber-300">لوحة تحكم صاحب الموقع 👑</h3>
                 </div>
 
-                {/* 1. Room Management */}
+                {/* 30 Ranks Gifting Tool */}
                 <div className="bg-zinc-900 p-3 rounded-2xl border border-zinc-800 space-y-2">
-                  <h4 className="font-black text-amber-300">⚙️ إدارة الغرفة الحالية ({currentRoom.name}):</h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    <label className="p-2 bg-zinc-800 hover:bg-zinc-700 text-center rounded-xl border border-zinc-700 font-bold cursor-pointer block">
-                      🖼️ رفع خلفية للغرفة
-                      <input type="file" accept="image/*" className="hidden" onChange={handleRoomBackgroundUpload} />
-                    </label>
-                    <button
-                      onClick={handleClearRoomMessages}
-                      className="p-2 bg-red-950/80 hover:bg-red-900 border border-red-800 text-red-300 font-bold rounded-xl"
+                  <h4 className="font-black text-amber-300">👑 إهداء وتعيين الرتب (30 رتبة حصرية):</h4>
+                  <div>
+                    <label className="text-zinc-400 block mb-1">اختر العضو المستهدف:</label>
+                    <select 
+                      value={adminTargetId} 
+                      onChange={e => setAdminTargetId(e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-2 text-white"
                     >
-                      🧹 تنظيف رسائل الغرفة
-                    </button>
+                      <option value="">-- اختر عضواً من المتصلين --</option>
+                      {users.filter(u => u.id !== currentUser.id).map(u => (
+                        <option key={u.id} value={u.id}>{u.name} ({u.roleTitle})</option>
+                      ))}
+                    </select>
                   </div>
-                </div>
-
-                {/* 2. Target User Selection */}
-                <div>
-                  <label className="text-zinc-300 font-bold block mb-1">اختر العضو المستهدف للتحكم:</label>
-                  <select 
-                    value={adminTargetId} 
-                    onChange={e => setAdminTargetId(e.target.value)}
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-2 text-white"
+                  <div>
+                    <label className="text-zinc-400 block mb-1">اختر الرتبة المطلوبة:</label>
+                    <select 
+                      value={selectedRankToGift} 
+                      onChange={e => setSelectedRankToGift(e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-2 text-white"
+                    >
+                      {RANKS_LIST.map(r => (
+                        <option key={r.id} value={r.id}>{r.icon} {r.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (!adminTargetId) return alert('يرجى اختيار عضو أولاً');
+                      handleGiftRankToUser(adminTargetId, selectedRankToGift);
+                    }}
+                    className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black rounded-xl shadow"
                   >
-                    <option value="">-- اختر عضواً من المتصلين --</option>
-                    {users.filter(u => u.id !== currentUser.id).map(u => (
-                      <option key={u.id} value={u.id}>{u.name} ({u.roleTitle})</option>
-                    ))}
-                  </select>
+                    منح الرتبة الآن للعضو 👑✨
+                  </button>
                 </div>
 
-                {/* 3. Punishment & Moderation Controls */}
+                {/* Punishment Controls */}
                 <div className="bg-zinc-900 p-3 rounded-2xl border border-zinc-800 space-y-2">
-                  <h4 className="font-black text-amber-300">🛡️ العقوبات والتحكم بالعضو:</h4>
+                  <h4 className="font-black text-amber-300">🛡️ العقوبات والحماية:</h4>
                   <div className="grid grid-cols-3 gap-1.5">
                     <button
                       onClick={() => {
                         if (!adminTargetId) return alert('يرجى اختيار عضو أولاً');
                         handleUpdateUser(adminTargetId, { isMuted: true });
-                        alert('تم كتم العضو من الكتابة بنجاح 🔇');
+                        alert('تم كتم العضو 🔇');
                       }}
-                      className="p-2 bg-zinc-800 hover:bg-zinc-700 text-yellow-300 font-bold rounded-xl"
+                      className="p-2 bg-zinc-800 text-yellow-300 font-bold rounded-xl"
                     >
                       🔇 كتم العضو
                     </button>
@@ -1191,9 +1115,9 @@
                       onClick={() => {
                         if (!adminTargetId) return alert('يرجى اختيار عضو أولاً');
                         handleUpdateUser(adminTargetId, { isMuted: false });
-                        alert('تم إلغاء كتم العضو 🔊');
+                        alert('تم إلغاء الكتم 🔊');
                       }}
-                      className="p-2 bg-zinc-800 hover:bg-zinc-700 text-emerald-300 font-bold rounded-xl"
+                      className="p-2 bg-zinc-800 text-emerald-300 font-bold rounded-xl"
                     >
                       🔊 فك الكتم
                     </button>
@@ -1201,9 +1125,9 @@
                       onClick={() => {
                         if (!adminTargetId) return alert('يرجى اختيار عضو أولاً');
                         handleUpdateUser(adminTargetId, { isJailed: true, currentRoomId: 'jail' });
-                        alert('تم سجن العضو في السجن التأديبي ⛓️');
+                        alert('تم سجن العضو 🔒');
                       }}
-                      className="p-2 bg-zinc-800 hover:bg-zinc-700 text-orange-400 font-bold rounded-xl"
+                      className="p-2 bg-zinc-800 text-orange-400 font-bold rounded-xl"
                     >
                       🔒 سجن العضو
                     </button>
@@ -1213,61 +1137,35 @@
                       onClick={() => {
                         if (!adminTargetId) return alert('يرجى اختيار عضو أولاً');
                         handleUpdateUser(adminTargetId, { isBanned: true, isOnline: false });
-                        alert('تم حظر العضو نهائياً من الموقع 🚫');
+                        alert('تم حظر العضو 🚫');
                       }}
                       className="p-2 bg-red-950/80 border border-red-800 text-red-300 font-bold rounded-xl"
                     >
-                      🚫 حظر العضو (Ban)
+                      🚫 حظر العضو
                     </button>
                     <button
                       onClick={async () => {
                         if (!adminTargetId) return alert('يرجى اختيار عضو أولاً');
-                        if (!confirm('هل أنت متأكد من رغبتك بحذف هذا الحساب نهائياً من قاعدة البيانات؟')) return;
-                        if (db) await db.collection('users').doc(adminTargetId).delete();
-                        alert('تم حذف الحساب نهائياً ❌');
+                        if (confirm('حذف الحساب نهائياً؟')) {
+                          if (db) await db.collection('users').doc(adminTargetId).delete();
+                          alert('تم حذف الحساب ❌');
+                        }
                       }}
                       className="p-2 bg-red-900 text-white font-black rounded-xl"
                     >
-                      ❌ حذف الحساب نهائياً
+                      ❌ حذف الحساب
                     </button>
                   </div>
                 </div>
 
-                {/* 4. Ranks and Gold */}
+                {/* Broadcast */}
                 <div className="bg-zinc-900 p-3 rounded-2xl border border-zinc-800 space-y-2">
-                  <h4 className="font-black text-amber-300">👑 تعيين الرتب والكؤوس:</h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => {
-                        if (!adminTargetId) return alert('يرجى اختيار عضو أولاً');
-                        handleUpdateUser(adminTargetId, { cupType: 'white_glowing', role: 'owner', roleTitle: '👑 صاحب الموقع' });
-                        alert('تم منح الكأس الأبيض اللامع بنجاح! 👑✨');
-                      }}
-                      className="p-2 bg-gradient-to-r from-slate-100 to-white text-black font-black rounded-xl shadow"
-                    >
-                      👑 الكأس الأبيض
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (!adminTargetId) return alert('يرجى اختيار عضو أولاً');
-                        handleUpdateUser(adminTargetId, { cupType: 'gold', role: 'super_admin', roleTitle: 'إدارة عليا 🏆' });
-                        alert('تم منح الكأس الذهبي بنجاح! 🏆');
-                      }}
-                      className="p-2 bg-gradient-to-r from-amber-600 to-yellow-500 text-black font-black rounded-xl"
-                    >
-                      🏆 الكأس الذهبي
-                    </button>
-                  </div>
-                </div>
-
-                {/* 5. Broadcast announcement */}
-                <div className="bg-zinc-900 p-3 rounded-2xl border border-zinc-800 space-y-2">
-                  <h4 className="font-black text-amber-300">📢 بث إعلان إداري عام:</h4>
+                  <h4 className="font-black text-amber-300">📢 إعلان إداري عام:</h4>
                   <input
                     type="text"
                     value={adminBroadcast}
                     onChange={e => setAdminBroadcast(e.target.value)}
-                    placeholder="اكتب الإعلان لجميع الغرف..."
+                    placeholder="اكتب الإعلان..."
                     className="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-2 text-white"
                   />
                   <button
@@ -1284,13 +1182,108 @@
                       };
                       if (db) db.collection('rooms').doc(currentRoomId).collection('messages').add(bMsg);
                       setAdminBroadcast('');
-                      playAudio('crown');
-                      alert('تم بث الإعلان بنجاح! 📢');
+                      alert('تم بث الإعلان! 📢');
                     }}
                     className="w-full py-2 bg-red-600 text-white font-black rounded-xl"
                   >
                     بث الإعلان الآن 📢
                   </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ================= SIDE DRAWER (Exact Match to Screenshot) ================= */}
+          {showDrawer && (
+            <div className="fixed inset-0 z-50 bg-black/70 flex justify-start">
+              <div className="bg-zinc-950 border-l border-zinc-800 w-72 h-full p-4 flex flex-col justify-between text-xs overflow-y-auto">
+                <div className="space-y-3 text-right">
+                  <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+                    <button onClick={() => setShowDrawer(false)} className="text-zinc-400 text-base">✕</button>
+                    <div>
+                      <span className="text-[10px] text-zinc-400 block">الغرفة الحالية</span>
+                      <h4 className="font-bold text-white text-xs">{currentRoom.name}</h4>
+                    </div>
+                  </div>
+
+                  {/* Drawer Options from Screenshot */}
+                  <div className="space-y-1">
+                    <button onClick={() => { setShowRooms(true); setShowDrawer(false); }} className="w-full p-2.5 rounded-xl bg-zinc-900 font-bold flex items-center justify-between text-zinc-200 hover:text-white">
+                      <span>قائمة الرومات</span>
+                      <span className="text-cyan-400">🏠</span>
+                    </button>
+                    <button onClick={() => alert('حائط الأصدقاء')} className="w-full p-2.5 rounded-xl bg-zinc-900 font-bold flex items-center justify-between text-zinc-200 hover:text-white">
+                      <span>حائط الأصدقاء</span>
+                      <span className="text-cyan-400">📡</span>
+                    </button>
+                    <button onClick={() => alert('شريط الأخبار')} className="w-full p-2.5 rounded-xl bg-zinc-900 font-bold flex items-center justify-between text-zinc-200 hover:text-white">
+                      <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500" />الأخبار</span>
+                      <span className="text-cyan-400">📰</span>
+                    </button>
+                    <button onClick={() => alert('قائمة التصنيف')} className="w-full p-2.5 rounded-xl bg-zinc-900 font-bold flex items-center justify-between text-zinc-200 hover:text-white">
+                      <span>قائمة التصنيف</span>
+                      <span className="text-cyan-400">🏆</span>
+                    </button>
+                    <button onClick={() => { setShowUsersModal(true); setShowDrawer(false); }} className="w-full p-2.5 rounded-xl bg-zinc-900 font-bold flex items-center justify-between text-zinc-200 hover:text-white">
+                      <span>قائمة الكبار</span>
+                      <span className="text-yellow-400">💎</span>
+                    </button>
+                    <button onClick={() => { setShowUsersModal(true); setShowDrawer(false); }} className="w-full p-2.5 rounded-xl bg-zinc-900 font-bold flex items-center justify-between text-zinc-200 hover:text-white">
+                      <span>قائمة الأثرياء</span>
+                      <span className="text-purple-400">👑</span>
+                    </button>
+                    <button onClick={() => alert('تفاعل الأعضاء')} className="w-full p-2.5 rounded-xl bg-zinc-900 font-bold flex items-center justify-between text-zinc-200 hover:text-white">
+                      <span>تفاعل الأعضاء</span>
+                      <span className="text-blue-400">👥</span>
+                    </button>
+                    <button onClick={() => alert('Mic Stars')} className="w-full p-2.5 rounded-xl bg-zinc-900 font-bold flex items-center justify-between text-zinc-200 hover:text-white">
+                      <span>Mic Stars</span>
+                      <span className="text-cyan-400">⭐</span>
+                    </button>
+                    <button onClick={() => alert('Mic Supporters')} className="w-full p-2.5 rounded-xl bg-zinc-900 font-bold flex items-center justify-between text-zinc-200 hover:text-white">
+                      <span>Mic Supporters</span>
+                      <span className="text-cyan-400">💙</span>
+                    </button>
+                  </div>
+                </div>
+                <div className="border-t border-zinc-800 pt-2 text-[10px] text-zinc-500 text-center font-mono">
+                  Hassouni Chat v6.0.0
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ================= MODAL: ONLINE USERS ================= */}
+          {showUsersModal && (
+            <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-3">
+              <div className="bg-zinc-950 border border-zinc-800 rounded-3xl w-full max-w-sm p-4 space-y-3 text-xs shadow-2xl">
+                <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
+                  <button onClick={() => setShowUsersModal(false)} className="text-zinc-400">✕</button>
+                  <h3 className="font-black text-sm text-amber-300">المتواجدين حالياً ({onlineCount}) 👥</h3>
+                </div>
+                <div className="space-y-2 max-h-72 overflow-y-auto">
+                  {users.length === 0 ? (
+                    <div className="py-8 text-center text-zinc-500">
+                      <p className="font-bold text-zinc-400">لا يوجد أعضاء متصلين حالياً</p>
+                    </div>
+                  ) : (
+                    users.map(u => (
+                      <div 
+                        key={u.id} 
+                        onClick={() => { setSelectedUser(u); setShowUsersModal(false); setShowProfile(true); }} 
+                        className={`p-2.5 rounded-2xl border flex items-center justify-between cursor-pointer ${u.role === 'owner' ? 'bg-amber-950/40 border-amber-500/70' : 'bg-zinc-900 border-zinc-800'}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <img src={u.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200'} className="w-10 h-10 rounded-full object-cover border-2 border-amber-400" />
+                          <div className="text-right">
+                            <span className="font-black block text-white text-xs">{u.name}</span>
+                            <span className="text-[10px] text-amber-400 font-bold">{u.roleTitle}</span>
+                          </div>
+                        </div>
+                        <RankBadge rankId={u.rankId || u.cupType} level={u.level || 1} />
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
@@ -1333,23 +1326,6 @@
                   <span>رصيدك: {currentUser?.gold || 0} 🪙</span>
                   <span>روبي: {currentUser?.rubies || 0} 💎</span>
                 </div>
-                <div className="p-2.5 bg-zinc-900 rounded-xl flex items-center justify-between border border-zinc-800">
-                  <div>
-                    <span className="font-bold block text-white">الهدية اليومية المجانية 🎁</span>
-                    <span className="text-[10px] text-zinc-400">+100 ذهب مجاني يومياً</span>
-                  </div>
-                  <button
-                    onClick={() => {
-                      if (!currentUser) return setShowLogin(true);
-                      handleUpdateUser(currentUser.id, { gold: (currentUser.gold || 0) + 100 });
-                      playAudio('gift');
-                      alert('تم استلام 100 ذهب مجاناً! 🪙');
-                    }}
-                    className="px-3 py-1.5 bg-amber-500 text-black font-black rounded-lg"
-                  >
-                    استلام
-                  </button>
-                </div>
               </div>
             </div>
           )}
@@ -1368,7 +1344,7 @@
                       key={g.id}
                       onClick={() => {
                         if (!currentUser) return setShowLogin(true);
-                        if ((currentUser.gold || 0) < g.price) return alert('رصيدك من الذهب لا يكفي!');
+                        if ((currentUser.gold || 0) < g.price) return alert('رصيدك لا يكفي!');
                         handleUpdateUser(currentUser.id, { gold: currentUser.gold - g.price });
                         const giftMsg = {
                           roomId: currentRoomId,
@@ -1384,7 +1360,6 @@
                         setShowGifts(false);
                         playAudio('gift');
                         if (window.confetti) window.confetti();
-                        alert(`تم إرسال هدية ${g.name} بنجاح!`);
                       }}
                       className="p-2 bg-zinc-900 border border-zinc-800 hover:border-pink-500 rounded-xl flex flex-col items-center gap-1"
                     >
@@ -1426,7 +1401,7 @@
                 {isGuestMode ? (
                   <form onSubmit={handleGuestLogin} className="space-y-3 text-right">
                     <div>
-                      <label className="text-zinc-400 block mb-1 font-bold">اسم الزائر المستعار (اختياري):</label>
+                      <label className="text-zinc-400 block mb-1 font-bold">اسم الزائر المستعار:</label>
                       <input 
                         type="text" 
                         value={guestName} 
@@ -1499,35 +1474,53 @@
             </div>
           )}
 
-          {/* ================= SIDE DRAWER ================= */}
-          {showDrawer && (
-            <div className="fixed inset-0 z-50 bg-black/70 flex justify-start">
-              <div className="bg-zinc-950 border-l border-zinc-800 w-72 h-full p-4 flex flex-col justify-between text-xs">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-                    <button onClick={() => setShowDrawer(false)} className="text-zinc-400">✕</button>
-                    <h3 className="font-black text-amber-400">شات حسوني 👑</h3>
-                  </div>
-                  <div className="space-y-1 text-right">
-                    <button onClick={() => { setShowRooms(true); setShowDrawer(false); }} className="w-full p-2.5 rounded-xl bg-zinc-900 font-bold flex items-center justify-between">
-                      <span>قائمة الرومات</span>
-                      <span>🚪</span>
-                    </button>
-                    <button onClick={() => { setShowStore(true); setShowDrawer(false); }} className="w-full p-2.5 rounded-xl bg-zinc-900 font-bold flex items-center justify-between">
-                      <span>المتجر والذهب</span>
-                      <span>🪙</span>
-                    </button>
-                    {currentUser?.role === 'owner' && (
-                      <button onClick={() => { setShowAdmin(true); setShowDrawer(false); }} className="w-full p-2.5 rounded-xl bg-amber-950/40 border border-amber-500/50 font-bold text-amber-300 flex items-center justify-between">
-                        <span>لوحة تحكم صاحب الموقع 👑</span>
-                        <span>🛡️</span>
-                      </button>
-                    )}
-                  </div>
+          {/* ================= MODAL: CONFIRM MIC ================= */}
+          {confirmMicSlot && (
+            <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-zinc-950 border border-amber-500/60 rounded-3xl w-full max-w-xs p-5 text-center space-y-4 shadow-2xl">
+                <span className="text-3xl block">🎙️</span>
+                <h3 className="font-black text-sm text-white">صعود المايك {confirmMicSlot}</h3>
+                <p className="text-xs text-zinc-300">هل تريد صعود المايك وبث صوتك لجميع الأعضاء؟</p>
+                <div className="grid grid-cols-2 gap-2 pt-2">
+                  <button onClick={() => confirmTakeMic(confirmMicSlot)} className="py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black rounded-xl shadow">
+                    نعم، صعود 🎙️
+                  </button>
+                  <button onClick={() => setConfirmMicSlot(null)} className="py-2.5 bg-zinc-800 text-zinc-300 font-bold rounded-xl border border-zinc-700">
+                    إلغاء ✕
+                  </button>
                 </div>
-                <div className="border-t border-zinc-800 pt-3 text-[10px] text-zinc-500 text-center font-mono">
-                  Hassouni Chat v5.2.0
+              </div>
+            </div>
+          )}
+
+          {/* ================= MODAL: MIC MENU ================= */}
+          {activeMicMenuSlot && (
+            <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-zinc-950 border border-zinc-800 rounded-3xl w-full max-w-xs p-4 space-y-2 text-xs shadow-2xl text-right">
+                <div className="flex items-center justify-between border-b border-zinc-800 pb-2 mb-2">
+                  <button onClick={() => setActiveMicMenuSlot(null)} className="text-zinc-400">✕</button>
+                  <h3 className="font-black text-amber-300">إدارة المايك الخاص بك 🎙️</h3>
                 </div>
+                <button onClick={() => handleMicMenuAction('mute')} className="w-full p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-between font-bold">
+                  <span>1. كتم المايك</span>
+                  <span>🔇</span>
+                </button>
+                <button onClick={() => handleMicMenuAction('unmute')} className="w-full p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-between text-emerald-400 font-bold">
+                  <span>2. فتح كتم المايك</span>
+                  <span>🎙️</span>
+                </button>
+                <button onClick={() => handleMicMenuAction('play_music')} className="w-full p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-between text-purple-400 font-bold">
+                  <span>3. تشغيل أغنية على المايك</span>
+                  <span>🎵</span>
+                </button>
+                <button onClick={() => handleMicMenuAction('stop_music')} className="w-full p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-between text-yellow-400 font-bold">
+                  <span>4. إيقاف الأغنية</span>
+                  <span>⏹️</span>
+                </button>
+                <button onClick={() => handleMicMenuAction('leave')} className="w-full p-2.5 rounded-xl bg-red-950/60 border border-red-800 text-red-300 font-black flex items-center justify-between">
+                  <span>5. نزول من المايك</span>
+                  <span>🔻</span>
+                </button>
               </div>
             </div>
           )}
