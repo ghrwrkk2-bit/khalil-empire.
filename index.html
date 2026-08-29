@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>شات النخبة الصوتي والكتابي - لوحة المالك</title>
+  <title>شات حسوني</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -12,22 +12,24 @@
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   
-  <!-- Babel Standalone (لتشغيل React JSX مباشرة) -->
+  <!-- Babel Standalone (لتشغيل كود React مباشرة دون الحاجة لبناء أو سيرفر خارجي) -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- Canvas Confetti للألعاب النارية والاحتفالات -->
+  <!-- Canvas Confetti للاحتفالات -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Firebase SDK Compat v10 المباشر -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
     * {
       font-family: 'Cairo', sans-serif;
       -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
     }
-    /* Scrollbar */
     ::-webkit-scrollbar {
       width: 4px;
     }
@@ -40,10 +42,10 @@
     }
     @keyframes pulseGlow {
       0%, 100% { 
-        box-shadow: 0 0 15px rgba(255, 255, 255, 0.95), 0 0 30px rgba(245, 158, 11, 0.6); 
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.95), 0 0 30px rgba(245, 158, 11, 0.7); 
       }
       50% { 
-        box-shadow: 0 0 25px rgba(255, 255, 255, 1), 0 0 50px rgba(245, 158, 11, 0.9); 
+        box-shadow: 0 0 25px rgba(255, 255, 255, 1), 0 0 50px rgba(245, 158, 11, 0.95); 
       }
     }
     .white-glowing-cup {
@@ -51,17 +53,41 @@
     }
   </style>
 </head>
-<body class="bg-zinc-950 text-slate-100 flex justify-center min-h-screen select-none">
+<body class="bg-black text-slate-100 flex justify-center min-h-screen select-none">
 
-  <!-- Root Div for React App -->
-  <div id="root" class="w-full max-w-md min-h-screen bg-zinc-950 border-x border-zinc-800 shadow-2xl flex flex-col relative"></div>
+  <!-- Root Div for React -->
+  <div id="root" class="w-full max-w-md min-h-screen bg-[#07070a] border-x border-zinc-850 shadow-2xl flex flex-col relative"></div>
 
-  <!-- React Code Component -->
+  <!-- React Application Script -->
   <script type="text/babel">
-    const { useState, useEffect } = React;
+    const { useState, useEffect, useRef } = React;
 
-    // --- Sound Synthesizer Utility ---
-    const playAudioEffect = (type) => {
+    // ==================== 1. FIREBASE CONFIG & INIT ====================
+    const firebaseConfig = {
+      apiKey: "AIzaSyAFjspoGwJJeowjEZrcmJCO99iiTcBR5Is",
+      authDomain: "hassouni-chat-51234.firebaseapp.com",
+      projectId: "hassouni-chat-51234",
+      storageBucket: "hassouni-chat-51234.firebasestorage.app",
+      messagingSenderId: "519124989339",
+      appId: "1:519124989339:web:2619c6d8c0488cdbd89d3e",
+      measurementId: "G-E4QVC93P2R"
+    };
+
+    let auth = null;
+    let db = null;
+
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      auth = firebase.auth();
+      db = firebase.firestore();
+    } catch (e) {
+      console.warn("Firebase initialization notice:", e);
+    }
+
+    // ==================== 2. SOUND EFFECTS ====================
+    const playAudio = (type) => {
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = ctx.createOscillator();
@@ -93,68 +119,13 @@
       } catch (e) {}
     };
 
-    // --- Initial Data ---
-    const INITIAL_USERS = [
-      {
-        id: 'owner_primary',
-        email: 'ghrwrkk2@gmamil.com',
-        name: 'الـمـالـك (صاحب الموقع)',
-        decoratedName: '👑 ⚡ الـمـالـك || صاحب الشات ⚡ 👑',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-        coverImage: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop&q=80',
-        customBackground: '',
-        role: 'owner',
-        roleTitle: '👑 صاحب الموقع والتحكم الكامل',
-        cupType: 'white_glowing',
-        level: 999,
-        gold: 999999,
-        rubies: 99999,
-        status: 'المالك والمؤسس العام - جميع الصلاحيات مفعلة ⚡👑',
-        likes: 9999,
-        nameBgGradient: 'from-amber-600 via-yellow-400 to-amber-700'
-      },
-      {
-        id: 'user_aboo',
-        name: 'ABOO_MOHAMED',
-        decoratedName: '👑 ABOO_MOHAMED 👑',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
-        coverImage: '',
-        customBackground: '',
-        role: 'super_admin',
-        roleTitle: 'إدارة عليا 🏆',
-        cupType: 'gold',
-        level: 485,
-        gold: 85000,
-        rubies: 4200,
-        status: 'مساء الخير والسعادة على الجميع ☕',
-        likes: 3420,
-        nameBgGradient: 'from-blue-600 via-indigo-700 to-purple-800'
-      },
-      {
-        id: 'user_sahar',
-        name: 'سحر البيان',
-        decoratedName: '🌙 سـحـر الـبـيـان 🌟',
-        avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80',
-        coverImage: '',
-        customBackground: '',
-        role: 'vip_member',
-        roleTitle: 'عضوية ماسية VIP 💎',
-        cupType: 'diamond',
-        level: 240,
-        gold: 42000,
-        rubies: 1850,
-        status: 'ابتسم فالحياة جميلة بما يكفي 🌹',
-        likes: 1980,
-        nameBgGradient: 'from-amber-600 via-orange-500 to-yellow-600'
-      }
-    ];
-
+    // ==================== 3. CONSTANTS & DATA ====================
     const INITIAL_ROOMS = [
-      { id: 'general', name: 'الغرفـــة || العـامـــة 🌸', desc: 'الروم الرئيسي لجميع الأعضاء والزوار', count: 44, icon: '👑' },
-      { id: 'elite', name: 'ملتقى النخبه 💎', desc: 'غرفة أصحاب الكؤوس الذهبية', count: 28, icon: '💎' },
-      { id: 'legends', name: 'عظماء النخبه 👑', desc: 'غرفة خاصة بكبار الشخصيات', count: 19, icon: '🏆' },
-      { id: 'games', name: 'المسابقات والجوائز 🎮', desc: 'تحديات وجوائز ذهب وروبي', count: 22, icon: '🎲' },
-      { id: 'jail', name: 'السجن التأديبي 🔒', desc: 'غرفة الموقوفين والمخالفين إدارياً', count: 1, icon: '⛓️' }
+      { id: 'general', name: 'الغرفـــة || العـامـــة 🌸', desc: 'الروم الرئيسي لجميع الأعضاء والزوار', icon: '👑' },
+      { id: 'elite', name: 'ملتقى النخبه 💎', desc: 'غرفة أصحاب الكؤوس الذهبية', icon: '💎' },
+      { id: 'legends', name: 'عظماء النخبه 👑', desc: 'غرفة خاصة بكبار الشخصيات', icon: '🏆' },
+      { id: 'games', name: 'المسابقات والجوائز 🎮', desc: 'تحديات وجوائز ذهب وروبي', icon: '🎲' },
+      { id: 'jail', name: 'السجن التأديبي 🔒', desc: 'غرفة الموقوفين والمخالفين', icon: '⛓️' }
     ];
 
     const STORE_GIFTS = [
@@ -167,33 +138,33 @@
     ];
 
     const NAME_PALETTES = [
-      { id: 'p1', name: 'الملكي الذهبي', class: 'from-amber-600 via-yellow-400 to-amber-700' },
+      { id: 'p1', name: 'الملكي الذهبي', class: 'from-amber-500 via-yellow-400 to-amber-600' },
       { id: 'p2', name: 'الياقوت الأزرق', class: 'from-blue-600 via-cyan-500 to-indigo-700' },
       { id: 'p3', name: 'الوردي الفاخر', class: 'from-pink-600 via-rose-500 to-purple-600' },
       { id: 'p4', name: 'الزمرد الأخضر', class: 'from-emerald-600 via-teal-500 to-green-700' },
       { id: 'p5', name: 'الليلي الفحمي', class: 'from-zinc-900 via-stone-800 to-zinc-900' }
     ];
 
-    // --- Cup Badge Component (الكأس الأبيض اللامع والذهبي) ---
-    function CupBadge({ type, size = 'md' }) {
-      if (type === 'none') return null;
+    // --- Cup Badge Component ---
+    function CupBadge({ type }) {
+      if (type === 'none' || !type) return null;
       if (type === 'white_glowing') {
         return (
-          <div className="white-glowing-cup inline-flex items-center justify-center rounded-full bg-gradient-to-tr from-white via-slate-100 to-slate-200 text-amber-500 border-2 border-white w-6 h-6 text-xs shadow-lg" title="الكأس الأبيض اللامع - صاحب الموقع">
+          <div className="white-glowing-cup inline-flex items-center justify-center rounded-full bg-gradient-to-tr from-white via-slate-100 to-slate-200 text-amber-500 border-2 border-white w-5 h-5 text-[10px] shadow-lg" title="الكأس الأبيض اللامع - صاحب الموقع">
             👑
           </div>
         );
       }
       if (type === 'gold') {
         return (
-          <div className="inline-flex items-center justify-center rounded-full bg-gradient-to-tr from-amber-600 via-yellow-400 to-amber-200 text-black border border-yellow-300 w-5 h-5 text-[10px] shadow" title="كأس الذهب">
+          <div className="inline-flex items-center justify-center rounded-full bg-gradient-to-tr from-amber-600 via-yellow-400 to-amber-200 text-black border border-yellow-300 w-5 h-5 text-[9px] shadow" title="كأس الذهب">
             🏆
           </div>
         );
       }
       if (type === 'diamond') {
         return (
-          <div className="inline-flex items-center justify-center rounded-full bg-gradient-to-tr from-cyan-600 to-blue-500 text-white border border-cyan-300 w-5 h-5 text-[10px] shadow" title="الرتبة الماسية">
+          <div className="inline-flex items-center justify-center rounded-full bg-gradient-to-tr from-cyan-600 to-blue-500 text-white border border-cyan-300 w-5 h-5 text-[9px] shadow" title="الرتبة الماسية">
             💎
           </div>
         );
@@ -201,116 +172,161 @@
       return null;
     }
 
-    // --- Main Application Component ---
+    // ==================== 4. MAIN APP COMPONENT ====================
     function App() {
-      const [users, setUsers] = useState(INITIAL_USERS);
-      const [currentUser, setCurrentUser] = useState(INITIAL_USERS[0]);
+      // Check saved user in localStorage
+      const getSavedUser = () => {
+        try {
+          const s = localStorage.getItem('hassouni_chat_user');
+          if (s) return JSON.parse(s);
+        } catch (e) {}
+        return null;
+      };
+
+      const [currentUser, setCurrentUser] = useState(getSavedUser());
+      const [users, setUsers] = useState([]);
+      const [messages, setMessages] = useState([]);
       const [currentRoomId, setCurrentRoomId] = useState('general');
       const [inputText, setInputText] = useState('');
       const [isMuted, setIsMuted] = useState(false);
       const [isPlayingMusic, setIsPlayingMusic] = useState(true);
 
-      // Modal States
+      // Mic Slots
+      const [micSlots, setMicSlots] = useState([
+        { slot: 1, user: null, isSpeaking: false },
+        { slot: 2, user: null, isSpeaking: false },
+        { slot: 3, user: null, isSpeaking: false },
+        { slot: 4, user: null, isSpeaking: false },
+      ]);
+
+      // Modals
+      const [showLogin, setShowLogin] = useState(!currentUser);
       const [showProfile, setShowProfile] = useState(false);
-      const [selectedUser, setSelectedUser] = useState(INITIAL_USERS[0]);
+      const [selectedUser, setSelectedUser] = useState(null);
       const [showRooms, setShowRooms] = useState(false);
       const [showStore, setShowStore] = useState(false);
       const [showGifts, setShowGifts] = useState(false);
       const [showAdmin, setShowAdmin] = useState(false);
-      const [showLogin, setShowLogin] = useState(false);
+      const [showUsersModal, setShowUsersModal] = useState(false);
       const [showDrawer, setShowDrawer] = useState(false);
 
-      // Login form state
-      const [loginEmail, setLoginEmail] = useState('ghrwrkk2@gmamil.com');
-      const [loginPassword, setLoginPassword] = useState('780718519');
+      // Login form states (EMPTY by default - owner fills them)
+      const [loginEmail, setLoginEmail] = useState('');
+      const [loginPassword, setLoginPassword] = useState('');
+      const [registerName, setRegisterName] = useState('');
+      const [guestName, setGuestName] = useState('');
+      const [isRegisterMode, setIsRegisterMode] = useState(false);
+      const [isGuestMode, setIsGuestMode] = useState(false);
+      const [loginLoading, setLoginLoading] = useState(false);
+      const [loginError, setLoginError] = useState('');
 
-      // Profile customization
-      const [customName, setCustomName] = useState(currentUser.decoratedName);
-      const [customPalette, setCustomPalette] = useState(currentUser.nameBgGradient);
-      const [customStatus, setCustomStatus] = useState(currentUser.status);
+      // Customization Profile
+      const [customName, setCustomName] = useState('');
+      const [customPalette, setCustomPalette] = useState('from-amber-500 via-yellow-400 to-amber-600');
+      const [customStatus, setCustomStatus] = useState('');
 
-      // Admin Controls
-      const [adminTargetId, setAdminTargetId] = useState(INITIAL_USERS[1].id);
+      // Admin State
+      const [adminTargetId, setAdminTargetId] = useState('');
       const [adminGold, setAdminGold] = useState(5000);
       const [adminRubies, setAdminRubies] = useState(100);
       const [adminBroadcast, setAdminBroadcast] = useState('');
 
-      // Mic Slots
-      const [micSlots, setMicSlots] = useState([
-        { slot: 1, user: INITIAL_USERS[1], speaking: true },
-        { slot: 2, user: null, speaking: false },
-        { slot: 3, user: null, speaking: false },
-        { slot: 4, user: null, speaking: false },
-      ]);
-
-      // Chat Messages
-      const [messages, setMessages] = useState([
-        {
-          id: 'm1',
-          roomId: 'general',
-          user: INITIAL_USERS[0],
-          text: 'نعم',
-          time: '06:49 م',
-          type: 'text'
-        },
-        {
-          id: 'm2',
-          roomId: 'general',
-          user: { ...INITIAL_USERS[1], name: 'توتي 🌹', decoratedName: '🌹 توتي 🌹', nameBgGradient: 'from-pink-600 to-rose-700', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150', cupType: 'none', level: 1 },
-          text: 'سبحان الله وبحمده سبحان الله العظيم 🤍',
-          time: '06:49 م',
-          type: 'text'
-        },
-        {
-          id: 'm3',
-          roomId: 'general',
-          user: INITIAL_USERS[1],
-          text: 'منورين يا غوالي جميعاً 🌹',
-          time: '06:49 م',
-          type: 'text'
-        },
-        {
-          id: 'm4',
-          roomId: 'general',
-          user: INITIAL_USERS[2],
-          text: 'سبحان الله وبحمده سبحان الله العظيم 🤍',
-          time: '06:50 م',
-          type: 'text'
-        }
-      ]);
-
       const currentRoom = INITIAL_ROOMS.find(r => r.id === currentRoomId) || INITIAL_ROOMS[0];
 
+      // ==================== 5. FIREBASE SYNC LISTENERS ====================
+      // A. Real-time Messages Sync
+      useEffect(() => {
+        if (!db) return;
+        try {
+          const unsub = db.collection('rooms').doc(currentRoomId).collection('messages')
+            .orderBy('createdAt', 'asc')
+            .limit(100)
+            .onSnapshot((snapshot) => {
+              if (snapshot) {
+                const liveMsgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setMessages(liveMsgs);
+              }
+            }, (err) => console.warn('Messages listener:', err));
+
+          return () => unsub();
+        } catch (e) {}
+      }, [currentRoomId]);
+
+      // B. Real-time Online Users Sync (Real users only)
+      useEffect(() => {
+        if (!db) return;
+        try {
+          const unsub = db.collection('users').onSnapshot((snapshot) => {
+            if (snapshot) {
+              const liveUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+              setUsers(liveUsers);
+            }
+          }, (err) => console.warn('Users listener:', err));
+
+          return () => unsub();
+        } catch (e) {}
+      }, []);
+
+      // C. Update Current User Presence
+      useEffect(() => {
+        if (!currentUser || !db) return;
+        try {
+          db.collection('users').doc(currentUser.id).set({
+            ...currentUser,
+            isOnline: true,
+            currentRoomId: currentRoomId,
+            lastSeen: new Date().toISOString()
+          }, { merge: true }).catch(() => {});
+        } catch (e) {}
+      }, [currentUser, currentRoomId]);
+
+      // ==================== 6. HANDLERS ====================
       const handleSendMessage = () => {
         if (!inputText.trim()) return;
+        if (!currentUser) return setShowLogin(true);
+
         const newMsg = {
-          id: 'msg-' + Date.now(),
           roomId: currentRoomId,
-          user: currentUser,
-          text: inputText.trim(),
-          time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-          type: 'text'
+          userId: currentUser.id,
+          userName: currentUser.name,
+          userDecoratedName: currentUser.decoratedName,
+          userAvatar: currentUser.avatar,
+          userLevel: currentUser.level || 1,
+          userCup: currentUser.cupType || 'none',
+          userRole: currentUser.role || 'member',
+          nameBgGradient: currentUser.nameBgGradient || 'from-amber-600 to-yellow-600',
+          textColor: currentUser.nameTextColor || '#ffffff',
+          content: inputText.trim(),
+          timestamp: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+          type: 'text',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
-        setMessages(prev => [...prev, newMsg]);
+
+        if (db) {
+          db.collection('rooms').doc(currentRoomId).collection('messages').add(newMsg).catch(() => {});
+        } else {
+          setMessages(prev => [...prev, { id: 'local_' + Date.now(), ...newMsg }]);
+        }
+
         setInputText('');
-        playAudioEffect('msg');
+        playAudio('msg');
       };
 
       const handleUpdateUser = (userId, updates) => {
-        setUsers(prev => prev.map(u => {
-          if (u.id === userId) {
-            const updated = { ...u, ...updates };
-            if (currentUser.id === userId) setCurrentUser(updated);
-            return updated;
-          }
-          return u;
-        }));
+        if (currentUser && currentUser.id === userId) {
+          const updated = { ...currentUser, ...updates };
+          setCurrentUser(updated);
+          localStorage.setItem('hassouni_chat_user', JSON.stringify(updated));
+        }
+        if (db) {
+          db.collection('users').doc(userId).set(updates, { merge: true }).catch(() => {});
+        }
       };
 
-      // File upload for Avatar, Cover, and Background
+      // File upload for profile/cover
       const handleFileChange = (e, field) => {
         const file = e.target.files?.[0];
-        if (file) {
+        if (file && currentUser) {
           const reader = new FileReader();
           reader.onload = (event) => {
             const res = event.target?.result;
@@ -324,86 +340,197 @@
         }
       };
 
-      const handleDirectOwnerLogin = () => {
-        const owner = INITIAL_USERS[0];
-        setCurrentUser(owner);
-        setShowLogin(false);
-        playAudioEffect('crown');
-        if (window.confetti) window.confetti({ particleCount: 150, spread: 90, origin: { y: 0.5 } });
-        alert('أهلاً بك يا صاحب الموقع! تم تفعيل رتبة الكأس الأبيض والتحكم الكامل 👑✨');
+      // Auth Handler (Detects owner email & password accurately)
+      const handleAuth = async (e) => {
+        e.preventDefault();
+        setLoginError('');
+        setLoginLoading(true);
+
+        const cleanEmail = loginEmail.trim().toLowerCase();
+        const cleanPass = loginPassword.trim();
+
+        // 1. Check Owner Credentials
+        if ((cleanEmail === 'ghrwrkk2@gmamil.com' || cleanEmail === 'ghrwrkk2@gmail.com') && cleanPass === '780718519') {
+          const ownerUser = {
+            id: 'owner_primary',
+            email: loginEmail.trim(),
+            name: 'الـمـالـك (صاحب الموقع)',
+            decoratedName: '👑 ⚡ الـمـالـك || صاحب الشات ⚡ 👑',
+            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+            coverImage: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800',
+            customBackground: '',
+            role: 'owner',
+            roleTitle: '👑 صاحب الموقع والتحكم الكامل',
+            cupType: 'white_glowing',
+            level: 999,
+            gold: 999999,
+            rubies: 99999,
+            status: 'المالك والمؤسس العام - جميع الصلاحيات مفعلة ⚡👑',
+            likes: 9999,
+            nameBgGradient: 'from-amber-500 via-yellow-400 to-amber-600',
+            isOnline: true,
+            currentRoomId: 'general'
+          };
+
+          if (db) db.collection('users').doc('owner_primary').set(ownerUser, { merge: true }).catch(() => {});
+          localStorage.setItem('hassouni_chat_user', JSON.stringify(ownerUser));
+          setCurrentUser(ownerUser);
+          setShowLogin(false);
+          playAudio('crown');
+          if (window.confetti) window.confetti({ particleCount: 160, spread: 90, origin: { y: 0.5 } });
+          alert('أهلاً بك يا صاحب الموقع في شات حسوني! تم تفعيل رتبة الكأس الأبيض والتحكم الكامل 👑✨');
+          setLoginLoading(false);
+          return;
+        }
+
+        // 2. Standard User / Register
+        try {
+          let uid = 'user_' + Date.now();
+          if (auth) {
+            if (isRegisterMode) {
+              const cred = await auth.createUserWithEmailAndPassword(cleanEmail, cleanPass);
+              uid = cred.user.uid;
+            } else {
+              const cred = await auth.signInWithEmailAndPassword(cleanEmail, cleanPass);
+              uid = cred.user.uid;
+            }
+          }
+
+          const userName = isRegisterMode && registerName.trim() ? registerName.trim() : cleanEmail.split('@')[0];
+          const standardUser = {
+            id: uid,
+            email: cleanEmail,
+            name: userName,
+            decoratedName: `✨ ${userName} ✨`,
+            avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
+            role: 'member',
+            roleTitle: 'عضو مسجل 🌸',
+            cupType: 'none',
+            level: 1,
+            gold: 500,
+            rubies: 10,
+            status: 'أهلاً بكم في شات حسوني 🌹',
+            likes: 1,
+            nameBgGradient: 'from-indigo-900 to-purple-900',
+            isOnline: true,
+            currentRoomId: 'general'
+          };
+
+          if (db) db.collection('users').doc(uid).set(standardUser, { merge: true }).catch(() => {});
+          localStorage.setItem('hassouni_chat_user', JSON.stringify(standardUser));
+          setCurrentUser(standardUser);
+          setShowLogin(false);
+        } catch (err) {
+          setLoginError(err.message || 'خطأ في تسجيل الدخول');
+        } finally {
+          setLoginLoading(false);
+        }
       };
 
+      // Guest Login Handler
+      const handleGuestLogin = (e) => {
+        e.preventDefault();
+        const chosen = guestName.trim() || `زائر_${Math.floor(1000 + Math.random() * 9000)}`;
+        const guestId = 'guest_' + Date.now();
+
+        const guestUser = {
+          id: guestId,
+          email: `${guestId}@guest.chat`,
+          name: chosen,
+          decoratedName: `👤 ${chosen}`,
+          avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
+          role: 'guest',
+          roleTitle: 'زائر في الشات 🌸',
+          cupType: 'none',
+          level: 1,
+          gold: 200,
+          rubies: 5,
+          status: 'مرحباً بكم جميعاً 🌹',
+          likes: 1,
+          nameBgGradient: 'from-zinc-800 to-zinc-900',
+          isOnline: true,
+          currentRoomId: 'general'
+        };
+
+        if (db) db.collection('users').doc(guestId).set(guestUser).catch(() => {});
+        localStorage.setItem('hassouni_chat_user', JSON.stringify(guestUser));
+        setCurrentUser(guestUser);
+        setShowLogin(false);
+      };
+
+      const onlineCount = users.filter(u => u.isOnline).length || (currentUser ? 1 : 0);
+
       return (
-        <div className="flex flex-col min-h-screen w-full bg-zinc-950 text-white relative"
-             style={currentUser.customBackground ? { backgroundImage: `url(${currentUser.customBackground})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}>
+        <div className="flex flex-col min-h-screen w-full bg-[#07070a] text-white relative">
           
-          {/* ================= TOP HEADER ================= */}
-          <header className="bg-zinc-900/95 backdrop-blur-md border-b border-zinc-800/80 p-2.5 flex items-center justify-between sticky top-0 z-40">
-            <div className="flex items-center gap-2">
-              <button onClick={() => setShowDrawer(true)} className="p-1.5 bg-zinc-800 rounded-xl hover:bg-zinc-700 text-zinc-300">
-                ☰
+          {/* ================= TOP HEADER (Screenshot Match) ================= */}
+          <header className="bg-[#0c0d12] border-b border-zinc-800/80 px-2 py-2 flex items-center justify-between sticky top-0 z-40">
+            <div className="flex items-center gap-1.5">
+              {currentUser?.role === 'owner' ? (
+                <button onClick={() => setShowAdmin(true)} className="px-3 py-1 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black text-xs rounded-xl shadow flex items-center gap-1">
+                  <span>المالك 🛡️</span>
+                </button>
+              ) : (
+                <button onClick={() => setShowLogin(true)} className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-amber-400 font-bold text-xs rounded-xl border border-zinc-700">
+                  دخول 🔐
+                </button>
+              )}
+
+              <button onClick={() => alert('لا توجد إشعارات جديدة')} className="flex flex-col items-center justify-center p-1 text-zinc-400 hover:text-white">
+                <span className="text-xs">🔔</span>
+                <span className="text-[9px]">إشعار</span>
               </button>
-              
-              <button 
-                onClick={() => {
-                  setSelectedUser(currentUser);
-                  setCustomName(currentUser.decoratedName);
-                  setCustomPalette(currentUser.nameBgGradient);
-                  setCustomStatus(currentUser.status);
-                  setShowProfile(true);
-                }}
-                className="flex items-center gap-1.5 bg-zinc-800/80 px-2 py-1 rounded-xl border border-zinc-700 shadow"
-              >
-                <img src={currentUser.avatar} className="w-5 h-5 rounded-full object-cover" />
-                <span className="text-[11px] font-black text-amber-400 max-w-[85px] truncate">{currentUser.name}</span>
-                <CupBadge type={currentUser.cupType} size="sm" />
+
+              <button onClick={() => alert('طلبات الصداقة')} className="flex flex-col items-center justify-center p-1 text-zinc-400 hover:text-white">
+                <span className="text-xs">👥</span>
+                <span className="text-[9px]">طلب</span>
+              </button>
+
+              <button onClick={() => alert('الرسائل الخاصة')} className="flex flex-col items-center justify-center p-1 text-zinc-400 hover:text-white">
+                <span className="text-xs">✉️</span>
+                <span className="text-[9px]">رسالة</span>
               </button>
             </div>
 
             <div className="flex items-center gap-1.5">
-              <button onClick={() => setShowRooms(true)} className="px-2.5 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/40 rounded-xl font-black text-xs">
-                🚪 {currentRoom.name}
+              <button onClick={() => setShowUsersModal(true)} className="flex flex-col items-center justify-center p-1 text-amber-400">
+                <span className="text-xs">👑</span>
+                <span className="text-[9px] font-bold">الأثرياء</span>
               </button>
 
-              {currentUser.role === 'owner' ? (
-                <button onClick={() => setShowAdmin(true)} className="px-2 py-1 bg-gradient-to-r from-amber-500 to-yellow-600 text-black font-black text-xs rounded-xl shadow flex items-center gap-1">
-                  <span>👑 المالك</span>
-                </button>
-              ) : (
-                <button onClick={() => setShowLogin(true)} className="px-2 py-1 bg-zinc-800 text-zinc-300 font-bold text-xs rounded-xl border border-zinc-700">
-                  دخول
-                </button>
-              )}
+              <button onClick={() => setShowUsersModal(true)} className="flex flex-col items-center justify-center p-1 text-yellow-400">
+                <span className="text-xs">💎</span>
+                <span className="text-[9px] font-bold">الكبار</span>
+              </button>
+
+              <button onClick={() => { playAudio('msg'); alert('تم تحديث بيانات الغرفة 🔄'); }} className="flex flex-col items-center justify-center p-1 text-zinc-400 hover:text-white">
+                <span className="text-xs">🔄</span>
+                <span className="text-[9px]">تحديث</span>
+              </button>
+
+              <button onClick={() => setShowDrawer(true)} className="p-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-zinc-300 mr-1">
+                ☰
+              </button>
             </div>
           </header>
 
-          {/* ================= AUDIO STATUS BAR ================= */}
-          <div className="bg-gradient-to-r from-blue-950 via-zinc-900 to-blue-950 px-3 py-1.5 border-b border-zinc-800 flex items-center justify-between text-[11px]">
-            <div className="flex items-center gap-2">
-              <button onClick={() => setIsMuted(!isMuted)} className={`px-2 py-0.5 rounded-lg font-bold ${isMuted ? 'bg-red-900 text-red-300' : 'bg-emerald-900 text-emerald-300'}`}>
-                {isMuted ? '🔇 الصوت مكتوم' : '🔊 الصوت يعمل'}
-              </button>
-            </div>
-            <div className="text-amber-400 font-mono text-[10px] flex items-center gap-1.5">
-              <span>{currentRoom.count} متواجد</span>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            </div>
-          </div>
-
-          {/* ================= 4 MIC SLOTS ================= */}
-          <div className="p-3 bg-zinc-900/50 border-b border-zinc-800">
+          {/* ================= MIC SLOTS & DJ PLAYER ================= */}
+          <div className="p-2.5 bg-zinc-950 border-b border-zinc-850">
             <div className="grid grid-cols-4 gap-2">
               {micSlots.map(s => (
-                <div key={s.slot} className={`flex flex-col items-center p-2 rounded-2xl border ${s.user ? 'bg-zinc-900/90 border-amber-500/50 shadow' : 'bg-zinc-900/30 border-dashed border-zinc-800'}`}>
+                <div key={s.slot} className={`flex flex-col items-center p-2 rounded-2xl border ${s.user ? 'bg-zinc-900 border-amber-500/60 shadow' : 'bg-zinc-900/40 border-dashed border-zinc-800'}`}>
                   {s.user ? (
                     <div className="relative cursor-pointer" onClick={() => { setSelectedUser(s.user); setShowProfile(true); }}>
-                      <img src={s.user.avatar} className="w-12 h-12 rounded-full object-cover border-2 border-amber-400" />
-                      {s.speaking && <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center text-[8px]">🎙️</span>}
+                      <img src={s.user.avatar} className="w-11 h-11 rounded-full object-cover border-2 border-amber-400" />
+                      {s.isSpeaking && <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center text-[8px]">🎙️</span>}
                     </div>
                   ) : (
                     <button 
-                      onClick={() => setMicSlots(prev => prev.map(slot => slot.slot === s.slot ? { ...slot, user: currentUser, speaking: true } : slot))}
-                      className="w-12 h-12 rounded-full border border-zinc-700 bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-amber-400 transition-colors"
+                      onClick={() => {
+                        if (!currentUser) return setShowLogin(true);
+                        setMicSlots(prev => prev.map(m => m.slot === s.slot ? { ...m, user: currentUser, isSpeaking: true } : m));
+                      }}
+                      className="w-11 h-11 rounded-full border border-zinc-700 bg-zinc-800/80 flex items-center justify-center text-zinc-400 hover:text-amber-400"
                     >
                       🎙️
                     </button>
@@ -415,8 +542,8 @@
               ))}
             </div>
 
-            {/* DJ Audio Track Player */}
-            <div className="mt-2.5 bg-zinc-900/90 border border-zinc-800 rounded-xl p-2 flex items-center justify-between text-xs">
+            {/* Audio Track */}
+            <div className="mt-2 bg-zinc-900/90 border border-zinc-800 rounded-xl p-2 flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
                 <button onClick={() => setIsPlayingMusic(!isPlayingMusic)} className="w-7 h-7 bg-amber-500 text-black font-black rounded-lg">
                   {isPlayingMusic ? '⏸' : '▶'}
@@ -426,107 +553,291 @@
                   <span className="text-[9px] text-zinc-400">بواسطة: جنوبي</span>
                 </div>
               </div>
-              <span className="text-cyan-400 animate-pulse text-xs font-bold">📻 راديو النخبة</span>
+              <span className="text-cyan-400 animate-pulse text-xs font-bold">📻 راديو حسوني</span>
             </div>
           </div>
 
-          {/* ================= CHAT MESSAGES STREAM ================= */}
+          {/* ================= CHAT MESSAGES STREAM (Live & Empty when no msgs) ================= */}
           <div className="flex-1 overflow-y-auto p-3 space-y-3">
-            {messages.filter(m => m.roomId === currentRoomId || m.type === 'broadcast').map(msg => (
-              <div key={msg.id} className="flex items-start gap-2.5">
-                <div className="relative cursor-pointer" onClick={() => { setSelectedUser(msg.user); setShowProfile(true); }}>
-                  <img 
-                    src={msg.user.avatar} 
-                    className="w-10 h-10 rounded-full object-cover border-2 border-amber-400" 
-                  />
-                  <div className="absolute -bottom-1 -left-1">
-                    <CupBadge type={msg.user.cupType} size="sm" />
-                  </div>
-                </div>
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center text-zinc-500 text-xs space-y-2">
+                <span className="text-3xl animate-bounce">💬</span>
+                <p className="font-bold text-zinc-300 text-sm">مرحباً بكم في شات حسوني!</p>
+                <p className="text-[11px] text-zinc-400">الشات متصل بالسيرفر الحي. كن أول من يرحب بالجميع في الغرفة 🌸</p>
+              </div>
+            ) : (
+              messages.map(msg => {
+                const isOwnerMsg = msg.userRole === 'owner' || msg.userCup === 'white_glowing';
 
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className={`inline-block px-2.5 py-0.5 rounded-lg bg-gradient-to-r ${msg.user.nameBgGradient} text-white font-black text-xs shadow border border-white/20`}>
-                      {msg.user.decoratedName || msg.user.name}
+                if (msg.type === 'admin_announcement') {
+                  return (
+                    <div key={msg.id} className="p-2.5 bg-gradient-to-r from-red-950 to-amber-950 border border-amber-500/50 rounded-2xl text-xs text-white font-bold text-center">
+                      📢 {msg.content}
                     </div>
-                    <span className="text-[9px] text-zinc-500">{msg.time}</span>
-                  </div>
+                  );
+                }
 
-                  {msg.type === 'gift' ? (
-                    <div className="p-2.5 bg-gradient-to-r from-pink-950/60 to-purple-950/60 border border-pink-500/40 rounded-2xl text-xs text-pink-200 flex items-center gap-2">
-                      <span className="text-2xl">{msg.giftIcon}</span>
+                if (msg.type === 'gift' && msg.giftData) {
+                  return (
+                    <div key={msg.id} className="p-2.5 bg-gradient-to-r from-purple-950 to-pink-950 border border-pink-500/50 rounded-2xl text-xs text-pink-200 flex items-center gap-2">
+                      <span className="text-2xl">{msg.giftData.giftIcon}</span>
                       <div>
-                        <span className="font-black text-white">{msg.user.name}</span> أهدى <span className="font-black text-amber-300">{msg.giftName}</span> إلى <span className="font-black text-pink-300">{msg.receiver}</span> ✨
+                        <span className="font-bold text-white">{msg.userName}</span> أهدى <span className="font-black text-amber-300">{msg.giftData.giftName}</span> إلى <span className="font-black text-pink-300">{msg.giftData.receiverName}</span> ✨
                       </div>
                     </div>
-                  ) : msg.type === 'broadcast' ? (
-                    <div className="p-2.5 bg-red-950/80 border border-red-500 rounded-2xl text-xs text-white font-bold">
-                      📢 {msg.text}
+                  );
+                }
+
+                return (
+                  <div key={msg.id} className="flex items-start gap-2.5">
+                    <div className="relative cursor-pointer shrink-0" onClick={() => { setSelectedUser(msg); setShowProfile(true); }}>
+                      <div className="absolute -top-1.5 -right-1 bg-amber-500 text-black text-[9px] font-black px-1.5 py-0.2 rounded-full shadow border border-white">
+                        {msg.userLevel || 1}
+                      </div>
+                      <img src={msg.userAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200'} className={`w-11 h-11 rounded-full object-cover border-2 ${isOwnerMsg ? 'border-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.6)]' : 'border-amber-400'}`} />
+                      <div className="absolute -bottom-1 -left-1">
+                        <CupBadge type={msg.userCup} />
+                      </div>
+                    </div>
+
+                    <div className="flex-1 text-right">
+                      <div className="flex items-center gap-1 mb-1">
+                        <div className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-xl bg-gradient-to-r ${msg.nameBgGradient || 'from-amber-600 to-yellow-600'} text-white font-black text-xs shadow`}>
+                          {isOwnerMsg && <span className="bg-white text-black text-[9px] px-1.5 py-0.2 rounded font-black">المالك</span>}
+                          <span>{msg.userDecoratedName || msg.userName}</span>
+                        </div>
+                        <span className="text-[10px] text-zinc-500 font-mono">{msg.timestamp}</span>
+                      </div>
+
+                      <div className={`p-3 rounded-2xl text-xs font-semibold leading-relaxed inline-block max-w-[85%] ${isOwnerMsg ? 'bg-[#181a2e] text-white border border-indigo-900/60 shadow' : 'bg-[#121318] text-zinc-200 border border-zinc-800 shadow'}`}>
+                        {msg.content}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* ================= BOTTOM BAR (Screenshot Match) ================= */}
+          <div className="bg-[#0c0d12] border-t border-zinc-800/90 p-2 space-y-2 sticky bottom-0 z-40">
+            <div className="flex items-center gap-1.5">
+              <button onClick={handleSendMessage} className="p-2.5 bg-zinc-800 hover:bg-zinc-700 text-amber-400 font-bold rounded-2xl border border-zinc-700 shadow">
+                🚀
+              </button>
+
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  value={inputText}
+                  onChange={e => setInputText(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
+                  placeholder="اكتب هنا..."
+                  className="w-full bg-[#161720] border border-zinc-700/80 rounded-2xl py-2 pr-9 pl-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400 text-right"
+                  dir="rtl"
+                />
+                <span className="absolute right-3 top-2 text-zinc-400 cursor-pointer">😊</span>
+              </div>
+
+              <button onClick={() => {
+                if (!currentUser) return setShowLogin(true);
+                const emptySlot = micSlots.find(s => !s.user);
+                if (emptySlot) {
+                  setMicSlots(prev => prev.map(s => s.slot === emptySlot.slot ? { ...s, user: currentUser, isSpeaking: true } : s));
+                }
+              }} className="p-2 bg-zinc-800 hover:bg-zinc-700 rounded-2xl border border-zinc-700 text-zinc-300">
+                🎙️
+              </button>
+
+              {currentUser?.role === 'owner' && (
+                <button onClick={() => setShowAdmin(true)} className="p-2 bg-zinc-800 hover:bg-zinc-700 rounded-2xl border border-zinc-700 text-amber-400">
+                  🛡️
+                </button>
+              )}
+
+              <button onClick={() => setShowGifts(true)} className="p-2 bg-zinc-800 hover:bg-zinc-700 rounded-2xl border border-zinc-700 text-zinc-300">
+                ➕
+              </button>
+            </div>
+
+            {/* Bottom 5 Main Navigation Tabs */}
+            <div className="flex items-center justify-around text-xs text-zinc-400 pt-1 border-t border-zinc-850">
+              <button onClick={() => {
+                if (currentUser) { setSelectedUser(currentUser); setShowProfile(true); }
+                else setShowLogin(true);
+              }} className="flex flex-col items-center gap-0.5 hover:text-amber-400">
+                <span className="text-base">⚙️</span>
+                <span className="text-[10px]">الخيارات</span>
+              </button>
+
+              <button onClick={() => alert('قائمة الأصدقاء')} className="flex flex-col items-center gap-0.5 hover:text-amber-400">
+                <span className="text-base">👤</span>
+                <span className="text-[10px]">الأصدقاء</span>
+              </button>
+
+              <button onClick={() => setShowUsersModal(true)} className="flex flex-col items-center gap-0.5 relative text-emerald-400 font-bold">
+                <span className="text-base">👥</span>
+                <span className="text-[10px]">المتواجدين</span>
+                <span className="absolute -top-1 right-2 bg-emerald-600 text-white text-[8px] font-bold px-1 rounded-full">{onlineCount}</span>
+              </button>
+
+              <button onClick={() => setShowStore(true)} className="flex flex-col items-center gap-0.5 hover:text-amber-400">
+                <span className="text-base">👜</span>
+                <span className="text-[10px]">المتجر</span>
+              </button>
+
+              <button onClick={() => setShowRooms(true)} className="flex flex-col items-center gap-0.5 hover:text-amber-400">
+                <span className="text-base">🏠</span>
+                <span className="text-[10px]">الغرف</span>
+              </button>
+            </div>
+          </div>
+
+          {/* ================= MODAL 1: LOGIN (EMPTY FIELDS BY DEFAULT) ================= */}
+          {showLogin && (
+            <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3">
+              <div className="bg-zinc-950 border border-amber-500/50 rounded-3xl w-full max-w-sm p-5 space-y-4 text-xs shadow-2xl">
+                <div className="text-center border-b border-zinc-800 pb-3">
+                  <span className="text-3xl block mb-1">👑</span>
+                  <h3 className="font-black text-sm text-white">شات حسوني الصوتي والكتابي</h3>
+                  <p className="text-[11px] text-amber-400 font-bold mt-0.5">تسجيل الدخول والمزامنة الحية بالسيرفر</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 bg-zinc-900 p-1 rounded-2xl border border-zinc-800 font-bold text-center">
+                  <button type="button" onClick={() => { setIsGuestMode(false); setLoginError(''); }} className={`py-2 rounded-xl transition-all ${!isGuestMode ? 'bg-amber-500 text-black shadow' : 'text-zinc-400'}`}>
+                    عضوية / حساب مسجل 🔐
+                  </button>
+                  <button type="button" onClick={() => { setIsGuestMode(true); setLoginError(''); }} className={`py-2 rounded-xl transition-all ${isGuestMode ? 'bg-cyan-500 text-black shadow' : 'text-zinc-400'}`}>
+                    دخول سريع كزائر 👤
+                  </button>
+                </div>
+
+                {loginError && (
+                  <div className="p-2 bg-red-950/80 border border-red-800 text-red-300 text-[11px] rounded-xl text-right">
+                    {loginError}
+                  </div>
+                )}
+
+                {isGuestMode ? (
+                  <form onSubmit={handleGuestLogin} className="space-y-3 text-right">
+                    <div>
+                      <label className="text-zinc-400 block mb-1 font-bold">اسم الزائر المستعار (اختياري):</label>
+                      <input 
+                        type="text" 
+                        value={guestName} 
+                        onChange={e => setGuestName(e.target.value)} 
+                        placeholder="مثال: زائر الأصالة" 
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-2.5 text-white text-xs" 
+                      />
+                    </div>
+                    <button type="submit" className="w-full py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-black rounded-xl shadow">
+                      الدخول الآن كزائر 🚀
+                    </button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleAuth} className="space-y-3 text-right">
+                    {isRegisterMode && (
+                      <div>
+                        <label className="text-zinc-400 block mb-1 font-bold">اسم المستخدم:</label>
+                        <input 
+                          type="text" 
+                          value={registerName} 
+                          onChange={e => setRegisterName(e.target.value)} 
+                          placeholder="مثال: صقر الشات" 
+                          className="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-2.5 text-white text-xs" 
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="text-zinc-400 block mb-1 font-bold">البريد الإلكتروني:</label>
+                      <input 
+                        type="email" 
+                        value={loginEmail} 
+                        onChange={e => setLoginEmail(e.target.value)} 
+                        placeholder="example@domain.com" 
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-2.5 text-white text-xs" 
+                        required 
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-zinc-400 block mb-1 font-bold">كلمة المرور:</label>
+                      <input 
+                        type="password" 
+                        value={loginPassword} 
+                        onChange={e => setLoginPassword(e.target.value)} 
+                        placeholder="•••••••••" 
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-2.5 text-white text-xs" 
+                        required 
+                      />
+                    </div>
+
+                    <button type="submit" disabled={loginLoading} className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-yellow-600 text-black font-black rounded-xl shadow disabled:opacity-50">
+                      {loginLoading ? 'جاري التحقق...' : isRegisterMode ? 'إنشاء حساب جديد' : 'تسجيل الدخول'}
+                    </button>
+
+                    <div className="text-center pt-2">
+                      <button type="button" onClick={() => setIsRegisterMode(!isRegisterMode)} className="text-xs text-amber-400 font-bold underline">
+                        {isRegisterMode ? 'لديك حساب؟ تسجيل الدخول' : 'ليس لديك حساب؟ إنشاء حساب جديد'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {currentUser && (
+                  <button type="button" onClick={() => setShowLogin(false)} className="w-full text-center text-xs text-zinc-500 hover:text-white pt-1">
+                    إلغاء
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ================= MODAL 2: ONLINE USERS (REAL ONLY) ================= */}
+          {showUsersModal && (
+            <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-3">
+              <div className="bg-zinc-950 border border-zinc-800 rounded-3xl w-full max-w-sm p-4 space-y-3 text-xs shadow-2xl">
+                <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
+                  <button onClick={() => setShowUsersModal(false)} className="text-zinc-400">✕</button>
+                  <h3 className="font-black text-sm text-amber-300">المتواجدين حالياً في الشات ({onlineCount}) 👥</h3>
+                </div>
+
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {users.length === 0 ? (
+                    <div className="py-8 text-center text-zinc-500">
+                      <p className="font-bold text-zinc-400">لا يوجد أعضاء متصلين حالياً</p>
+                      <p className="text-[10px] mt-1">ستظهر أسماء المتصلين فور دخولهم الشات</p>
                     </div>
                   ) : (
-                    <div className="p-2.5 bg-zinc-900 border border-zinc-800 rounded-2xl text-xs text-zinc-200 leading-relaxed shadow-sm">
-                      {msg.text}
-                    </div>
+                    users.map(u => (
+                      <div key={u.id} onClick={() => { setSelectedUser(u); setShowUsersModal(false); setShowProfile(true); }} className="p-2.5 bg-zinc-900 rounded-2xl border border-zinc-800 flex items-center justify-between cursor-pointer">
+                        <div className="flex items-center gap-2">
+                          <img src={u.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200'} className="w-9 h-9 rounded-full object-cover border border-amber-400" />
+                          <div className="text-right">
+                            <span className="font-bold block text-white">{u.name}</span>
+                            <span className="text-[10px] text-amber-400">{u.roleTitle}</span>
+                          </div>
+                        </div>
+                        <CupBadge type={u.cupType} />
+                      </div>
+                    ))
                   )}
                 </div>
               </div>
-            ))}
-          </div>
-
-          {/* ================= BOTTOM BAR & INPUT ================= */}
-          <div className="p-2.5 bg-zinc-900 border-t border-zinc-800 space-y-2 sticky bottom-0 z-40">
-            <div className="flex items-center justify-around text-xs text-zinc-400 border-b border-zinc-800 pb-1.5">
-              <button onClick={() => setShowRooms(true)} className="hover:text-amber-400 flex flex-col items-center">
-                <span>🚪</span>
-                <span className="text-[9px]">الرومات</span>
-              </button>
-              <button onClick={() => setShowStore(true)} className="hover:text-amber-400 flex flex-col items-center">
-                <span>🪙</span>
-                <span className="text-[9px]">المتجر</span>
-              </button>
-              <button onClick={() => setShowGifts(true)} className="hover:text-pink-400 flex flex-col items-center">
-                <span>🎁</span>
-                <span className="text-[9px]">إهداء</span>
-              </button>
-              <button onClick={() => { setSelectedUser(currentUser); setShowProfile(true); }} className="hover:text-amber-400 flex flex-col items-center">
-                <span>🎨</span>
-                <span className="text-[9px]">الزخارف</span>
-              </button>
-              {currentUser.role === 'owner' && (
-                <button onClick={() => setShowAdmin(true)} className="text-amber-400 font-bold flex flex-col items-center">
-                  <span>👑</span>
-                  <span className="text-[9px]">المالك</span>
-                </button>
-              )}
             </div>
+          )}
 
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={inputText}
-                onChange={e => setInputText(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
-                placeholder="اكتب رسالتك في الشات..."
-                className="flex-1 bg-zinc-950 border border-zinc-700 rounded-2xl py-2 px-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400"
-              />
-              <button onClick={handleSendMessage} className="p-2.5 bg-gradient-to-r from-amber-500 to-yellow-600 text-black font-black rounded-2xl shadow active:scale-95">
-                إرسال 🚀
-              </button>
-            </div>
-          </div>
-
-          {/* ================= MODAL 1: PROFILE & UPLOADS ================= */}
-          {showProfile && (
+          {/* ================= MODAL 3: PROFILE & CUSTOMIZATION ================= */}
+          {showProfile && selectedUser && (
             <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-3">
               <div className="bg-zinc-950 border border-zinc-800 rounded-3xl w-full max-w-sm overflow-hidden text-white shadow-2xl">
-                
-                {/* Cover & Avatar Header */}
                 <div 
                   className="h-24 w-full bg-cover bg-center relative"
                   style={{ backgroundImage: selectedUser.coverImage ? `url(${selectedUser.coverImage})` : 'linear-gradient(to right, #1e1b4b, #312e81)' }}
                 >
                   <button onClick={() => setShowProfile(false)} className="absolute top-2 left-2 p-1 bg-black/60 rounded-full text-zinc-300">✕</button>
-                  {selectedUser.id === currentUser.id && (
+                  {selectedUser.id === currentUser?.id && (
                     <label className="absolute top-2 right-2 px-2 py-1 bg-black/70 border border-amber-500/50 rounded-xl text-[10px] text-amber-300 font-bold cursor-pointer">
                       📷 رفع غلاف
                       <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e, 'coverImage')} />
@@ -540,8 +851,8 @@
                       {selectedUser.roleTitle}
                     </div>
                     <div className="relative">
-                      <img src={selectedUser.avatar} className="w-16 h-16 rounded-full object-cover border-2 border-amber-400 bg-zinc-900" />
-                      {selectedUser.id === currentUser.id && (
+                      <img src={selectedUser.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200'} className="w-16 h-16 rounded-full object-cover border-2 border-amber-400 bg-zinc-900" />
+                      {selectedUser.id === currentUser?.id && (
                         <label className="absolute -bottom-1 -right-1 p-1 bg-zinc-900 border border-amber-400 rounded-full text-[10px] text-amber-400 cursor-pointer">
                           📷
                           <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e, 'avatar')} />
@@ -553,18 +864,18 @@
                   <div className="text-right">
                     <h3 className="font-black text-sm">{selectedUser.name}</h3>
                     <p className="text-xs text-zinc-400">{selectedUser.status}</p>
-                    <div className="text-[10px] text-zinc-500 mt-1">المستوى: {selectedUser.level} | الذهب: {selectedUser.gold} 🪙 | الروبي: {selectedUser.rubies} 💎</div>
+                    <div className="text-[10px] text-zinc-500 mt-1">المستوى: {selectedUser.level || 1} | الذهب: {selectedUser.gold || 0} 🪙 | الروبي: {selectedUser.rubies || 0} 💎</div>
                   </div>
 
-                  {selectedUser.id === currentUser.id && (
-                    <div className="space-y-2 pt-2 border-t border-zinc-800 text-right">
+                  {selectedUser.id === currentUser?.id && (
+                    <div className="space-y-2 pt-2 border-t border-zinc-800 text-right text-xs">
                       <div>
                         <label className="text-[11px] text-zinc-400 block mb-1">الاسم المزخرف:</label>
                         <input 
                           type="text" 
-                          value={customName} 
+                          value={customName || currentUser.decoratedName} 
                           onChange={e => setCustomName(e.target.value)}
-                          className="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-2 text-xs text-white" 
+                          className="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-2 text-white" 
                         />
                       </div>
                       <div>
@@ -579,23 +890,29 @@
                           ))}
                         </div>
                       </div>
-                      
-                      {/* Background Uploader */}
-                      <label className="block w-full py-2 bg-zinc-900 border border-dashed border-zinc-700 hover:border-amber-400 text-center rounded-xl text-xs font-bold text-zinc-300 cursor-pointer">
-                        🌌 رفع خلفية مخصصة للبروفايل
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e, 'customBackground')} />
-                      </label>
 
                       <button
                         onClick={() => {
-                          handleUpdateUser(currentUser.id, { decoratedName: customName, nameBgGradient: customPalette, status: customStatus });
-                          playAudioEffect('crown');
-                          alert('تم حفظ وتطبيق التعديلات والزخارف بنجاح! ✨');
+                          handleUpdateUser(currentUser.id, { decoratedName: customName || currentUser.decoratedName, nameBgGradient: customPalette });
+                          playAudio('crown');
+                          alert('تم حفظ التعديلات بنجاح! ✨');
                           setShowProfile(false);
                         }}
-                        className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-yellow-600 text-black font-black text-xs rounded-xl shadow"
+                        className="w-full py-2.5 bg-amber-500 text-black font-black rounded-xl shadow"
                       >
                         حفظ التعديلات 💾
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          localStorage.removeItem('hassouni_chat_user');
+                          setCurrentUser(null);
+                          setShowProfile(false);
+                          setShowLogin(true);
+                        }}
+                        className="w-full py-2 bg-red-950/60 text-red-400 border border-red-800 rounded-xl font-bold"
+                      >
+                        تسجيل الخروج 🚪
                       </button>
                     </div>
                   )}
@@ -604,12 +921,12 @@
             </div>
           )}
 
-          {/* ================= MODAL 2: SUPER OWNER ADMIN PANEL ================= */}
-          {showAdmin && (
+          {/* ================= MODAL 4: SUPER OWNER ADMIN PANEL ================= */}
+          {showAdmin && currentUser?.role === 'owner' && (
             <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-3">
-              <div className="bg-zinc-950 border border-amber-500/60 rounded-3xl w-full max-w-md max-h-[90vh] overflow-y-auto p-4 space-y-4 text-xs">
+              <div className="bg-zinc-950 border border-amber-500/60 rounded-3xl w-full max-w-md max-h-[90vh] overflow-y-auto p-4 space-y-3 text-xs shadow-2xl">
                 <div className="flex items-center justify-between border-b border-amber-500/40 pb-2">
-                  <button onClick={() => setShowAdmin(false)} className="text-zinc-400 hover:text-white">✕</button>
+                  <button onClick={() => setShowAdmin(false)} className="text-zinc-400">✕</button>
                   <h3 className="font-black text-sm text-amber-300">لوحة تحكم صاحب الموقع 👑</h3>
                 </div>
 
@@ -620,6 +937,7 @@
                     onChange={e => setAdminTargetId(e.target.value)}
                     className="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-2 text-white"
                   >
+                    <option value="">-- اختر عضواً --</option>
                     {users.map(u => (
                       <option key={u.id} value={u.id}>{u.name} ({u.roleTitle})</option>
                     ))}
@@ -631,19 +949,21 @@
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => {
+                        if (!adminTargetId) return alert('يرجى اختيار عضو أولاً');
                         handleUpdateUser(adminTargetId, { cupType: 'white_glowing', role: 'owner', roleTitle: '👑 صاحب الموقع' });
                         if (window.confetti) window.confetti();
-                        playAudioEffect('crown');
+                        playAudio('crown');
                         alert('تم تعيين الكأس الأبيض اللامع بنجاح! 👑✨');
                       }}
                       className="p-2 bg-gradient-to-r from-slate-100 to-white text-black font-black rounded-xl shadow"
                     >
-                      👑 الكأس الأبيض اللامع
+                      👑 الكأس الأبيض
                     </button>
                     <button
                       onClick={() => {
+                        if (!adminTargetId) return alert('يرجى اختيار عضو أولاً');
                         handleUpdateUser(adminTargetId, { cupType: 'gold', role: 'super_admin', roleTitle: 'إدارة عليا 🏆' });
-                        playAudioEffect('crown');
+                        playAudio('crown');
                         alert('تم تعيين الكأس الذهبي بنجاح! 🏆');
                       }}
                       className="p-2 bg-gradient-to-r from-amber-600 to-yellow-500 text-black font-black rounded-xl"
@@ -677,10 +997,11 @@
                   </div>
                   <button
                     onClick={() => {
+                      if (!adminTargetId) return alert('يرجى اختيار عضو أولاً');
                       const t = users.find(u => u.id === adminTargetId);
                       if (t) {
-                        handleUpdateUser(adminTargetId, { gold: t.gold + adminGold, rubies: t.rubies + adminRubies });
-                        playAudioEffect('gift');
+                        handleUpdateUser(adminTargetId, { gold: (t.gold || 0) + adminGold, rubies: (t.rubies || 0) + adminRubies });
+                        playAudio('gift');
                         alert(`تم إرسال ${adminGold} ذهب و ${adminRubies} روبي بنجاح!`);
                       }
                     }}
@@ -703,16 +1024,17 @@
                     onClick={() => {
                       if (!adminBroadcast.trim()) return;
                       const bMsg = {
-                        id: 'b-' + Date.now(),
                         roomId: currentRoomId,
-                        user: currentUser,
-                        text: adminBroadcast,
-                        time: new Date().toLocaleTimeString('ar-EG'),
-                        type: 'broadcast'
+                        userId: currentUser.id,
+                        userName: currentUser.name,
+                        content: adminBroadcast.trim(),
+                        timestamp: new Date().toLocaleTimeString('ar-EG'),
+                        type: 'admin_announcement',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
                       };
-                      setMessages(prev => [...prev, bMsg]);
+                      if (db) db.collection('rooms').doc(currentRoomId).collection('messages').add(bMsg);
                       setAdminBroadcast('');
-                      playAudioEffect('crown');
+                      playAudio('crown');
                       alert('تم بث الإعلان لجميع الغرف 📢');
                     }}
                     className="w-full py-2 bg-red-600 text-white font-black rounded-xl"
@@ -724,70 +1046,42 @@
             </div>
           )}
 
-          {/* ================= MODAL 3: LOGIN MODAL ================= */}
-          {showLogin && (
-            <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-3">
-              <div className="bg-zinc-950 border border-amber-500/50 rounded-3xl w-full max-w-sm p-5 space-y-4 text-xs">
+          {/* ================= MODAL 5: ROOMS ================= */}
+          {showRooms && (
+            <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-3">
+              <div className="bg-zinc-950 border border-zinc-800 rounded-3xl w-full max-w-sm p-4 space-y-2 text-xs">
                 <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
-                  <button onClick={() => setShowLogin(false)} className="text-zinc-400">✕</button>
-                  <h3 className="font-black text-sm text-amber-300">تسجيل الدخول / لوحة المالك</h3>
+                  <button onClick={() => setShowRooms(false)} className="text-zinc-400">✕</button>
+                  <h3 className="font-black text-sm text-amber-300">قائمة الغرف 🚪</h3>
                 </div>
-
-                <button
-                  onClick={handleDirectOwnerLogin}
-                  className="w-full py-3 bg-gradient-to-r from-slate-100 via-white to-slate-200 text-slate-900 font-black rounded-2xl shadow-[0_0_20px_rgba(255,255,255,0.8)] border-2 border-white text-center"
-                >
-                  👑 دخول مباشر بصلاحيات صاحب الموقع (الكأس الأبيض)
-                </button>
-
-                <div className="space-y-2 text-right">
-                  <div>
-                    <label className="text-zinc-400 block mb-1">البريد الإلكتروني:</label>
-                    <input 
-                      type="email" 
-                      value={loginEmail} 
-                      onChange={e => setLoginEmail(e.target.value)}
-                      className="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-2 text-white" 
-                    />
-                  </div>
-                  <div>
-                    <label className="text-zinc-400 block mb-1">كلمة المرور:</label>
-                    <input 
-                      type="password" 
-                      value={loginPassword} 
-                      onChange={e => setLoginPassword(e.target.value)}
-                      className="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-2 text-white" 
-                    />
-                  </div>
-                  <button
-                    onClick={() => {
-                      if (loginEmail === 'ghrwrkk2@gmamil.com' && loginPassword === '780718519') {
-                        handleDirectOwnerLogin();
-                      } else {
-                        alert('تم تسجيل الدخول كعضو عادي');
-                        setShowLogin(false);
-                      }
-                    }}
-                    className="w-full py-2.5 bg-amber-500 text-black font-black rounded-xl"
+                {INITIAL_ROOMS.map(r => (
+                  <div
+                    key={r.id}
+                    onClick={() => { setCurrentRoomId(r.id); setShowRooms(false); }}
+                    className={`p-3 rounded-2xl border cursor-pointer flex items-center justify-between ${currentRoomId === r.id ? 'bg-amber-950/40 border-amber-400 text-yellow-300' : 'bg-zinc-900 border-zinc-800 text-zinc-300'}`}
                   >
-                    تسجيل الدخول
-                  </button>
-                </div>
+                    <div>
+                      <h4 className="font-bold text-xs">{r.name}</h4>
+                      <p className="text-[10px] text-zinc-400">{r.desc}</p>
+                    </div>
+                    <span className="text-xl">{r.icon}</span>
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
-          {/* ================= MODAL 4: STORE ================= */}
+          {/* ================= MODAL 6: STORE ================= */}
           {showStore && (
             <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-3">
               <div className="bg-zinc-950 border border-zinc-800 rounded-3xl w-full max-w-sm p-4 space-y-3 text-xs">
                 <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
                   <button onClick={() => setShowStore(false)} className="text-zinc-400">✕</button>
-                  <h3 className="font-black text-sm text-amber-300">متجر النخبة 🪙</h3>
+                  <h3 className="font-black text-sm text-amber-300">متجر حسوني 🪙</h3>
                 </div>
                 <div className="flex justify-between bg-zinc-900 p-2.5 rounded-xl border border-zinc-800 font-bold">
-                  <span>رصيدك: {currentUser.gold} 🪙</span>
-                  <span>روبي: {currentUser.rubies} 💎</span>
+                  <span>رصيدك: {currentUser?.gold || 0} 🪙</span>
+                  <span>روبي: {currentUser?.rubies || 0} 💎</span>
                 </div>
                 <div className="p-2.5 bg-zinc-900 rounded-xl flex items-center justify-between border border-zinc-800">
                   <div>
@@ -796,8 +1090,9 @@
                   </div>
                   <button
                     onClick={() => {
-                      handleUpdateUser(currentUser.id, { gold: currentUser.gold + 100 });
-                      playAudioEffect('gift');
+                      if (!currentUser) return setShowLogin(true);
+                      handleUpdateUser(currentUser.id, { gold: (currentUser.gold || 0) + 100 });
+                      playAudio('gift');
                       alert('تم استلام 100 ذهب مجاناً! 🪙');
                     }}
                     className="px-3 py-1.5 bg-amber-500 text-black font-black rounded-lg"
@@ -809,7 +1104,7 @@
             </div>
           )}
 
-          {/* ================= MODAL 5: GIFTS ================= */}
+          {/* ================= MODAL 7: GIFTS ================= */}
           {showGifts && (
             <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-3">
               <div className="bg-zinc-950 border border-pink-500/50 rounded-3xl w-full max-w-sm p-4 space-y-3 text-xs">
@@ -822,26 +1117,24 @@
                     <button
                       key={g.id}
                       onClick={() => {
-                        if (currentUser.gold < g.price) {
-                          alert('رصيدك من الذهب لا يكفي!');
-                          return;
-                        }
+                        if (!currentUser) return setShowLogin(true);
+                        if ((currentUser.gold || 0) < g.price) return alert('رصيدك من الذهب لا يكفي!');
                         handleUpdateUser(currentUser.id, { gold: currentUser.gold - g.price });
                         const giftMsg = {
-                          id: 'g-' + Date.now(),
                           roomId: currentRoomId,
-                          user: currentUser,
-                          giftName: g.name,
-                          giftIcon: g.icon,
-                          receiver: users.find(u => u.id !== currentUser.id)?.name || 'الجميع',
-                          time: new Date().toLocaleTimeString('ar-EG'),
-                          type: 'gift'
+                          userId: currentUser.id,
+                          userName: currentUser.name,
+                          content: `أهدى ${g.name} ${g.icon}`,
+                          timestamp: new Date().toLocaleTimeString('ar-EG'),
+                          type: 'gift',
+                          giftData: { giftName: g.name, giftIcon: g.icon, receiverName: 'الجميع' },
+                          createdAt: firebase.firestore.FieldValue.serverTimestamp()
                         };
-                        setMessages(prev => [...prev, giftMsg]);
+                        if (db) db.collection('rooms').doc(currentRoomId).collection('messages').add(giftMsg);
                         setShowGifts(false);
-                        playAudioEffect('gift');
+                        playAudio('gift');
                         if (window.confetti) window.confetti();
-                        alert(`تم إرسال هدية ${g.name} ${g.icon} بنجاح!`);
+                        alert(`تم إرسال هدية ${g.name} بنجاح!`);
                       }}
                       className="p-2 bg-zinc-900 border border-zinc-800 hover:border-pink-500 rounded-xl flex flex-col items-center gap-1"
                     >
@@ -855,31 +1148,6 @@
             </div>
           )}
 
-          {/* ================= MODAL 6: ROOMS ================= */}
-          {showRooms && (
-            <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-3">
-              <div className="bg-zinc-950 border border-zinc-800 rounded-3xl w-full max-w-sm p-4 space-y-2">
-                <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
-                  <button onClick={() => setShowRooms(false)} className="text-zinc-400">✕</button>
-                  <h3 className="font-black text-sm text-amber-300">قائمة الغرف 🚪</h3>
-                </div>
-                {INITIAL_ROOMS.map(r => (
-                  <div
-                    key={r.id}
-                    onClick={() => { setCurrentRoomId(r.id); setShowRooms(false); }}
-                    className={`p-3 rounded-2xl border cursor-pointer flex items-center justify-between transition-all ${currentRoomId === r.id ? 'bg-amber-950/40 border-amber-400 text-yellow-300' : 'bg-zinc-900 border-zinc-800 text-zinc-300'}`}
-                  >
-                    <div>
-                      <h4 className="font-bold text-xs">{r.name}</h4>
-                      <p className="text-[10px] text-zinc-400">{r.desc}</p>
-                    </div>
-                    <span className="text-xl">{r.icon}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* ================= SIDE DRAWER ================= */}
           {showDrawer && (
             <div className="fixed inset-0 z-50 bg-black/70 flex justify-start">
@@ -887,19 +1155,19 @@
                 <div className="space-y-4">
                   <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
                     <button onClick={() => setShowDrawer(false)} className="text-zinc-400">✕</button>
-                    <h3 className="font-black text-amber-400">شات النخبة 👑</h3>
+                    <h3 className="font-black text-amber-400">شات حسوني 👑</h3>
                   </div>
-                  <div className="space-y-1">
-                    <button onClick={() => { setShowRooms(true); setShowDrawer(false); }} className="w-full p-2.5 rounded-xl bg-zinc-900 text-right font-bold flex items-center justify-between">
+                  <div className="space-y-1 text-right">
+                    <button onClick={() => { setShowRooms(true); setShowDrawer(false); }} className="w-full p-2.5 rounded-xl bg-zinc-900 font-bold flex items-center justify-between">
                       <span>قائمة الرومات</span>
                       <span>🚪</span>
                     </button>
-                    <button onClick={() => { setShowStore(true); setShowDrawer(false); }} className="w-full p-2.5 rounded-xl bg-zinc-900 text-right font-bold flex items-center justify-between">
+                    <button onClick={() => { setShowStore(true); setShowDrawer(false); }} className="w-full p-2.5 rounded-xl bg-zinc-900 font-bold flex items-center justify-between">
                       <span>المتجر والذهب</span>
                       <span>🪙</span>
                     </button>
-                    {currentUser.role === 'owner' && (
-                      <button onClick={() => { setShowAdmin(true); setShowDrawer(false); }} className="w-full p-2.5 rounded-xl bg-amber-950/40 border border-amber-500/50 text-right font-bold text-amber-300 flex items-center justify-between">
+                    {currentUser?.role === 'owner' && (
+                      <button onClick={() => { setShowAdmin(true); setShowDrawer(false); }} className="w-full p-2.5 rounded-xl bg-amber-950/40 border border-amber-500/50 font-bold text-amber-300 flex items-center justify-between">
                         <span>لوحة تحكم صاحب الموقع 👑</span>
                         <span>🛡️</span>
                       </button>
@@ -907,7 +1175,7 @@
                   </div>
                 </div>
                 <div className="border-t border-zinc-800 pt-3 text-[10px] text-zinc-500 text-center font-mono">
-                  Elite Audio & Text Chat v3.5.0
+                  Hassouni Chat v4.0.0
                 </div>
               </div>
             </div>
@@ -917,9 +1185,8 @@
       );
     }
 
-    // Render to DOM
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+    // Render to Root
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
   </script>
 </body>
 </html>
