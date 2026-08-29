@@ -23,6 +23,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics-compat.js"></script>
 
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
@@ -96,19 +97,21 @@
     const { useState, useEffect, useRef } = React;
 
     // ==================== 1. FIREBASE CONFIG ====================
+    // FIREBASE PROJECT: hassouni-chat-51234 | This project is used for real-time sync.
     const firebaseConfig = {
       apiKey: "AIzaSyAFjspoGwJJeowjEZrcmJCO99iiTcBR5Is",
       authDomain: "hassouni-chat-51234.firebaseapp.com",
       projectId: "hassouni-chat-51234",
       storageBucket: "hassouni-chat-51234.firebasestorage.app",
       messagingSenderId: "519124989339",
-      appId: "1:519124989339:web:3039954b61ef6f6dd89d3e",
-      measurementId: "G-R3EEG7F2P2"
+      appId: "1:519124989339:web:3146863a113c289bd89d3e",
+      measurementId: "G-F0YTQ9JSLP"
     };
 
     let auth = null;
     let db = null;
     let storage = null;
+    let analytics = null;
 
     try {
       if (!firebase.apps.length) {
@@ -117,6 +120,7 @@
       auth = firebase.auth();
       db = firebase.firestore();
       storage = firebase.storage();
+      try { analytics = firebase.analytics(); } catch (analyticsError) { console.warn("Analytics notice:", analyticsError); }
     } catch (e) {
       console.warn("Firebase initialization notice:", e);
     }
