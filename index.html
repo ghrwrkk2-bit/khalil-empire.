@@ -79,8 +79,9 @@
     .speaking-active {
       animation: speakingRipple 1.4s infinite;
     }
-    html, body { width:100%; height:100%; margin:0; overflow:hidden; background:#000; }
-    #root { height:100dvh; min-height:100dvh; max-height:100dvh; }
+    html, body { width:100%; height:100%; min-height:100dvh; margin:0; overflow:hidden; background:#000; }
+    body { display:flex; justify-content:center; }
+    #root { height:100dvh; min-height:100dvh; max-height:100dvh; width:100%; }
     .top-safe { padding-top: max(0.5rem, env(safe-area-inset-top)); }
     .rank-white-cup { animation: glowWhite 1.4s infinite ease-in-out; }
     .canvas-draw { touch-action:none; }
@@ -256,6 +257,7 @@
       const [messages, setMessages] = useState([]);
       const [currentRoomId, setCurrentRoomId] = useState('general');
       const [inputText, setInputText] = useState('');
+      const [firebaseStatus, setFirebaseStatus] = useState(db ? 'connecting' : 'error');
       const [showMicCapsule, setShowMicCapsule] = useState(true);
 
       // Mic Slots
@@ -331,61 +333,100 @@
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, [messages]);
 
-      // مزامنة الحساب الحقيقي بين جميع المتصفحات
+      // ==================== مزامنة Firebase الحقيقية ====================
       useEffect(() => {
         currentUserRef.current = currentUser;
       }, [currentUser]);
 
+      // مزامنة حساب العضو نفسه
       useEffect(() => {
         if (!currentUser?.id || !db) return;
-        const unsub = db.collection('users').doc(currentUser.id).onSnapshot((doc) => {
-          if (!doc.exists) return;
-          const liveUser = { id: doc.id, ...doc.data() };
-          currentUserRef.current = liveUser;
-          setCurrentUser(liveUser);
-          localStorage.setItem('hassouni_chat_user', JSON.stringify(liveUser));
-          if (selectedUser && selectedUser.id === liveUser.id) setSelectedUser(liveUser);
-        }, (err) => console.warn('User sync:', err));
+        setFirebaseStatus('connecting');
+
+        const unsub = db.collection('users').doc(currentUser.id).onSnapshot(
+          (doc) => {
+            if (doc.exists) {
+              const liveUser = { id: doc.id, ...doc.data() };
+              currentUserRef.current = liveUser;
+              setCurrentUser(liveUser);
+              localStorage.setItem('hassouni_chat_user', JSON.stringify(liveUser));
+              setSelectedUser(prev => prev?.id === liveUser.id ? liveUser : prev);
+            }
+            setFirebaseStatus('connected');
+          },
+          (err) => {
+            console.error('User sync error:', err);
+            setFirebaseStatus('error');
+          }
+        );
+
         return () => unsub();
       }, [currentUser?.id]);
 
-      // Firebase Messages Listener
+      // مزامنة الرسائل مباشرة بدون orderBy
       useEffect(() => {
-        if (!db) return;
-        try {
-          const unsub = db.collection('rooms').doc(currentRoomId).collection('messages')
-            .orderBy('createdAt', 'asc')
-            .limit(150)
-            .onSnapshot((snapshot) => {
-              if (snapshot) {
-                const liveMsgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                setMessages(liveMsgs);
-              }
-            }, (err) => console.warn('Messages listener:', err));
+        if (!db) {
+          setFirebaseStatus('error');
+          return;
+        }
 
-          return () => unsub();
-        } catch (e) {}
+        setFirebaseStatus('connecting');
+
+        const unsub = db.collection('rooms')
+          .doc(currentRoomId)
+          .collection('messages')
+          .limit(150)
+          .onSnapshot(
+            (snapshot) => {
+              const liveMsgs = snapshot.docs
+                .map(doc => ({ id: doc.id, ...doc.data() }))
+                .sort((a, b) => {
+                  const av = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+                  const bv = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+                  return av - bv;
+                });
+
+              setMessages(liveMsgs);
+              setFirebaseStatus('connected');
+            },
+            (err) => {
+              console.error('Messages listener error:', err);
+              setFirebaseStatus('error');
+            }
+          );
+
+        return () => unsub();
       }, [currentRoomId]);
 
-      // Firebase Online Users Listener (Owner first, real only)
+      // Firebase Online Users Listener - المتواجدون الحقيقيون
       useEffect(() => {
         if (!db) return;
-        try {
-          const unsub = db.collection('users').onSnapshot((snapshot) => {
-            if (snapshot) {
-              const liveUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-              const sorted = liveUsers.sort((a, b) => {
-                if (a.role === 'owner' || a.rankId === 'white_glowing' || a.cupType === 'white_glowing') return -1;
-                if (b.role === 'owner' || b.rankId === 'white_glowing' || b.cupType === 'white_glowing') return 1;
-                return (b.isOnline ? 1 : 0) - (a.isOnline ? 1 : 0);
-              });
-              setUsers(sorted);
-            }
-          }, (err) => console.warn('Users listener:', err));
 
-          return () => unsub();
-        } catch (e) {}
-      }, []);
+        const unsub = db.collection('users').onSnapshot(
+          (snapshot) => {
+            const liveUsers = snapshot.docs
+              .map(doc => ({ id: doc.id, ...doc.data() }))
+              .filter(u => u.isOnline && (!u.currentRoomId || u.currentRoomId === currentRoomId));
+
+            liveUsers.sort((a, b) => {
+              const ao = a.role === 'owner' || a.rankId === 'white_glowing';
+              const bo = b.role === 'owner' || b.rankId === 'white_glowing';
+              if (ao && !bo) return -1;
+              if (!ao && bo) return 1;
+              return (a.name || '').localeCompare(b.name || '');
+            });
+
+            setUsers(liveUsers);
+            setFirebaseStatus('connected');
+          },
+          (err) => {
+            console.error('Users listener error:', err);
+            setFirebaseStatus('error');
+          }
+        );
+
+        return () => unsub();
+      }, [currentRoomId]);
 
       // Mic Slots Listener
       useEffect(() => {
@@ -405,17 +446,40 @@
         } catch (e) {}
       }, [currentRoomId]);
 
-      // Presence Sync
+      // ==================== مزامنة حالة التواجد ====================
       useEffect(() => {
-        if (!currentUser || !db) return;
-        try {
-          db.collection('users').doc(currentUser.id).set({
-            ...currentUser,
-            isOnline: true,
-            currentRoomId: currentRoomId,
-            lastSeen: new Date().toISOString()
+        if (!currentUser?.id || !db) return;
+
+        const userRef = db.collection('users').doc(currentUser.id);
+
+        const markOnline = () => userRef.set({
+          isOnline: true,
+          currentRoomId: currentRoomId,
+          lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true }).catch((err) => {
+          console.error('Presence write error:', err);
+          setFirebaseStatus('error');
+        });
+
+        markOnline();
+        const timer = setInterval(markOnline, 25000);
+
+        const markOffline = () => {
+          userRef.set({
+            isOnline: false,
+            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
           }, { merge: true }).catch(() => {});
-        } catch (e) {}
+        };
+
+        window.addEventListener('beforeunload', markOffline);
+        window.addEventListener('pagehide', markOffline);
+
+        return () => {
+          clearInterval(timer);
+          markOffline();
+          window.removeEventListener('beforeunload', markOffline);
+          window.removeEventListener('pagehide', markOffline);
+        };
       }, [currentUser?.id, currentRoomId]);
 
       // ==================== 6. HANDLERS ====================
@@ -444,9 +508,15 @@
         };
 
         if (db) {
-          db.collection('rooms').doc(currentRoomId).collection('messages').add(newMsg).catch(() => {});
+          db.collection('rooms').doc(currentRoomId).collection('messages').add(newMsg)
+            .catch((err) => {
+              console.error('Message write error:', err);
+              setFirebaseStatus('error');
+              alert('لم يتم إرسال الرسالة إلى Firebase. راجع حالة المزامنة وقواعد Firestore.');
+            });
         } else {
-          setMessages(prev => [...prev, { id: 'local_' + Date.now(), ...newMsg }]);
+          alert('Firebase غير متصل، لذلك لا توجد مزامنة بين المتصفحات.');
+          setFirebaseStatus('error');
         }
 
         setInputText('');
@@ -893,13 +963,13 @@
 
       return (
         <div 
-          className="flex flex-col h-[100dvh] min-h-[100dvh] w-full bg-[#07070a] text-white relative bg-cover bg-center overflow-hidden"
+          className="flex flex-col h-[100dvh] min-h-[100dvh] w-full bg-[#07070a] text-white relative bg-cover bg-center overflow-hidden pt-[58px]"
           style={{ backgroundImage: currentRoom.bgImage ? `url(${currentRoom.bgImage})` : 'none' }}
         >
           {currentRoom.bgImage && <div className="absolute inset-0 bg-black/60 pointer-events-none z-0" />}
 
           {/* ================= FIXED TOP HEADER (Exact Screenshot Match) ================= */}
-          <header className="top-safe bg-[#0c0d12]/95 backdrop-blur-md border-b border-zinc-800/80 px-2 pb-2 flex items-center justify-between sticky top-0 z-[100] shrink-0 w-full">
+          <header className="top-safe fixed top-0 left-0 right-0 mx-auto w-full max-w-md h-[58px] bg-[#0c0d12]/98 backdrop-blur-md border-b border-zinc-800/80 px-2 pb-2 flex items-center justify-between z-[9999]">
             <div className="flex items-center gap-1.5">
               {currentUser?.role === 'owner' ? (
                 <button onClick={() => setShowAdmin(true)} className="px-3 py-1 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black text-xs rounded-xl shadow flex items-center gap-1">
@@ -1005,6 +1075,22 @@
                 </button>
               )}
             </div>
+          </div>
+
+          <div className="absolute top-[62px] left-2 z-[120] pointer-events-none">
+            <span className={`text-[9px] px-2 py-1 rounded-full border ${
+              firebaseStatus === 'connected'
+                ? 'bg-emerald-950/90 text-emerald-300 border-emerald-700'
+                : firebaseStatus === 'connecting'
+                  ? 'bg-amber-950/90 text-amber-300 border-amber-700'
+                  : 'bg-red-950/90 text-red-300 border-red-700'
+            }`}>
+              {firebaseStatus === 'connected'
+                ? '● Firebase متصل'
+                : firebaseStatus === 'connecting'
+                  ? '● جارٍ الاتصال'
+                  : '● Firebase غير متصل'}
+            </span>
           </div>
 
           {roomMusic && (
