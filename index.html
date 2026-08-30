@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>شات حسوني - النسخة الإمبراطورية السحابية المطورة</title>
+    <title>شات حسوني - النسخة الكاملة المحدثة</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
+    <!-- مكتبات Firebase SDK المتوافقة -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics-compat.js"></script>
 
     <style>
         :root { 
@@ -21,7 +23,7 @@
         body, html { margin: 0; padding: 0; height: 100vh; background: var(--dark-bg); color: #fff; overflow: hidden; }
 
         #welcomeOverlay {
-            display: flex; 
+            display: none; 
             position: fixed; 
             inset: 0; 
             background: #0a0a0a; 
@@ -31,7 +33,7 @@
             padding: 15px;
         }
 
-        /* الشريط العلوي المعاد ترتيبه حسب الطلب */
+        /* الشريط العلوي */
         .header-bar { position: fixed; top: 0; width: 100%; height: 65px; background: rgba(15, 15, 15, 0.98); display: flex; align-items: center; justify-content: space-around; z-index: 1000; border-bottom: 2px solid var(--gold); padding: 0 5px; }
         .header-btn { color: #fff; font-size: 11px; text-align: center; cursor: pointer; flex: 1; position: relative; }
         .header-btn i { display: block; font-size: 18px; color: var(--gold); margin-bottom: 2px; }
@@ -177,11 +179,10 @@
         
         .msg-text { color: #fff; font-size: 14px; line-height: 1.5; margin-top: 8px; padding-right: 5px; word-break: break-word; }
 
-        /* شريط الإدخال المطور بتصميم مصغر للزر السهم والأزرار المجاورة */
+        /* شريط الإدخال */
         .input-section { position: fixed; bottom: 60px; width: 100%; height: 65px; background: #111; padding: 10px; display: flex; align-items: center; gap: 8px; border-top: 1px solid #222; z-index: 1000; }
         .chat-input { flex: 1; background: #1a1a1a; border: 1px solid var(--gold); color: #fff; height: 42px; border-radius: 20px; padding: 0 15px; outline: none; }
         
-        /* زر إرسال مصغر بشكل سهم */
         .send-btn-arrow { 
             background: var(--king-grad); 
             border: none; 
@@ -232,7 +233,6 @@
             align-items: center;
             gap: 12px;
             cursor: pointer;
-            transition: transform 0.2s;
         }
 
         .profile-card-wrapper { text-align: center; color: #fff; position: relative; }
@@ -325,7 +325,6 @@
             cursor: pointer;
             padding: 5px;
             border-radius: 5px;
-            transition: background 0.2s;
         }
         .emoji-picker-item:hover { background: rgba(255,215,0,0.2); }
 
@@ -338,7 +337,7 @@
 <audio id="hiddenAudioNode" loop></audio>
 <div id="youtubeVideoFrameContainer"></div>
 
-<!-- واجهة تسجيل الدخول والترحيب -->
+<!-- واجهة تسجيل الدخول -->
 <div id="welcomeOverlay">
     <div class="king-card">
         <h2 style="text-align:center; color:var(--gold); margin:0 0 5px;">شات حسوني - النسخة الإمبراطورية</h2>
@@ -381,9 +380,8 @@
     </div>
 </div>
 
-<!-- الشريط العلوي المعدل بالتسلسل المطلوب: الأيقونة مع الخلفية، إشعار، بلاغ، خاص، الكبار، الأثرياء، زرر 3 خطوط -->
+<!-- الشريط العلوي -->
 <div class="header-bar">
-    <!-- أيقونة خلفية البروفايل بجانب الجهة اليمنى -->
     <div class="header-user-bg-btn" id="userHeaderBgIcon" title="خلفيتك الحالية" onclick="ui.openProfileHeaderBgMenu()">
         <i class="fas fa-user-circle" style="font-size:20px; color:var(--gold);" id="userHeaderBgDefaultIcon"></i>
     </div>
@@ -396,7 +394,7 @@
     <div class="header-btn" onclick="ui.openSideThreeLinesMenu()"><i class="fas fa-bars"></i>خيارات</div>
 </div>
 
-<!-- حاوية المايكات بتصميم أزرق حديث مع زر السهم للإخفاء والإظهار -->
+<!-- حاوية المايكات -->
 <div class="mics-wrapper" id="micsWrapper">
     <div class="mics-container-floating" id="micsContainer">
         <div class="floating-mic-circle" id="mic_1" onclick="ui.clickMicSlot(1)">
@@ -422,14 +420,14 @@
 
 <div id="chatBox"></div>
 
-<!-- شريط الإدخال السفلي المطوّر: زر الإرسال سهم مصغر باليسار، المايك والإيموجي والإضافة باليمين -->
+<!-- شريط الإدخال السفلي -->
 <div class="input-section">
     <button class="send-btn-arrow" onclick="ui.sendMessage()" title="إرسال"><i class="fas fa-paper-plane"></i></button>
-    <input type="text" id="msgInp" class="chat-input" placeholder="اكتب رسالتك العامة هنا بكل حرية..." onkeypress="if(event.key==='Enter') ui.sendMessage()">
+    <input type="text" id="msgInp" class="chat-input" placeholder="اكتب رسالتك العامة هنا..." onkeypress="if(event.key==='Enter') ui.sendMessage()">
     
-    <div class="right-input-btn" onclick="ui.openEmojiPicker()" title="إيموجيات وصفحة"><i class="fas fa-smile"></i></div>
+    <div class="right-input-btn" onclick="ui.openEmojiPicker()" title="إيموجيات"><i class="fas fa-smile"></i></div>
     <div class="right-input-btn" onclick="ui.clickMicSlot(1)" title="صوت المايك"><i class="fas fa-microphone"></i></div>
-    <div class="right-input-btn" onclick="ui.openPlusPlusMenu()" title="المزيد من الخيارات"><i class="fas fa-plus-circle"></i></div>
+    <div class="right-input-btn" onclick="ui.openPlusPlusMenu()" title="المزيد"><i class="fas fa-plus-circle"></i></div>
 </div>
 
 <!-- الشريط السفلي للتنقل -->
@@ -459,14 +457,15 @@
 </div>
 
 <script>
+    // إعدادات Firebase المحدثة لمشروع hassouni-chat-51234
     const firebaseConfig = {
-        apiKey: "AIzaSyC6m8083RtFHgah8RuiRWULsCBl_54Ul3I",
-        authDomain: "oskar-a937e.firebaseapp.com",
-        projectId: "oskar-a937e",
-        storageBucket: "oskar-a937e.firebasestorage.app",
-        messagingSenderId: "411961765190",
-        appId: "1:411961765190:web:6241e57b746c970bdd4947",
-        measurementId: "G-3RZG5SMNLC"
+        apiKey: "AIzaSyAFjspoGwJJeowjEZrcmJCO99iiTcBR5Is",
+        authDomain: "hassouni-chat-51234.firebaseapp.com",
+        projectId: "hassouni-chat-51234",
+        storageBucket: "hassouni-chat-51234.firebasestorage.app",
+        messagingSenderId: "519124989339",
+        appId: "1:519124989339:web:4d00b1ecfd60fe1ed89d3e",
+        measurementId: "G-28KGXQ7B1T"
     };
 
     if (!firebase.apps.length) {
@@ -479,12 +478,13 @@
     window.roomsList = ["العام"];
     window.micsHidden = false;
     
+    // نظام الـ 30 رتبة المتمايزة
     window.chatRanksData = {
-        "owner": { icon: "fas fa-trophy", color: "#ffd700", text: "البرنس الأصلي" },
-        "prince": { icon: "fas fa-trophy", color: "#aa0000", text: "برنس إمبراطوري" },
-        "king": { icon: "fas fa-crown", color: "#FF0000", text: "الملك الملكي" },
-        "honor": { icon: "fas fa-crown", color: "#0000FF", text: "تاج الشرف" },
-        "admin": { icon: "fas fa-star", color: "#FFD700", text: "إدارة العليا" },
+        "owner": { icon: "fas fa-trophy", color: "#ffd700", text: "صاحب الموقع (كأس أبيض لامع)" },
+        "prince": { icon: "fas fa-trophy", color: "#aa0000", text: "برنس (كأس أحمر لامع)" },
+        "king": { icon: "fas fa-crown", color: "#ffffff", text: "كنج (تاج أبيض لامع)" },
+        "honor": { icon: "fas fa-crown", color: "#0088ff", text: "أنروا (تاج أزرق لامع)" },
+        "admin": { icon: "fas fa-crown", color: "#111111", text: "أدمان (تاج أسود لامع)" },
         "developer": { icon: "fas fa-code", color: "#00FF00", text: "مطور السيرفر" },
         "senior_mod": { icon: "fas fa-gem", color: "#00FFFF", text: "مشرف أول" },
         "mod": { icon: "fas fa-star", color: "#C0C0C0", text: "مشرف" },
@@ -495,7 +495,7 @@
         "distinguished": { icon: "fas fa-bolt", color: "#FF8C00", text: "متميز" },
         "interactive": { icon: "fas fa-bolt", color: "#FFFF00", text: "متفاعل" },
         "active": { icon: "fas fa-heart", color: "#FF69B4", text: "نشط" },
-        "new": { icon: "fas fa-seedling", color: "#32CD32", text: "جديد" },
+        "new": { icon: "fas fa-seedling", color: "#32CD32", text: "عضو مسجل" },
         "guest": { icon: "fas fa-user", color: "#ffffff", text: "زائر" }
     };
 
@@ -507,12 +507,12 @@
     };
 
     window.defaultOwnerData = { 
-        uid: "owner_hassouni", name: "خليل إبراهيم", role: "owner", level: 100, 
+        uid: "owner_hassouni", name: "صاحب الموقع", role: "owner", level: 100, 
         img: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=150", 
         nameBg: "rgba(255,215,0,0.15)", 
         cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400",
-        likes: 742, gifts: "تاج ذهبي، سيف ملكي", profileUrl: "hassouni.chat/king_1", age: 19, gender: "ذكر", country: "اليمن", status: "متصل بأناقة الملك الملكية 🏆",
-        points: 5000, isMuted: false, isBanned: false, isOnline: true
+        likes: 999, gifts: "كأس أبيض لامع، تاج ذهبي", profileUrl: "hassouni.chat/owner", age: 24, gender: "ذكر", country: "السعودية", status: "المالك والمؤسس العام - جميع الصلاحيات مفعلة ⚡👑",
+        points: 99999, isMuted: false, isBanned: false, isOnline: true
     };
 
     window.currentUser = null;
@@ -526,7 +526,6 @@
     window.tempUploadedCover = "";
     window.tempUploadedPfp = "";
     window.tempUploadedRoomBg = "";
-
     window.localAudioStream = null;
 
     function validateEmailAddress(email) {
@@ -779,7 +778,7 @@
             if(!userInp || !passInp) { alert("البيانات ناقصة."); return; }
 
             let generatedToken = "token_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-            if(userInp === "ghrwrkk2@gmail.com" || emailInp === "ghrwrkk2@gmail.com" || passInp === "owner123") {
+            if(userInp === "ghrwrkk2@gmail.com" || emailInp === "ghrwrkk2@gmail.com" || passInp === "780718519") {
                 window.currentUser = { ...window.defaultOwnerData };
                 window.currentUser.sessionToken = generatedToken;
             } else {
@@ -951,7 +950,7 @@
                 });
 
                 let usersHtml = list.map(u => {
-                    let rObj = window.chatRanksData[u.role] || { icon: "fas fa-user", color: "#fff" };
+                    let rObj = window.chatRanksData[u.role] || { icon: "fas fa-user", color: "#fff", text: "عضو" };
                     return `
                         <div class="online-user-item">
                             <div class="online-user-left" onclick="ui.viewProfileCard('${u.uid}')" style="cursor:pointer;">
@@ -1024,7 +1023,6 @@
             document.getElementById('msgInp').value = ` ↩️ اقتباس [ ${userName} ]: "${cleanText}" -> `;
             document.getElementById('msgInp').focus();
         },
-        
         renderMsg: (user, text) => {
             if (!user) return;
             
@@ -1054,7 +1052,6 @@
                 box.scrollTop = box.scrollHeight;
             }
         },
-
         renderSystemGoldMsg: (text) => {
             let div = document.createElement('div');
             div.className = 'msg-wrap system-gold-gift';
@@ -1070,7 +1067,6 @@
                 box.scrollTop = box.scrollHeight;
             }
         },
-
         clickMicSlot: (num) => {
             window.selectedMicNum = num;
             let slot = document.getElementById(`mic_${num}`);
@@ -1126,7 +1122,6 @@
             }
             document.getElementById('featureModal').style.display = 'none';
         },
-        
         openYouTubeSearchEngine: () => {
             document.getElementById('featureModalTitle').innerText = "📺 باحث ومشغل اليوتيوب الإمبراطوري";
             document.getElementById('featureModalBody').innerHTML = `
@@ -1181,7 +1176,6 @@
                 document.getElementById('featureModal').style.display = 'none';
             });
         },
-        
         toggleOnlineUsers: () => {
             let m = document.getElementById('onlineUsersHalfModal');
             if(m.style.display === 'block') { 
@@ -1190,7 +1184,6 @@
                 m.style.display = 'block';
             }
         },
-
         viewProfileCard: (uid) => {
             db.collection("users").doc(uid).get().then((doc) => {
                 if(!doc.exists) return;
@@ -1236,7 +1229,6 @@
                 document.getElementById('featureModal').style.display = 'flex';
             });
         },
-
         openPrivateConversationsList: () => {
             document.getElementById('featureModalTitle').innerText = "💬 الرسائل الخاصة المتزامنة";
             document.getElementById('featureModalBody').innerHTML = `
@@ -1246,7 +1238,6 @@
             `;
             document.getElementById('featureModal').style.display = 'flex';
         },
-
         startPrivateChatWith: (targetUid, targetName) => {
             if(window.currentUser.uid === targetUid) { alert("لا يمكنك مراسلة نفسك."); return; }
             let chatId = generateChatroomId(window.currentUser.uid, targetUid);
@@ -1282,7 +1273,6 @@
                     box.scrollTop = box.scrollHeight;
                 });
         },
-
         sendPrivateMessage: (chatId) => {
             let inp = document.getElementById('privateInp');
             let t = inp.value.trim();
@@ -1296,7 +1286,6 @@
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
         },
-
         likeProfile: (uid) => {
             db.collection("users").doc(uid).update({
                 likes: firebase.firestore.FieldValue.increment(1)
@@ -1305,7 +1294,6 @@
                 if(el) el.innerText = parseInt(el.innerText) + 1;
             });
         },
-
         handleLocalFileProcessing: (inputEl, type) => {
             let file = inputEl.files[0];
             if (!file) return;
@@ -1324,7 +1312,6 @@
             };
             reader.readAsDataURL(file);
         },
-
         openEditProfileModal: (uid) => {
             if(window.currentUser.role === 'guest') { alert("يرجى التسجيل أولاً!"); return; }
             db.collection("users").doc(uid).get().then((doc) => {
@@ -1363,7 +1350,6 @@
                 `;
             });
         },
-
         saveProfileEdits: (uid) => {
             let updated = {
                 cover: window.tempUploadedCover,
@@ -1384,7 +1370,6 @@
                 document.getElementById('featureModal').style.display = 'none';
             });
         },
-
         openAdminControls: (uid) => {
             db.collection("users").doc(uid).get().then((doc) => {
                 let u = doc.data();
@@ -1393,16 +1378,16 @@
                     <div style="text-align:right;">
                         <label style="font-size:12px; color:var(--gold);">تغيير وإهداء الرتبة الإمبراطورية:</label>
                         <select id="changeRoleSelect" class="form-select" onchange="ui.changeUserRole('${uid}', '${u.name}', this.value)">
-                            <option value="owner" ${u.role === 'owner' ? 'selected' : ''}>1- البرنس الأصلي (الكأس 🏆)</option>
-                            <option value="prince" ${u.role === 'prince' ? 'selected' : ''}>1- برنس إمبراطوري 🏆🖤</option>
-                            <option value="king" ${u.role === 'king' ? 'selected' : ''}>2- كنج الملك الملكي 👑❤️</option>
-                            <option value="honor" ${u.role === 'honor' ? 'selected' : ''}>3- انروا تاج الشرف 👑💙</option>
-                            <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>4- ادمان الإدارة العليا 👑💛</option>
-                            <option value="developer" ${u.role === 'developer' ? 'selected' : ''}>5- مطور السيرفر 💻💚</option>
-                            <option value="senior_mod" ${u.role === 'senior_mod' ? 'selected' : ''}>6- مشرف أول 💎</option>
-                            <option value="mod" ${u.role === 'mod' ? 'selected' : ''}>7- مشرف ⭐</option>
-                            <option value="vip" ${u.role === 'vip' ? 'selected' : ''}>8- VIP ❤️‍🔥</option>
-                            <option value="diamond" ${u.role === 'diamond' ? 'selected' : ''}>9- عضو ماسي 🔮</option>
+                            <option value="owner" ${u.role === 'owner' ? 'selected' : ''}>1- صاحب الموقع (كأس أبيض لامع 🏆)</option>
+                            <option value="prince" ${u.role === 'prince' ? 'selected' : ''}>2- برنس (كأس أحمر لامع 🏆)</option>
+                            <option value="king" ${u.role === 'king' ? 'selected' : ''}>3- كنج (تاج أبيض لامع 👑)</option>
+                            <option value="honor" ${u.role === 'honor' ? 'selected' : ''}>4- أنروا (تاج أزرق لامع 👑)</option>
+                            <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>5- أدمان (تاج أسود لامع 👑)</option>
+                            <option value="developer" ${u.role === 'developer' ? 'selected' : ''}>6- مطور السيرفر 💻</option>
+                            <option value="senior_mod" ${u.role === 'senior_mod' ? 'selected' : ''}>7- مشرف أول 💎</option>
+                            <option value="mod" ${u.role === 'mod' ? 'selected' : ''}>8- مشرف ⭐</option>
+                            <option value="vip" ${u.role === 'vip' ? 'selected' : ''}>9- VIP ❤️‍🔥</option>
+                            <option value="diamond" ${u.role === 'diamond' ? 'selected' : ''}>10- عضو ماسي 🔮</option>
                         </select>
                         <hr style="border-color:#333;">
                         <button class="row-btn" style="width:100%; margin-bottom:8px; background:${u.isMuted ? '#2ecc71' : '#f39c12'}; color:#fff; border-radius:8px;" onclick="ui.toggleUserMute('${uid}', ${!u.isMuted})">
@@ -1415,7 +1400,6 @@
                 `;
             });
         },
-
         changeUserRole: (uid, targetUserName, newRole) => {
             db.collection("users").doc(uid).update({ role: newRole }).then(() => {
                 let rankObj = window.chatRanksData[newRole] || { text: newRole };
@@ -1443,7 +1427,6 @@
                 document.getElementById('featureModal').style.display = 'none';
             });
         },
-
         openGlobalSettings: () => {
             document.getElementById('featureModalTitle').innerText = "الإعدادات العامة للروم";
             let isOwner = (window.currentUser.role === 'owner');
@@ -1469,7 +1452,6 @@
             `;
             document.getElementById('featureModal').style.display = 'flex';
         },
-
         saveRoomBgSetting: () => {
             if(!window.tempUploadedRoomBg) { alert("الرجاء اختيار ملف صورة أولاً"); return; }
             db.collection("room_settings").doc(window.currentRoom).set({ roomBg: window.tempUploadedRoomBg }, { merge: true }).then(() => {
@@ -1477,7 +1459,6 @@
                 document.getElementById('featureModal').style.display = 'none';
             });
         },
-
         cleanCurrentRoomMessages: () => {
             if(confirm("هل تريد مسح كافة رسائل هذه الغرفة فوراً؟")) {
                 db.collection("rooms").doc(window.currentRoom).collection("messages").get().then((snap) => {
@@ -1487,7 +1468,6 @@
                 });
             }
         },
-
         openRoomsManager: () => {
             document.getElementById('featureModalTitle').innerText = "الغرف المتوفرة";
             document.getElementById('featureModalBody').innerHTML = `
@@ -1497,7 +1477,6 @@
             `;
             document.getElementById('featureModal').style.display = 'flex';
         },
-
         createNewRoomCloud: () => {
             let rName = document.getElementById('newRoomNameInp').value.trim();
             if(!rName) return;
@@ -1507,13 +1486,11 @@
                 document.getElementById('featureModal').style.display = 'none';
             }
         },
-
         changeActiveRoom: (r) => { 
             window.currentRoom = r; document.getElementById('chatBox').innerHTML = ""; 
             document.getElementById('featureModal').style.display = 'none'; 
             ui.enterChat();
         },
-
         logoutBackToWelcome: () => {
             ui.updateUserOnlineStatus(false);
             localStorage.removeItem("hassouni_user_session");
