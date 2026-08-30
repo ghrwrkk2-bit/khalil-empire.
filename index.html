@@ -21,7 +21,7 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; height: 100vh; background: var(--dark-bg); color: #fff; overflow: hidden; }
 
-        /* واجهة تسجيل الدخول مع صورتك الإمبراطورية كخلفية فاخرة */
+        /* واجهة تسجيل الدخول مع صورتك الشخصية الإمبراطورية كخلفية فاخرة */
         #welcomeOverlay {
             display: none; 
             position: fixed; 
@@ -136,14 +136,19 @@
         .menu-item { padding: 12px; border-bottom: 1px solid #222; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; color: #fff; justify-content: space-between; }
         .menu-item:hover { background: rgba(255,255,255,0.03); }
 
-        /* كارت البروفايل الإمبراطوري المتطابق مع صورك */
+        /* كارت البروفايل الإمبراطوري المتطابق مع صورك تماماً */
         .profile-card-wrapper { text-align: center; color: #fff; position: relative; }
-        .profile-card-cover { width: 100%; height: 140px; border-radius: 10px; object-fit: cover; border: 1px solid #333; }
-        .profile-card-pfp { width: 90px; height: 90px; border-radius: 50%; border: 3px solid var(--gold); margin-top: -45px; object-fit: cover; background: #111; position: relative; z-index: 2; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .profile-card-cover { width: 100%; height: 150px; border-radius: 12px; object-fit: cover; border: 1px solid var(--gold); }
+        .profile-card-pfp { width: 95px; height: 95px; border-radius: 50%; border: 3px solid var(--gold); margin-top: -50px; object-fit: cover; background: #111; position: relative; z-index: 2; box-shadow: 0 4px 15px rgba(0,0,0,0.8); }
         .profile-edit-pencil { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); border: 1px solid var(--gold); color: var(--gold); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; }
-        .profile-action-bar { display: flex; background: rgba(255,255,255,0.04); border: 1px solid #333; padding: 10px; border-radius: 8px; justify-content: space-around; margin: 15px 0; align-items: center; }
-        .profile-bar-btn { text-align: center; color: #fff; cursor: pointer; font-size: 12px; flex: 1; }
-        .profile-bar-btn i { display: block; font-size: 16px; color: var(--gold); margin-bottom: 3px; }
+        
+        .profile-top-actions { display: flex; background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 8px; justify-content: space-around; margin: 12px 0; }
+        .profile-top-btn { font-size: 11px; color: #ccc; cursor: pointer; text-align: center; flex: 1; }
+        .profile-top-btn i { display: block; font-size: 15px; color: var(--gold); margin-bottom: 2px; }
+
+        .profile-tabs-bar { display: flex; background: #161616; border-radius: 10px; border: 1px solid #333; margin: 10px 0; overflow: hidden; }
+        .profile-tab-item { flex: 1; padding: 8px; text-align: center; font-size: 12px; font-weight: bold; cursor: pointer; color: #aaa; background: #1c1c1c; }
+        .profile-tab-item.active { background: var(--king-grad); color: #000; }
 
         .online-user-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; margin-bottom: 6px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid #222; }
         .online-user-left { display: flex; align-items: center; gap: 10px; }
@@ -166,13 +171,8 @@
         .emoji-picker-item { cursor: pointer; padding: 5px; border-radius: 5px; }
         .emoji-picker-item:hover { background: rgba(255,215,0,0.2); }
 
-        /* تنسيق متجر النخبة المطابق تماماً لصورك */
-        .elite-store-header { background: linear-gradient(135deg, #2c1654, #120924); border: 2px solid var(--gold); border-radius: 15px; padding: 15px; text-align: center; margin-bottom: 15px; }
-        .elite-store-balances { display: flex; gap: 8px; margin-top: 10px; justify-content: space-around; }
-        .elite-balance-box { background: rgba(0,0,0,0.5); border: 1px solid var(--gold); border-radius: 10px; padding: 8px; flex: 1; text-align: center; }
-        
-        .room-card-box { background: #161616; border: 2px solid var(--gold); border-radius: 12px; padding: 12px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: 0.2s; }
-        .room-card-box:hover { background: rgba(255,215,0,0.1); }
+        .store-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-height: 250px; overflow-y: auto; }
+        .store-item { background: #1a1a1a; border: 1px solid var(--gold); border-radius: 10px; padding: 10px; text-align: center; }
 
         #hiddenAudioNode { display: none; }
         #youtubeVideoFrameContainer { position: fixed; top: -9999px; left: -9999px; width: 1px; height: 1px; overflow: hidden; opacity: 0; }
@@ -276,7 +276,7 @@
     <div class="right-input-btn" onclick="ui.openPlusPlusMenu()" title="المزيد"><i class="fas fa-plus-circle"></i></div>
 </div>
 
-<!-- الشريط السفلي للتنقل مع متجر النخبة الإمبراطوري -->
+<!-- الشريط السفلي للتنقل مع المتجر والخيارات -->
 <div class="footer-nav">
     <div class="f-btn" onclick="ui.toggleOnlineUsers()"><i class="fas fa-users"></i>المتواجدين</div>
     <div class="f-btn" onclick="ui.openRoomsManager()"><i class="fas fa-door-open"></i>الغرف</div>
@@ -321,13 +321,7 @@
     const db = firebase.firestore();
 
     window.currentRoom = "الغرفة العامة";
-    window.roomsList = [
-        {name: "الغرفة العامة", desc: "هنا تلتقي القلوب، وتحلو الأحاديث، وتبدأ أجمل الذكريات.", count: 44},
-        {name: "ملتقى النخبة", desc: "هنا للنخبة مكان... وللرقي عنوان.", count: 17},
-        {name: "عظماء النخبة", desc: "مكان يليق بمن كان حضورهم استثنائياً.", count: 10},
-        {name: "روم المسابقات", desc: "أهلاً بكم في روم المسابقات الأكثر حماساً وذكاءً!", count: 5},
-        {name: "السجن", desc: "هذه الغرفة لا تحتوي وصف", count: 1}
-    ];
+    window.roomsList = ["الغرفة العامة", "ملتقى النخبة", "عظماء النخبة", "روم المسابقات", "السجن"];
     window.micsHidden = false;
     
     // نظام الـ 30 رتبة المتمايزة
@@ -451,30 +445,22 @@
             document.getElementById('featureModal').style.display = 'flex';
         },
         openStoreModal: () => {
-            document.getElementById('featureModalTitle').innerText = "متجر النخبة";
+            document.getElementById('featureModalTitle').innerText = "🛍️ متجر شات حسوني الإمبراطوري";
             document.getElementById('featureModalBody').innerHTML = `
-                <div class="elite-store-header">
-                    <h3 style="color:var(--gold); margin:0 0 5px;">متجر النخبة</h3>
-                    <p style="font-size:11px; color:#aaa; margin:0;">هدايا وتحديات وعروض مميزة</p>
-                    <div class="elite-store-balances">
-                        <div class="elite-balance-box">
-                            <span style="font-size:10px; color:#aaa;">رصيد الذهب</span>
-                            <div style="color:var(--gold); font-weight:bold;">2,826 🪙</div>
-                        </div>
-                        <div class="elite-balance-box">
-                            <span style="font-size:10px; color:#aaa;">رصيد الروزي</span>
-                            <div style="color:#00ffff; font-weight:bold;">445 💎</div>
-                        </div>
-                        <div class="elite-balance-box">
-                            <span style="font-size:10px; color:#aaa;">مستواك</span>
-                            <div style="color:#3498db; font-weight:bold;">${window.currentUser ? window.currentUser.level || 76 : 76} 📈</div>
-                        </div>
+                <p style="font-size:12px; text-align:center; color:#ccc;">رصيدك الحالي: <span style="color:var(--gold); font-weight:bold;">${window.currentUser.points || 0} نقطة</span></p>
+                <div class="store-grid">
+                    <div class="store-item">
+                        <i class="fas fa-crown" style="font-size:24px; color:var(--gold); margin-bottom:5px;"></i>
+                        <h4 style="margin:5px 0; font-size:13px;">عضوية بريميم</h4>
+                        <p style="font-size:10px; color:#aaa; margin:5px 0;">لمدة 30 يوم</p>
+                        <button class="row-btn active" style="padding:6px; font-size:10px; width:100%;" onclick="alert('تم شراء العضوية بنجاح!')">شراء (5000 ذهب)</button>
                     </div>
-                </div>
-                <div style="background:#1a1a1a; padding:12px; border-radius:10px; border:1px solid #333;">
-                    <h4 style="color:var(--gold); margin:0 0 8px; font-size:13px;">🎁 هدايا اليوم</h4>
-                    <p style="font-size:11px; color:#ccc; margin:0 0 10px;">اخذ هديك اليومية للحصول علي 100 ذهب مجاناً.</p>
-                    <button class="row-btn active" style="width:100%; border-radius:8px; padding:10px;" onclick="alert('تم استلام الهدية اليومية بنجاح! +100 ذهب')">فتح الهدية اليومية</button>
+                    <div class="store-item">
+                        <i class="fas fa-chart-line" style="font-size:24px; color:#3498db; margin-bottom:5px;"></i>
+                        <h4 style="margin:5px 0; font-size:13px;">ترقية مستوى 50</h4>
+                        <p style="font-size:10px; color:#aaa; margin:5px 0;">تطوير فوري</p>
+                        <button class="row-btn active" style="padding:6px; font-size:10px; width:100%;" onclick="alert('تم الترقية بنجاح!')">شراء (6000 ذهب)</button>
+                    </div>
                 </div>
             `;
             document.getElementById('featureModal').style.display = 'flex';
@@ -1039,19 +1025,53 @@
                         <img src="${u.cover || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400'}" class="profile-card-cover">
                         <img src="${u.img || 'https://cdn-icons-png.flaticon.com/512/1042/1042291.png'}" class="profile-card-pfp">
                         <h2 style="color:${rObj.color}; margin:5px 0 2px;">${u.name}</h2>
-                        <p style="margin:0 0 10px; font-size:13px; color:${rObj.color}; font-weight:bold;"><i class="${rObj.icon}"></i> ${rObj.text}</p>
-                        <p style="margin:0 0 10px; font-size:12px; color:#aaa;">${u.status || 'لا يوجد حالة'}</p>
+                        <p style="margin:0 0 5px; font-size:12px; color:${rObj.color}; font-weight:bold;"><i class="${rObj.icon}"></i> ${rObj.text}</p>
+                        <p style="margin:0 0 10px; font-size:11px; color:#aaa;">${u.status || 'لا يوجد حالة'}</p>
                         
-                        <div class="profile-action-bar">
-                            <div class="profile-bar-btn" onclick="ui.likeProfile('${uid}')"><i class="fas fa-heart"></i> <span id="likeCountText">${u.likes || 0}</span> إعجاب</div>
-                            <div class="profile-bar-btn" onclick="ui.startPrivateChatWith('${u.uid}', '${u.name}')"><i class="fas fa-paper-plane"></i> الخاص</div>
-                            <div class="profile-bar-btn"><i class="fas fa-chart-line"></i> ليفل ${u.level || 1}</div>
+                        <div style="display:flex; justify-content:center; gap:15px; margin-bottom:10px; font-size:12px;">
+                            <div><i class="fas fa-star" style="color:var(--gold);"></i> 485</div>
+                            <div><i class="fas fa-heart" style="color:#2ecc71;"></i> <span id="likeCountText">${u.likes || 0}</span></div>
+                        </div>
+
+                        <div style="display:flex; gap:8px; margin-bottom:12px;">
+                            <button class="row-btn" style="background:#f1c40f; color:#000; border-radius:8px; padding:6px;" onclick="alert('تم الإبلاغ بنجاح')"><i class="fas fa-flag"></i> بلاغ</button>
+                            <button class="row-btn" style="background:#e74c3c; color:#fff; border-radius:8px; padding:6px;" onclick="alert('تم حظر العضو')"><i class="fas fa-ban"></i> حظر</button>
+                            <button class="row-btn active" style="border-radius:8px; padding:6px;" onclick="alert('تم إضافة العضو لصديقك')"><i class="fas fa-user-plus"></i> صديق</button>
+                            <button class="row-btn active" style="border-radius:8px; padding:6px;" onclick="ui.startPrivateChatWith('${u.uid}', '${u.name}')"><i class="fas fa-comment"></i> خاص</button>
+                        </div>
+
+                        <div class="profile-tabs-bar">
+                            <div class="profile-tab-item active" onclick="ui.switchProfileTab(this, 'info')">المعلومات</div>
+                            <div class="profile-tab-item" onclick="ui.switchProfileTab(this, 'friends')">الأصدقاء</div>
+                            <div class="profile-tab-item" onclick="ui.switchProfileTab(this, 'commands')">الأوامر</div>
+                        </div>
+
+                        <div id="profileTabContent" style="text-align:right; font-size:12px; background:#181818; padding:10px; border-radius:8px; border:1px solid #333;">
+                            <div><i class="fas fa-link" style="color:var(--gold);"></i> رابط الملف: https://chat.l9l0.net/#id${u.uid.slice(-4)}</div>
+                            <div style="margin-top:5px;"><i class="fas fa-globe"></i> اللغة: عربي</div>
+                            <div style="margin-top:5px;"><i class="fas fa-calendar"></i> تاريخ الانضمام: 2026-08-23</div>
                         </div>
                         ${adminOptionsBtn}
                     </div>
                 `;
                 document.getElementById('featureModal').style.display = 'flex';
             });
+        },
+        switchProfileTab: (el, tabName) => {
+            document.querySelectorAll('.profile-tab-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+            let content = document.getElementById('profileTabContent');
+            if(tabName === 'info') {
+                content.innerHTML = `
+                    <div><i class="fas fa-link" style="color:var(--gold);"></i> رابط الملف الشخصي</div>
+                    <div style="margin-top:5px;"><i class="fas fa-globe"></i> اللغة: عربي</div>
+                    <div style="margin-top:5px;"><i class="fas fa-calendar"></i> تاريخ الانضمام: 2026-08-23</div>
+                `;
+            } else if(tabName === 'friends') {
+                content.innerHTML = `<div style="text-align:center; padding:10px; color:#aaa;">قائمة الأصدقاء فارغة حالياً.</div>`;
+            } else if(tabName === 'commands') {
+                content.innerHTML = `<div style="text-align:center; padding:10px; color:var(--gold);">لا توجد أوامر خاصة متاحة.</div>`;
+            }
         },
         openPrivateConversationsList: () => {
             document.getElementById('featureModalTitle').innerText = "💬 الرسائل الخاصة المتزامنة";
@@ -1138,7 +1158,7 @@
                 window.tempUploadedCover = u.cover || "";
                 window.tempUploadedPfp = u.img || "";
                 
-                document.getElementById('featureModalTitle').innerText = "تعديل الملف الشخصي والصور";
+                document.getElementById('featureModalTitle').innerText = "تعديل الملف الشخصي والمميزات";
                 document.getElementById('featureModalBody').innerHTML = `
                     <div style="text-align:right;">
                         <label style="font-size:12px; color:var(--gold); font-weight:bold;">صورة الغلاف:</label>
@@ -1155,7 +1175,7 @@
                         <label style="font-size:12px; color:var(--gold);">الحالة الشخصية:</label>
                         <input type="text" id="editStatus" class="form-control" value="${u.status || ''}">
                         
-                        <button class="row-btn active" style="width:100%; margin-top:10px; border-radius:8px; padding:10px;" onclick="ui.saveProfileEdits('${uid}')">حفظ التغييرات ومزامنتها</button>
+                        <button class="row-btn active" style="width:100%; margin-top:10px; border-radius:8px; padding:10px;" onclick="ui.saveProfileEdits('${uid}')">حفظ التغييرات ومزامنتها فوراً</button>
                     </div>
                 `;
             });
@@ -1222,17 +1242,13 @@
             document.getElementById('featureModalTitle').innerText = "قائمة الغرف المتاحة";
             let html = '<div style="text-align:right;">';
             window.roomsList.forEach(r => {
-                let activeMark = window.currentRoom === r.name ? '<span style="color:var(--gold);">🏆 نشطة</span>' : '';
+                let activeMark = window.currentRoom === r ? '<span style="color:var(--gold);">🏆 نشطة</span>' : '';
                 html += `
-                    <div class="room-card-box" onclick="ui.changeActiveRoom('${r.name}')">
+                    <div class="room-card-box" onclick="ui.changeActiveRoom('${r}')">
                         <div>
-                            <div style="color:var(--gold); font-weight:bold; font-size:14px;"><i class="fas fa-crown"></i> ${r.name}</div>
-                            <div style="font-size:11px; color:#aaa; margin-top:3px;">${r.desc}</div>
+                            <div style="color:var(--gold); font-weight:bold; font-size:14px;"><i class="fas fa-crown"></i> ${r}</div>
                         </div>
-                        <div style="text-align:center;">
-                            <span style="font-size:12px; color:#fff;"><i class="fas fa-users"></i> ${r.count}</span>
-                            <div>${activeMark}</div>
-                        </div>
+                        <div>${activeMark}</div>
                     </div>
                 `;
             });
@@ -1243,8 +1259,8 @@
         createNewRoomCloud: () => {
             let rName = document.getElementById('newRoomNameInp').value.trim();
             if(!rName) return;
-            if(!window.roomsList.some(r => r.name === rName)) {
-                window.roomsList.push({name: rName, desc: "غرفة إمبراطورية جديدة", count: 1});
+            if(!window.roomsList.includes(rName)) {
+                window.roomsList.push(rName);
                 alert(`تم إنشاء غرفة [ ${rName} ] بنجاح وصارت متاحة للجميع.`);
                 document.getElementById('featureModal').style.display = 'none';
             }
