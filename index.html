@@ -21,7 +21,7 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; height: 100vh; background: var(--dark-bg); color: #fff; overflow: hidden; }
 
-        /* واجهة تسجيل الدخول مع صورتك الشخصية الإمبراطورية كخلفية فاخرة */
+        /* واجهة تسجيل الدخول */
         #welcomeOverlay {
             display: none; 
             position: fixed; 
@@ -143,7 +143,6 @@
         }
         .room-card-box:hover { background: rgba(255,215,0,0.1); }
 
-        /* كارت البروفايل الإمبراطوري المتطابق تماماً */
         .profile-card-wrapper { text-align: center; color: #fff; position: relative; }
         .profile-card-cover { width: 100%; height: 150px; border-radius: 12px; object-fit: cover; border: 1px solid var(--gold); }
         .profile-card-pfp { width: 95px; height: 95px; border-radius: 50%; border: 3px solid var(--gold); margin-top: -50px; object-fit: cover; background: #111; position: relative; z-index: 2; box-shadow: 0 4px 15px rgba(0,0,0,0.8); }
@@ -179,12 +178,14 @@
 
         #hiddenAudioNode { display: none; }
         #youtubeVideoFrameContainer { position: fixed; top: -9999px; left: -9999px; width: 1px; height: 1px; overflow: hidden; opacity: 0; }
+        #liveAudioBroadcastContainer { display: none; }
     </style>
 </head>
 <body>
 
 <audio id="hiddenAudioNode" loop></audio>
 <div id="youtubeVideoFrameContainer"></div>
+<div id="liveAudioBroadcastContainer"></div>
 
 <!-- واجهة تسجيل الدخول -->
 <div id="welcomeOverlay">
@@ -455,13 +456,57 @@
             document.getElementById('featureModal').style.display = 'flex';
         },
         openSideThreeLinesMenu: () => {
+            let isOwner = (window.currentUser && window.currentUser.role === 'owner');
+            
+            let ownerOptionsHtml = '';
+            if (isOwner) {
+                ownerOptionsHtml = `
+                    <div style="background:rgba(255,215,0,0.1); border:1px solid var(--gold); border-radius:10px; padding:10px; margin-bottom:10px;">
+                        <p style="color:var(--gold); font-weight:bold; font-size:13px; text-align:center; margin:0 0 8px;">👑 لوحة تحكم صاحب الموقع للروم (${window.currentRoom})</p>
+                        <label for="roomBgFileInput" class="file-input-label" style="margin-bottom:6px;"><i class="fas fa-image"></i> رفع وتغيير خلفية هذه الغرفة للجميع</label>
+                        <input type="file" id="roomBgFileInput" class="file-input-hidden" accept="image/*" onchange="ui.ownerUploadRoomBg(this)">
+                        <button class="row-btn active" style="width:100%; background:#e74c3c; color:#fff; border-radius:8px; padding:10px; font-size:12px;" onclick="ui.ownerClearRoomChat()"><i class="fas fa-trash-alt"></i> تنظيف وحذف محادثات الغرفة للجميع</button>
+                    </div>
+                `;
+            }
+
             document.getElementById('featureModalTitle').innerText = "📜 قائمة الخيارات الإمبراطورية";
             document.getElementById('featureModalBody').innerHTML = `
+                ${ownerOptionsHtml}
                 <div class="menu-item" onclick="ui.openRoomsManager()"><i class="fas fa-door-open" style="color:var(--gold);"></i> قائمة الرومات المنفصلة</div>
                 <div class="menu-item" onclick="ui.openStoreModal()"><i class="fas fa-store" style="color:#2ecc71;"></i> متجر النخبة</div>
                 <div class="menu-item" onclick="ui.openYouTubeSearchEngine()"><i class="fab fa-youtube" style="color:red;"></i> تشغيل صوت يوتيوب</div>
             `;
             document.getElementById('featureModal').style.display = 'flex';
+        },
+        ownerUploadRoomBg: (inputEl) => {
+            let file = inputEl.files[0];
+            if(!file) return;
+            let reader = new FileReader();
+            reader.onload = (e) => {
+                let base64Img = e.target.result;
+                let roomDocId = window.currentRoom.replace(/\s+/g, '_');
+                db.collection("room_settings").doc(roomDocId).set({ roomBg: base64Img }, { merge: true }).then(() => {
+                    alert("✅ تم رفع وتحديث خلفية الغرفة بنجاح وتطبيقها لجميع الأعضاء الحاضرين!");
+                    document.getElementById('featureModal').style.display = 'none';
+                });
+            };
+            reader.readAsDataURL(file);
+        },
+        ownerClearRoomChat: () => {
+            if(!confirm("هل أنت متأكد من رغبتك في تنظيف وحذف كافة رسائل هذه الغرفة لدى جميع الأعضاء؟")) return;
+            let roomDocId = window.currentRoom.replace(/\s+/g, '_');
+            
+            db.collection("rooms").doc(roomDocId).collection("messages").get().then(snapshot => {
+                let batch = db.batch();
+                snapshot.docs.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                return batch.commit();
+            }).then(() => {
+                alert("🧹 تم تنظيف الغرفة وحذف المحادثات بنجاح لدى الجميع.");
+                document.getElementById('featureModal').style.display = 'none';
+            });
         },
         openEmojiPicker: () => {
             const emojis = ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕','🤑','🤠','😈','👿','👹','👺','🤡','💩','👻','💀','☠️','👽','👾','🤖','🎃','❤️','🔥','⭐','👑','💎'];
@@ -607,7 +652,6 @@
             });
         },
         registerAndLoginUser: (userObj) => {
-            // توليد رمز جلسة فريد لهذا المتصفح/الجهاز لمنع تعدد الفتح
             let currentSessionToken = "sess_" + Math.random().toString(36).substring(2) + Date.now();
             userObj.sessionToken = currentSessionToken;
             window.currentUser = userObj;
@@ -632,7 +676,6 @@
         },
         startSingleSessionMonitor: () => {
             if(window.sessionCheckInterval) clearInterval(window.sessionCheckInterval);
-            // مراقبة حية لتسجيل الدخول من جهاز آخر (طرد الجلسة القديمة فوراً)
             window.sessionCheckInterval = setInterval(() => {
                 if(!window.currentUser) return;
                 db.collection("users").doc(window.currentUser.uid).get().then(doc => {
@@ -659,7 +702,6 @@
                             return;
                         }
                         window.currentUser = sData;
-                        // تحديث جلسة هذا المتصفح
                         let currentSessionToken = "sess_" + Math.random().toString(36).substring(2) + Date.now();
                         window.currentUser.sessionToken = currentSessionToken;
                         db.collection("users").doc(parsedUser.uid).update({ sessionToken: currentSessionToken });
@@ -713,7 +755,6 @@
             window.activeListeners.push(unsub);
         },
         listenToGlobalMessages: () => {
-            // فصل رسائل كل غرفة تماماً عن الأخرى باستخدام مسار فريد لكل غرفة
             let roomDocId = window.currentRoom.replace(/\s+/g, '_');
             let unsub = db.collection("rooms").doc(roomDocId).collection("messages")
               .orderBy("timestamp", "asc")
@@ -754,6 +795,10 @@
                       slot.classList.remove('occupied'); slot.style.backgroundImage = 'none';
                       document.getElementById(`micName_${i}`).innerText = `${i}`;
                   }
+                  
+                  let broadcastContainer = document.getElementById('liveAudioBroadcastContainer');
+                  broadcastContainer.innerHTML = ""; // تفريغ تدفقات الصوت القديمة
+
                   snapshot.forEach((doc) => {
                       let micData = doc.data();
                       let num = micData.micNum;
@@ -762,6 +807,15 @@
                           slot.classList.add('occupied');
                           slot.style.backgroundImage = `url('${micData.userImg}')`;
                           document.getElementById(`micName_${num}`).innerText = micData.userName;
+                      }
+
+                      // تفعيل استقبال الصوت الحقيقي عبر WebRTC / MediaStream للمايكات المفتوحة
+                      if(micData.audioStreamUrl && !micData.isMuted) {
+                          let audioEl = document.createElement('audio');
+                          audioEl.src = micData.audioStreamUrl;
+                          audioEl.autoplay = true;
+                          audioEl.volume = 1.0;
+                          broadcastContainer.appendChild(audioEl);
                       }
                   });
               });
@@ -917,7 +971,7 @@
                 document.getElementById('featureModalBody').innerHTML = `
                     <p style="text-align:center; font-size:15px;">هل تريد الصعود وبث صوتك الحقيقي على مايك رقم [ ${num} ]?</p>
                     <div style="display:flex; gap:10px; margin-top:15px;">
-                        <button class="row-btn active" style="flex:1; border-radius:8px;" onclick="ui.confirmMicGoingUp(true)">نعم صعود</button>
+                        <button class="row-btn active" style="flex:1; border-radius:8px;" onclick="ui.confirmMicGoingUp(true)">نعم صعود وبث الصوت</button>
                         <button class="row-btn" style="flex:1; background:#7f8c8d; color:#fff; border-radius:8px;" onclick="ui.confirmMicGoingUp(false)">إلغاء</button>
                     </div>
                 `;
@@ -941,11 +995,14 @@
             navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }).then(stream => {
                 window.localAudioStream = stream;
                 
+                // تحويل البث الصوتي المحلي إلى Object URL لبثه حياً لجميع المتواجدين في الروم
+                let audioBlobUrl = URL.createObjectURL(new MediaStream(stream.getAudioTracks()));
+
                 db.collection("rooms").doc(roomDocId).collection("mics").doc(`mic_${num}`).set({
                     micNum: num, userId: window.currentUser.uid, userName: window.currentUser.name,
-                    userImg: window.currentUser.img, isMuted: false
+                    userImg: window.currentUser.img, isMuted: false, audioStreamUrl: audioBlobUrl
                 });
-                alert("🎤 تم صعود المايك بنجاح وبث صوتك الحقيقي مفعل!");
+                alert("🎤 تم صعود المايك بنجاح وبث صوتك الحقيقي مفعل للجميع!");
             }).catch(() => {
                 alert("⚠️ يرجى السماح للمتصفح بالوصول إلى المايك لتتمكن من التحدث بنجاح!");
             });
