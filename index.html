@@ -82,6 +82,11 @@
             border: 2px solid #ffd700 !important; box-shadow: 0 0 15px rgba(255, 215, 0, 0.6) !important;
             width: 100% !important; max-width: 100% !important; text-align: center;
         }
+        .msg-wrap.bot-msg-wrap {
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.25), rgba(41, 128, 185, 0.35)) !important;
+            border: 2px solid #3498db !important; box-shadow: 0 0 15px rgba(52, 152, 219, 0.6) !important;
+            width: 100% !important; max-width: 100% !important; text-align: center;
+        }
         
         .msg-header { display: flex; align-items: center; gap: 10px; width: 100%; position: relative; }
         .pfp-main-frame { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--gold); box-shadow: 0 0 8px var(--gold); display: flex; align-items: center; justify-content: center; background: #000; flex-shrink: 0; }
@@ -148,10 +153,6 @@
         .profile-card-pfp { width: 95px; height: 95px; border-radius: 50%; border: 3px solid var(--gold); margin-top: -50px; object-fit: cover; background: #111; position: relative; z-index: 2; box-shadow: 0 4px 15px rgba(0,0,0,0.8); }
         .profile-edit-pencil { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); border: 1px solid var(--gold); color: var(--gold); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; }
         
-        .profile-tabs-bar { display: flex; background: #161616; border-radius: 10px; border: 1px solid #333; margin: 10px 0; overflow: hidden; }
-        .profile-tab-item { flex: 1; padding: 8px; text-align: center; font-size: 12px; font-weight: bold; cursor: pointer; color: #aaa; background: #1c1c1c; }
-        .profile-tab-item.active { background: var(--king-grad); color: #000; }
-
         .online-user-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; margin-bottom: 6px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid #222; }
         .online-user-left { display: flex; align-items: center; gap: 10px; }
         .online-user-avatar { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 1px solid var(--gold); }
@@ -312,19 +313,22 @@
     const db = firebase.firestore();
 
     window.currentRoom = "الغرفة العامة";
-    window.roomsList = ["الغرفة العامة", "ملتقى النخبة", "عظماء النخبة", "روم المسابقات", "السجن"];
+    window.roomsList = ["الغرفة العامة", "روم المسابقات", "ملتقى النخبة", "عظماء النخبة", "السجن"];
     window.micsHidden = false;
     window.currentUser = null;
     window.activeListeners = [];
     window.localAudioStream = null;
     window.sessionCheckInterval = null;
+    window.activeTrivia = null; // بوت المسابقات
 
+    // نظام الـ 30 رتبة الإمبراطورية المتمايزة بالأيقونات والألوان اللامعة
     window.chatRanksData = {
-        "owner": { icon: "fas fa-trophy", color: "#ffd700", text: "صاحب الموقع" },
-        "prince": { icon: "fas fa-trophy", color: "#aa0000", text: "برنس" },
-        "king": { icon: "fas fa-crown", color: "#ffffff", text: "كنج" },
-        "honor": { icon: "fas fa-crown", color: "#0088ff", text: "أنروا" },
-        "admin": { icon: "fas fa-crown", color: "#111111", text: "أدمان" },
+        "owner": { icon: "fas fa-trophy", color: "#ffd700", text: "صاحب الموقع (كأس ذهبي لامع)" },
+        "prince": { icon: "fas fa-trophy", color: "#ffffff", text: "برنس (كأس أبيض لامع)" },
+        "king": { icon: "fas fa-crown", color: "#ffffff", text: "كنج (تاج أبيض لامع)" },
+        "honor": { icon: "fas fa-crown", color: "#0088ff", text: "أنروا (تاج ازرق لامع)" },
+        "management": { icon: "fas fa-crown", color: "#ff0000", text: "اداره (تاج احمر لامع)" },
+        "admin": { icon: "fas fa-crown", color: "#ff69b4", text: "ادمان (تاج وردي لامع)" },
         "developer": { icon: "fas fa-code", color: "#00FF00", text: "مطور السيرفر" },
         "senior_mod": { icon: "fas fa-gem", color: "#00FFFF", text: "مشرف أول" },
         "mod": { icon: "fas fa-star", color: "#C0C0C0", text: "مشرف" },
@@ -335,23 +339,35 @@
         "distinguished": { icon: "fas fa-bolt", color: "#FF8C00", text: "متميز" },
         "interactive": { icon: "fas fa-bolt", color: "#FFFF00", text: "متفاعل" },
         "active": { icon: "fas fa-heart", color: "#FF69B4", text: "نشط" },
+        "bronze": { icon: "fas fa-shield-alt", color: "#cd7f32", text: "برونزي" },
+        "elite": { icon: "fas fa-star", color: "#ff1493", text: "نخبة" },
+        "legend": { icon: "fas fa-dragon", color: "#9400d3", text: "أسطورة" },
+        "expert": { icon: "fas fa-graduation-cap", color: "#00fa9a", text: "خبير" },
+        "master": { icon: "fas fa-chess-king", color: "#ff4500", text: "معلم" },
+        "general": { icon: "fas fa-medal", color: "#4682b4", text: "قائد" },
+        "ambassador": { icon: "fas fa-globe", color: "#00ffff", text: "سفير" },
+        "knight": { icon: "fas fa-shield-alt", color: "#708090", text: "فارس" },
+        "hero": { icon: "fas fa-user-shield", color: "#ffd700", text: "بطل" },
+        "guardian": { icon: "fas fa-lock", color: "#dc143c", text: "حارس" },
+        "pioneer": { icon: "fas fa-rocket", color: "#00ff7f", text: "رائد" },
+        "star": { icon: "fas fa-star", color: "#ffff00", text: "نجم" },
         "new": { icon: "fas fa-seedling", color: "#32CD32", text: "عضو مسجل" },
         "guest": { icon: "fas fa-user", color: "#ffffff", text: "زائر" }
     };
 
-    window.rolesOrder = { 
-        "owner": 1, "prince": 2, "king": 3, "honor": 4, "admin": 5, 
-        "developer": 6, "senior_mod": 7, "mod": 8, "vip": 9, "diamond": 10, 
-        "gold_member": 11, "silver_member": 12, "distinguished": 13, "interactive": 14, 
-        "active": 15, "new": 16, "guest": 17 
-    };
+    window.rolesOrder = {};
+    let rIdx = 1;
+    for(let rKey in window.chatRanksData) {
+        window.rolesOrder[rKey] = rIdx++;
+    }
 
     window.defaultOwnerData = { 
         uid: "owner_hassouni", name: "صاحب الموقع", role: "owner", level: 100, 
         img: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=150", 
         cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400",
         likes: 999, status: "المالك والمؤسس العام - جميع الصلاحيات مفعلة ⚡👑",
-        points: 99999, isMuted: false, isBanned: false, isOnline: true
+        points: 99999, isMuted: false, isBanned: false, isOnline: true,
+        age: "25", gender: "ذكر", country: "العراق", nameColor: "#ffd700"
     };
 
     function validateEmailAddress(email) {
@@ -408,7 +424,7 @@
             document.getElementById('featureModalBody').innerHTML = `
                 <div class="menu-item" onclick="alert('مستوى العضو الحالي: ' + (window.currentUser ? window.currentUser.level || 1 : 1))"><i class="fas fa-layer-group" style="color:var(--gold);"></i> معلومات المستوى</div>
                 <div class="menu-item" onclick="alert('المحفظة تحتوي على: ' + (window.currentUser ? window.currentUser.points || 0 : 0) + ' نقطة')"><i class="fas fa-wallet" style="color:#2ecc71;"></i> محفظتي</div>
-                <div class="menu-item" onclick="ui.openEditProfileModal('${window.currentUser.uid}')"><i class="fas fa-user-edit" style="color:#3498db;"></i> تحرير الملف الشخصي والصور</div>
+                <div class="menu-item" onclick="ui.openEditProfileModal('${window.currentUser.uid}')"><i class="fas fa-user-edit" style="color:#3498db;"></i> تحرير الملف الشخصي الكامل والصور</div>
                 <div class="menu-item" onclick="ui.logoutBackToWelcome()" style="color:#e74c3c;"><i class="fas fa-sign-out-alt"></i> تسجيل خروج وإظهار لوحة الدخول</div>
             `;
             document.getElementById('featureModal').style.display = 'flex';
@@ -457,7 +473,6 @@
         },
         openSideThreeLinesMenu: () => {
             let isOwner = (window.currentUser && window.currentUser.role === 'owner');
-            
             let ownerOptionsHtml = '';
             if (isOwner) {
                 ownerOptionsHtml = `
@@ -496,12 +511,9 @@
         ownerClearRoomChat: () => {
             if(!confirm("هل أنت متأكد من رغبتك في تنظيف وحذف كافة رسائل هذه الغرفة لدى جميع الأعضاء؟")) return;
             let roomDocId = window.currentRoom.replace(/\s+/g, '_');
-            
             db.collection("rooms").doc(roomDocId).collection("messages").get().then(snapshot => {
                 let batch = db.batch();
-                snapshot.docs.forEach(doc => {
-                    batch.delete(doc.ref);
-                });
+                snapshot.docs.forEach(doc => { batch.delete(doc.ref); });
                 return batch.commit();
             }).then(() => {
                 alert("🧹 تم تنظيف الغرفة وحذف المحادثات بنجاح لدى الجميع.");
@@ -597,7 +609,8 @@
                     uid: uid, name: n, email: em, password: ps, role: "diamond", level: 50, 
                     img: "https://cdn-icons-png.flaticon.com/512/1042/1042291.png", 
                     cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400",
-                    likes: 0, status: "عضو ماسي جديد", points: 100, isMuted: false, isBanned: false, isOnline: true
+                    likes: 0, status: "عضو ماسي جديد", points: 100, isMuted: false, isBanned: false, isOnline: true,
+                    age: "20", gender: "ذكر", country: "السعودية", nameColor: "#8A2BE2"
                 };
             }
             ui.registerAndLoginUser(userObj);
@@ -612,7 +625,8 @@
                 uid: "g_"+Date.now(), name: n, role: "guest", level: 1, 
                 img: "https://cdn-icons-png.flaticon.com/512/1042/1042291.png", 
                 cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400",
-                likes: 0, status: "زائر في شات حسوني", points: 0, isMuted: false, isBanned: false, isOnline: true
+                likes: 0, status: "زائر في شات حسوني", points: 0, isMuted: false, isBanned: false, isOnline: true,
+                age: a, gender: g, country: "العراق", nameColor: "#ffffff"
             };
             ui.registerAndLoginUser(userObj);
         },
@@ -643,7 +657,8 @@
                         uid: "u_"+Date.now(), name: userInp, email: emailInp || userInp+"@chat.com", password: passInp, role: "new", level: 10, 
                         img: "https://cdn-icons-png.flaticon.com/512/1042/1042291.png", 
                         cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400",
-                        likes: 5, status: "عضو مسجل جديد", points: 50, isMuted: false, isBanned: false, isOnline: true
+                        likes: 5, status: "عضو مسجل جديد", points: 50, isMuted: false, isBanned: false, isOnline: true,
+                        age: "22", gender: "ذكر", country: "الكويت", nameColor: "#32CD32"
                     };
                 }
                 ui.registerAndLoginUser(userObj);
@@ -681,6 +696,11 @@
                 db.collection("users").doc(window.currentUser.uid).get().then(doc => {
                     if(doc.exists) {
                         let data = doc.data();
+                        if(data.isBanned) {
+                            alert("تم حظرك نهائياً من الموقع.");
+                            ui.logoutBackToWelcome();
+                            return;
+                        }
                         if(data.sessionToken && data.sessionToken !== window.currentUser.sessionToken) {
                             alert("⚠️ تم تسجيل الدخول إلى هذا الحساب من جهاز أو متصفح آخر. سيتم إخروجك هنا.");
                             ui.logoutBackToWelcome();
@@ -731,6 +751,7 @@
             ui.listenToRoomSettings();
             ui.listenOnlineUsersRealtime();
             ui.startSingleSessionMonitor();
+            ui.checkAndRunTriviaBot();
         },
         clearAllListeners: () => {
             window.activeListeners.forEach(unsub => unsub());
@@ -779,6 +800,8 @@
                       let mData = doc.data();
                       if (mData.isSystemGold) {
                           ui.renderSystemGoldMsg(mData.text);
+                      } else if (mData.isBotMsg) {
+                          ui.renderBotMsg(mData.text);
                       } else if (mData.user) {
                           ui.renderMsg(mData.user, mData.text, mData.timestamp);
                       }
@@ -795,9 +818,8 @@
                       slot.classList.remove('occupied'); slot.style.backgroundImage = 'none';
                       document.getElementById(`micName_${i}`).innerText = `${i}`;
                   }
-                  
                   let broadcastContainer = document.getElementById('liveAudioBroadcastContainer');
-                  broadcastContainer.innerHTML = ""; // تفريغ تدفقات الصوت القديمة
+                  broadcastContainer.innerHTML = "";
 
                   snapshot.forEach((doc) => {
                       let micData = doc.data();
@@ -808,8 +830,6 @@
                           slot.style.backgroundImage = `url('${micData.userImg}')`;
                           document.getElementById(`micName_${num}`).innerText = micData.userName;
                       }
-
-                      // تفعيل استقبال الصوت الحقيقي عبر WebRTC / MediaStream للمايكات المفتوحة
                       if(micData.audioStreamUrl && !micData.isMuted) {
                           let audioEl = document.createElement('audio');
                           audioEl.src = micData.audioStreamUrl;
@@ -826,7 +846,7 @@
                 let list = []; 
                 snap.forEach(doc => {
                     let uData = doc.data();
-                    if(uData.isOnline) list.push(uData);
+                    if(uData.isOnline && !uData.isBanned) list.push(uData);
                 });
                 
                 list.sort((a, b) => (window.rolesOrder[a.role] || 99) - (window.rolesOrder[b.role] || 99));
@@ -838,7 +858,7 @@
                             <div class="online-user-left" onclick="ui.viewProfileCard('${u.uid}')" style="cursor:pointer;">
                                 <img src="${u.img || 'https://cdn-icons-png.flaticon.com/512/1042/1042291.png'}" class="online-user-avatar">
                                 <div>
-                                    <div style="color:${rObj.color}; font-weight: bold; font-size:13px;">
+                                    <div style="color:${u.nameColor || rObj.color}; font-weight: bold; font-size:13px;">
                                         <i class="${rObj.icon}"></i> ${u.name}
                                     </div>
                                     <span style="font-size:10px; color:${rObj.color}; border:1px solid ${rObj.color}; padding:1px 5px; border-radius:8px;">${rObj.text}</span>
@@ -871,7 +891,7 @@
             alert("تم إعادة مزامنة وغرف الشات بنجاح.");
         },
         sendMessage: () => {
-            if(window.currentUser.isMuted) { alert("أنت مكتوم حالياً."); return; }
+            if(window.currentUser.isMuted) { alert("أنت مكتوم حالياً من قبل الإدارة."); return; }
             let inp = document.getElementById('msgInp');
             let t = inp.value.trim(); if(!t) return;
             inp.value = '';
@@ -887,14 +907,53 @@
                     name: latestUser.name,
                     role: latestUser.role,
                     img: latestUser.img,
-                    cover: latestUser.cover
+                    cover: latestUser.cover,
+                    nameColor: latestUser.nameColor
                 };
+
+                // فحص إذا كانت الغرفة الحالية هي "روم المسابقات" وبوت المسابقات نشط
+                if (window.currentRoom === "روم المسابقات" && window.activeTrivia) {
+                    if (t.toLowerCase() === window.activeTrivia.answer.toLowerCase()) {
+                        // إجابة صحيحة! منح نقاط
+                        let rewardPoints = 50;
+                        db.collection("users").doc(latestUser.uid).update({
+                            points: firebase.firestore.FieldValue.increment(rewardPoints)
+                        });
+
+                        db.collection("rooms").doc(roomDocId).collection("messages").add({
+                            isBotMsg: true,
+                            text: `🤖 تهانينا للبطل [ ${latestUser.name} ]! لقد أجاب إجابة صحيحة وحصل على جائزة ${rewardPoints} نقطة! 🏆`,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        window.activeTrivia = null; // إيقاف السؤال الحالي
+                        setTimeout(() => ui.checkAndRunTriviaBot(), 8000); // طرح سؤال جديد بعد 8 ثواني
+                    }
+                }
 
                 db.collection("rooms").doc(roomDocId).collection("messages").add({
                     user: cleanUserObj,
                     text: t,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
+            });
+        },
+        checkAndRunTriviaBot: () => {
+            if (window.currentRoom !== "روم المسابقات") return;
+            const triviaQuestions = [
+                { q: "ما هو عاصمة دولة فرنسا؟", a: "باريس" },
+                { q: "كم عدد سور القرآن الكريم؟", a: "114" },
+                { q: "ما هي عاصمة العراق؟", a: "بغداد" },
+                { q: "حيوان يُسمى بأست سفينة الصحراء؟", a: "الجمل" },
+                { q: "ما هو أكبر كوكب في المجموعة الشمسية؟", a: "المشتري" }
+            ];
+            let randomQ = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
+            window.activeTrivia = { question: randomQ.q, answer: randomQ.a };
+
+            let roomDocId = window.currentRoom.replace(/\s+/g, '_');
+            db.collection("rooms").doc(roomDocId).collection("messages").add({
+                isBotMsg: true,
+                text: `🤖 [ بوت المسابقات الإمبراطوري ]: السؤال الجديد هو:\n❓ ${randomQ.q}\nأسرع واكتب الإجابة الصحيحة لتحصل على النقاط! 💎`,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
         },
         quoteUserText: (userName, textContent) => {
@@ -914,8 +973,7 @@
                 let hours = date.getHours();
                 let minutes = date.getMinutes();
                 let ampm = hours >= 12 ? 'مساءً' : 'صباحاً';
-                hours = hours % 12;
-                hours = hours ? hours : 12;
+                hours = hours % 12; hours = hours ? hours : 12;
                 minutes = minutes < 10 ? '0'+minutes : minutes;
                 timeStr = `${hours}:${minutes} ${ampm}`;
             } else {
@@ -923,8 +981,7 @@
                 let hours = now.getHours();
                 let minutes = now.getMinutes();
                 let ampm = hours >= 12 ? 'مساءً' : 'صباحاً';
-                hours = hours % 12;
-                hours = hours ? hours : 12;
+                hours = hours % 12; hours = hours ? hours : 12;
                 minutes = minutes < 10 ? '0'+minutes : minutes;
                 timeStr = `${hours}:${minutes} ${ampm}`;
             }
@@ -938,17 +995,14 @@
                         <i class="${rankObj.icon}" style="color: ${rankObj.color};"></i>
                     </div>
                     <div class="king-name-container" style="border-color: ${rankObj.color}; background: rgba(0,0,0,0.6);" onclick="ui.quoteUserText('${user.name}', '${text}')">
-                        <span class="king-name-tag" style="color: ${rankObj.color};">${user.name}</span>
+                        <span class="king-name-tag" style="color: ${user.nameColor || rankObj.color};">${user.name}</span>
                     </div>
                 </div>
                 <div class="msg-text">${text}</div>
                 <div class="msg-time">${timeStr}</div>
             `;
             let box = document.getElementById('chatBox');
-            if (box) {
-                box.appendChild(div);
-                box.scrollTop = box.scrollHeight;
-            }
+            if (box) { box.appendChild(div); box.scrollTop = box.scrollHeight; }
         },
         renderSystemGoldMsg: (text) => {
             let div = document.createElement('div');
@@ -958,10 +1012,17 @@
                 <div style="color:#fff; font-size:13px; font-weight:bold; margin-top:5px;">${text}</div>
             `;
             let box = document.getElementById('chatBox');
-            if (box) {
-                box.appendChild(div);
-                box.scrollTop = box.scrollHeight;
-            }
+            if (box) { box.appendChild(div); box.scrollTop = box.scrollHeight; }
+        },
+        renderBotMsg: (text) => {
+            let div = document.createElement('div');
+            div.className = 'msg-wrap bot-msg-wrap';
+            div.innerHTML = `
+                <div style="color:#3498db; font-weight:bold; font-size:14px;"><i class="fas fa-robot"></i> بوت المسابقات الإمبراطوري</div>
+                <div style="color:#fff; font-size:13px; font-weight:bold; margin-top:5px; white-space: pre-line;">${text}</div>
+            `;
+            let box = document.getElementById('chatBox');
+            if (box) { box.appendChild(div); box.scrollTop = box.scrollHeight; }
         },
         clickMicSlot: (num) => {
             window.selectedMicNum = num;
@@ -994,8 +1055,6 @@
             
             navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }).then(stream => {
                 window.localAudioStream = stream;
-                
-                // تحويل البث الصوتي المحلي إلى Object URL لبثه حياً لجميع المتواجدين في الروم
                 let audioBlobUrl = URL.createObjectURL(new MediaStream(stream.getAudioTracks()));
 
                 db.collection("rooms").doc(roomDocId).collection("mics").doc(`mic_${num}`).set({
@@ -1081,8 +1140,39 @@
                 let pencilHtml = (isMe || isAmOwner) ? 
                     `<div class="profile-edit-pencil" onclick="ui.openEditProfileModal('${uid}')"><i class="fas fa-pencil-alt"></i></div>` : '';
                 
-                let adminOptionsBtn = isAmOwner && !isMe ? 
-                    `<button class="row-btn active" style="width:100%; margin-top:10px; background:#e74c3c; color:#fff; border-radius:8px;" onclick="ui.openAdminControls('${uid}')">⚙️ إهداء رتبة وإدارة الحساب</button>` : '';
+                let ownerAdminPanelHtml = '';
+                if (isAmOwner && !isMe) {
+                    ownerAdminPanelHtml = `
+                        <div style="background:rgba(231,76,60,0.15); border:1px solid #e74c3c; border-radius:10px; padding:10px; margin-top:12px; text-align:right;">
+                            <p style="color:#e74c3c; font-weight:bold; font-size:13px; text-align:center; margin:0 0 8px;">👑 لوحة تحكم صاحب الموقع للإدارة</p>
+                            
+                            <label style="font-size:11px; color:var(--gold);">إهداء وتغيير الرتبة الإمبراطورية:</label>
+                            <select id="changeRoleSelect" class="form-select" style="font-size:12px; padding:6px;" onchange="ui.changeUserRole('${uid}', '${u.name}', this.value)">
+                                <option value="owner" ${u.role === 'owner' ? 'selected' : ''}>1. صاحب الموقع (كأس ذهبي)</option>
+                                <option value="prince" ${u.role === 'prince' ? 'selected' : ''}>2. برنس (كأس أبيض)</option>
+                                <option value="king" ${u.role === 'king' ? 'selected' : ''}>3. كنج (تاج أبيض)</option>
+                                <option value="honor" ${u.role === 'honor' ? 'selected' : ''}>4. انروا (تاج ازرق)</option>
+                                <option value="management" ${u.role === 'management' ? 'selected' : ''}>5. اداره (تاج احمر)</option>
+                                <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>6. ادمان (تاج وردي)</option>
+                                <option value="developer" ${u.role === 'developer' ? 'selected' : ''}>مطور</option>
+                                <option value="senior_mod" ${u.role === 'senior_mod' ? 'selected' : ''}>مشرف أول</option>
+                                <option value="mod" ${u.role === 'mod' ? 'selected' : ''}>مشرف</option>
+                                <option value="vip" ${u.role === 'vip' ? 'selected' : ''}>VIP</option>
+                                <option value="diamond" ${u.role === 'diamond' ? 'selected' : ''}>ماسي</option>
+                                <option value="gold_member" ${u.role === 'gold_member' ? 'selected' : ''}>ذهبي</option>
+                                <option value="new" ${u.role === 'new' ? 'selected' : ''}>عضو مسجل</option>
+                            </select>
+
+                            <div style="display:flex; gap:5px; margin-top:8px;">
+                                <button class="row-btn" style="background:${u.isMuted ? '#2ecc71':'#f39c12'}; color:#000; font-size:11px; padding:6px;" onclick="ui.adminToggleMute('${uid}', ${!u.isMuted})">${u.isMuted ? 'إلغاء الكتم':'كتم'}</button>
+                                <button class="row-btn" style="background:#e67e22; color:#fff; font-size:11px; padding:6px;" onclick="ui.adminKickUser('${uid}')">طرد</button>
+                                <button class="row-btn" style="background:#8e44ad; color:#fff; font-size:11px; padding:6px;" onclick="ui.adminBlockUser('${uid}')">حجب</button>
+                                <button class="row-btn" style="background:#c0392b; color:#fff; font-size:11px; padding:6px;" onclick="ui.adminBanUser('${uid}')">حظر</button>
+                            </div>
+                            <button class="row-btn" style="width:100%; background:#2c3e50; color:#e74c3c; font-size:11px; padding:8px; margin-top:6px;" onclick="ui.adminDeleteAccount('${uid}')"><i class="fas fa-user-slash"></i> حذف الحساب نهائياً</button>
+                        </div>
+                    `;
+                }
 
                 let rObj = window.chatRanksData[u.role] || { icon: "fas fa-user", color: "#fff", text: "عضو" };
 
@@ -1091,22 +1181,70 @@
                         ${pencilHtml}
                         <img src="${u.cover || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400'}" class="profile-card-cover">
                         <img src="${u.img || 'https://cdn-icons-png.flaticon.com/512/1042/1042291.png'}" class="profile-card-pfp">
-                        <h2 style="color:${rObj.color}; margin:5px 0 2px;">${u.name}</h2>
+                        <h2 style="color:${u.nameColor || rObj.color}; margin:5px 0 2px;">${u.name}</h2>
                         <p style="margin:0 0 5px; font-size:12px; color:${rObj.color}; font-weight:bold;"><i class="${rObj.icon}"></i> ${rObj.text}</p>
                         <p style="margin:0 0 10px; font-size:11px; color:#aaa;">${u.status || 'لا يوجد حالة'}</p>
                         
                         <div style="display:flex; justify-content:center; gap:15px; margin-bottom:10px; font-size:12px;">
-                            <div><i class="fas fa-star" style="color:var(--gold);"></i> 485</div>
-                            <div><i class="fas fa-heart" style="color:#2ecc71;"></i> <span id="likeCountText">${u.likes || 0}</span></div>
+                            <div><i class="fas fa-layer-group" style="color:var(--gold);"></i> العمر: ${u.age || 'غير محدد'}</div>
+                            <div><i class="fas fa-globe" style="color:#3498db;"></i> البلد: ${u.country || 'غير محدد'}</div>
+                            <div><i class="fas fa-heart" style="color:#2ecc71;"></i> ${u.likes || 0}</div>
                         </div>
 
                         <div style="display:flex; gap:8px; margin-bottom:12px;">
                             <button class="row-btn active" style="border-radius:8px; padding:6px; width:100%;" onclick="ui.startPrivateChatWith('${u.uid}', '${u.name}')"><i class="fas fa-comment"></i> مراسلة خاصة</button>
                         </div>
-                        ${adminOptionsBtn}
+                        ${ownerAdminPanelHtml}
                     </div>
                 `;
                 document.getElementById('featureModal').style.display = 'flex';
+            });
+        },
+        adminToggleMute: (uid, muteState) => {
+            db.collection("users").doc(uid).update({ isMuted: muteState }).then(() => {
+                alert(muteState ? "تم كتم العضو بنجاح." : "تم إلغاء كتم العضو.");
+                document.getElementById('featureModal').style.display = 'none';
+            });
+        },
+        adminKickUser: (uid) => {
+            db.collection("users").doc(uid).update({ isOnline: false }).then(() => {
+                alert("تم طرد العضو من الروم بنجاح.");
+                document.getElementById('featureModal').style.display = 'none';
+            });
+        },
+        adminBlockUser: (uid) => {
+            db.collection("users").doc(uid).update({ isMuted: true, status: "محجوب من الإدارة" }).then(() => {
+                alert("تم حجب العضو بنجاح.");
+                document.getElementById('featureModal').style.display = 'none';
+            });
+        },
+        adminBanUser: (uid) => {
+            db.collection("users").doc(uid).update({ isBanned: true, isOnline: false }).then(() => {
+                alert("تم حظر العضو نهائياً.");
+                document.getElementById('featureModal').style.display = 'none';
+            });
+        },
+        adminDeleteAccount: (uid) => {
+            if(!confirm("هل أنت متأكد تماماً من حذف هذا الحساب نهائياً من قاعدة البيانات؟")) return;
+            db.collection("users").doc(uid).delete().then(() => {
+                alert("تم حذف الحساب نهائياً.");
+                document.getElementById('featureModal').style.display = 'none';
+            });
+        },
+        changeUserRole: (uid, targetUserName, newRole) => {
+            db.collection("users").doc(uid).update({ role: newRole }).then(() => {
+                let rankObj = window.chatRanksData[newRole] || { text: newRole };
+                let systemNotice = `🎉 تم إهداء العضو [ ${targetUserName} ] رتبة [ ${rankObj.text} ] بواسطة الإدارة العامة 👑`;
+                let roomDocId = window.currentRoom.replace(/\s+/g, '_');
+                
+                db.collection("rooms").doc(roomDocId).collection("messages").add({
+                    isSystemGold: true,
+                    text: systemNotice,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                alert("تم تحديث الرتبة وحفظها وإرسال إعلان التهنئة في الشات بنجاح!");
+                document.getElementById('featureModal').style.display = 'none';
             });
         },
         openPrivateConversationsList: () => {
@@ -1186,19 +1324,40 @@
                 window.tempUploadedCover = u.cover || "";
                 window.tempUploadedPfp = u.img || "";
                 
-                document.getElementById('featureModalTitle').innerText = "تعديل الملف الشخصي والمميزات";
+                document.getElementById('featureModalTitle').innerText = "تعديل الملف الشخصي الكامل";
                 document.getElementById('featureModalBody').innerHTML = `
                     <div style="text-align:right;">
-                        <label style="font-size:12px; color:var(--gold); font-weight:bold;">صورة الغلاف:</label>
-                        <label for="fileCover" class="file-input-label"><i class="fas fa-upload"></i> اختر صورة الغلاف</label>
+                        <label style="font-size:12px; color:var(--gold); font-weight:bold;">صورة الغلاف (من ملفات الجهاز):</label>
+                        <label for="fileCover" class="file-input-label"><i class="fas fa-upload"></i> اختر ملف الغلاف</label>
                         <input type="file" id="fileCover" class="file-input-hidden" accept="image/*" onchange="ui.handleLocalFileProcessing(this, 'cover')">
                         
-                        <label style="font-size:12px; color:var(--gold); font-weight:bold;">الصورة الشخصية (البروفايل):</label>
-                        <label for="filePfp" class="file-input-label"><i class="fas fa-image"></i> اختر صورة البروفايل</label>
+                        <label style="font-size:12px; color:var(--gold); font-weight:bold;">الصورة الشخصية / البروفايل (من ملفات الجهاز):</label>
+                        <label for="filePfp" class="file-input-label"><i class="fas fa-image"></i> اختر ملف الصورة الشخصية</label>
                         <input type="file" id="filePfp" class="file-input-hidden" accept="image/*" onchange="ui.handleLocalFileProcessing(this, 'pfp')">
                         
                         <label style="font-size:12px; color:var(--gold);">الاسم المستعار:</label>
                         <input type="text" id="editName" class="form-control" value="${u.name || ''}">
+
+                        <label style="font-size:12px; color:var(--gold);">خلفية / لون الاسم:</label>
+                        <input type="color" id="editNameColor" class="form-control" style="height:40px; padding:4px;" value="${u.nameColor || '#ffd700'}">
+
+                        <label style="font-size:12px; color:var(--gold);">العمر:</label>
+                        <input type="number" id="editAge" class="form-control" value="${u.age || ''}">
+
+                        <label style="font-size:12px; color:var(--gold);">الجنس:</label>
+                        <select id="editGender" class="form-select">
+                            <option value="ذكر" ${u.gender === 'ذكر' ? 'selected' : ''}>ذكر</option>
+                            <option value="أنثى" ${u.gender === 'أنثى' ? 'selected' : ''}>أنثى</option>
+                        </select>
+
+                        <label style="font-size:12px; color:var(--gold);">البلد:</label>
+                        <input type="text" id="editCountry" class="form-control" value="${u.country || ''}">
+
+                        <label style="font-size:12px; color:var(--gold);">البريد الإلكتروني:</label>
+                        <input type="email" id="editEmail" class="form-control" value="${u.email || ''}">
+
+                        <label style="font-size:12px; color:var(--gold);">كلمة المرور الجديدة:</label>
+                        <input type="password" id="editPassword" class="form-control" value="${u.password || ''}">
                         
                         <label style="font-size:12px; color:var(--gold);">الحالة الشخصية:</label>
                         <input type="text" id="editStatus" class="form-control" value="${u.status || ''}">
@@ -1213,6 +1372,12 @@
                 cover: window.tempUploadedCover,
                 img: window.tempUploadedPfp,
                 name: document.getElementById('editName').value.trim(),
+                nameColor: document.getElementById('editNameColor').value,
+                age: document.getElementById('editAge').value.trim(),
+                gender: document.getElementById('editGender').value,
+                country: document.getElementById('editCountry').value.trim(),
+                email: document.getElementById('editEmail').value.trim(),
+                password: document.getElementById('editPassword').value,
                 status: document.getElementById('editStatus').value.trim()
             };
 
@@ -1223,47 +1388,6 @@
                     localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser));
                     ui.updateHeaderUserBgIcon();
                 });
-                document.getElementById('featureModal').style.display = 'none';
-            });
-        },
-        openAdminControls: (uid) => {
-            db.collection("users").doc(uid).get().then((doc) => {
-                let u = doc.data();
-                document.getElementById('featureModalTitle').innerText = `إدارة حساب: ${u.name}`;
-                document.getElementById('featureModalBody').innerHTML = `
-                    <div style="text-align:right;">
-                        <label style="font-size:12px; color:var(--gold); font-weight:bold;">إهداء وتغيير الرتبة الإمبراطورية:</label>
-                        <select id="changeRoleSelect" class="form-select" onchange="ui.changeUserRole('${uid}', '${u.name}', this.value)">
-                            <option value="owner" ${u.role === 'owner' ? 'selected' : ''}>صاحب الموقع</option>
-                            <option value="prince" ${u.role === 'prince' ? 'selected' : ''}>برنس</option>
-                            <option value="king" ${u.role === 'king' ? 'selected' : ''}>كنج</option>
-                            <option value="honor" ${u.role === 'honor' ? 'selected' : ''}>أنروا</option>
-                            <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>أدمان</option>
-                            <option value="developer" ${u.role === 'developer' ? 'selected' : ''}>مطور</option>
-                            <option value="senior_mod" ${u.role === 'senior_mod' ? 'selected' : ''}>مشرف أول</option>
-                            <option value="mod" ${u.role === 'mod' ? 'selected' : ''}>مشرف</option>
-                            <option value="vip" ${u.role === 'vip' ? 'selected' : ''}>VIP</option>
-                            <option value="diamond" ${u.role === 'diamond' ? 'selected' : ''}>ماسي</option>
-                            <option value="gold_member" ${u.role === 'gold_member' ? 'selected' : ''}>ذهبي</option>
-                            <option value="new" ${u.role === 'new' ? 'selected' : ''}>عضو مسجل</option>
-                        </select>
-                    </div>
-                `;
-            });
-        },
-        changeUserRole: (uid, targetUserName, newRole) => {
-            db.collection("users").doc(uid).update({ role: newRole }).then(() => {
-                let rankObj = window.chatRanksData[newRole] || { text: newRole };
-                let systemNotice = `🎉 تم إهداء العضو [ ${targetUserName} ] رتبة [ ${rankObj.text} ] بواسطة الإدارة العامة 👑`;
-                let roomDocId = window.currentRoom.replace(/\s+/g, '_');
-                
-                db.collection("rooms").doc(roomDocId).collection("messages").add({
-                    isSystemGold: true,
-                    text: systemNotice,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
-                alert("تم تحديث الرتبة وحفظها وإرسال إعلان التهنئة في الشات بنجاح!");
                 document.getElementById('featureModal').style.display = 'none';
             });
         },
