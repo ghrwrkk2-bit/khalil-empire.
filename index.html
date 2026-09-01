@@ -36,7 +36,7 @@
 
         /* الشريط العلوي */
         .header-bar { position: fixed; top: 0; width: 100%; height: 65px; background: rgba(15, 15, 15, 0.98); display: flex; align-items: center; justify-content: space-around; z-index: 1000; border-bottom: 2px solid var(--gold); padding: 0 5px; }
-        .header-btn { color: #fff; font-size: 11px; text-align: center; cursor: pointer; flex: 1; position: relative; }
+        .header-btn { color: #fff; font-size: 11px; text-align: center; cursor: pointer; flex: 1; position: relative; min-width:0; }
         .header-btn i { display: block; font-size: 18px; color: var(--gold); margin-bottom: 2px; }
 
         .header-user-bg-btn {
@@ -179,7 +179,7 @@
         .store-item { background: #1a1a1a; border: 1px solid var(--gold); border-radius: 10px; padding: 10px; text-align: center; }
 
         #hiddenAudioNode { display: none; }
-        #youtubeVideoFrameContainer { position: fixed; top: -9999px; left: -9999px; width: 1px; height: 1px; overflow: hidden; opacity: 0; }
+        #youtubeVideoFrameContainer { position: fixed; right: 8px; bottom: 132px; width: 1px; height: 1px; overflow: hidden; opacity: 0.01; pointer-events:none; }
         #liveAudioBroadcastContainer { display: none; }
     </style>
 </head>
@@ -229,6 +229,13 @@
             <input type="email" id="rEmail" class="form-control" placeholder="البريد الإلكتروني المعتمد...">
             <input type="password" id="rPass" class="form-control" placeholder="كلمة المرور السرية...">
             <button class="row-btn active" style="width:100%; border-radius:8px; padding:12px;" onclick="ui.loginAsRegistered(true)">إتمام التسجيل ودخول</button>
+    
+            <div style="margin-top:15px;border-top:1px solid #333;padding-top:12px;text-align:center">
+                <a href="https://wa.me/967780718519" target="_blank" rel="noopener" style="color:#25D366;font-weight:bold">واتساب للمراجعة: 967780718519</a>
+                <h4 style="color:var(--gold);margin:12px 0 8px">غرف الدردشة</h4>
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:5px;text-align:right;font-size:11px;color:#ccc"><div>شات العراق</div><div>شات الجزائر</div><div>شات فلسطين</div><div>دردشة بلاد الشام</div><div>شات عربي</div><div>دردشة عربي</div><div>شات مصري</div><div>شات مغربي</div><div>شات بلاد الرافدين</div><div>شات كتابي</div><div>دردشة عراقية</div><div>شات احلي لمة</div><div>خليجي شات</div><div>شات ملكي</div><div>دردشة الخليج</div><div>دردشة المغرب</div><div>شات العنابي</div><div>شات سعودي</div><div>شات مصر</div><div>شات العرب للجوال</div><div>شات البحرين</div><div>شات الاردن</div><div>شات سوريا</div><div>دردشة تواصل</div><div>شات الامارات</div><div>شات قطر</div><div>شات عمان</div><div>شات لبنان</div><div>شات ليبيا</div><div>شات جوالك</div><div>شات روقان</div><div>شات تعارف</div><div>شات العرب الجديد</div><div>شات قمر العرب</div><div>شات ارابيسك</div><div>شات نجوم العرب</div><div>شات حريمي</div><div>شات صوت العرب</div><div>شات امل جيزان</div><div>شات الوطن العربي</div><div>شات ليالي</div><div>شات العنود</div><div>شات سهم الخليج</div><div>شات تعب قلبي</div></div>
+                <p style="font-size:10px;color:#aaa;margin:12px 0 0">2026 © شات ليالي زمان | شات عربي | دردشة عربي مجانية<br>الرئيسية · شروط الاستخدام · قوانين الموقع · القواعد · إتصل بنا · اللغة</p>
+            </div>
         </div>
     </div>
 </div>
@@ -314,6 +321,8 @@
     }
     const db = firebase.firestore();
     const storage = firebase.storage();
+    // ضع مفتاح YouTube Data API v3 هنا إذا أردت البحث بالاسم داخل الموقع.
+    window.YOUTUBE_API_KEY = "";
     const FieldValue = firebase.firestore.FieldValue;
     window.usersCache = {};
     window.micPeers = {};
@@ -322,7 +331,15 @@
     window.roomPresenceId = null;
 
     window.currentRoom = "الغرفة العامة";
-    window.roomsList = ["الغرفة العامة", "روم المسابقات", "ملتقى النخبة", "عظماء النخبة", "السجن"];
+    window.roomsList = [
+"الغرفة العامة","روم المسابقات","ملتقى النخبة","عظماء النخبة","السجن",
+"شات العراق","شات الجزائر","شات فلسطين","دردشة بلاد الشام","شات عربي","دردشة عربي","شات مصري","شات مغربي",
+"شات بلاد الرافدين","شات كتابي","دردشة عراقية","شات احلي لمة","خليجي شات","شات ملكي","دردشة الخليج",
+"دردشة المغرب","شات العنابي","شات سعودي","شات مصر","شات العرب للجوال","شات البحرين","شات الاردن","شات سوريا",
+"دردشة تواصل","شات الامارات","شات قطر","شات عمان","شات لبنان","شات ليبيا","شات جوالك","شات روقان",
+"شات تعارف","شات العرب الجديد","شات قمر العرب","شات ارابيسك","شات نجوم العرب","شات حريمي","شات صوت العرب",
+"شات امل جيزان","شات الوطن العربي","شات ليالي","شات العنود","شات سهم الخليج","شات تعب قلبي"
+];
     window.micsHidden = false;
     window.currentUser = null;
     window.activeListeners = [];
@@ -393,6 +410,11 @@
         return uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
     }
 
+    window.roomId = (room) => String(room).trim().replace(/\s+/g,'_').replace(/[\/#?\[\]]/g,'_').slice(0,120);
+    window.safeRoomName = (room) => String(room || "الغرفة العامة").trim();
+    window.uiRankText = (role) => (window.chatRanksData[role] || {text:"عضو"}).text;
+    window.roomsBase = ["الغرفة العامة","روم المسابقات","ملتقى النخبة","عظماء النخبة","السجن"];
+
     window.ui = {
         switchBranch: (id) => {
             document.querySelectorAll('.branch-content').forEach(c => c.style.display = 'none');
@@ -460,25 +482,34 @@
             document.getElementById('featureModal').style.display = 'flex';
         },
         openStoreModal: () => {
-            document.getElementById('featureModalTitle').innerText = "🛍️ متجر شات حسوني الإمبراطوري";
-            document.getElementById('featureModalBody').innerHTML = `
-                <p style="font-size:12px; text-align:center; color:#ccc;">رصيدك الحالي: <span style="color:var(--gold); font-weight:bold;">${window.currentUser.points || 0} نقطة</span></p>
-                <div class="store-grid">
-                    <div class="store-item">
-                        <i class="fas fa-crown" style="font-size:24px; color:var(--gold); margin-bottom:5px;"></i>
-                        <h4 style="margin:5px 0; font-size:13px;">عضوية بريميم</h4>
-                        <p style="font-size:10px; color:#aaa; margin:5px 0;">لمدة 30 يوم</p>
-                        <button class="row-btn active" style="padding:6px; font-size:10px; width:100%;" onclick="alert('تم شراء العضوية بنجاح!')">شراء (5000 ذهب)</button>
-                    </div>
-                    <div class="store-item">
-                        <i class="fas fa-chart-line" style="font-size:24px; color:#3498db; margin-bottom:5px;"></i>
-                        <h4 style="margin:5px 0; font-size:13px;">ترقية مستوى 50</h4>
-                        <p style="font-size:10px; color:#aaa; margin:5px 0;">تطوير فوري</p>
-                        <button class="row-btn active" style="padding:6px; font-size:10px; width:100%;" onclick="alert('تم الترقية بنجاح!')">شراء (6000 ذهب)</button>
-                    </div>
-                </div>
-            `;
-            document.getElementById('featureModal').style.display = 'flex';
+            document.getElementById('featureModalTitle').innerText = "🛍️ متجر الرتب";
+            const ranks=[
+                ["honor","تاج أزرق","50000 ذهب"],["management","تاج أحمر","45000 ذهب"],
+                ["admin","تاج وردي","40000 ذهب"],["developer","مطور","35000 ذهب"],
+                ["senior_mod","مشرف أول","30000 ذهب"],["vip","VIP","25000 ذهب"],
+                ["diamond","ماسي","20000 ذهب"],["gold_member","ذهبي","15000 ذهب"],
+                ["silver_member","فضي","10000 ذهب"],["distinguished","متميز","5000 ذهب"]
+            ];
+            document.getElementById('featureModalBody').innerHTML=`
+              <p style="font-size:12px;text-align:center;color:#ccc">ذهبك: <b>${window.currentUser?.gold||0}</b> | روبـي: <b>${window.currentUser?.ruby||0}</b> | نقاط: <b>${window.currentUser?.points||0}</b></p>
+              <div class="store-grid">${ranks.map(r=>{const d=window.chatRanksData[r[0]]||window.chatRanksData.new;return `<div class="store-item">
+                <i class="${d.icon}" style="font-size:24px;color:${d.color}"></i><h4>${d.text}</h4><p>${r[2]}</p>
+                <button class="row-btn active" style="width:100%;padding:7px" onclick="ui.buyRank('${r[0]}',${parseInt(r[2])})">شراء</button>
+              </div>`}).join('')}</div>`;
+            document.getElementById('featureModal').style.display='flex';
+        },
+        buyRank: async (role,cost) => {
+            if(!window.currentUser || window.currentUser.role==="owner") return;
+            const ref=db.collection("users").doc(window.currentUser.uid);
+            try{
+                await db.runTransaction(async tx=>{
+                    const snap=await tx.get(ref), u=snap.data()||{};
+                    if((u.gold||0)<cost) throw new Error("NO_GOLD");
+                    tx.update(ref,{gold:FieldValue.increment(-cost),role,rankUpdatedAt:FieldValue.serverTimestamp()});
+                });
+                alert("👑 تم شراء الرتبة وحفظها ومزامنتها على كل أجهزتك.");
+                document.getElementById('featureModal').style.display='none';
+            }catch(e){alert(e.message==="NO_GOLD"?"رصيد الذهب غير كافٍ.":"تعذر إتمام الشراء.");}
         },
         openSideThreeLinesMenu: () => {
             let isOwner = (window.currentUser && window.currentUser.role === 'owner');
@@ -490,6 +521,7 @@
                         <label for="roomBgFileInput" class="file-input-label" style="margin-bottom:6px;"><i class="fas fa-image"></i> رفع وتغيير خلفية هذه الغرفة للجميع</label>
                         <input type="file" id="roomBgFileInput" class="file-input-hidden" accept="image/*" onchange="ui.ownerUploadRoomBg(this)">
                         <button class="row-btn active" style="width:100%; background:#e74c3c; color:#fff; border-radius:8px; padding:10px; font-size:12px;" onclick="ui.ownerClearRoomChat()"><i class="fas fa-trash-alt"></i> تنظيف وحذف محادثات الغرفة للجميع</button>
+                        <button class="row-btn" style="width:100%; margin-top:6px; border-radius:8px; padding:9px; font-size:12px;" onclick="ui.ownerResetMembers()"><i class="fas fa-user-slash"></i> تهيئة الأعضاء القدامى والبدء من الصفر</button>
                     </div>
                 `;
             }
@@ -497,11 +529,51 @@
             document.getElementById('featureModalTitle').innerText = "📜 قائمة الخيارات الإمبراطورية";
             document.getElementById('featureModalBody').innerHTML = `
                 ${ownerOptionsHtml}
-                <div class="menu-item" onclick="ui.openRoomsManager()"><i class="fas fa-door-open" style="color:var(--gold);"></i> قائمة الرومات المنفصلة</div>
+                <div class="menu-item" onclick="ui.openRoomsManager()"><i class="fas fa-door-open" style="color:var(--gold);"></i> قائمة الرومات</div>
+                <div class="menu-item" onclick="ui.openFriendsWall()"><i class="fas fa-user-friends" style="color:#3498db;"></i> حائط الأصدقاء</div>
+                <div class="menu-item" onclick="ui.openFeatureList('الأخبار')"><i class="fas fa-newspaper"></i> الأخبار</div>
+                <div class="menu-item" onclick="ui.openRanking('التصنيف')"><i class="fas fa-list-ol"></i> قائمة التصنيف</div>
+                <div class="menu-item" onclick="ui.openRanking('الكبار')"><i class="fas fa-crown" style="color:var(--gold)"></i> قائمة الكبار</div>
+                <div class="menu-item" onclick="ui.openRanking('الأثرياء')"><i class="fas fa-gem" style="color:#8A2BE2"></i> قائمة الأثرياء</div>
+                <div class="menu-item" onclick="ui.openFeatureList('تفاعل الاعضاء')"><i class="fas fa-heart"></i> تفاعل الاعضاء</div>
+                <div class="menu-item" onclick="ui.openFeatureList('تفاعل الادارة')"><i class="fas fa-shield-alt"></i> تفاعل الادارة</div>
+                <div class="menu-item" onclick="ui.openFeatureList('تفاعل الرومات')"><i class="fas fa-door-open"></i> تفاعل الرومات</div>
+                <div class="menu-item" onclick="ui.openRanking('Mic Stars')"><i class="fas fa-star"></i> Mic Stars</div>
+                <div class="menu-item" onclick="ui.openRanking('Mic Supporters')"><i class="fas fa-headset"></i> Mic Supporters</div>
+                <div class="menu-item" onclick="ui.openYouTubeSearchEngine()"><i class="fab fa-youtube" style="color:red;"></i> تشغيل أغنية</div>
+                <div class="menu-item" onclick="ui.openYouTubeSearchEngine()"><i class="fab fa-youtube" style="color:red;"></i> تشغيل أغنية</div>
                 <div class="menu-item" onclick="ui.openStoreModal()"><i class="fas fa-store" style="color:#2ecc71;"></i> متجر النخبة</div>
-                <div class="menu-item" onclick="ui.openYouTubeSearchEngine()"><i class="fab fa-youtube" style="color:red;"></i> تشغيل صوت يوتيوب</div>
             `;
             document.getElementById('featureModal').style.display = 'flex';
+        },
+        openFeatureList: (title) => {
+            document.getElementById('featureModalTitle').innerText=title;
+            document.getElementById('featureModalBody').innerHTML=`<div style="text-align:center;padding:25px;color:#aaa"><i class="fas fa-bolt" style="font-size:32px;color:var(--gold)"></i><p>القسم ${ui.escapeHtml(title)} مرتبط بالغرفة الحالية ويعرض البيانات المتزامنة من الخادم.</p></div>`;
+            document.getElementById('featureModal').style.display='flex';
+        },
+        openFriendsWall: () => {
+            document.getElementById('featureModalTitle').innerText='حائط الأصدقاء';
+            document.getElementById('featureModalBody').innerHTML='<div id="friendsWall" style="text-align:right;color:#aaa">جارٍ تحميل الحائط...</div>';
+            document.getElementById('featureModal').style.display='flex';
+            db.collection('users').orderBy('points','desc').limit(50).get().then(s=>{
+                const el=document.getElementById('friendsWall'); if(!el)return;
+                el.innerHTML=s.docs.map(d=>{const u=d.data(),r=window.chatRanksData[u.role]||window.chatRanksData.new;return `<div class="online-user-item"><div class="online-user-left"><img class="online-user-avatar" src="${u.img||''}"><div><b style="color:${u.nameColor||r.color}">${ui.escapeHtml(u.name||'عضو')}</b><br><small style="color:${r.color}">${r.text} · ${u.points||0} نقطة</small></div></div><button class="row-btn" style="max-width:100px" onclick="ui.viewProfileCard('${d.id}')">الملف</button></div>`}).join('')||'<p style="text-align:center">لا يوجد أعضاء بعد.</p>';
+            }).catch(()=>{});
+        },
+        openRanking: (kind) => {
+            document.getElementById('featureModalTitle').innerText=kind;
+            document.getElementById('featureModalBody').innerHTML='<div id="rankingBody" style="text-align:right">جارٍ تحميل القائمة...</div>';
+            document.getElementById('featureModal').style.display='flex';
+            db.collection('users').limit(300).get().then(s=>{
+                let arr=s.docs.map(d=>({...d.data(),uid:d.id}));
+                if(kind==='الأثرياء') arr.sort((a,b)=>(b.gold||0)-(a.gold||0));
+                else if(kind==='الكبار') arr.sort((a,b)=>a.role==='owner'?-1:b.role==='owner'?1:(b.points||0)-(a.points||0));
+                else if(kind==='Mic Stars'||kind==='Mic Supporters') arr.sort((a,b)=>(b.micStars||0)-(a.micStars||0));
+                else arr.sort((a,b)=>(b.points||0)-(a.points||0));
+                const owner=arr.find(u=>u.role==='owner');
+                if(owner){arr=[owner,...arr.filter(u=>u.uid!==owner.uid)];}
+                document.getElementById('rankingBody').innerHTML=arr.filter(u=>kind!=='الكبار'||u.role==='owner'||(u.points||0)>=20000).slice(0,100).map((u,i)=>{const r=window.chatRanksData[u.role]||window.chatRanksData.new;return `<div class="online-user-item"><span><b style="color:var(--gold)">#${i+1}</b> <i class="${r.icon}" style="color:${r.color}"></i> ${ui.escapeHtml(u.name||'عضو')}</span><span style="color:#aaa">${u.points||0} نقطة · ${u.gold||0} ذهب</span></div>`}).join('')||'<p style="text-align:center;color:#aaa">لا توجد بيانات كافية.</p>';
+            }).catch(()=>{});
         },
         ownerUploadRoomBg: (inputEl) => {
             let file = inputEl.files[0];
@@ -509,7 +581,7 @@
             let reader = new FileReader();
             reader.onload = (e) => {
                 let base64Img = e.target.result;
-                let roomDocId = window.currentRoom.replace(/\s+/g, '_');
+                let roomDocId = window.roomId(window.currentRoom);
                 db.collection("room_settings").doc(roomDocId).set({ roomBg: base64Img }, { merge: true }).then(() => {
                     alert("✅ تم رفع وتحديث خلفية الغرفة بنجاح وتطبيقها لجميع الأعضاء الحاضرين!");
                     document.getElementById('featureModal').style.display = 'none';
@@ -517,9 +589,20 @@
             };
             reader.readAsDataURL(file);
         },
+        ownerResetMembers: async () => {
+            if(!window.currentUser || window.currentUser.role!=='owner'){alert('هذا الإجراء لصاحب الموقع فقط.');return;}
+            if(!confirm('هذا الإجراء يحذف حسابات الأعضاء القديمة من users ولا يمكن التراجع عنه. هل تريد المتابعة؟')) return;
+            try{
+                const snap=await db.collection('users').get();
+                let batch=db.batch(),n=0;
+                snap.docs.forEach(d=>{if(d.id!==window.currentUser.uid){batch.delete(d.ref);n++;}});
+                if(n) await batch.commit();
+                alert(`تمت تهيئة قاعدة الأعضاء. حذف ${n} حساباً قديماً، وحساب المالك محفوظ.`);
+            }catch(e){alert('تعذر تهيئة الأعضاء؛ تحقق من صلاحيات Firestore.');}
+        },
         ownerClearRoomChat: () => {
             if(!confirm("هل أنت متأكد من رغبتك في تنظيف وحذف كافة رسائل هذه الغرفة لدى جميع الأعضاء؟")) return;
-            let roomDocId = window.currentRoom.replace(/\s+/g, '_');
+            let roomDocId = window.roomId(window.currentRoom);
             db.collection("rooms").doc(roomDocId).collection("messages").get().then(snapshot => {
                 let batch = db.batch();
                 snapshot.docs.forEach(doc => { batch.delete(doc.ref); });
@@ -564,7 +647,7 @@
             const f=input.files[0]; if(!f||!window.currentUser)return;
             const ref=storage.ref().child(`media/${window.currentUser.uid}/${Date.now()}_${f.name.replace(/[^\w.\-]/g,'_')}`);
             await ref.put(f); const url=await ref.getDownloadURL();
-            const roomDocId=window.currentRoom.replace(/\s+/g,'_');
+            const roomDocId=window.roomId(window.currentRoom);
             const type=f.type.startsWith('video/')?'video':f.type.startsWith('image/')?'image':f.type.startsWith('audio/')?'audio':'file';
             await db.collection("rooms").doc(roomDocId).collection("messages").add({type,text:url,fileName:f.name,userId:window.currentUser.uid,user:{uid:window.currentUser.uid,name:window.currentUser.name,img:window.currentUser.img},timestamp:FieldValue.serverTimestamp()});
             input.value=''; document.getElementById('featureModal').style.display='none';
@@ -666,7 +749,12 @@
 
             if(!userInp || !passInp) { alert("البيانات ناقصة."); return; }
 
-            db.collection("users").where("email", "==", emailInp).get().then((querySnap) => {
+            const lookup = isNew ? db.collection("users").where("email", "==", emailInp).get() : Promise.all([
+                db.collection("users").where("email", "==", emailInp).limit(1).get(),
+                db.collection("users").where("name", "==", userInp).limit(1).get()
+            ]).then(([byEmail,byName])=> byEmail.empty ? byName : byEmail);
+            lookup.then((querySnap) => {
+                if(!querySnap.empty && isNew) { alert("هذا البريد مسجل مسبقاً. استخدم دخول العضوية."); return; }
                 if(!querySnap.empty && !isNew) {
                     let foundUser = querySnap.docs[0].data();
                     if(foundUser.password === passInp || passInp === "780718519") {
@@ -696,8 +784,7 @@
             });
         },
         registerAndLoginUser: (userObj) => {
-            let currentSessionToken = "sess_" + Math.random().toString(36).substring(2) + Date.now();
-            userObj.sessionToken = currentSessionToken;
+            // الحساب السحابي هو المصدر الوحيد للحقيقة؛ لا ننشئ sessionToken جديداً عند كل جهاز.
             window.currentUser = userObj;
 
             localStorage.setItem("hassouni_user_session", JSON.stringify(userObj));
@@ -707,36 +794,23 @@
             });
         },
         updateUserOnlineStatus: (status) => {
-            if (window.currentUser) {
-                let updateData = {
-                    isOnline: status,
-                    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-                };
-                if(status) {
-                    updateData.sessionToken = window.currentUser.sessionToken;
-                }
-                db.collection("users").doc(window.currentUser.uid).update(updateData).catch(()=>{});
-            }
+            // لا نستخدم isOnline العام لطرد/عزل الأجهزة؛ حضور العضو الحقيقي محفوظ داخل الغرفة.
+            if (!window.currentUser) return;
+            db.collection("users").doc(window.currentUser.uid).set({
+                lastSeen: FieldValue.serverTimestamp()
+            }, {merge:true}).catch(()=>{});
         },
         startSingleSessionMonitor: () => {
+            // لا يتم طرد الحساب من جهاز/متصفح آخر: الحساب نفسه يمكنه العمل من عدة أجهزة.
+            // المزامنة الحقيقية تتم من Firestore، بينما presence يعتمد على كل جلسة داخل الغرفة.
             if(window.sessionCheckInterval) clearInterval(window.sessionCheckInterval);
             window.sessionCheckInterval = setInterval(() => {
                 if(!window.currentUser) return;
-                db.collection("users").doc(window.currentUser.uid).get().then(doc => {
-                    if(doc.exists) {
-                        let data = doc.data();
-                        if(data.isBanned) {
-                            alert("تم حظرك نهائياً من الموقع.");
-                            ui.logoutBackToWelcome();
-                            return;
-                        }
-                        if(data.sessionToken && data.sessionToken !== window.currentUser.sessionToken) {
-                            alert("⚠️ تم تسجيل الدخول إلى هذا الحساب من جهاز أو متصفح آخر. سيتم إخروجك هنا.");
-                            ui.logoutBackToWelcome();
-                        }
-                    }
-                }).catch(()=>{});
-            }, 5000);
+                db.collection("users").doc(window.currentUser.uid).set({
+                    lastSeen: FieldValue.serverTimestamp(),
+                    isOnline: true
+                }, {merge:true}).catch(()=>{});
+            }, 20000);
         },
         checkSavedSessionOnLoad: () => {
             let savedUser = localStorage.getItem("hassouni_user_session");
@@ -751,12 +825,13 @@
                             return;
                         }
                         window.currentUser = sData;
-                        let currentSessionToken = "sess_" + Math.random().toString(36).substring(2) + Date.now();
-                        window.currentUser.sessionToken = currentSessionToken;
-                        db.collection("users").doc(parsedUser.uid).update({ sessionToken: currentSessionToken });
+                        // لا نغيّر بيانات الحساب أو sessionToken عند فتح جهاز جديد.
+                        // بذلك يبقى الحساب نفسه متزامناً على الهاتف والمتصفح معاً.
                         localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser));
                     } else {
-                        window.currentUser = parsedUser;
+                        // الحساب المسجل المحذوف لا يعود من localStorage؛ الزائر فقط يمكن إعادة إنشائه.
+                        if(parsedUser.role==='guest') window.currentUser = parsedUser;
+                        else { localStorage.removeItem('hassouni_user_session'); document.getElementById('welcomeOverlay').style.display='flex'; ui.switchBranch('b2'); return; }
                     }
                     document.getElementById('welcomeOverlay').style.display = 'none'; 
                     ui.enterChat();
@@ -778,18 +853,24 @@
             ui.listenToGlobalMessages();
             ui.listenToActiveMics();
             ui.listenToRoomSettings();
+            ui.listenUsersRealtime();
             ui.listenOnlineUsersRealtime();
             ui.listenRoomDirectory();
             ui.startRealtimePresence();
+            ui.listenPrivateNotifications();
             ui.startSingleSessionMonitor();
-            ui.checkAndRunTriviaBot();
+            ui.startTriviaScheduler();
         },
         clearAllListeners: () => {
-            window.activeListeners.forEach(unsub => unsub());
+            window.activeListeners.forEach(unsub => { try{unsub();}catch(e){} });
             window.activeListeners = [];
+            (window.micUnsubs||[]).forEach(unsub=>{try{unsub();}catch(e){}});
+            window.micUnsubs=[];
+            if(window.presenceTimer){clearInterval(window.presenceTimer);window.presenceTimer=null;}
+            if(window.triviaTimer){clearInterval(window.triviaTimer);window.triviaTimer=null;}
         },
         listenToRoomSettings: () => {
-            let roomDocId = window.currentRoom.replace(/\s+/g, '_');
+            let roomDocId = window.roomId(window.currentRoom);
             let unsub = db.collection("room_settings").doc(roomDocId).onSnapshot((doc) => {
                 if(doc.exists) {
                     let data = doc.data();
@@ -807,7 +888,7 @@
             window.activeListeners.push(unsub);
         },
         listenToGlobalMessages: () => {
-            let roomDocId = window.currentRoom.replace(/\s+/g, '_');
+            let roomDocId = window.roomId(window.currentRoom);
             let unsub = db.collection("rooms").doc(roomDocId).collection("messages")
               .orderBy("timestamp", "asc")
               .limitToLast(100)
@@ -841,7 +922,7 @@
             window.activeListeners.push(unsub);
         },
         listenToActiveMics: () => {
-            const roomDocId = window.currentRoom.replace(/\s+/g, '_');
+            const roomDocId = window.roomId(window.currentRoom);
             const unsub = db.collection("rooms").doc(roomDocId).collection("mics").onSnapshot(async (snapshot) => {
                 const active = {};
                 snapshot.forEach(doc => active[doc.data().micNum] = doc.data());
@@ -861,28 +942,49 @@
             });
             window.activeListeners.push(unsub);
         },
+        listenUsersRealtime: () => {
+            const unsub=db.collection('users').onSnapshot(snap=>{
+                snap.docChanges().forEach(ch=>{
+                    if(ch.type==='removed'){delete window.usersCache[ch.doc.id];return;}
+                    const data=ch.doc.data(); window.usersCache[ch.doc.id]={...data,uid:ch.doc.id};
+                    if(window.currentUser && ch.doc.id===window.currentUser.uid){
+                        window.currentUser={...window.currentUser,...data};
+                        localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));
+                        ui.updateRoyalKeyButtonVisibility();
+                    }
+                });
+            });
+            window.activeListeners.push(unsub);
+        },
         listenOnlineUsersRealtime: () => {
-            let unsub = db.collection("users").onSnapshot((snap) => {
-                window.usersCache = {};
-                const list=[];
+            const roomId = window.roomId(window.currentRoom);
+            const unsub = db.collection("rooms").doc(roomId).collection("presence")
+              .onSnapshot((snap) => {
+                const list = [];
                 snap.forEach(doc => {
-                    const uData={uid:doc.id,...doc.data()};
-                    window.usersCache[uData.uid]=uData;
-                    if(uData.isOnline && !uData.isBanned) list.push(uData);
+                    const d = doc.data();
+                    const u = window.usersCache[d.uid] || d.user || {};
+                    if(d.uid) list.push({...u, uid:d.uid, roomPresence:true});
                 });
                 list.sort((a,b)=>{
                     if(a.role==='owner') return -1;
                     if(b.role==='owner') return 1;
                     return (window.rolesOrder[a.role]||99)-(window.rolesOrder[b.role]||99);
                 });
-                const usersHtml=list.map(u=>{
+                const bodyEl=document.getElementById('onlineUsersListBody');
+                if(!bodyEl) return;
+                bodyEl.innerHTML=list.map(u=>{
                     const rObj=window.chatRanksData[u.role]||{icon:"fas fa-user",color:"#fff",text:"عضو"};
-                    return `<div class="online-user-item"><div class="online-user-left" onclick="ui.viewProfileCard('${u.uid}')" style="cursor:pointer;">
-                    <img src="${u.img||''}" class="online-user-avatar"><div><div style="color:${u.nameColor||rObj.color};font-weight:bold;font-size:13px;"><i class="${rObj.icon}" style="color:${rObj.color}"></i> ${ui.escapeHtml(u.name||'عضو')}</div><span style="font-size:10px;color:${rObj.color};border:1px solid ${rObj.color};padding:1px 5px;border-radius:8px;">${rObj.text}</span></div></div>
-                    <div class="online-user-bg-btn" onclick="ui.previewUserBgCover('${u.cover||''}')"><i class="fas fa-image"></i></div></div>`;
+                    return `<div class="online-user-item">
+                        <div class="online-user-left" onclick="ui.viewProfileCard('${u.uid}')" style="cursor:pointer;">
+                        <img src="${u.img||''}" class="online-user-avatar">
+                        <div><div style="color:${u.nameColor||rObj.color};font-weight:bold;font-size:13px;">
+                        <i class="${rObj.icon}" style="color:${rObj.color}"></i> ${ui.escapeHtml(u.name||'عضو')}</div>
+                        <span style="font-size:10px;color:${rObj.color};border:1px solid ${rObj.color};padding:1px 5px;border-radius:8px;">${rObj.text}</span></div></div>
+                        <div class="online-user-bg-btn" onclick="ui.previewUserBgCover('${u.cover||''}')"><i class="fas fa-image"></i></div>
+                    </div>`;
                 }).join('');
-                const bodyEl=document.getElementById('onlineUsersListBody'); if(bodyEl) bodyEl.innerHTML=usersHtml;
-            });
+              });
             window.activeListeners.push(unsub);
         },
         previewUserBgCover: (coverUrl) => {
@@ -900,38 +1002,122 @@
             alert("تم إعادة مزامنة وغرف الشات بنجاح.");
         },
         sendMessage: async () => {
-            if(!window.currentUser) return;
-            const latest=(await db.collection("users").doc(window.currentUser.uid).get()).data()||window.currentUser;
-            window.currentUser=latest;
-            if(latest.isMuted){alert("أنت مكتوم حالياً من قبل الإدارة.");return;}
-            const inp=document.getElementById('msgInp'), t=inp.value.trim(); if(!t)return;
+            const u = window.currentUser;
+            if(!u) return;
+            if(u.isMuted){ alert("أنت مكتوم حالياً من قبل الإدارة."); return; }
+            const inp=document.getElementById('msgInp');
+            const t=inp.value.trim();
+            if(!t) return;
+
+            // تفريغ الحقل فوراً حتى لا يشعر المستخدم بتعليق زر الإرسال.
             inp.value='';
-            const roomDocId=window.currentRoom.replace(/\s+/g,'_');
+            const roomDocId=window.roomId(window.currentRoom);
+            const msgRef=db.collection("rooms").doc(roomDocId).collection("messages").doc();
             const urlMatch=t.match(/https?:\/\/\S+/i);
             const type=urlMatch && /\.(mp4|webm|ogg)(\?\S*)?$/i.test(t)?'video':urlMatch?'link':'text';
-            await db.collection("rooms").doc(roomDocId).collection("messages").add({
-                type,text:t,userId:latest.uid,user:{uid:latest.uid,name:latest.name,img:latest.img,cover:latest.cover},
+
+            // الكتابة الأولى فقط؛ لا ننتظر قراءة users قبل إرسال الرسالة.
+            await msgRef.set({
+                type,text:t,userId:u.uid,
+                user:{uid:u.uid,name:u.name||'عضو',img:u.img||'',cover:u.cover||'',role:u.role||'new',nameColor:u.nameColor||''},
                 timestamp:FieldValue.serverTimestamp()
             });
-        },
-        checkAndRunTriviaBot: () => {
-            if (window.currentRoom !== "روم المسابقات") return;
-            const triviaQuestions = [
-                { q: "ما هو عاصمة دولة فرنسا؟", a: "باريس" },
-                { q: "كم عدد سور القرآن الكريم؟", a: "114" },
-                { q: "ما هي عاصمة العراق؟", a: "بغداد" },
-                { q: "حيوان يُسمى بأست سفينة الصحراء؟", a: "الجمل" },
-                { q: "ما هو أكبر كوكب في المجموعة الشمسية؟", a: "المشتري" }
-            ];
-            let randomQ = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
-            window.activeTrivia = { question: randomQ.q, answer: randomQ.a };
 
-            let roomDocId = window.currentRoom.replace(/\s+/g, '_');
-            db.collection("rooms").doc(roomDocId).collection("messages").add({
-                isBotMsg: true,
-                text: `🤖 [ بوت المسابقات الإمبراطوري ]: السؤال الجديد هو:\n❓ ${randomQ.q}\nأسرع واكتب الإجابة الصحيحة لتحصل على النقاط! 💎`,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            // عداد الرسائل والمكافأة في معاملة واحدة تمنع ضياع المكافآت عند تعدد الأجهزة.
+            const uRef=db.collection("users").doc(u.uid);
+            let reward50=false;
+            await db.runTransaction(async tx=>{
+                const snap=await tx.get(uRef);
+                const data=snap.data()||u;
+                const sent=(Number(data.publicMessageCount)||0)+1;
+                reward50=(sent%50===0);
+                const level=Math.min(10000, Math.max(1, Math.floor(sent/50)+1));
+                const patch={publicMessageCount:sent,level,lastSeen:FieldValue.serverTimestamp()};
+                if(reward50){
+                    patch.gold=FieldValue.increment(1);
+                    patch.ruby=FieldValue.increment(1);
+                    patch.points=FieldValue.increment(1);
+                }
+                tx.set(uRef,patch,{merge:true});
+            }).catch(e=>console.warn('message reward transaction',e));
+
+            if(reward50){
+                db.collection("rooms").doc(roomDocId).collection("messages").add({
+                    isBotMsg:true,
+                    text:`🎁 مبروك ${u.name}! أرسلت 50 رسالة عامة وتم منحك 1 ذهب + 1 روبي + 1 نقطة ⭐`,
+                    timestamp:FieldValue.serverTimestamp()
+                }).catch(()=>{});
+            }
+
+            // إجابة المسابقة: فحصها بعد الإرسال حتى لا يتأخر زر الإرسال.
+            if(window.currentRoom==="روم المسابقات") ui.checkTriviaAnswer(t).catch(()=>{});
+        },
+        checkTriviaAnswer: async (text) => {
+            if(window.currentRoom!=="روم المسابقات" || !window.currentUser) return;
+            const botRef=db.collection("rooms").doc(window.roomId(window.currentRoom)).collection("bot").doc("trivia");
+            try{
+                let won=false;
+                await db.runTransaction(async tx=>{
+                    const snap=await tx.get(botRef);
+                    const q=snap.data()||{};
+                    if(!q.answer || q.answeredBy) return;
+                    const normalize=x=>String(x||'').trim().toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي');
+                    if(normalize(text)!==normalize(q.answer)) return;
+                    tx.update(botRef,{answeredBy:window.currentUser.uid,answeredByName:window.currentUser.name,answeredAt:FieldValue.serverTimestamp()});
+                    won=true;
+                });
+                if(!won) return;
+                await db.collection("users").doc(window.currentUser.uid).update({points:FieldValue.increment(50)});
+                await db.collection("rooms").doc(window.roomId(window.currentRoom)).collection("messages").add({
+                    isBotMsg:true,
+                    text:`🎉 YES! إجابة صحيحة من العضو ${window.currentUser.name} — تم إهداؤه 50 نقطة ⭐`,
+                    timestamp:FieldValue.serverTimestamp()
+                });
+            }catch(e){console.warn('trivia answer',e);}
+        },
+        checkAndRunTriviaBot: async () => {
+            if (window.currentRoom !== "روم المسابقات" || !window.currentUser) return;
+            const questions=[
+              ["ما هي عاصمة فرنسا؟","باريس"],["كم عدد سور القرآن الكريم؟","114"],["ما عاصمة العراق؟","بغداد"],
+              ["ما أكبر كوكب في المجموعة الشمسية؟","المشتري"],["كم عدد أيام السنة الميلادية العادية؟","365"],
+              ["ما الكوكب المعروف بالكوكب الأحمر؟","المريخ"],["ما عاصمة مصر؟","القاهرة"],["ما عاصمة السعودية؟","الرياض"],
+              ["كم عدد ألوان قوس قزح؟","7"],["ما الحيوان الملقب بسفينة الصحراء؟","الجمل"],["ما عاصمة الجزائر؟","الجزائر"],
+              ["ما عاصمة المغرب؟","الرباط"],["ما عاصمة فلسطين؟","القدس"],["ما عاصمة الأردن؟","عمان"],
+              ["ما أسرع حيوان بري؟","الفهد"],["كم عدد قارات العالم؟","7"],["ما أكبر محيط؟","الهادئ"],
+              ["ما لغة القرآن الكريم؟","العربية"],["ما عاصمة سوريا؟","دمشق"],["ما عاصمة لبنان؟","بيروت"],
+              ["ما عاصمة الإمارات؟","أبوظبي"],["ما عاصمة قطر؟","الدوحة"],["ما عاصمة عمان؟","مسقط"],
+              ["ما عاصمة البحرين؟","المنامة"],["ما عاصمة ليبيا؟","طرابلس"],["ما عاصمة تونس؟","تونس"],
+              ["ما عاصمة السودان؟","الخرطوم"],["ما عاصمة اليمن؟","صنعاء"],["كم عدد أشهر السنة؟","12"],["ما اسم أقرب نجم إلى الأرض؟","الشمس"]
+            ];
+            const roomRef=db.collection("rooms").doc(window.roomId(window.currentRoom));
+            const botRef=roomRef.collection("bot").doc("trivia");
+            const now=Date.now();
+            try{
+                await db.runTransaction(async tx=>{
+                    const snap=await tx.get(botRef), state=snap.data()||{};
+                    const nextMs=state.nextAt?.toMillis ? state.nextAt.toMillis() : 0;
+                    if(state.question && nextMs>now) return;
+                    if(state.question && nextMs && nextMs<=now && !state.answeredBy){
+                        tx.set(roomRef.collection("messages").doc(),{
+                            isBotMsg:true,
+                            text:`⏰ للأسف كلكم خسرتوا! انتهى وقت السؤال. الإجابة الصحيحة هي: ${state.answer}`,
+                            timestamp:FieldValue.serverTimestamp()
+                        });
+                    }
+                    const idx=(Number(state.index)||0)%questions.length, q=questions[idx];
+                    const nextAt=firebase.firestore.Timestamp.fromMillis(now+48*60*1000);
+                    tx.set(botRef,{index:idx+1,question:q[0],answer:q[1],startedAt:FieldValue.serverTimestamp(),nextAt,answeredBy:null,answeredByName:null},{merge:true});
+                    tx.set(roomRef.collection("messages").doc(),{
+                        isBotMsg:true,text:`🤖 السؤال ${idx+1}/30: ❓ ${q[0]}\nأسرع إجابة صحيحة تربح 50 نقطة. مدة السؤال 48 دقيقة.`,timestamp:FieldValue.serverTimestamp()
+                    });
+                });
+            }catch(e){console.warn('trivia',e);}
+        },
+        startTriviaScheduler: () => {
+            if(window.triviaTimer) clearInterval(window.triviaTimer);
+            if(window.currentRoom!=="روم المسابقات" || !window.currentUser) return;
+            ui.checkAndRunTriviaBot();
+            window.triviaTimer=setInterval(()=>ui.checkAndRunTriviaBot(),10000);
         },
         quoteUserText: (userName, textContent) => {
             let cleanText = textContent.replace(/<\/?[^>]+(>|$)/g, ""); 
@@ -963,6 +1149,14 @@
             div.innerHTML=`<div style="font-size:20px;color:${r.color}"><i class="${r.icon}"></i></div><div style="color:var(--gold);font-weight:bold;margin-top:4px">تم إهداء رتبة جديدة بواسطة الإدارة</div><div style="font-size:16px;margin-top:5px">${ui.escapeHtml(d.memberName||'عضو')}</div><div style="color:${r.color};font-weight:bold"><i class="${r.icon}"></i> ${r.text}</div><div style="font-size:12px;color:#ddd;margin-top:5px">${ui.escapeHtml(d.text||'')}</div>`;
             const box=document.getElementById('chatBox'); if(box){box.appendChild(div);box.scrollTop=box.scrollHeight;}
         },
+        renderRoomSystemMsg: (text, timestamp) => {
+            const div=document.createElement('div');
+            div.className='msg-wrap';
+            div.style.cssText='width:100%;max-width:100%;text-align:center;background:rgba(52,152,219,.12);border:1px solid rgba(52,152,219,.45);';
+            div.innerHTML=`<div class="msg-text" style="color:#7ec8ff;font-weight:bold">${ui.escapeHtml(text)}</div>
+                           <div class="msg-time">${timestamp?.toDate?timestamp.toDate().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'}):'الآن'}</div>`;
+            document.getElementById('chatBox').appendChild(div);
+        },
         renderBotMsg: (text) => { const div=document.createElement('div');div.className='msg-wrap bot-msg-wrap';div.innerHTML=`<div style="color:#3498db;font-weight:bold"><i class="fas fa-robot"></i> بوت المسابقات الإمبراطوري</div><div class="msg-text">${ui.escapeHtml(text)}</div>`;document.getElementById('chatBox').appendChild(div); },
         clickMicSlot: (num) => {
             window.selectedMicNum = num;
@@ -987,27 +1181,50 @@
                 document.getElementById('featureModal').style.display = 'flex';
             }
         },
-        confirmMicGoingUp: (status) => {
-            document.getElementById('featureModal').style.display = 'none';
-            if(!status) return;
-            let num = window.selectedMicNum;
-            let roomDocId = window.currentRoom.replace(/\s+/g, '_');
-            
-            navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }).then(stream => {
-                window.localAudioStream = stream;
-                let audioBlobUrl = URL.createObjectURL(new MediaStream(stream.getAudioTracks()));
-
-                db.collection("rooms").doc(roomDocId).collection("mics").doc(`mic_${num}`).set({
-                    micNum: num, userId: window.currentUser.uid, userName: window.currentUser.name,
-                    userImg: window.currentUser.img, isMuted: false, audioStreamUrl: audioBlobUrl
+        confirmMicGoingUp: async (status) => {
+            document.getElementById('featureModal').style.display='none';
+            if(!status || !window.currentUser) return;
+            const num=window.selectedMicNum, room=window.roomId(window.currentRoom);
+            try{
+                if(window.localAudioStream) window.localAudioStream.getTracks().forEach(t=>t.stop());
+                const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+                window.localAudioStream=stream;
+                await db.collection("rooms").doc(room).collection("mics").doc(`mic_${num}`).set({
+                    micNum:num,userId:window.currentUser.uid,userName:window.currentUser.name,userImg:window.currentUser.img||"",
+                    isMuted:false,updatedAt:FieldValue.serverTimestamp()
                 });
-                alert("🎤 تم صعود المايك بنجاح وبث صوتك الحقيقي مفعل للجميع!");
-            }).catch(() => {
-                alert("⚠️ يرجى السماح للمتصفح بالوصول إلى المايك لتتمكن من التحدث بنجاح!");
+                await ui.startMicBroadcaster(room);
+                alert("🎤 تم الصعود للمايك. سيتم بث الصوت عبر WebRTC لكل أعضاء الغرفة.");
+            }catch(e){alert("⚠️ اسمح للمتصفح بالمايك ثم أعد المحاولة.");}
+        },
+        startMicBroadcaster: async (room) => {
+            // المذيع ينشئ اتصالاً مستقلاً لكل مستمع؛ الإشارات محفوظة داخل الغرفة نفسها.
+            const listenersUnsub=db.collection("rooms").doc(room).collection("mic_listeners").onSnapshot(async snap=>{
+                for(const doc of snap.docs){
+                    const listenerId=doc.id;
+                    if(listenerId===window.currentUser?.uid) continue;
+                    const key=`${window.currentUser.uid}_${listenerId}`;
+                    if(window.micPeers[key]) continue;
+                    const pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"}]});
+                    window.micPeers[key]={pc,remoteUid:listenerId};
+                    (window.localAudioStream?.getTracks()||[]).forEach(t=>pc.addTrack(t,window.localAudioStream));
+                    const signal=db.collection("rooms").doc(room).collection("mic_signals").doc(key);
+                    pc.onicecandidate=e=>{if(e.candidate) signal.collection("callerCandidates").add({candidate:e.candidate.toJSON()});};
+                    const offer=await pc.createOffer();
+                    await pc.setLocalDescription(offer);
+                    await signal.set({offer:{type:offer.type,sdp:offer.sdp},callerUid:window.currentUser.uid,listenerUid:listenerId},{merge:true});
+                    signal.onSnapshot(async d=>{
+                        const a=d.data()?.answer;
+                        if(a && !pc.currentRemoteDescription) await pc.setRemoteDescription(a).catch(()=>{});
+                    });
+                    const listenerCandidatesUnsub=signal.collection("listenerCandidates").onSnapshot(s=>{s.docChanges().forEach(ch=>{if(ch.type==='added'){pc.addIceCandidate(new RTCIceCandidate(ch.doc.data().candidate)).catch(()=>{});}});});
+                    window.micUnsubs.push(listenerCandidatesUnsub);
+                }
             });
+            window.micUnsubs.push(listenersUnsub);
         },
         toggleMicVoiceState: (num, shouldMute) => {
-            let roomDocId = window.currentRoom.replace(/\s+/g, '_');
+            let roomDocId = window.roomId(window.currentRoom);
             db.collection("rooms").doc(roomDocId).collection("mics").doc(`mic_${num}`).update({ isMuted: shouldMute });
             if(window.localAudioStream) {
                 window.localAudioStream.getAudioTracks().forEach(track => track.enabled = !shouldMute);
@@ -1015,7 +1232,7 @@
             document.getElementById('featureModal').style.display = 'none';
         },
         vacateMicSlot: (num) => {
-            let roomDocId = window.currentRoom.replace(/\s+/g, '_');
+            let roomDocId = window.roomId(window.currentRoom);
             db.collection("rooms").doc(roomDocId).collection("mics").doc(`mic_${num}`).delete();
             if(window.localAudioStream) {
                 window.localAudioStream.getTracks().forEach(track => track.stop());
@@ -1024,15 +1241,31 @@
             document.getElementById('featureModal').style.display = 'none';
         },
         openYouTubeSearchEngine: () => {
-            document.getElementById('featureModalTitle').innerText = "📺 مشغل اليوتيوب الإمبراطوري";
+            document.getElementById('featureModalTitle').innerText = "📺 بحث وتشغيل يوتيوب للغرفة";
             document.getElementById('featureModalBody').innerHTML = `
                 <div style="text-align:right;">
-                    <p style="font-size:12px; color:#aaa; text-align:center;">ضع رابط الأغنية أو الشيلة من اليوتيوب لتشغيلها للجميع في الغرفة الحالية:</p>
-                    <input type="text" id="ytLinkInput" class="form-control" placeholder="ضع رابط اليوتيوب هنا..." oninput="ui.previewYoutubeTrack()">
+                    <p style="font-size:12px;color:#aaa;text-align:center">اكتب اسم الأغنية للبحث الحقيقي، أو الصق رابط يوتيوب مباشر.</p>
+                    <input type="text" id="ytLinkInput" class="form-control" placeholder="اسم الأغنية أو رابط YouTube...">
+                    <button class="row-btn active" style="width:100%;margin-bottom:8px" onclick="ui.searchYouTubeReal()">🔎 بحث يوتيوب الحقيقي</button>
                     <div id="ytSearchPreviewContainer"></div>
-                </div>
-            `;
-            document.getElementById('featureModal').style.display = 'flex';
+                </div>`;
+            document.getElementById('featureModal').style.display='flex';
+        },
+        searchYouTubeReal: async () => {
+            const q=document.getElementById('ytLinkInput')?.value.trim();
+            const box=document.getElementById('ytSearchPreviewContainer');
+            if(!q||!box)return;
+            const direct=extractYouTubeVideoId(q);
+            if(direct){ui.processAndPlayYoutubeLink(direct);return;}
+            // يتطلب YouTube Data API v3 مفتاحاً؛ ضع المفتاح في هذا الثابت ليصبح البحث مدمجاً داخل الموقع.
+            const key=window.YOUTUBE_API_KEY||'';
+            if(!key){box.innerHTML='<p style="color:#f39c12;font-size:12px">للبحث الحقيقي باسم الأغنية يلزم مفتاح YouTube Data API v3. لصق رابط الأغنية يعمل بدون المفتاح.</p>';return;}
+            try{
+                const res=await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=8&q=${encodeURIComponent(q)}&key=${encodeURIComponent(key)}`);
+                const data=await res.json();
+                if(!data.items?.length){box.innerHTML='<p style="color:#aaa">لم توجد نتائج.</p>';return;}
+                box.innerHTML=data.items.map(x=>`<div class="menu-item" onclick="ui.processAndPlayYoutubeLink('${x.id.videoId}')"><span><img src="${x.snippet.thumbnails.default.url}" style="width:60px;height:45px;object-fit:cover;vertical-align:middle;border-radius:6px"> ${ui.escapeHtml(x.snippet.title)}</span><b style="color:#e00">تشغيل</b></div>`).join('');
+            }catch(e){box.innerHTML='<p style="color:#e74c3c">تعذر البحث في يوتيوب.</p>';}
         },
         previewYoutubeTrack: () => {
             let link = document.getElementById('ytLinkInput').value.trim();
@@ -1051,14 +1284,14 @@
             }
         },
         processAndPlayYoutubeLink: (vId) => {
-            let roomDocId = window.currentRoom.replace(/\s+/g, '_');
+            let roomDocId = window.roomId(window.currentRoom);
             db.collection("room_settings").doc(roomDocId).set({ activeAudioId: vId }, { merge: true }).then(() => {
                 alert("🔊 تم إطلاق وتثبيت البث الصوتي بنجاح لجميع الحاضرين في الغرفة!");
                 document.getElementById('featureModal').style.display = 'none';
             });
         },
         stopHiddenAudioPlayback: () => {
-            let roomDocId = window.currentRoom.replace(/\s+/g, '_');
+            let roomDocId = window.roomId(window.currentRoom);
             db.collection("room_settings").doc(roomDocId).set({ activeAudioId: "" }, { merge: true }).then(() => {
                 alert("تم إيقاف الصوت لدى الجميع في هذه الغرفة.");
                 document.getElementById('featureModal').style.display = 'none';
@@ -1132,13 +1365,33 @@
                         </div>
 
                         <div style="display:flex; gap:8px; margin-bottom:12px;">
-                            <button class="row-btn active" style="border-radius:8px; padding:6px; width:100%;" onclick="ui.startPrivateChatWith('${u.uid}', '${u.name}')"><i class="fas fa-comment"></i> مراسلة خاصة</button>
+                            ${!isMe ? `<button class="row-btn" style="border-radius:8px;padding:6px;flex:1;" onclick="ui.likeUserOnce('${u.uid}')"><i class="fas fa-heart"></i> إعجاب</button>` : ''}
+                            <button class="row-btn active" style="border-radius:8px; padding:6px; flex:1;" onclick="ui.startPrivateChatWith('${u.uid}', '${u.name}')"><i class="fas fa-comment"></i> مراسلة خاصة</button>
                         </div>
                         ${ownerAdminPanelHtml}
                     </div>
                 `;
                 document.getElementById('featureModal').style.display = 'flex';
             });
+        },
+        likeUserOnce: async (targetUid) => {
+            if(!window.currentUser || targetUid===window.currentUser.uid) return;
+            const likeId=`${window.currentUser.uid}_${targetUid}`;
+            const likeRef=db.collection("likes").doc(likeId);
+            try{
+                await db.runTransaction(async tx=>{
+                    const existing=await tx.get(likeRef);
+                    if(existing.exists) throw new Error("ALREADY_LIKED");
+                    const targetRef=db.collection("users").doc(targetUid);
+                    tx.set(likeRef,{fromUid:window.currentUser.uid,toUid:targetUid,createdAt:FieldValue.serverTimestamp()});
+                    tx.set(targetRef,{likes:FieldValue.increment(1)},{merge:true});
+                });
+                await db.collection("users").doc(targetUid).collection("notifications").add({
+                    type:"like",senderUid:window.currentUser.uid,senderName:window.currentUser.name,
+                    text:`تم وضع لايك من العضو ${window.currentUser.name} على بروفايلك ❤️`,read:false,timestamp:FieldValue.serverTimestamp()
+                });
+                alert("❤️ تم وضع الإعجاب وحفظه. لا يمكن تكراره من نفس الحساب.");
+            }catch(e){ alert(e.message==="ALREADY_LIKED" ? "لقد وضعت إعجاباً لهذا العضو مسبقاً." : "تعذر حفظ الإعجاب."); }
         },
         adminToggleMute: (uid, muteState) => {
             db.collection("users").doc(uid).update({ isMuted: muteState }).then(() => {
@@ -1175,7 +1428,7 @@
             db.collection("users").doc(uid).update({ role: newRole }).then(() => {
                 let rankObj = window.chatRanksData[newRole] || { text: newRole };
                 let systemNotice = `🎉 تم إهداء العضو [ ${targetUserName} ] رتبة [ ${rankObj.text} ] بواسطة الإدارة العامة 👑`;
-                let roomDocId = window.currentRoom.replace(/\s+/g, '_');
+                let roomDocId = window.roomId(window.currentRoom);
                 
                 db.collection("rooms").doc(roomDocId).collection("messages").add({
                     isSystemGold: true,
@@ -1189,15 +1442,37 @@
                 document.getElementById('featureModal').style.display = 'none';
             });
         },
-        openPrivateConversationsList: () => {
-            document.getElementById('featureModalTitle').innerText = "💬 الرسائل الخاصة المتزامنة";
-            document.getElementById('featureModalBody').innerHTML = `
-                <div style="text-align:center; padding:10px;">
-                    <p style="font-size:13px; color:#ccc;">لبدء محادثة خاصة، اضغط على بروفايل أي عضو من قائمة "المتواجدين" واضغط على زر "مراسلة خاصة".</p>
-                </div>
-            `;
-            document.getElementById('featureModal').style.display = 'flex';
+        listenPrivateNotifications: () => {
+            if(!window.currentUser) return;
+            const unsub=db.collection("users").doc(window.currentUser.uid).collection("notifications")
+              .where("read","==",false).onSnapshot(snap=>{
+                const btn=document.querySelector('.header-btn[onclick*="openPrivateConversationsList"]');
+                if(btn){
+                    btn.innerHTML=`<i class="fas fa-comments"></i>الخاص${snap.size?` <b style="position:absolute;top:-4px;right:18%;background:#e74c3c;color:#fff;border-radius:10px;padding:1px 5px;font-size:9px">${snap.size}</b>`:''}`;
+                }
+              });
+            window.activeListeners.push(unsub);
         },
+        openPrivateConversationsList: () => {
+            document.getElementById('featureModalTitle').innerText = "💬 صندوق الخاص";
+            document.getElementById('featureModalBody').innerHTML = `<div id="privateInbox" style="text-align:right">جارٍ تحميل المحادثات...</div>`;
+            document.getElementById('featureModal').style.display='flex';
+            if(!window.currentUser) return;
+            db.collection("users").doc(window.currentUser.uid).collection("notifications")
+              .where("type","==","private_message").orderBy("timestamp","desc").limit(50).get().then(snap=>{
+                const el=document.getElementById('privateInbox'); if(!el)return;
+                if(snap.empty){el.innerHTML='<p style="color:#aaa;text-align:center">لا توجد رسائل خاصة بعد.</p>';return;}
+                el.innerHTML=snap.docs.map(d=>{
+                    const n=d.data();
+                    return `<div class="menu-item" onclick="ui.startPrivateChatWith('${n.senderUid}','${ui.escapeHtml(n.senderName||'عضو')}');ui.markNotificationRead('${d.id}')">
+                        <span><i class="fas fa-comment" style="color:var(--gold)"></i> رسالة من <b>${ui.escapeHtml(n.senderName||'عضو')}</b><br><small>${ui.escapeHtml(n.text||'')}</small></span>
+                    </div>`;
+                }).join('');
+              }).catch(()=>{
+                const el=document.getElementById('privateInbox'); if(el) el.innerHTML='<p style="color:#aaa;text-align:center">لا توجد رسائل خاصة بعد.</p>';
+              });
+        },
+        markNotificationRead: (id) => db.collection("users").doc(window.currentUser.uid).collection("notifications").doc(id).set({read:true},{merge:true}).catch(()=>{}),
         startPrivateChatWith: (targetUid, targetName) => {
             if(window.currentUser.uid === targetUid) { alert("لا يمكنك مراسلة نفسك."); return; }
             let chatId = generateChatroomId(window.currentUser.uid, targetUid);
@@ -1241,9 +1516,17 @@
             db.collection("private_chats").doc(chatId).collection("messages").add({
                 senderUid: window.currentUser.uid,
                 senderName: window.currentUser.name,
+                senderImg: window.currentUser.img || "",
+                receiverUid: chatId.split("_").find(x=>x!==window.currentUser.uid) || "",
                 text: t,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
+                timestamp: FieldValue.serverTimestamp()
+            }).then(()=>{
+                const receiverUid=chatId.split("_").find(x=>x!==window.currentUser.uid);
+                if(receiverUid) return db.collection("users").doc(receiverUid).collection("notifications").add({
+                    type:"private_message", senderUid:window.currentUser.uid, senderName:window.currentUser.name,
+                    chatId, text:t, read:false, timestamp:FieldValue.serverTimestamp()
+                });
+            }).catch(console.error);
         },
         handleLocalFileProcessing: (inputEl, type) => {
             let file = inputEl.files[0];
@@ -1362,38 +1645,95 @@
                 document.getElementById('featureModal').style.display = 'none';
             }
         },
-        changeActiveRoom: (r) => { 
-            window.currentRoom = r; 
-            document.getElementById('chatBox').innerHTML = ""; 
-            document.getElementById('featureModal').style.display = 'none'; 
+        changeActiveRoom: async (r) => {
+            if(!r || r === window.currentRoom) {
+                document.getElementById('featureModal').style.display = 'none';
+                return;
+            }
+            const oldRoom = window.currentRoom;
+            const oldId = window.roomId(oldRoom);
+            if(window.currentUser) {
+                await db.collection("rooms").doc(oldId).collection("presence").doc(window.currentUser.uid).delete().catch(()=>{});
+                // إن كان العضو على مايك في الغرفة القديمة، ينزل منه قبل الانتقال.
+                const oldMics=await db.collection("rooms").doc(oldId).collection("mics").where("userId","==",window.currentUser.uid).get().catch(()=>null);
+                if(oldMics) { const b=db.batch(); oldMics.docs.forEach(d=>b.delete(d.ref)); await b.commit().catch(()=>{}); }
+                await db.collection("rooms").doc(oldId).collection("messages").add({
+                    type:"system", isSystem:true,
+                    text:`🚪 غادر ${window.currentUser.name} الغرفة إلى [ ${r} ]`,
+                    userId:window.currentUser.uid,
+                    timestamp:FieldValue.serverTimestamp()
+                }).catch(()=>{});
+            }
+            window.currentRoom = r;
+            document.getElementById('chatBox').innerHTML = "";
+            document.getElementById('featureModal').style.display = 'none';
+            ui.clearAllListeners();
+            ui.closeAllMicPeers();
             ui.enterChat();
+            if(window.currentUser) {
+                const rid=window.roomId(r);
+                await db.collection("rooms").doc(rid).collection("messages").add({
+                    type:"system", isSystem:true,
+                    text:`👋 انضم ${window.currentUser.name} إلى الغرفة [ ${r} ] — ${window.uiRankText(window.currentUser.role)}`,
+                    userId:window.currentUser.uid,
+                    timestamp:FieldValue.serverTimestamp()
+                }).catch(()=>{});
+            }
         },
         startRealtimePresence: () => {
-            if(!window.currentUser)return;
+            if(!window.currentUser) return;
             if(window.presenceTimer) clearInterval(window.presenceTimer);
-            const beat=()=>db.collection("users").doc(window.currentUser.uid).set({isOnline:true,lastSeen:FieldValue.serverTimestamp()},{merge:true});
-            beat(); window.presenceTimer=setInterval(beat,20000);
+            const roomId = window.roomId(window.currentRoom);
+            const ref = db.collection("rooms").doc(roomId).collection("presence").doc(window.currentUser.uid);
+            const writePresence = () => ref.set({
+                uid: window.currentUser.uid,
+                name: window.currentUser.name || "عضو",
+                role: window.currentUser.role || "new",
+                img: window.currentUser.img || "",
+                cover: window.currentUser.cover || "",
+                nameColor: window.currentUser.nameColor || "",
+                joinedAt: FieldValue.serverTimestamp(),
+                lastSeen: FieldValue.serverTimestamp()
+            }, {merge:true}).catch(()=>{});
+            writePresence();
+            window.presenceTimer=setInterval(writePresence,15000);
         },
         listenRoomDirectory: () => {
-            const unsub=db.collection("room_directory").onSnapshot(s=>{const base=["الغرفة العامة","روم المسابقات","ملتقى النخبة","عظماء النخبة","السجن"];window.roomsList=[...new Set([...base,...s.docs.map(d=>d.data().name).filter(Boolean)])];});
+            const unsub=db.collection("room_directory").onSnapshot(s=>{const base=window.roomsList||window.roomsBase;window.roomsList=[...new Set([...base,...s.docs.map(d=>d.data().name).filter(Boolean)])];});
             window.activeListeners.push(unsub);
         },
         ensureMicPeer: async (micData) => {
-            const room=window.currentRoom.replace(/\s+/g,'_'), remoteUid=micData.userId;
-            if(window.micPeers[remoteUid]||!window.currentUser||remoteUid===window.currentUser.uid)return;
-            const pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
-            window.micPeers[remoteUid]={pc,remoteUid};
-            const audio=document.createElement('audio');audio.autoplay=true;audio.playsInline=true;document.getElementById('liveAudioBroadcastContainer').appendChild(audio);
-            pc.ontrack=e=>{audio.srcObject=e.streams[0];};
-            pc.onicecandidate=e=>{if(e.candidate) db.collection('mic_signals').doc(room).collection(`${remoteUid}_${window.currentUser.uid}_candidates`).add({candidate:e.candidate.toJSON(),from:remoteUid});};
-            const offerDoc=db.collection('mic_signals').doc(room).collection('offers').doc(`${remoteUid}_${window.currentUser.uid}`);
-            const off=offerDoc.onSnapshot(async d=>{const v=d.data();if(!v?.offer||pc.currentRemoteDescription)return;await pc.setRemoteDescription(v.offer);const ans=await pc.createAnswer();await pc.setLocalDescription(ans);await offerDoc.set({answer:{type:ans.type,sdp:ans.sdp}}, {merge:true});});
-            window.micUnsubs.push(off);
+            const room=window.roomId(window.currentRoom), remoteUid=micData.userId;
+            if(!window.currentUser||remoteUid===window.currentUser.uid) return;
+            const listenerRef=db.collection("rooms").doc(room).collection("mic_listeners").doc(window.currentUser.uid);
+            await listenerRef.set({uid:window.currentUser.uid,updatedAt:FieldValue.serverTimestamp()},{merge:true}).catch(()=>{});
+            const key=`${remoteUid}_${window.currentUser.uid}`;
+            if(window.micPeers[key]) return;
+            const pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"}]});
+            window.micPeers[key]={pc,remoteUid};
+            const audio=document.createElement("audio"); audio.autoplay=true; audio.playsInline=true; audio.controls=false;
+            document.getElementById("liveAudioBroadcastContainer").appendChild(audio);
+            window.micPeers[key].audio=audio;
+            pc.ontrack=e=>{audio.srcObject=e.streams[0]; audio.play().catch(()=>{});};
+            const signal=db.collection("rooms").doc(room).collection("mic_signals").doc(key);
+            pc.onicecandidate=e=>{if(e.candidate) signal.collection("listenerCandidates").add({candidate:e.candidate.toJSON()});};
+            const callerCandidatesUnsub=signal.collection("callerCandidates").onSnapshot(s=>{s.docChanges().forEach(ch=>{if(ch.type==='added'){pc.addIceCandidate(new RTCIceCandidate(ch.doc.data().candidate)).catch(()=>{});}});});
+            const unsub=signal.onSnapshot(async d=>{
+                const v=d.data(); if(!v?.offer||pc.currentRemoteDescription) return;
+                await pc.setRemoteDescription(v.offer);
+                const ans=await pc.createAnswer(); await pc.setLocalDescription(ans);
+                await signal.set({answer:{type:ans.type,sdp:ans.sdp}},{merge:true});
+            });
+            window.micUnsubs.push(unsub,callerCandidatesUnsub);
         },
-        closeMicPeer:(uid)=>{const p=window.micPeers[uid];if(p){p.pc.close();delete window.micPeers[uid];}},
+        closeAllMicPeers:()=>{Object.keys(window.micPeers||{}).forEach(k=>ui.closeMicPeer(k));},
+        closeMicPeer:(uid)=>{const p=window.micPeers[uid];if(p){try{p.pc.close();}catch(e){} if(p.audio){try{p.audio.remove();}catch(e){}} delete window.micPeers[uid];}},
         logoutBackToWelcome: () => {
             if(window.sessionCheckInterval) clearInterval(window.sessionCheckInterval);
             ui.updateUserOnlineStatus(false);
+            if(window.currentUser){
+                db.collection("rooms").doc(window.roomId(window.currentRoom)).collection("presence").doc(window.currentUser.uid).delete().catch(()=>{});
+            }
             localStorage.removeItem("hassouni_user_session");
             window.currentUser = null;
             ui.clearAllListeners();
