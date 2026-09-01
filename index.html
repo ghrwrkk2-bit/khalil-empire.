@@ -317,9 +317,14 @@
 
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
-        firebase.firestore().enablePersistence().catch(()=>{});
     }
     const db = firebase.firestore();
+    // تحسين الاتصال على الشبكات الضعيفة/المقيدة: لا يفرض VPN، لكنه يستخدم Long Polling
+    // ويقلل حالات انقطاع WebChannel التي كانت تسبب توقف التزامن بعد عدة دقائق.
+    try {
+        db.settings({ experimentalForceLongPolling: true, useFetchStreams: false });
+    } catch(e) {}
+    db.enablePersistence({ synchronizeTabs: true }).catch(()=>{});
     const storage = firebase.storage();
     // ضع مفتاح YouTube Data API v3 هنا إذا أردت البحث بالاسم داخل الموقع.
     window.YOUTUBE_API_KEY = "";
@@ -334,21 +339,16 @@
     window.roomListenerGeneration = 0;
 
     window.currentRoom = "الغرفة العامة";
-    window.roomsList = [
-"الغرفة العامة","روم المسابقات","ملتقى النخبة","عظماء النخبة","السجن",
-"شات العراق","شات الجزائر","شات فلسطين","دردشة بلاد الشام","شات عربي","دردشة عربي","شات مصري","شات مغربي",
-"شات بلاد الرافدين","شات كتابي","دردشة عراقية","شات احلي لمة","خليجي شات","شات ملكي","دردشة الخليج",
-"دردشة المغرب","شات العنابي","شات سعودي","شات مصر","شات العرب للجوال","شات البحرين","شات الاردن","شات سوريا",
-"دردشة تواصل","شات الامارات","شات قطر","شات عمان","شات لبنان","شات ليبيا","شات جوالك","شات روقان",
-"شات تعارف","شات العرب الجديد","شات قمر العرب","شات ارابيسك","شات نجوم العرب","شات حريمي","شات صوت العرب",
-"شات امل جيزان","شات الوطن العربي","شات ليالي","شات العنود","شات سهم الخليج","شات تعب قلبي"
-];
+    window.roomsList = ["الغرفة العامة","روم المسابقات","روم اليمن","روم السجن"];
     window.micsHidden = false;
     window.currentUser = null;
     window.activeListeners = [];
     window.localAudioStream = null;
     window.sessionCheckInterval = null;
     window.activeTrivia = null; // بوت المسابقات
+    window.connectionState = 'starting';
+    window.connectionRetryTimer = null;
+    window.profilePresenceTimer = null;
 
     // نظام الـ 30 رتبة الإمبراطورية المتمايزة بالأيقونات والألوان اللامعة
     window.chatRanksData = {
@@ -417,6 +417,22 @@
     window.safeRoomName = (room) => String(room || "الغرفة العامة").trim();
     window.uiRankText = (role) => (window.chatRanksData[role] || {text:"عضو"}).text;
     window.roomsBase = ["الغرفة العامة","روم المسابقات","روم اليمن","روم السجن"];
+
+    function updateConnectionBadge(state) {
+        window.connectionState = state;
+        let el = document.getElementById('connectionBadge');
+        if(!el) {
+            el = document.createElement('div');
+            el.id='connectionBadge';
+            el.style.cssText='position:fixed;left:8px;top:72px;z-index:2000;padding:4px 8px;border-radius:10px;font-size:10px;background:#222;color:#ffd700;border:1px solid #444;pointer-events:none;';
+            document.body.appendChild(el);
+        }
+        const map={online:['🟢 متصل','#2ecc71'],offline:['🔴 غير متصل','#e74c3c'],starting:['🟡 جاري الاتصال','#f1c40f']};
+        const v=map[state]||map.starting; el.textContent=v[0]; el.style.color=v[1];
+        el.style.display = state==='online' ? 'none' : 'block';
+    }
+    window.addEventListener('online',()=>{updateConnectionBadge('online'); if(window.currentUser) ui.enterChat(true);});
+    window.addEventListener('offline',()=>updateConnectionBadge('offline'));
 
     window.ui = {
         switchBranch: (id) => {
@@ -689,9 +705,8 @@
                 document.getElementById('featureModalTitle').innerText = "👑 لوحة التحكم والمفتاح الملكي";
                 document.getElementById('featureModalBody').innerHTML = `
                     <div style="text-align:right;">
-                        <p style="font-size:14px; color:var(--gold); font-weight:bold; text-align:center;">أنشئ غرفة سحابية منفصلة جديدة:</p>
-                        <input type="text" id="newRoomNameInp" class="form-control" placeholder="اسم الغرفة الجديدة...">
-                        <button class="row-btn active" style="width:100%; border-radius:8px; padding:10px;" onclick="ui.createNewRoomCloud()">➕ إنشاء الغرفة سحابياً</button>
+                        <p style="font-size:14px; color:var(--gold); font-weight:bold; text-align:center;">إدارة الرومات الموحدة</p>
+                        <div style="font-size:12px;color:#ccc;text-align:center;line-height:1.9">الغرفة العامة · روم المسابقات · روم اليمن · روم السجن<br>كل غرفة لها رسائل ومتواجدون ومايكات مستقلة.</div>
                     </div>
                 `;
                 document.getElementById('featureModal').style.display = 'flex';
@@ -839,30 +854,33 @@
                     document.getElementById('welcomeOverlay').style.display = 'none'; 
                     ui.enterChat();
                 }).catch(() => {
-                    window.currentUser = parsedUser;
-                    document.getElementById('welcomeOverlay').style.display = 'none';
-                    ui.enterChat();
+                    // لا ندخل بوضع وهمي عند فشل Firebase؛ هذا كان سبب ظهور الشات منفصلاً عن صديقك.
+                    window.currentUser = null;
+                    updateConnectionBadge(navigator.onLine?'starting':'offline');
+                    document.getElementById('welcomeOverlay').style.display = 'flex';
+                    ui.switchBranch('b2');
+                    alert('تعذر الاتصال بخادم Firebase حالياً. جرّب بعد لحظات؛ VPN ليس شرطاً، لكن إذا كانت الشبكة تحجب Firebase فلن يستطيع الموقع المزامنة حتى يتوفر مسار اتصال مناسب.');
                 });
             } else {
                 document.getElementById('welcomeOverlay').style.display = 'flex';
                 ui.switchBranch('b1');
             }
         },
-        enterChat: () => {
+        enterChat: (reconnect=false) => {
             document.getElementById('welcomeOverlay').style.display = 'none';
-            ui.updateUserOnlineStatus(true);
             ui.updateRoyalKeyButtonVisibility();
+            // كل دخول/إعادة اتصال يبدأ مجموعة مستمعين واحدة فقط، بدون تراكم مستمعين قدامى.
             ui.clearAllListeners();
             ui.listenToGlobalMessages();
             ui.listenToActiveMics();
             ui.listenToRoomSettings();
             ui.listenUsersRealtime();
             ui.listenOnlineUsersRealtime();
-            ui.listenRoomDirectory();
             ui.startRealtimePresence();
             ui.listenPrivateNotifications();
             ui.startSingleSessionMonitor();
             ui.startTriviaScheduler();
+            updateConnectionBadge(navigator.onLine ? 'online' : 'offline');
         },
         clearAllListeners: () => {
             window.roomListenerGeneration++;
@@ -870,6 +888,7 @@
             window.activeListeners=[];
             (window.micUnsubs||[]).forEach(unsub=>{try{unsub();}catch(e){}}); window.micUnsubs=[];
             if(window.presenceTimer){clearInterval(window.presenceTimer);window.presenceTimer=null;}
+            if(window.profilePresenceTimer){clearInterval(window.profilePresenceTimer);window.profilePresenceTimer=null;}
             if(window.triviaTimer){clearInterval(window.triviaTimer);window.triviaTimer=null;}
         },
         listenToRoomSettings: () => {
@@ -1184,7 +1203,7 @@
                     if(listenerId===window.currentUser?.uid) continue;
                     const key=`${window.currentUser.uid}_${listenerId}`;
                     if(window.micPeers[key]) continue;
-                    const pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"}]});
+                    const pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"},{urls:"stun:stun1.l.google.com:19302"}]});
                     window.micPeers[key]={pc,remoteUid:listenerId};
                     (window.localAudioStream?.getTracks()||[]).forEach(t=>pc.addTrack(t,window.localAudioStream));
                     const signal=db.collection("rooms").doc(room).collection("mic_signals").doc(key);
@@ -1405,6 +1424,8 @@
         },
         changeUserRole: (uid, targetUserName, newRole) => {
             db.collection("users").doc(uid).update({ role: newRole }).then(() => {
+                if(window.currentUser && window.currentUser.uid===uid){ window.currentUser.role=newRole; }
+                if(window.currentUser) ui.startRealtimePresence();
                 let rankObj = window.chatRanksData[newRole] || { text: newRole };
                 let systemNotice = `🎉 تم إهداء العضو [ ${targetUserName} ] رتبة [ ${rankObj.text} ] بواسطة الإدارة العامة 👑`;
                 let roomDocId = window.roomId(window.currentRoom);
@@ -1587,11 +1608,14 @@
 
             db.collection("users").doc(uid).update(updated).then(() => {
                 alert("تم تحديث ومزامنة البيانات والصور بنجاح لجميع الأعضاء!");
-                db.collection("users").doc(uid).get().then(doc => {
-                    window.currentUser = doc.data();
-                    localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser));
+                if(window.currentUser && window.currentUser.uid===uid){
+                    window.currentUser={...window.currentUser,...updated};
+                    localStorage.setItem("hassouni_user_session",JSON.stringify(window.currentUser));
                     ui.updateHeaderUserBgIcon();
-                });
+                }
+                if(window.currentUser && window.currentUser.uid===uid && typeof window.roomPresenceId==='string'){
+                    ui.startRealtimePresence();
+                }
                 document.getElementById('featureModal').style.display = 'none';
             });
         },
@@ -1614,16 +1638,7 @@
             document.getElementById('featureModalBody').innerHTML = html;
             document.getElementById('featureModal').style.display = 'flex';
         },
-        createNewRoomCloud: async () => {
-            let rName = document.getElementById('newRoomNameInp').value.trim();
-            if(!rName) return;
-            if(!window.roomsList.includes(rName)) {
-                await db.collection("room_directory").doc(rName.replace(/\s+/g,"_")).set({name:rName,createdAt:FieldValue.serverTimestamp(),createdBy:window.currentUser.uid});
-                window.roomsList.push(rName);
-                alert(`تم إنشاء الغرفة المستقلة [ ${rName} ] بنجاح وصارت متاحة للجميع.`);
-                document.getElementById('featureModal').style.display = 'none';
-            }
-        },
+        createNewRoomCloud: async () => { alert('الرومات المعتمدة حالياً هي: الغرفة العامة، روم المسابقات، روم اليمن، روم السجن.'); },
         changeActiveRoom: async (r) => {
             if(!r || r===window.currentRoom) { document.getElementById('featureModal').style.display='none'; return; }
             const oldRoom=window.currentRoom, oldId=window.roomId(oldRoom), newRoom=window.safeRoomName(r);
@@ -1651,23 +1666,25 @@
             const sessionDocId = `${window.currentUser.uid}_${window.roomSessionId}`;
             const ref = db.collection("rooms").doc(roomDocId).collection("presence").doc(sessionDocId);
             window.roomPresenceId = sessionDocId;
-            const writePresence = () => ref.set({
-                uid: window.currentUser.uid,
-                sessionId: window.roomSessionId,
-                room: window.currentRoom,
-                name: window.currentUser.name || "عضو",
-                role: window.currentUser.role || "new",
-                img: window.currentUser.img || "",
-                cover: window.currentUser.cover || "",
-                nameColor: window.currentUser.nameColor || "",
-                lastSeen: FieldValue.serverTimestamp()
-            }, {merge:true}).catch(e=>console.warn("presence",e));
+            const writePresence = () => {
+                if(!window.currentUser) return;
+                ref.set({
+                    uid:window.currentUser.uid, sessionId:window.roomSessionId, room:window.currentRoom,
+                    name:window.currentUser.name||"عضو", role:window.currentUser.role||"new",
+                    img:window.currentUser.img||"", cover:window.currentUser.cover||"",
+                    nameColor:window.currentUser.nameColor||"", lastSeen:FieldValue.serverTimestamp()
+                },{merge:true}).then(()=>updateConnectionBadge('online')).catch(e=>{
+                    console.warn("presence",e); updateConnectionBadge(navigator.onLine?'starting':'offline');
+                });
+            };
             writePresence();
-            window.presenceTimer=setInterval(writePresence,10000);
+            window.presenceTimer=setInterval(writePresence,8000);
+            if(window.profilePresenceTimer) clearInterval(window.profilePresenceTimer);
+            window.profilePresenceTimer=setInterval(writePresence,2500);
         },
         listenRoomDirectory: () => {
-            const unsub=db.collection("room_directory").onSnapshot(s=>{const custom=s.docs.map(d=>d.data().name).filter(n=>n && !window.roomsBase.includes(n)); window.roomsList=[...new Set([...window.roomsBase,...custom])];});
-            window.activeListeners.push(unsub);
+            // الرومات ثابتة ومحددة من الإدارة: العامة، المسابقات، اليمن، السجن فقط.
+            window.roomsList = [...window.roomsBase];
         },
         ensureMicPeer: async (micData) => {
             const room=window.roomId(window.currentRoom), remoteUid=micData.userId;
@@ -1676,12 +1693,18 @@
             await listenerRef.set({uid:window.currentUser.uid,updatedAt:FieldValue.serverTimestamp()},{merge:true}).catch(()=>{});
             const key=`${remoteUid}_${window.currentUser.uid}`;
             if(window.micPeers[key]) return;
-            const pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"}]});
+            const pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"},{urls:"stun:stun1.l.google.com:19302"}]});
             window.micPeers[key]={pc,remoteUid};
             const audio=document.createElement("audio"); audio.autoplay=true; audio.playsInline=true; audio.controls=false;
             document.getElementById("liveAudioBroadcastContainer").appendChild(audio);
             window.micPeers[key].audio=audio;
-            pc.ontrack=e=>{audio.srcObject=e.streams[0]; audio.play().catch(()=>{});};
+            pc.ontrack=e=>{
+                audio.srcObject=e.streams[0];
+                audio.muted=false;
+                const play=()=>audio.play().catch(()=>{});
+                play();
+                document.addEventListener('click',play,{once:true});
+            };
             const signal=db.collection("rooms").doc(room).collection("mic_signals").doc(key);
             pc.onicecandidate=e=>{if(e.candidate) signal.collection("listenerCandidates").add({candidate:e.candidate.toJSON()});};
             const callerCandidatesUnsub=signal.collection("callerCandidates").onSnapshot(s=>{s.docChanges().forEach(ch=>{if(ch.type==='added'){pc.addIceCandidate(new RTCIceCandidate(ch.doc.data().candidate)).catch(()=>{});}});});
@@ -1710,7 +1733,7 @@
         }
     };
 
-    window.onload = () => { ui.checkSavedSessionOnLoad(); };
+    window.onload = () => { updateConnectionBadge(navigator.onLine ? 'starting' : 'offline'); ui.checkSavedSessionOnLoad(); };
     window.addEventListener('beforeunload',()=>{ if(window.currentUser){ db.collection("rooms").doc(window.roomId(window.currentRoom)).collection("presence").doc(`${window.currentUser.uid}_${window.roomSessionId}`).delete().catch(()=>{}); } });
 </script>
 </body>
