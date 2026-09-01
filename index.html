@@ -329,6 +329,9 @@
     window.micUnsubs = [];
     window.presenceTimer = null;
     window.roomPresenceId = null;
+    window.roomSessionId = localStorage.getItem("hassouni_room_session_id") || (Date.now().toString(36)+"_"+Math.random().toString(36).slice(2));
+    localStorage.setItem("hassouni_room_session_id", window.roomSessionId);
+    window.roomListenerGeneration = 0;
 
     window.currentRoom = "الغرفة العامة";
     window.roomsList = [
@@ -413,7 +416,7 @@
     window.roomId = (room) => String(room).trim().replace(/\s+/g,'_').replace(/[\/#?\[\]]/g,'_').slice(0,120);
     window.safeRoomName = (room) => String(room || "الغرفة العامة").trim();
     window.uiRankText = (role) => (window.chatRanksData[role] || {text:"عضو"}).text;
-    window.roomsBase = ["الغرفة العامة","روم المسابقات","ملتقى النخبة","عظماء النخبة","السجن"];
+    window.roomsBase = ["الغرفة العامة","روم المسابقات","روم اليمن","روم السجن"];
 
     window.ui = {
         switchBranch: (id) => {
@@ -862,10 +865,10 @@
             ui.startTriviaScheduler();
         },
         clearAllListeners: () => {
+            window.roomListenerGeneration++;
             window.activeListeners.forEach(unsub => { try{unsub();}catch(e){} });
-            window.activeListeners = [];
-            (window.micUnsubs||[]).forEach(unsub=>{try{unsub();}catch(e){}});
-            window.micUnsubs=[];
+            window.activeListeners=[];
+            (window.micUnsubs||[]).forEach(unsub=>{try{unsub();}catch(e){}}); window.micUnsubs=[];
             if(window.presenceTimer){clearInterval(window.presenceTimer);window.presenceTimer=null;}
             if(window.triviaTimer){clearInterval(window.triviaTimer);window.triviaTimer=null;}
         },
@@ -888,11 +891,13 @@
             window.activeListeners.push(unsub);
         },
         listenToGlobalMessages: () => {
-            let roomDocId = window.roomId(window.currentRoom);
+            const roomAtStart=window.currentRoom; const generation=window.roomListenerGeneration;
+            let roomDocId = window.roomId(roomAtStart);
             let unsub = db.collection("rooms").doc(roomDocId).collection("messages")
               .orderBy("timestamp", "asc")
               .limitToLast(100)
               .onSnapshot((snapshot) => {
+                  if(generation!==window.roomListenerGeneration || roomAtStart!==window.currentRoom) return;
                   let chatBox = document.getElementById('chatBox');
                   chatBox.innerHTML = "";
                   
@@ -957,18 +962,22 @@
             window.activeListeners.push(unsub);
         },
         listenOnlineUsersRealtime: () => {
-            const roomId = window.roomId(window.currentRoom);
-            const unsub = db.collection("rooms").doc(roomId).collection("presence")
+            const roomAtStart = window.currentRoom;
+            const roomDocId = window.roomId(roomAtStart);
+            const generation = window.roomListenerGeneration;
+            const unsub = db.collection("rooms").doc(roomDocId).collection("presence")
               .onSnapshot((snap) => {
-                const list = [];
+                if (generation !== window.roomListenerGeneration || roomAtStart !== window.currentRoom) return;
+                const byUid = {};
                 snap.forEach(doc => {
-                    const d = doc.data();
-                    const u = window.usersCache[d.uid] || d.user || {};
-                    if(d.uid) list.push({...u, uid:d.uid, roomPresence:true});
+                    const d = doc.data() || {};
+                    if (!d.uid) return;
+                    const u = window.usersCache[d.uid] || {};
+                    byUid[d.uid] = {...d, ...u, uid:d.uid, roomPresence:true};
                 });
+                const list = Object.values(byUid);
                 list.sort((a,b)=>{
-                    if(a.role==='owner') return -1;
-                    if(b.role==='owner') return 1;
+                    if(a.role==='owner') return -1; if(b.role==='owner') return 1;
                     return (window.rolesOrder[a.role]||99)-(window.rolesOrder[b.role]||99);
                 });
                 const bodyEl=document.getElementById('onlineUsersListBody');
@@ -1001,56 +1010,26 @@
             ui.enterChat();
             alert("تم إعادة مزامنة وغرف الشات بنجاح.");
         },
-        sendMessage: async () => {
-            const u = window.currentUser;
-            if(!u) return;
-            if(u.isMuted){ alert("أنت مكتوم حالياً من قبل الإدارة."); return; }
-            const inp=document.getElementById('msgInp');
-            const t=inp.value.trim();
-            if(!t) return;
-
-            // تفريغ الحقل فوراً حتى لا يشعر المستخدم بتعليق زر الإرسال.
+        sendMessage: () => {
+            const u=window.currentUser; if(!u) return;
+            if(u.isMuted){alert("أنت مكتوم حالياً من قبل الإدارة.");return;}
+            const inp=document.getElementById('msgInp'), t=inp.value.trim(); if(!t) return;
             inp.value='';
-            const roomDocId=window.roomId(window.currentRoom);
+            const roomAtSend=window.currentRoom, roomDocId=window.roomId(roomAtSend);
             const msgRef=db.collection("rooms").doc(roomDocId).collection("messages").doc();
             const urlMatch=t.match(/https?:\/\/\S+/i);
             const type=urlMatch && /\.(mp4|webm|ogg)(\?\S*)?$/i.test(t)?'video':urlMatch?'link':'text';
-
-            // الكتابة الأولى فقط؛ لا ننتظر قراءة users قبل إرسال الرسالة.
-            await msgRef.set({
-                type,text:t,userId:u.uid,
-                user:{uid:u.uid,name:u.name||'عضو',img:u.img||'',cover:u.cover||'',role:u.role||'new',nameColor:u.nameColor||''},
-                timestamp:FieldValue.serverTimestamp()
+            const payload={type,text:t,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',img:u.img||'',cover:u.cover||'',role:u.role||'new',nameColor:u.nameColor||''},timestamp:FieldValue.serverTimestamp()};
+            // لا ننتظر الشبكة أو معاملة المكافآت قبل السماح برسالة أخرى. Firestore يزامنها تلقائياً.
+            msgRef.set(payload).catch(e=>console.error('sendMessage',e));
+            // المكافأة تعمل بالخلفية حتى لا تتأخر واجهة الإرسال.
+            Promise.resolve().then(async()=>{
+                const uRef=db.collection('users').doc(u.uid); let reward50=false;
+                try{ await db.runTransaction(async tx=>{const snap=await tx.get(uRef);const data=snap.data()||u;const sent=(Number(data.publicMessageCount)||0)+1;reward50=sent%50===0;const level=Math.min(10000,Math.max(1,Math.floor(sent/50)+1));const patch={publicMessageCount:sent,level,lastSeen:FieldValue.serverTimestamp()};if(reward50){patch.gold=FieldValue.increment(1);patch.ruby=FieldValue.increment(1);patch.points=FieldValue.increment(1);}tx.set(uRef,patch,{merge:true});});
+                    if(reward50) db.collection('rooms').doc(roomDocId).collection('messages').add({isBotMsg:true,text:`🎁 مبروك ${u.name}! أرسلت 50 رسالة عامة وتم منحك 1 ذهب + 1 روبي + 1 نقطة ⭐`,timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
+                }catch(e){console.warn('reward',e);}
             });
-
-            // عداد الرسائل والمكافأة في معاملة واحدة تمنع ضياع المكافآت عند تعدد الأجهزة.
-            const uRef=db.collection("users").doc(u.uid);
-            let reward50=false;
-            await db.runTransaction(async tx=>{
-                const snap=await tx.get(uRef);
-                const data=snap.data()||u;
-                const sent=(Number(data.publicMessageCount)||0)+1;
-                reward50=(sent%50===0);
-                const level=Math.min(10000, Math.max(1, Math.floor(sent/50)+1));
-                const patch={publicMessageCount:sent,level,lastSeen:FieldValue.serverTimestamp()};
-                if(reward50){
-                    patch.gold=FieldValue.increment(1);
-                    patch.ruby=FieldValue.increment(1);
-                    patch.points=FieldValue.increment(1);
-                }
-                tx.set(uRef,patch,{merge:true});
-            }).catch(e=>console.warn('message reward transaction',e));
-
-            if(reward50){
-                db.collection("rooms").doc(roomDocId).collection("messages").add({
-                    isBotMsg:true,
-                    text:`🎁 مبروك ${u.name}! أرسلت 50 رسالة عامة وتم منحك 1 ذهب + 1 روبي + 1 نقطة ⭐`,
-                    timestamp:FieldValue.serverTimestamp()
-                }).catch(()=>{});
-            }
-
-            // إجابة المسابقة: فحصها بعد الإرسال حتى لا يتأخر زر الإرسال.
-            if(window.currentRoom==="روم المسابقات") ui.checkTriviaAnswer(t).catch(()=>{});
+            if(roomAtSend==='روم المسابقات') setTimeout(()=>ui.checkTriviaAnswer(t,u),0);
         },
         checkTriviaAnswer: async (text) => {
             if(window.currentRoom!=="روم المسابقات" || !window.currentUser) return;
@@ -1646,60 +1625,48 @@
             }
         },
         changeActiveRoom: async (r) => {
-            if(!r || r === window.currentRoom) {
-                document.getElementById('featureModal').style.display = 'none';
-                return;
-            }
-            const oldRoom = window.currentRoom;
-            const oldId = window.roomId(oldRoom);
-            if(window.currentUser) {
-                await db.collection("rooms").doc(oldId).collection("presence").doc(window.currentUser.uid).delete().catch(()=>{});
-                // إن كان العضو على مايك في الغرفة القديمة، ينزل منه قبل الانتقال.
-                const oldMics=await db.collection("rooms").doc(oldId).collection("mics").where("userId","==",window.currentUser.uid).get().catch(()=>null);
-                if(oldMics) { const b=db.batch(); oldMics.docs.forEach(d=>b.delete(d.ref)); await b.commit().catch(()=>{}); }
-                await db.collection("rooms").doc(oldId).collection("messages").add({
-                    type:"system", isSystem:true,
-                    text:`🚪 غادر ${window.currentUser.name} الغرفة إلى [ ${r} ]`,
-                    userId:window.currentUser.uid,
-                    timestamp:FieldValue.serverTimestamp()
-                }).catch(()=>{});
-            }
-            window.currentRoom = r;
-            document.getElementById('chatBox').innerHTML = "";
-            document.getElementById('featureModal').style.display = 'none';
-            ui.clearAllListeners();
+            if(!r || r===window.currentRoom) { document.getElementById('featureModal').style.display='none'; return; }
+            const oldRoom=window.currentRoom, oldId=window.roomId(oldRoom), newRoom=window.safeRoomName(r);
+            const u=window.currentUser;
+            window.roomListenerGeneration++;
+            if(window.presenceTimer){clearInterval(window.presenceTimer);window.presenceTimer=null;}
             ui.closeAllMicPeers();
+            if(u){
+                await db.collection("rooms").doc(oldId).collection("presence").doc(`${u.uid}_${window.roomSessionId}`).delete().catch(()=>{});
+                await db.collection("rooms").doc(oldId).collection("messages").add({type:"system",isSystem:true,text:`🚪 غادر ${u.name||'عضو'} الغرفة إلى [ ${newRoom} ] — ${ui.uiRankText?ui.uiRankText(u.role):'عضو'}`,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',role:u.role||'new'},timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
+            }
+            ui.clearAllListeners();
+            window.currentRoom=newRoom;
+            document.getElementById('chatBox').innerHTML='';
+            document.getElementById('featureModal').style.display='none';
             ui.enterChat();
-            if(window.currentUser) {
-                const rid=window.roomId(r);
-                await db.collection("rooms").doc(rid).collection("messages").add({
-                    type:"system", isSystem:true,
-                    text:`👋 انضم ${window.currentUser.name} إلى الغرفة [ ${r} ] — ${window.uiRankText(window.currentUser.role)}`,
-                    userId:window.currentUser.uid,
-                    timestamp:FieldValue.serverTimestamp()
-                }).catch(()=>{});
+            if(u){
+                await db.collection("rooms").doc(window.roomId(newRoom)).collection("messages").add({type:"system",isSystem:true,text:`👋 انضم ${u.name||'عضو'} إلى الغرفة [ ${newRoom} ] — ${ui.uiRankText?ui.uiRankText(u.role):'عضو'}`,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',role:u.role||'new'},timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
             }
         },
         startRealtimePresence: () => {
             if(!window.currentUser) return;
             if(window.presenceTimer) clearInterval(window.presenceTimer);
-            const roomId = window.roomId(window.currentRoom);
-            const ref = db.collection("rooms").doc(roomId).collection("presence").doc(window.currentUser.uid);
+            const roomDocId = window.roomId(window.currentRoom);
+            const sessionDocId = `${window.currentUser.uid}_${window.roomSessionId}`;
+            const ref = db.collection("rooms").doc(roomDocId).collection("presence").doc(sessionDocId);
+            window.roomPresenceId = sessionDocId;
             const writePresence = () => ref.set({
                 uid: window.currentUser.uid,
+                sessionId: window.roomSessionId,
+                room: window.currentRoom,
                 name: window.currentUser.name || "عضو",
                 role: window.currentUser.role || "new",
                 img: window.currentUser.img || "",
                 cover: window.currentUser.cover || "",
                 nameColor: window.currentUser.nameColor || "",
-                joinedAt: FieldValue.serverTimestamp(),
                 lastSeen: FieldValue.serverTimestamp()
-            }, {merge:true}).catch(()=>{});
+            }, {merge:true}).catch(e=>console.warn("presence",e));
             writePresence();
-            window.presenceTimer=setInterval(writePresence,15000);
+            window.presenceTimer=setInterval(writePresence,10000);
         },
         listenRoomDirectory: () => {
-            const unsub=db.collection("room_directory").onSnapshot(s=>{const base=window.roomsList||window.roomsBase;window.roomsList=[...new Set([...base,...s.docs.map(d=>d.data().name).filter(Boolean)])];});
+            const unsub=db.collection("room_directory").onSnapshot(s=>{const custom=s.docs.map(d=>d.data().name).filter(n=>n && !window.roomsBase.includes(n)); window.roomsList=[...new Set([...window.roomsBase,...custom])];});
             window.activeListeners.push(unsub);
         },
         ensureMicPeer: async (micData) => {
@@ -1732,7 +1699,7 @@
             if(window.sessionCheckInterval) clearInterval(window.sessionCheckInterval);
             ui.updateUserOnlineStatus(false);
             if(window.currentUser){
-                db.collection("rooms").doc(window.roomId(window.currentRoom)).collection("presence").doc(window.currentUser.uid).delete().catch(()=>{});
+                db.collection("rooms").doc(window.roomId(window.currentRoom)).collection("presence").doc(`${window.currentUser.uid}_${window.roomSessionId}`).delete().catch(()=>{});
             }
             localStorage.removeItem("hassouni_user_session");
             window.currentUser = null;
@@ -1744,7 +1711,7 @@
     };
 
     window.onload = () => { ui.checkSavedSessionOnLoad(); };
-    window.addEventListener('beforeunload',()=>{ if(window.currentUser) db.collection("users").doc(window.currentUser.uid).set({isOnline:false,lastSeen:FieldValue.serverTimestamp()},{merge:true}); });
+    window.addEventListener('beforeunload',()=>{ if(window.currentUser){ db.collection("rooms").doc(window.roomId(window.currentRoom)).collection("presence").doc(`${window.currentUser.uid}_${window.roomSessionId}`).delete().catch(()=>{}); } });
 </script>
 </body>
 </html>
