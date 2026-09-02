@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>شات حسوني - النسخة الإمبراطورية المطورة الكاملة</title>
+    <title>شات حسوني المطورة الكاملة</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <!-- مكتبات Firebase SDK المتوافقة -->
@@ -205,7 +205,7 @@
 <div id="welcomeOverlay">
     <div class="king-card">
         <div id="loginPanelIcon" style="width:72px;height:72px;border-radius:50%;border:2px solid var(--gold);margin:0 auto 8px;display:grid;place-items:center;background:#111 center/cover no-repeat;overflow:hidden"><i class="fas fa-crown" style="font-size:30px;color:var(--gold)"></i></div>
-        <h2 style="text-align:center; color:var(--gold); margin:0 0 5px;">شات حسوني - النسخة الإمبراطورية</h2>
+        <h2 style="text-align:center; color:var(--gold); margin:0 0 5px;">شات حسوني</h2>
         <p style="text-align:center; font-size:12px; margin:0 0 10px; color:#aaa;">أهلاً وسهلاً بكم في شات عربي دردشة عربية محمية بالكامل</p>
         
         <div class="btn-row">
@@ -888,10 +888,12 @@
 
             if(!userInp || !passInp) { alert("البيانات ناقصة."); return; }
 
-            const lookup = isNew ? db.collection("users").where("email", "==", emailInp).get() : Promise.all([
-                db.collection("users").where("email", "==", emailInp).limit(1).get(),
-                db.collection("users").where("name", "==", userInp).limit(1).get()
-            ]).then(([byEmail,byName])=> byEmail.empty ? byName : byEmail);
+            // الدخول أولاً بالبريد: قراءة واحدة فقط. نلجأ للاسم فقط إذا لم نجد البريد.
+            const lookup = isNew
+                ? db.collection("users").where("email", "==", emailInp.toLowerCase()).limit(1).get()
+                : db.collection("users").where("email", "==", emailInp.toLowerCase()).limit(1).get().then(byEmail =>
+                    byEmail.empty ? db.collection("users").where("name", "==", userInp).limit(1).get() : byEmail
+                  );
             lookup.then((querySnap) => {
                 if(!querySnap.empty && isNew) { alert("هذا البريد مسجل مسبقاً. استخدم دخول العضوية."); return; }
                 if(!querySnap.empty && !isNew) {
@@ -929,8 +931,9 @@
         },
         registerAndLoginUser: (userObj) => {
             // الحساب السحابي هو المصدر الوحيد للحقيقة؛ لا ننشئ sessionToken جديداً عند كل جهاز.
-            window.currentUser = userObj;
-            localStorage.setItem("hassouni_user_session", JSON.stringify(userObj));
+            window.currentUser = {...userObj};
+            window.usersCache[userObj.uid] = {...userObj};
+            localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser));
             document.getElementById('featureModal').style.display = 'none';
             ui.enterChat();
             db.collection("users").doc(userObj.uid).set({...userObj,lastSeen:FieldValue.serverTimestamp()}, { merge: true }).catch(e=>console.warn('user save',e));
@@ -955,50 +958,49 @@
             }, 60000);
         },
         checkSavedSessionOnLoad: () => {
-            let savedUser = localStorage.getItem("hassouni_user_session");
-            if(savedUser) {
-                let parsedUser = JSON.parse(savedUser);
-                db.collection("users").doc(parsedUser.uid).get().then((doc)=>{
-                    if(doc.exists){
-                        let sData = doc.data();
-                        if(sData.isBanned) {
-                            alert("لقد تم حظر حسابك.");
-                            ui.logoutBackToWelcome();
-                            return;
-                        }
-                        window.currentUser = sData;
-                        // لا نغيّر بيانات الحساب أو sessionToken عند فتح جهاز جديد.
-                        // بذلك يبقى الحساب نفسه متزامناً على الهاتف والمتصفح معاً.
-                        localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser));
-                    } else {
-                        // الحساب المسجل المحذوف لا يعود من localStorage؛ الزائر فقط يمكن إعادة إنشائه.
-                        if(parsedUser.role==='guest') window.currentUser = parsedUser;
-                        else { localStorage.removeItem('hassouni_user_session'); document.getElementById('welcomeOverlay').style.display='flex'; ui.switchBranch('b2'); return; }
-                    }
-                    window.sessionLoadAttempts = 0;
-                    document.getElementById('welcomeOverlay').style.display = 'none'; 
-                    ui.enterChat();
-                }).catch((err) => {
-                    // لا نطرد العضو ولا نمسح جلسته بسبب انقطاع مؤقت في Firebase.
-                    // نعيد المحاولة تلقائياً، ولا نظهر رسالة مزعجة إلا بعد عدة محاولات فاشلة.
-                    console.warn('Firebase session read failed', err);
-                    window.sessionLoadAttempts = (window.sessionLoadAttempts || 0) + 1;
-                    updateConnectionBadge(navigator.onLine ? 'starting' : 'offline');
-                    if(window.sessionLoadAttempts <= 6 && navigator.onLine){
-                        const delay = Math.min(1500 * Math.pow(1.7, window.sessionLoadAttempts-1), 12000);
-                        setTimeout(() => ui.checkSavedSessionOnLoad(), delay);
-                        return;
-                    }
-                    // إبقاء الحساب محلياً مؤقتاً، لكن لا ندخل الشات بدون اتصال Firestore.
-                    window.currentUser = null;
-                    document.getElementById('welcomeOverlay').style.display = 'flex';
-                    ui.switchBranch('b2');
-                    alert('تعذر الاتصال بخادم Firebase بعد عدة محاولات. سيتم إعادة المحاولة تلقائياً عند عودة الاتصال.');
-                });
-            } else {
-                document.getElementById('welcomeOverlay').style.display = 'flex';
+            const savedUser = localStorage.getItem("hassouni_user_session");
+            if(!savedUser){
+                document.getElementById('welcomeOverlay').style.display='flex';
                 ui.switchBranch('b1');
+                return;
             }
+            let parsedUser;
+            try{ parsedUser=JSON.parse(savedUser); }catch(e){ localStorage.removeItem('hassouni_user_session'); document.getElementById('welcomeOverlay').style.display='flex'; ui.switchBranch('b1'); return; }
+
+            // دخول فوري من الكاش المحلي، ثم التحقق من Firestore في الخلفية.
+            window.currentUser = parsedUser;
+            window.usersCache[parsedUser.uid] = {...parsedUser};
+            window.sessionLoadAttempts=0;
+            document.getElementById('welcomeOverlay').style.display='none';
+            ui.enterChat();
+
+            db.collection("users").doc(parsedUser.uid).get().then(doc=>{
+                if(!doc.exists){
+                    if(parsedUser.role==='guest') return;
+                    localStorage.removeItem('hassouni_user_session');
+                    ui.logoutBackToWelcome();
+                    return;
+                }
+                const fresh={uid:doc.id,...doc.data()};
+                if(fresh.isBanned){
+                    alert("لقد تم حظر حسابك.");
+                    ui.logoutBackToWelcome();
+                    return;
+                }
+                // حدّث الكاش والواجهة فقط إذا وصلت بيانات أحدث.
+                window.currentUser=fresh;
+                window.usersCache[fresh.uid]=fresh;
+                localStorage.setItem("hassouni_user_session",JSON.stringify(fresh));
+                ui.updateHeaderUserBgIcon();
+                if(window._roomPresenceData && window.roomPresenceId){
+                    window._roomPresenceData[window.roomPresenceId]={...(window._roomPresenceData[window.roomPresenceId]||{}),uid:fresh.uid,sessionId:window.roomSessionId,room:window.currentRoom,name:fresh.name||'عضو',role:fresh.role||'new',img:fresh.img||'',cover:fresh.cover||'',nameColor:fresh.nameColor||'',lastSeen:new Date()};
+                    ui.renderOnlineUsersFromCache();
+                }
+            }).catch(err=>{
+                console.warn('background session refresh',err);
+                updateConnectionBadge(navigator.onLine?'starting':'offline');
+                // لا نعيد تحميل الصفحة ولا نطرد العضو عند انقطاع مؤقت.
+            });
         },
         reconnectRealtime: () => {
             if(!window.currentUser || !navigator.onLine || window.firebaseReconnectTimer) return;
@@ -1054,10 +1056,15 @@
                         document.getElementById('chatBox').style.backgroundImage = `url('${data.roomBg}')`;
                     }
                     let ytContainer = document.getElementById('youtubeVideoFrameContainer');
-                    if(data.activeAudioId) {
-                        ytContainer.innerHTML = `<iframe width="100" height="100" src="https://www.youtube.com/embed/${data.activeAudioId}?autoplay=1&loop=1&playlist=${data.activeAudioId}" allow="autoplay"></iframe>`;
-                    } else {
-                        ytContainer.innerHTML = "";
+                    const nextAudioId = data.activeAudioId || '';
+                    // لا تعيد إنشاء iframe الثقيل مع كل تحديث لإعدادات الروم.
+                    if(nextAudioId !== (window.renderedRoomAudioId || '')) {
+                        if(nextAudioId) {
+                            ytContainer.innerHTML = `<iframe width="100" height="100" loading="lazy" src="https://www.youtube.com/embed/${nextAudioId}?autoplay=1&loop=1&playlist=${nextAudioId}&playsinline=1" allow="autoplay; encrypted-media"></iframe>`;
+                        } else {
+                            ytContainer.innerHTML = "";
+                        }
+                        window.renderedRoomAudioId = nextAudioId;
                     }
                 }
             },(err)=>{
@@ -1191,13 +1198,23 @@
         },
         listenOnlineUsersRealtime: (expectedGeneration=window.roomListenerGeneration) => {
             const roomAtStart=window.currentRoom, roomDocId=window.roomId(roomAtStart);
-            window._roomPresenceData={};
+            window._roomPresenceData=window._roomPresenceData||{};
             const unsub=db.collection("rooms").doc(roomDocId).collection("presence").onSnapshot((snap)=>{
                 if(expectedGeneration!==window.roomListenerGeneration || roomAtStart!==window.currentRoom)return;
                 window.lastFirestoreEventAt=Date.now(); window.firestoreReady=true; window.realtimeReconnectAttempts=0; updateConnectionBadge('online');
-                window._roomPresenceData={};
-                snap.forEach(doc=>{const d=doc.data()||{}; if(d.uid) window._roomPresenceData[doc.id]={...d};});
-                ui.renderOnlineUsersFromCache();
+                let changed=false;
+                snap.docChanges().forEach(ch=>{
+                    if(ch.type==='removed'){ if(window._roomPresenceData[ch.doc.id]){delete window._roomPresenceData[ch.doc.id];changed=true;} return; }
+                    const d=ch.doc.data()||{};
+                    if(!d.uid)return;
+                    const old=window._roomPresenceData[ch.doc.id]||{};
+                    // heartbeat لا يغيّر شكل القائمة، لذلك لا نعيد رسم DOM بلا داعٍ.
+                    const displayChanged=old.uid!==d.uid||old.name!==d.name||old.role!==d.role||old.img!==d.img||old.cover!==d.cover||old.nameColor!==d.nameColor||old.room!==d.room;
+                    window._roomPresenceData[ch.doc.id]={...old,...d};
+                    window.usersCache[d.uid]={...(window.usersCache[d.uid]||{}),...d,uid:d.uid};
+                    if(displayChanged || ch.type==='added') changed=true;
+                });
+                if(changed) ui.renderOnlineUsersFromCache();
             },(err)=>{
                 console.error('Firestore presence listener',err);
                 if(expectedGeneration===window.roomListenerGeneration && err?.code!=='permission-denied') ui.scheduleRealtimeReconnect();
@@ -1523,12 +1540,12 @@
             const body = document.getElementById('featureModalBody');
             if (!modal || !title || !body || !uid) return;
             title.innerText = "الملف الشخصي";
-            body.innerHTML = '<div style="text-align:center;padding:35px;color:#aaa"><i class="fas fa-spinner fa-spin" style="font-size:28px;color:var(--gold)"></i><p style="margin:10px 0 0">جارٍ فتح الملف...</p></div>';
             modal.style.display = 'flex';
 
-            // إذا كانت بيانات العضو موجودة في كاش الغرفة، اعرضها مباشرة بلا انتظار.
+            // إذا كانت بيانات العضو موجودة، افتح الكرت فوراً بدون شاشة انتظار.
             const cached = (window.usersCache && window.usersCache[uid]) ||
                            (window._roomPresenceData ? Object.values(window._roomPresenceData).find(x => x.uid === uid) : null);
+            if(!cached) body.innerHTML = '<div style="text-align:center;padding:35px;color:#aaa"><i class="fas fa-spinner fa-spin" style="font-size:28px;color:var(--gold)"></i><p style="margin:10px 0 0">جارٍ فتح الملف...</p></div>';
             const renderProfile = (u) => {
                 if (!u) return;
                 const isMe = !!window.currentUser && window.currentUser.uid === uid;
@@ -1593,7 +1610,7 @@
 
             // تحديث صامت من Firestore؛ لا يمنع فتح الكرت ولا يعلّق الواجهة.
             db.collection("users").doc(uid).get()
-              .then(doc => { if (doc.exists) renderProfile({uid: doc.id, ...doc.data()}); })
+              .then(doc => { if (doc.exists) { const fresh={uid: doc.id, ...doc.data()}; window.usersCache[uid]=fresh; renderProfile(fresh); } })
               .catch(err => console.warn('profile fetch failed', err));
         },
         openYouTubeMessage: (videoId) => {
@@ -1806,53 +1823,45 @@
             reader.readAsDataURL(file);
         },
         openEditProfileModal: (uid) => {
-            db.collection("users").doc(uid).get().then((doc) => {
-                let u = doc.data();
+            const cached = (window.usersCache && window.usersCache[uid]) ||
+                           (window._roomPresenceData ? Object.values(window._roomPresenceData).find(x=>x.uid===uid) : null) ||
+                           (window.currentUser && window.currentUser.uid===uid ? window.currentUser : null);
+            const renderEditor = (u) => {
+                if(!u)return;
+                window.usersCache[uid]={...(window.usersCache[uid]||{}),...u};
                 window.tempUploadedCover = u.cover || "";
                 window.tempUploadedPfp = u.img || "";
-                
                 document.getElementById('featureModalTitle').innerText = "تعديل الملف الشخصي الكامل";
                 document.getElementById('featureModalBody').innerHTML = `
                     <div style="text-align:right;">
                         <label style="font-size:12px; color:var(--gold); font-weight:bold;">صورة الغلاف (من ملفات الجهاز):</label>
                         <label for="fileCover" class="file-input-label"><i class="fas fa-upload"></i> اختر ملف الغلاف</label>
                         <input type="file" id="fileCover" class="file-input-hidden" accept="image/*" onchange="ui.handleLocalFileProcessing(this, 'cover')">
-                        
-                        <label style="font-size:12px; color:var(--gold); font-weight:bold;">الصورة الشخصية / البروفايل (من ملفات الجهاز):</label>
+                        <label style="font-size:12px; color:var(--gold); font-weight:bold;">الصورة الشخصية / البروفايل:</label>
                         <label for="filePfp" class="file-input-label"><i class="fas fa-image"></i> اختر ملف الصورة الشخصية</label>
                         <input type="file" id="filePfp" class="file-input-hidden" accept="image/*" onchange="ui.handleLocalFileProcessing(this, 'pfp')">
-                        
                         <label style="font-size:12px; color:var(--gold);">الاسم المستعار:</label>
-                        <input type="text" id="editName" class="form-control" value="${u.name || ''}">
-
+                        <input type="text" id="editName" class="form-control" value="${ui.escapeHtml(u.name || '')}">
                         <label style="font-size:12px; color:var(--gold);">خلفية / لون الاسم:</label>
                         <input type="color" id="editNameColor" class="form-control" style="height:40px; padding:4px;" value="${u.nameColor || '#ffd700'}">
-
-                        <label style="font-size:12px; color:var(--gold);">العمر:</label>
-                        <input type="number" id="editAge" class="form-control" value="${u.age || ''}">
-
+                        <label style="font-size:12px; color:var(--gold);">العمر:</label><input type="number" id="editAge" class="form-control" value="${u.age || ''}">
                         <label style="font-size:12px; color:var(--gold);">الجنس:</label>
-                        <select id="editGender" class="form-select">
-                            <option value="ذكر" ${u.gender === 'ذكر' ? 'selected' : ''}>ذكر</option>
-                            <option value="أنثى" ${u.gender === 'أنثى' ? 'selected' : ''}>أنثى</option>
-                        </select>
-
-                        <label style="font-size:12px; color:var(--gold);">البلد:</label>
-                        <input type="text" id="editCountry" class="form-control" value="${u.country || ''}">
-
-                        <label style="font-size:12px; color:var(--gold);">البريد الإلكتروني:</label>
-                        <input type="email" id="editEmail" class="form-control" value="${u.email || ''}">
-
-                        <label style="font-size:12px; color:var(--gold);">كلمة المرور الجديدة:</label>
-                        <input type="password" id="editPassword" class="form-control" value="${u.password || ''}">
-                        
-                        <label style="font-size:12px; color:var(--gold);">الحالة الشخصية:</label>
-                        <input type="text" id="editStatus" class="form-control" value="${u.status || ''}">
-                        
+                        <select id="editGender" class="form-select"><option value="ذكر" ${u.gender === 'ذكر' ? 'selected' : ''}>ذكر</option><option value="أنثى" ${u.gender === 'أنثى' ? 'selected' : ''}>أنثى</option></select>
+                        <label style="font-size:12px; color:var(--gold);">البلد:</label><input type="text" id="editCountry" class="form-control" value="${ui.escapeHtml(u.country || '')}">
+                        <label style="font-size:12px; color:var(--gold);">البريد الإلكتروني:</label><input type="email" id="editEmail" class="form-control" value="${ui.escapeHtml(u.email || '')}">
+                        <label style="font-size:12px; color:var(--gold);">كلمة المرور الجديدة:</label><input type="password" id="editPassword" class="form-control" value="${ui.escapeHtml(u.password || '')}">
+                        <label style="font-size:12px; color:var(--gold);">الحالة الشخصية:</label><input type="text" id="editStatus" class="form-control" value="${ui.escapeHtml(u.status || '')}">
                         <button class="row-btn active" style="width:100%; margin-top:10px; border-radius:8px; padding:10px;" onclick="ui.saveProfileEdits('${uid}')">حفظ التغييرات ومزامنتها فوراً</button>
-                    </div>
-                `;
-            });
+                    </div>`;
+                document.getElementById('featureModal').style.display='flex';
+            };
+            if(cached) renderEditor(cached);
+            else {
+                document.getElementById('featureModalTitle').innerText='تعديل الملف الشخصي الكامل';
+                document.getElementById('featureModalBody').innerHTML='<div style="text-align:center;padding:25px;color:#aaa">جارٍ تحميل بيانات الحساب...</div>';
+                document.getElementById('featureModal').style.display='flex';
+            }
+            db.collection("users").doc(uid).get().then(doc=>{if(doc.exists)renderEditor({uid:doc.id,...doc.data()});}).catch(e=>console.warn('edit profile fetch',e));
         },
         saveProfileEdits: async (uid) => {
             let updated = {
@@ -1868,13 +1877,15 @@
                 status: document.getElementById('editStatus').value.trim()
             };
 
+            // حدّث الواجهة والكاش فوراً، ثم اكتب إلى Firebase في الخلفية.
+            window.usersCache[uid]={...(window.usersCache[uid]||{}),...updated,uid};
+            if(window.currentUser && window.currentUser.uid===uid){
+                window.currentUser={...window.currentUser,...updated};
+                localStorage.setItem("hassouni_user_session",JSON.stringify(window.currentUser));
+                ui.updateHeaderUserBgIcon();
+            }
             db.collection("users").doc(uid).update(updated).then(async () => {
                 alert("تم تحديث ومزامنة البيانات والصور بنجاح لجميع الأعضاء!");
-                if(window.currentUser && window.currentUser.uid===uid){
-                    window.currentUser={...window.currentUser,...updated};
-                    localStorage.setItem("hassouni_user_session",JSON.stringify(window.currentUser));
-                    ui.updateHeaderUserBgIcon();
-                }
                 if(window.currentUser && window.currentUser.uid===uid && typeof window.roomPresenceId==='string'){
                     ui.startRealtimePresence();
                 } else {
@@ -2012,7 +2023,13 @@
         }
     },15000);
 
-    window.onload = async () => { updateConnectionBadge(navigator.onLine ? 'starting' : 'offline'); await window.loadSiteSettings(); ui.applyLoginSettings(); ui.checkSavedSessionOnLoad(); };
+    window.onload = () => {
+        updateConnectionBadge(navigator.onLine ? 'starting' : 'offline');
+        // لا نوقف شاشة الدخول بانتظار إعدادات الموقع؛ طبّقها فور وصولها.
+        ui.applyLoginSettings();
+        ui.checkSavedSessionOnLoad();
+        window.loadSiteSettings().then(()=>ui.applyLoginSettings()).catch(()=>{});
+    };
     window.addEventListener('beforeunload',()=>{ if(window.currentUser){ db.collection("rooms").doc(window.roomId(window.currentRoom)).collection("presence").doc(`${window.currentUser.uid}_${window.roomSessionId}`).delete().catch(()=>{}); } });
 </script>
 </body>
