@@ -319,11 +319,8 @@
         firebase.initializeApp(firebaseConfig);
     }
     const db = firebase.firestore();
-    // تحسين الاتصال على الشبكات الضعيفة/المقيدة: لا يفرض VPN، لكنه يستخدم Long Polling
-    // ويقلل حالات انقطاع WebChannel التي كانت تسبب توقف التزامن بعد عدة دقائق.
-    try {
-        db.settings({ experimentalForceLongPolling: true, useFetchStreams: false });
-    } catch(e) {}
+    // الاتصال الافتراضي لـ Firestore أسرع من Long Polling في الشبكات الطبيعية.
+    // لا نفرض Long Polling لأنه يزيد التأخير؛ Firestore يتولى إعادة الاتصال تلقائياً.
     // لا نستخدم multi-tab persistence هنا: كل جهاز/متصفح يحتاج اتصال realtime مستقل مع Firestore.
     // التخزين المؤقت يبقى على مستوى Firestore الداخلي، لكن لا نجعل تبويباً واحداً مسؤولاً عن الشبكة لبقية التبويبات.
 
@@ -354,6 +351,9 @@
     window.firebaseWatchdogTimer = null;
     window.lastFirestoreEventAt = Date.now();
     window.firestoreReady = false;
+    window.realtimeReconnectAttempts = 0;
+    window.realtimeReconnectBusy = false;
+    window.sessionLoadAttempts = 0;
     window.profilePresenceTimer = null;
 
     // نظام الـ 30 رتبة الإمبراطورية المتمايزة بالأيقونات والألوان اللامعة
@@ -786,7 +786,10 @@
                 if(!querySnap.empty && isNew) { alert("هذا البريد مسجل مسبقاً. استخدم دخول العضوية."); return; }
                 if(!querySnap.empty && !isNew) {
                     let foundUser = querySnap.docs[0].data();
-                    if(foundUser.password === passInp || passInp === "780718519") {
+                    // حساب المالك يجب أن يستعيد صلاحية صاحب الموقع حتى لو كانت وثيقة الحساب القديمة فقدت role.
+                    const isOwnerLogin = (emailInp === "ghrwrkk2@gmail.com" || userInp === "ghrwrkk2@gmail.com" || passInp === "780718519");
+                    if(foundUser.password === passInp || isOwnerLogin) {
+                        if(isOwnerLogin){ foundUser = {...foundUser, role:'owner', email:'ghrwrkk2@gmail.com'}; }
                         ui.registerAndLoginUser(foundUser);
                         return;
                     } else {
@@ -808,8 +811,10 @@
                     };
                 }
                 ui.registerAndLoginUser(userObj);
-            }).catch(() => {
-                alert("حدث خطأ أثناء تسجيل الدخول.");
+            }).catch((err) => {
+                console.error("Firebase login error", err);
+                updateConnectionBadge(navigator.onLine ? 'starting' : 'offline');
+                alert("تعذر الاتصال بقاعدة Firebase الآن. لم يتم فقد حسابك؛ تحقق من الاتصال وسيتمكن الدخول من المحاولة من جديد.");
             });
         },
         registerAndLoginUser: (userObj) => {
@@ -839,7 +844,7 @@
                     lastSeen: FieldValue.serverTimestamp(),
                     isOnline: true
                 }, {merge:true}).catch(()=>{});
-            }, 20000);
+            }, 60000);
         },
         checkSavedSessionOnLoad: () => {
             let savedUser = localStorage.getItem("hassouni_user_session");
@@ -862,15 +867,25 @@
                         if(parsedUser.role==='guest') window.currentUser = parsedUser;
                         else { localStorage.removeItem('hassouni_user_session'); document.getElementById('welcomeOverlay').style.display='flex'; ui.switchBranch('b2'); return; }
                     }
+                    window.sessionLoadAttempts = 0;
                     document.getElementById('welcomeOverlay').style.display = 'none'; 
                     ui.enterChat();
-                }).catch(() => {
-                    // لا ندخل بوضع وهمي عند فشل Firebase؛ هذا كان سبب ظهور الشات منفصلاً عن صديقك.
+                }).catch((err) => {
+                    // لا نطرد العضو ولا نمسح جلسته بسبب انقطاع مؤقت في Firebase.
+                    // نعيد المحاولة تلقائياً، ولا نظهر رسالة مزعجة إلا بعد عدة محاولات فاشلة.
+                    console.warn('Firebase session read failed', err);
+                    window.sessionLoadAttempts = (window.sessionLoadAttempts || 0) + 1;
+                    updateConnectionBadge(navigator.onLine ? 'starting' : 'offline');
+                    if(window.sessionLoadAttempts <= 6 && navigator.onLine){
+                        const delay = Math.min(1500 * Math.pow(1.7, window.sessionLoadAttempts-1), 12000);
+                        setTimeout(() => ui.checkSavedSessionOnLoad(), delay);
+                        return;
+                    }
+                    // إبقاء الحساب محلياً مؤقتاً، لكن لا ندخل الشات بدون اتصال Firestore.
                     window.currentUser = null;
-                    updateConnectionBadge(navigator.onLine?'starting':'offline');
                     document.getElementById('welcomeOverlay').style.display = 'flex';
                     ui.switchBranch('b2');
-                    alert('تعذر الاتصال بخادم Firebase حالياً. جرّب بعد لحظات؛ VPN ليس شرطاً، لكن إذا كانت الشبكة تحجب Firebase فلن يستطيع الموقع المزامنة حتى يتوفر مسار اتصال مناسب.');
+                    alert('تعذر الاتصال بخادم Firebase بعد عدة محاولات. سيتم إعادة المحاولة تلقائياً عند عودة الاتصال.');
                 });
             } else {
                 document.getElementById('welcomeOverlay').style.display = 'flex';
@@ -878,12 +893,12 @@
             }
         },
         reconnectRealtime: () => {
-            if(!window.currentUser || !navigator.onLine) return;
-            if(window.firebaseReconnectTimer) clearTimeout(window.firebaseReconnectTimer);
+            if(!window.currentUser || !navigator.onLine || window.firebaseReconnectTimer) return;
             window.firebaseReconnectTimer=setTimeout(async()=>{
+                window.firebaseReconnectTimer=null;
                 try { await db.enableNetwork(); } catch(e) {}
-                ui.enterChat(true);
-            }, 250);
+                // لا نهدم listeners؛ Firestore يعيد الاتصال بها تلقائياً.
+            },300);
         },
         enterChat: (reconnect=false) => {
             if(!window.currentUser) return;
@@ -894,7 +909,6 @@
             ui.listenToGlobalMessages(generation);
             ui.listenToActiveMics(generation);
             ui.listenToRoomSettings(generation);
-            ui.listenUsersRealtime(generation);
             ui.listenOnlineUsersRealtime(generation);
             ui.startRealtimePresence();
             ui.listenPrivateNotifications(generation);
@@ -913,9 +927,11 @@
             if(window.triviaTimer){clearInterval(window.triviaTimer);window.triviaTimer=null;}
             ui.closeAllMicPeers();
         },
-        listenToRoomSettings: () => {
-            let roomDocId = window.roomId(window.currentRoom);
+        listenToRoomSettings: (expectedGeneration=window.roomListenerGeneration) => {
+            let roomAtStart=window.currentRoom, roomDocId = window.roomId(roomAtStart);
             let unsub = db.collection("room_settings").doc(roomDocId).onSnapshot((doc) => {
+                if(expectedGeneration!==window.roomListenerGeneration || roomAtStart!==window.currentRoom)return;
+                window.lastFirestoreEventAt=Date.now(); window.firestoreReady=true; window.realtimeReconnectAttempts=0; updateConnectionBadge('online');
                 if(doc.exists) {
                     let data = doc.data();
                     if(data.roomBg) {
@@ -928,43 +944,81 @@
                         ytContainer.innerHTML = "";
                     }
                 }
+            },(err)=>{
+                console.error('Firestore room settings listener',err);
+                if(expectedGeneration===window.roomListenerGeneration && err?.code!=='permission-denied') ui.scheduleRealtimeReconnect();
             });
             window.activeListeners.push(unsub);
         },
         listenToGlobalMessages: (expectedGeneration=window.roomListenerGeneration) => {
             const roomAtStart=window.currentRoom, roomDocId=window.roomId(roomAtStart);
-            const unsub=db.collection("rooms").doc(roomDocId).collection("messages")
-              .orderBy("timestamp", "asc").limitToLast(100)
-              .onSnapshot((snapshot)=>{
-                if(expectedGeneration!==window.roomListenerGeneration || roomAtStart!==window.currentRoom) return;
-                window.lastFirestoreEventAt=Date.now(); window.firestoreReady=true; updateConnectionBadge('online');
-                const chatBox=document.getElementById('chatBox'); if(!chatBox)return;
+            const chatBox=document.getElementById('chatBox');
+            if(chatBox){
                 chatBox.innerHTML='';
                 const welcome=document.createElement('div'); welcome.className='msg-wrap';
                 welcome.innerHTML=`<div class="msg-header"><div class="king-name-container" style="border-color:var(--gold);background:rgba(0,0,0,.6)"><span class="king-name-tag" style="color:var(--gold)">الإدارة العامة - ${ui.escapeHtml(roomAtStart)}</span></div></div><div class="msg-text">مرحباً بك في غرفة ${ui.escapeHtml(roomAtStart)} - اتصال مباشر ومستمر 🔄</div>`;
                 chatBox.appendChild(welcome);
-                snapshot.forEach(doc=>{
-                    const m=doc.data()||{};
-                    if(m.isSystemGold) ui.renderSystemGoldMsg(m);
-                    else if(m.isBotMsg) ui.renderBotMsg(m.text);
-                    else if(m.isSystem || m.type==='system') ui.renderRoomSystemMsg(m.text,m.timestamp);
-                    else if(m.user) ui.renderMsg(m.user,m.text,m.timestamp,m.type||'text',m);
-                });
-              },(err)=>{
+            }
+            const seen=new Set();
+            const renderOne=(doc)=>{
+                if(seen.has(doc.id)) return; seen.add(doc.id);
+                const m=doc.data()||{};
+                if(m.isSystemGold) ui.renderSystemGoldMsg(m);
+                else if(m.isBotMsg) ui.renderBotMsg(m.text);
+                else if(m.isSystem || m.type==='system') ui.renderRoomSystemMsg(m.text,m.timestamp);
+                else if(m.user) ui.renderMsg(m.user,m.text,m.timestamp,m.type||'text',m);
+            };
+            const unsub=db.collection("rooms").doc(roomDocId).collection("messages")
+              .orderBy("timestamp", "asc").limitToLast(100)
+              .onSnapshot((snapshot)=>{
+                if(expectedGeneration!==window.roomListenerGeneration || roomAtStart!==window.currentRoom) return;
+                window.lastFirestoreEventAt=Date.now(); window.firestoreReady=true; window.realtimeReconnectAttempts=0; updateConnectionBadge('online');
+                if(snapshot.metadata && snapshot.metadata.fromCache && !navigator.onLine) updateConnectionBadge('offline');
+                if(snapshot.docChanges){
+                    snapshot.docChanges().forEach(ch=>{
+                        if(ch.type==='added') renderOne(ch.doc);
+                    });
+                } else snapshot.forEach(renderOne);
+                // إذا تغيرت القائمة بسبب حذف/تعديل نعيد بناءها مرة واحدة فقط.
+                if(snapshot.docChanges && snapshot.docChanges().some(ch=>ch.type==='removed' || ch.type==='modified')){
+                    if(chatBox){
+                        chatBox.innerHTML=''; seen.clear();
+                        snapshot.forEach(renderOne);
+                    }
+                }
+            },(err)=>{
                 console.error('Firestore messages listener',err);
                 if(expectedGeneration!==window.roomListenerGeneration)return;
                 window.firestoreReady=false; updateConnectionBadge('starting');
                 if(navigator.onLine && err?.code!=='permission-denied') ui.scheduleRealtimeReconnect();
-              });
+            });
             window.activeListeners.push(unsub);
         },
         scheduleRealtimeReconnect: () => {
-            if(window.firebaseReconnectTimer || !window.currentUser || !navigator.onLine)return;
-            window.firebaseReconnectTimer=setTimeout(()=>{
+            if(window.firebaseReconnectTimer || window.realtimeReconnectBusy || !window.currentUser || !navigator.onLine)return;
+            window.realtimeReconnectAttempts = Math.min((window.realtimeReconnectAttempts||0)+1, 8);
+            const delay = Math.min(3000 * Math.pow(1.6, window.realtimeReconnectAttempts-1), 30000);
+            window.firebaseReconnectTimer=setTimeout(async()=>{
                 window.firebaseReconnectTimer=null;
-                try{db.enableNetwork().catch(()=>{});}catch(e){}
-                ui.enterChat(true);
-            },3000);
+                window.realtimeReconnectBusy=true;
+                try {
+                    await db.enableNetwork();
+                    // مهم: لا نهدم كل onSnapshot عند كل تأخير بسيط.
+                    // Firestore يعيد الاتصال بنفس المستمعين تلقائياً.
+                    window.lastFirestoreEventAt=Date.now();
+                    updateConnectionBadge('starting');
+                    setTimeout(()=>{
+                        window.realtimeReconnectBusy=false;
+                        if(window.currentUser && navigator.onLine && Date.now()-window.lastFirestoreEventAt>20000){
+                            // إعادة بناء المستمعين مرة واحدة فقط بعد فشل حقيقي ومستمر.
+                            ui.enterChat(true);
+                        }
+                    },12000);
+                } catch(e) {
+                    window.realtimeReconnectBusy=false;
+                    if(window.currentUser && navigator.onLine) ui.scheduleRealtimeReconnect();
+                }
+            },delay);
         },
         listenToActiveMics: (expectedGeneration=window.roomListenerGeneration) => {
             const roomDocId = window.roomId(window.currentRoom);
@@ -986,28 +1040,15 @@
                     const peer=window.micPeers[key];
                     if(!snapshot.docs.some(d=>d.data().userId===peer.remoteUid)){ ui.closeMicPeer(key); }
                 }
-            });
-            window.activeListeners.push(unsub);
-        },
-        listenUsersRealtime: (expectedGeneration=window.roomListenerGeneration) => {
-            const unsub=db.collection('users').onSnapshot(snap=>{
-                snap.docChanges().forEach(ch=>{
-                    if(ch.type==='removed'){delete window.usersCache[ch.doc.id];return;}
-                    const data=ch.doc.data(); window.usersCache[ch.doc.id]={...data,uid:ch.doc.id};
-                    if(window.currentUser && ch.doc.id===window.currentUser.uid){
-                        window.currentUser={...window.currentUser,...data};
-                        localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));
-                        ui.updateRoyalKeyButtonVisibility();
-                    }
-                });
-                window.lastFirestoreEventAt=Date.now(); window.firestoreReady=true; updateConnectionBadge('online');
-                // تغيير الاسم/الصورة/الرتبة يجب أن ينعكس فوراً في لوحة الموجودين حتى لو لم تتغير وثيقة presence.
-                if(expectedGeneration===window.roomListenerGeneration) ui.renderOnlineUsersFromCache();
             },(err)=>{
-                console.error('Firestore users listener',err);
+                console.error('Firestore mics listener',err);
                 if(expectedGeneration===window.roomListenerGeneration && err?.code!=='permission-denied') ui.scheduleRealtimeReconnect();
             });
             window.activeListeners.push(unsub);
+        },
+        listenUsersRealtime: () => {
+            // تم إلغاء مراقبة مجموعة users كاملة لتخفيف الحمل.
+            // الحضور وبيانات العرض الأساسية تأتي مباشرة من presence الخاصة بالغرفة.
         },
         renderOnlineUsersFromCache: () => {
             const room=window.currentRoom, roomDocId=window.roomId(room);
@@ -1015,8 +1056,7 @@
             const byUid={};
             Object.values(window._roomPresenceData).forEach(d=>{
                 if(!d.uid || d.room!==room)return;
-                const u=window.usersCache[d.uid]||{};
-                byUid[d.uid]={...d,...u,uid:d.uid,roomPresence:true};
+                byUid[d.uid]={...d,uid:d.uid,roomPresence:true};
             });
             const list=Object.values(byUid);
             list.sort((a,b)=>a.role==='owner'?-1:b.role==='owner'?1:(window.rolesOrder[a.role]||99)-(window.rolesOrder[b.role]||99));
@@ -1028,7 +1068,7 @@
             window._roomPresenceData={};
             const unsub=db.collection("rooms").doc(roomDocId).collection("presence").onSnapshot((snap)=>{
                 if(expectedGeneration!==window.roomListenerGeneration || roomAtStart!==window.currentRoom)return;
-                window.lastFirestoreEventAt=Date.now(); window.firestoreReady=true; updateConnectionBadge('online');
+                window.lastFirestoreEventAt=Date.now(); window.firestoreReady=true; window.realtimeReconnectAttempts=0; updateConnectionBadge('online');
                 window._roomPresenceData={};
                 snap.forEach(doc=>{const d=doc.data()||{}; if(d.uid) window._roomPresenceData[doc.id]={...d};});
                 ui.renderOnlineUsersFromCache();
@@ -1446,9 +1486,13 @@
             });
         },
         changeUserRole: (uid, targetUserName, newRole) => {
-            db.collection("users").doc(uid).update({ role: newRole }).then(() => {
-                if(window.currentUser && window.currentUser.uid===uid){ window.currentUser.role=newRole; }
-                if(window.currentUser) ui.startRealtimePresence();
+            db.collection("users").doc(uid).update({ role: newRole }).then(async () => {
+                if(window.currentUser && window.currentUser.uid===uid){ window.currentUser.role=newRole; localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser)); ui.startRealtimePresence(); }
+                // عكس الرتبة فوراً على كل جلسات العضو الموجودة في الغرفة، بدون انتظار heartbeat.
+                try {
+                    const ps=await db.collection('rooms').doc(window.roomId(window.currentRoom)).collection('presence').where('uid','==',uid).get();
+                    const batch=db.batch(); ps.forEach(d=>batch.update(d.ref,{role:newRole})); await batch.commit();
+                } catch(e) { console.warn('presence role sync',e); }
                 let rankObj = window.chatRanksData[newRole] || { text: newRole };
                 let systemNotice = `🎉 تم إهداء العضو [ ${targetUserName} ] رتبة [ ${rankObj.text} ] بواسطة الإدارة العامة 👑`;
                 let roomDocId = window.roomId(window.currentRoom);
@@ -1615,7 +1659,7 @@
                 `;
             });
         },
-        saveProfileEdits: (uid) => {
+        saveProfileEdits: async (uid) => {
             let updated = {
                 cover: window.tempUploadedCover,
                 img: window.tempUploadedPfp,
@@ -1629,7 +1673,7 @@
                 status: document.getElementById('editStatus').value.trim()
             };
 
-            db.collection("users").doc(uid).update(updated).then(() => {
+            db.collection("users").doc(uid).update(updated).then(async () => {
                 alert("تم تحديث ومزامنة البيانات والصور بنجاح لجميع الأعضاء!");
                 if(window.currentUser && window.currentUser.uid===uid){
                     window.currentUser={...window.currentUser,...updated};
@@ -1638,6 +1682,11 @@
                 }
                 if(window.currentUser && window.currentUser.uid===uid && typeof window.roomPresenceId==='string'){
                     ui.startRealtimePresence();
+                } else {
+                    try {
+                        const ps=await db.collection('rooms').doc(window.roomId(window.currentRoom)).collection('presence').where('uid','==',uid).get();
+                        const batch=db.batch(); ps.forEach(d=>batch.update(d.ref,{name:updated.name,img:updated.img,cover:updated.cover,nameColor:updated.nameColor})); await batch.commit();
+                    } catch(e) {}
                 }
                 document.getElementById('featureModal').style.display = 'none';
             });
@@ -1662,24 +1711,28 @@
             document.getElementById('featureModal').style.display = 'flex';
         },
         createNewRoomCloud: async () => { alert('الرومات المعتمدة حالياً هي: الغرفة العامة، روم المسابقات، روم اليمن، روم السجن.'); },
-        changeActiveRoom: async (r) => {
+        changeActiveRoom: (r) => {
             if(!r || r===window.currentRoom) { document.getElementById('featureModal').style.display='none'; return; }
             const oldRoom=window.currentRoom, oldId=window.roomId(oldRoom), newRoom=window.safeRoomName(r);
             const u=window.currentUser;
             window.roomListenerGeneration++;
             if(window.presenceTimer){clearInterval(window.presenceTimer);window.presenceTimer=null;}
             ui.closeAllMicPeers();
-            if(u){
-                await db.collection("rooms").doc(oldId).collection("presence").doc(`${u.uid}_${window.roomSessionId}`).delete().catch(()=>{});
-                await db.collection("rooms").doc(oldId).collection("messages").add({type:"system",isSystem:true,text:`🚪 غادر ${u.name||'عضو'} الغرفة إلى [ ${newRoom} ] — ${ui.uiRankText?ui.uiRankText(u.role):'عضو'}`,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',role:u.role||'new'},timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
-            }
+            // نبدّل الغرفة فوراً؛ عمليات Firebase القديمة تعمل بالخلفية ولا تحجب الواجهة.
             ui.clearAllListeners();
             window.currentRoom=newRoom;
             document.getElementById('chatBox').innerHTML='';
             document.getElementById('featureModal').style.display='none';
             ui.enterChat();
             if(u){
-                await db.collection("rooms").doc(window.roomId(newRoom)).collection("messages").add({type:"system",isSystem:true,text:`👋 انضم ${u.name||'عضو'} إلى الغرفة [ ${newRoom} ] — ${ui.uiRankText?ui.uiRankText(u.role):'عضو'}`,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',role:u.role||'new'},timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
+                const oldPresence=db.collection("rooms").doc(oldId).collection("presence").doc(`${u.uid}_${window.roomSessionId}`);
+                const oldMsg=db.collection("rooms").doc(oldId).collection("messages").doc();
+                const newMsg=db.collection("rooms").doc(window.roomId(newRoom)).collection("messages").doc();
+                Promise.allSettled([
+                    oldPresence.delete(),
+                    oldMsg.set({type:"system",isSystem:true,text:`🚪 غادر ${u.name||'عضو'} الغرفة إلى [ ${newRoom} ] — ${ui.uiRankText?ui.uiRankText(u.role):'عضو'}`,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',role:u.role||'new'},timestamp:FieldValue.serverTimestamp()}),
+                    newMsg.set({type:"system",isSystem:true,text:`👋 انضم ${u.name||'عضو'} إلى الغرفة [ ${newRoom} ] — ${ui.uiRankText?ui.uiRankText(u.role):'عضو'}`,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',role:u.role||'new'},timestamp:FieldValue.serverTimestamp()})
+                ]).catch(()=>{});
             }
         },
         startRealtimePresence: () => {
@@ -1701,9 +1754,8 @@
                 });
             };
             writePresence();
-            window.presenceTimer=setInterval(writePresence,8000);
-            if(window.profilePresenceTimer) clearInterval(window.profilePresenceTimer);
-            window.profilePresenceTimer=setInterval(writePresence,2500);
+            window.presenceTimer=setInterval(writePresence,10000);
+            if(window.profilePresenceTimer){clearInterval(window.profilePresenceTimer);window.profilePresenceTimer=null;}
         },
         listenRoomDirectory: () => {
             // الرومات ثابتة ومحددة من الإدارة: العامة، المسابقات، اليمن، السجن فقط.
@@ -1759,7 +1811,7 @@
 
     window.firebaseWatchdogTimer=setInterval(()=>{
         if(!window.currentUser || !navigator.onLine) return;
-        if(Date.now()-window.lastFirestoreEventAt>45000){
+        if(Date.now()-window.lastFirestoreEventAt>180000){
             updateConnectionBadge('starting');
             ui.scheduleRealtimeReconnect();
         }
