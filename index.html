@@ -193,6 +193,7 @@
 <!-- واجهة تسجيل الدخول -->
 <div id="welcomeOverlay">
     <div class="king-card">
+        <div id="loginPanelIcon" style="width:72px;height:72px;border-radius:50%;border:2px solid var(--gold);margin:0 auto 8px;display:grid;place-items:center;background:#111 center/cover no-repeat;overflow:hidden"><i class="fas fa-crown" style="font-size:30px;color:var(--gold)"></i></div>
         <h2 style="text-align:center; color:var(--gold); margin:0 0 5px;">شات حسوني - النسخة الإمبراطورية</h2>
         <p style="text-align:center; font-size:12px; margin:0 0 10px; color:#aaa;">أهلاً وسهلاً بكم في شات عربي دردشة عربية محمية بالكامل</p>
         
@@ -438,6 +439,8 @@
     window.safeRoomName = (room) => String(room || "الغرفة العامة").trim();
     window.uiRankText = (role) => (window.chatRanksData[role] || {text:"عضو"}).text;
     window.roomsBase = ["الغرفة العامة","روم المسابقات","روم اليمن","روم السجن"];
+    window.siteSettings={allowGuests:true,blockPrivateLinks:true,allowedCleanRanks:['prince'],maxMicCount:4,securityEnabled:true};
+    window.loadSiteSettings=async()=>{try{const d=await db.collection('site_settings').doc('main').get();if(d.exists)window.siteSettings={...window.siteSettings,...d.data()};window.maxMicCount=window.siteSettings.maxMicCount||4;}catch(e){}};
 
     function updateConnectionBadge(state) {
         window.connectionState = state;
@@ -473,7 +476,7 @@
                 if(window.currentUser && window.currentUser.role !== 'guest') {
                     if(window.currentUser.role === 'owner') {
                         authBtn.style.display = 'block';
-                        authBtn.querySelector('span').innerText = "لوحة المالك";
+                        authBtn.querySelector('span').innerText = "لوحة التحكم";
                     } else {
                         authBtn.style.display = 'none';
                     }
@@ -646,7 +649,8 @@
             }catch(e){alert('تعذر تهيئة الأعضاء؛ تحقق من صلاحيات Firestore.');}
         },
         ownerClearRoomChat: async () => {
-            if(!window.currentUser || !['owner','prince'].includes(window.currentUser.role)){alert('تنظيف الروم متاح لصاحب الموقع والبرنس فقط.');return;}
+            if(!window.currentUser){alert('يجب تسجيل الدخول.');return;}
+            if(window.currentUser.role!=='owner' && !(window.siteSettings?.allowedCleanRanks||['prince']).includes(window.currentUser.role)){alert('🚫 رتبتك لا تملك صلاحية تنظيف الروم.');return;}
             if(!confirm('هل أنت متأكد من تنظيف وحذف رسائل هذه الغرفة عند الجميع فوراً؟')) return;
             const roomDocId=window.roomId(window.currentRoom),roomRef=db.collection('rooms').doc(roomDocId),messagesRef=roomRef.collection('messages');
             try{
@@ -751,17 +755,65 @@
             `;
             document.getElementById('featureModal').style.display = 'flex';
         },
+        openOwnerDashboard: async () => {
+            if(window.currentUser?.role!=='owner'){alert('لوحة التحكم لصاحب الموقع فقط.');return;}
+            await window.loadSiteSettings();
+            const roles=Object.keys(window.chatRanksData).filter(r=>r!=='owner');
+            const checked=r=>((window.siteSettings.allowedCleanRanks||['prince']).includes(r)?'checked':'');
+            document.getElementById('featureModalTitle').innerText='👑 لوحة تحكم صاحب الموقع';
+            document.getElementById('featureModalBody').innerHTML=`<div style="display:grid;gap:8px">
+              <button class="row-btn active" onclick="ui.openOwnerSection('security')">🔐 1. الأمن السري والخاص</button>
+              <button class="row-btn" onclick="ui.openOwnerSection('permissions')">🛡️ 2. إعدادات الأذونات والرتب</button>
+              <button class="row-btn" onclick="ui.openOwnerSection('mics')">🎙️ 3. إعداد المايك</button>
+              <button class="row-btn" onclick="ui.openOwnerSection('login')">🚪 4. لوحة تسجيل الدخول</button>
+              <button class="row-btn" onclick="ui.openOwnerSection('encryption')">🔒 5. التشفير والكلمات</button>
+              <button class="row-btn" onclick="ui.openOwnerSection('bots')">🤖 6. البوتات</button>
+              <button class="row-btn" onclick="ui.openOwnerSection('protection')">🛡️ 7. إعدادات الحماية</button>
+              <button class="row-btn" onclick="ui.openOwnerSection('bans')">🚫 8. إعدادات المحظورين</button>
+              <button class="row-btn" onclick="ui.openOwnerSection('system')">⚙️ 9. إعدادات النظام</button>
+              <button class="row-btn" onclick="ui.openOwnerSection('public')">💬 10. العام والرسائل العامة</button></div>`;
+            document.getElementById('featureModal').style.display='flex';
+        },
+        openOwnerSection: async (kind) => {
+            if(window.currentUser?.role!=='owner') return;
+            const body=document.getElementById('featureModalBody');
+            if(kind==='security'){
+                body.innerHTML=`<h4 style="color:var(--gold)">🔐 الأمن السري</h4><p style="font-size:12px;color:#aaa">مراجعة رسائل الخاص مع اسم المرسل والمستلم والنص، وحذف الرسالة بعد مراجعتها.</p><div id="privateAuditList">جارٍ التحميل...</div>`;
+                try{const snap=await db.collectionGroup('messages').limit(200).get();const docs=snap.docs.filter(d=>d.ref.path.startsWith('private_chats/'));document.getElementById('privateAuditList').innerHTML=docs.map(d=>{const x=d.data();return `<div class="online-user-item"><div style="text-align:right;max-width:75%"><b>${ui.escapeHtml(x.senderName||'مرسل')}</b> ➜ <b>${ui.escapeHtml(x.receiverUid||'مستلم')}</b><br><span>${ui.escapeHtml(x.text||'[وسائط]')}</span></div><button class="row-btn" style="background:#c0392b;color:#fff" onclick="ui.ownerDeletePrivateMessage('${d.ref.path}')">حذف</button></div>`}).join('')||'<p style="text-align:center;color:#aaa">لا توجد رسائل خاصة.</p>';}catch(e){document.getElementById('privateAuditList').innerHTML='<p style="color:#e74c3c">تعذر قراءة الخاص؛ راجع Firestore Rules/Index.</p>';}
+            }else if(kind==='permissions'){
+                body.innerHTML=`<h4 style="color:var(--gold)">🛡️ إعدادات الأذونات</h4><p style="font-size:11px;color:#aaa">حدد حتى 10 رتب لتنظيف الروم. صاحب الموقع دائماً مسموح.</p><div>${roles.map(r=>{const d=window.chatRanksData[r];return `<label style="display:flex;gap:8px;align-items:center;padding:7px;border-bottom:1px solid #222"><input type="checkbox" class="clean-rank" value="${r}" ${checked(r)}> <i class="${d.icon}" style="color:${d.color}"></i> ${ui.escapeHtml(d.text)}</label>`}).join('')}</div><button class="row-btn active" style="width:100%;margin-top:10px" onclick="ui.saveCleanRanks()">حفظ الأذونات</button><hr><p>خلفية الروم الحالي</p><input type="file" id="adminRoomBg" accept="image/*"><button class="row-btn" style="width:100%;margin-top:8px" onclick="ui.saveAdminRoomBg()">رفع الخلفية للجميع</button>`;
+            }else if(kind==='mics'){
+                body.innerHTML=`<h4 style="color:var(--gold)">🎙️ إعداد المايك</h4><p>عدد المايكات الحالية: <b>${window.maxMicCount||4}</b></p><input id="maxMicInput" type="number" min="4" max="30" class="form-control" value="${window.maxMicCount||4}"><button class="row-btn active" style="width:100%" onclick="ui.saveMicCount()">حفظ عدد المايكات</button>`;
+            }else if(kind==='login'){
+                body.innerHTML=`<h4 style="color:var(--gold)">🚪 لوحة تسجيل الدخول</h4><label style="display:flex;gap:8px;margin:10px 0"><input id="allowGuestsCheck" type="checkbox" ${window.siteSettings.allowGuests!==false?'checked':''}> السماح بدخول الزوار</label><label>خلفية لوحة الدخول<input id="loginBgFile" type="file" accept="image/*" style="display:block;margin:8px 0"></label><label>أيقونة فوق لوحة الدخول<input id="loginIconFile" type="file" accept="image/*" style="display:block;margin:8px 0"></label><button class="row-btn active" style="width:100%" onclick="ui.saveLoginSettings()">حفظ الإعدادات</button>`;
+            }else if(kind==='encryption'){
+                body.innerHTML=`<h4 style="color:var(--gold)">🔒 التشفير والكلمات</h4><p style="font-size:12px;color:#aaa">هذا القسم لإدارة الكلمات الممنوعة. كلمات المرور لا ينبغي تخزينها كنص صريح؛ التشفير الآمن الحقيقي يحتاج Firebase Authentication/Backend.</p><textarea id="badWordsInput" class="form-control" rows="5" placeholder="كلمة1\nكلمة2">${ui.escapeHtml((window.siteSettings.blockedWords||[]).join('\n'))}</textarea><button class="row-btn active" style="width:100%" onclick="ui.saveBlockedWords()">حفظ الكلمات</button>`;
+            }else if(kind==='bots'){
+                const bots=[['reminder','⏰ بوت التذكير'],['trivia','🏆 بوت المسابقات'],['protection','🛡️ بوت الحماية'],['obedience','🤖 بوت المساعد'],['welcome','👋 بوت الترحيب']];
+                body.innerHTML=`<h4 style="color:var(--gold)">🤖 البوتات</h4>${bots.map(b=>`<label style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #222">${b[1]}<input type="checkbox" id="bot_${b[0]}" ${(window.siteSettings.enabledBots||['trivia']).includes(b[0])?'checked':''}></label>`).join('')}<button class="row-btn active" style="width:100%;margin-top:10px" onclick="ui.saveBots()">حفظ وتشغيل</button>`;
+            }else if(kind==='protection'){
+                body.innerHTML=`<h4 style="color:var(--gold)">🛡️ إعدادات الحماية</h4><label style="display:flex;justify-content:space-between;padding:10px"><span>تفعيل الحماية</span><input id="securityCheck" type="checkbox" ${window.siteSettings.securityEnabled!==false?'checked':''}></label><button class="row-btn active" style="width:100%" onclick="ui.saveProtection()">حفظ</button>`;
+            }else if(kind==='bans'){
+                body.innerHTML='<h4 style="color:var(--gold)">🚫 المحظورون</h4><div id="banList">جارٍ التحميل...</div>';
+                try{const snap=await db.collection('users').where('isBanned','==',true).limit(200).get();document.getElementById('banList').innerHTML=snap.docs.map(d=>{const u=d.data();return `<div class="online-user-item"><span>${ui.escapeHtml(u.name||d.id)}<br><small>حظر بواسطة: ${ui.escapeHtml(u.bannedByName||'غير مسجل')}</small></span><button class="row-btn" onclick="ui.unbanUser('${d.id}')">فك الحظر</button></div>`}).join('')||'<p>لا يوجد محظورون.</p>';}catch(e){document.getElementById('banList').innerHTML='<p style="color:#e74c3c">تعذر تحميل القائمة.</p>';}
+            }else if(kind==='system'){
+                body.innerHTML=`<h4 style="color:var(--gold)">⚙️ إعدادات النظام</h4><p>الغرف:</p><div style="color:#ccc;line-height:2">${window.roomsBase.join(' · ')}</div>`;
+            }else if(kind==='public'){
+                body.innerHTML=`<h4 style="color:var(--gold)">💬 العام والرسائل العامة</h4><p style="font-size:12px;color:#aaa">أي رابط عام يرسله العضو يظهر لجميع أعضاء نفس الروم، وروابط YouTube تظهر كبطاقة تشغيل. لكل روم رسائله المستقلة.</p><button class="row-btn active" style="width:100%" onclick="ui.ownerClearRoomChat()">تنظيف العام الحالي للجميع</button>`;
+            }
+        },
+        saveCleanRanks: async()=>{const a=[...document.querySelectorAll('.clean-rank:checked')].map(x=>x.value).slice(0,10);await db.collection('site_settings').doc('main').set({allowedCleanRanks:a},{merge:true});window.siteSettings.allowedCleanRanks=a;alert('✅ تم حفظ الأذونات.');},
+        saveMicCount: async()=>{const n=Math.max(4,Math.min(30,Number(document.getElementById('maxMicInput')?.value)||4));await db.collection('site_settings').doc('main').set({maxMicCount:n},{merge:true});window.maxMicCount=n;ui.renderMicSlots(n);alert('🎙️ تم تحديث عدد المايكات.');},
+        saveLoginSettings: async()=>{const allow=document.getElementById('allowGuestsCheck')?.checked!==false;const f=document.getElementById('loginBgFile')?.files?.[0],ic=document.getElementById('loginIconFile')?.files?.[0];let patch={allowGuests:allow};if(f){const r=storage.ref().child(`site/login/${Date.now()}_${f.name.replace(/[^\w.\-]/g,'_')}`);await r.put(f);patch.loginBg=await r.getDownloadURL();}if(ic){const r2=storage.ref().child(`site/login/icons/${Date.now()}_${ic.name.replace(/[^\w.\-]/g,'_')}`);await r2.put(ic);patch.loginIcon=await r2.getDownloadURL();}await db.collection('site_settings').doc('main').set(patch,{merge:true});window.siteSettings={...window.siteSettings,...patch};ui.applyLoginSettings();alert('🚪 تم حفظ لوحة الدخول والأيقونة.');},
+        applyLoginSettings:()=>{const ov=document.getElementById('welcomeOverlay'),ic=document.getElementById('loginPanelIcon');if(window.siteSettings.loginBg&&ov)ov.style.backgroundImage=`url('${window.siteSettings.loginBg}')`;if(window.siteSettings.loginIcon&&ic){ic.style.backgroundImage=`url('${window.siteSettings.loginIcon}')`;const i=ic.querySelector('i');if(i)i.style.display='none';}const b=document.querySelector('#b1 button[onclick*="loginAsGuest"]');if(b)b.disabled=window.siteSettings.allowGuests===false;},
+        saveBlockedWords: async()=>{const a=(document.getElementById('badWordsInput')?.value||'').split(/\n|,/).map(x=>x.trim()).filter(Boolean).slice(0,200);await db.collection('site_settings').doc('main').set({blockedWords:a},{merge:true});window.siteSettings.blockedWords=a;alert('🔒 تم حفظ الكلمات.');},
+        saveBots: async()=>{const ids=['reminder','trivia','protection','obedience','welcome'].filter(x=>document.getElementById('bot_'+x)?.checked);await db.collection('site_settings').doc('main').set({enabledBots:ids},{merge:true});window.siteSettings.enabledBots=ids;alert('🤖 تم حفظ البوتات.');},
+        saveProtection: async()=>{const enabled=document.getElementById('securityCheck')?.checked!==false;await db.collection('site_settings').doc('main').set({securityEnabled:enabled},{merge:true});window.siteSettings.securityEnabled=enabled;alert(enabled?'🛡️ الحماية مفعلة.':'⚠️ الحماية متوقفة.');},
+        unbanUser: async(uid)=>{if(window.currentUser?.role!=='owner')return;await db.collection('users').doc(uid).set({isBanned:false,bannedAt:null,bannedByName:null},{merge:true});ui.openOwnerSection('bans');},
+        ownerDeletePrivateMessage: async(path)=>{if(window.currentUser?.role!=='owner')return;await db.doc(path).delete();ui.openOwnerSection('security');},
+        saveAdminRoomBg: async()=>{const f=document.getElementById('adminRoomBg')?.files?.[0];if(!f)return;const r=storage.ref().child(`room_backgrounds/${window.roomId(window.currentRoom)}/${Date.now()}_${f.name.replace(/[^\w.\-]/g,'_')}`);await r.put(f);const url=await r.getDownloadURL();await db.collection('room_settings').doc(window.roomId(window.currentRoom)).set({roomBg:url,updatedBy:window.currentUser.uid},{merge:true});alert('🌄 تم تحديث خلفية الروم للجميع.');},
         showAuthBranchDirect: () => {
-            if(window.currentUser && window.currentUser.role === 'owner') {
-                document.getElementById('featureModalTitle').innerText = "👑 لوحة التحكم والمفتاح الملكي";
-                document.getElementById('featureModalBody').innerHTML = `
-                    <div style="text-align:right;">
-                        <p style="font-size:14px; color:var(--gold); font-weight:bold; text-align:center;">إدارة الرومات الموحدة</p>
-                        <div style="font-size:12px;color:#ccc;text-align:center;line-height:1.9">الغرفة العامة · روم المسابقات · روم اليمن · روم السجن<br>كل غرفة لها رسائل ومتواجدون ومايكات مستقلة.</div>
-                    </div>
-                `;
-                document.getElementById('featureModal').style.display = 'flex';
-            } else {
+            if(window.currentUser && window.currentUser.role === 'owner') { ui.openOwnerDashboard(); return; } else {
                 document.getElementById('featureModalTitle').innerText = "🔑 تفعيل المفتاح الماسي الفوري";
                 document.getElementById('featureModalBody').innerHTML = `
                     <div style="text-align:right;">
@@ -796,7 +848,8 @@
             }
             ui.registerAndLoginUser(userObj);
         },
-        loginAsGuest: () => {
+        loginAsGuest: async () => {
+            try{ const gs=await db.collection('site_settings').doc('main').get(); if(gs.exists && gs.data().allowGuests===false){ alert('🚫 دخول الزوار متوقف حالياً من إدارة الموقع.'); return; } }catch(e){}
             let n = document.getElementById('vName').value.trim();
             let a = document.getElementById('vAge').value;
             let g = document.getElementById('vGender').value;
@@ -860,12 +913,10 @@
         registerAndLoginUser: (userObj) => {
             // الحساب السحابي هو المصدر الوحيد للحقيقة؛ لا ننشئ sessionToken جديداً عند كل جهاز.
             window.currentUser = userObj;
-
             localStorage.setItem("hassouni_user_session", JSON.stringify(userObj));
-            db.collection("users").doc(userObj.uid).set(userObj, { merge: true }).then(() => {
-                document.getElementById('featureModal').style.display = 'none';
-                ui.enterChat();
-            });
+            document.getElementById('featureModal').style.display = 'none';
+            ui.enterChat();
+            db.collection("users").doc(userObj.uid).set({...userObj,lastSeen:FieldValue.serverTimestamp()}, { merge: true }).catch(e=>console.warn('user save',e));
         },
         updateUserOnlineStatus: (status) => {
             // لا نستخدم isOnline العام لطرد/عزل الأجهزة؛ حضور العضو الحقيقي محفوظ داخل الغرفة.
@@ -1049,8 +1100,7 @@
                     setTimeout(()=>{
                         window.realtimeReconnectBusy=false;
                         if(window.currentUser && navigator.onLine && Date.now()-window.lastFirestoreEventAt>20000){
-                            // إعادة بناء المستمعين مرة واحدة فقط بعد فشل حقيقي ومستمر.
-                            ui.enterChat(true);
+                            db.enableNetwork().catch(()=>{});
                         }
                     },12000);
                 } catch(e) {
@@ -1059,6 +1109,16 @@
                 }
             },delay);
         },
+        renderMicSlots: (count=4) => {
+            const c=document.getElementById('micsContainer'); if(!c)return;
+            const control=c.querySelector('.mic-control-btn');
+            for(let i=1;i<=count;i++){
+                if(document.getElementById(`mic_${i}`)) continue;
+                const d=document.createElement('div'); d.className='floating-mic-circle'; d.id=`mic_${i}`; d.onclick=()=>ui.clickMicSlot(i);
+                d.innerHTML=`<i class="fas fa-microphone"></i><span class="mic-num-sub" id="micName_${i}">${i}</span>`;
+                c.insertBefore(d,control||null);
+            }
+        },
         listenToActiveMics: (expectedGeneration=window.roomListenerGeneration) => {
             const roomDocId = window.roomId(window.currentRoom);
             const unsub = db.collection("rooms").doc(roomDocId).collection("mics").onSnapshot(async (snapshot) => {
@@ -1066,10 +1126,11 @@
                 window.lastFirestoreEventAt=Date.now();
                 const active = {};
                 snapshot.forEach(doc => active[doc.data().micNum] = doc.data());
-                for(let i=1;i<=4;i++){
-                    const slot=document.getElementById(`mic_${i}`);
-                    const name=document.getElementById(`micName_${i}`);
-                    const data=active[i];
+                const maxMics=Math.max(4,Math.min(30,Number(window.maxMicCount)||4));
+                ui.renderMicSlots(maxMics);
+                for(let i=1;i<=maxMics;i++){
+                    const slot=document.getElementById(`mic_${i}`), name=document.getElementById(`micName_${i}`);
+                    const data=active[i]; if(!slot||!name) continue;
                     slot.classList.toggle('occupied', !!data);
                     slot.style.backgroundImage=data && data.userImg ? `url('${data.userImg}')` : 'none';
                     name.innerText=data ? (data.userName || 'عضو') : String(i); name.title=data ? (data.userName || 'عضو') : `مايك ${i}`;
@@ -1135,6 +1196,7 @@
             const u=window.currentUser; if(!u) return;
             if(u.isMuted){alert("أنت مكتوم حالياً من قبل الإدارة.");return;}
             const inp=document.getElementById('msgInp'), t=inp.value.trim(); if(!t) return;
+            const bad=(window.siteSettings?.blockedWords||[]); if(bad.some(w=>w && t.toLowerCase().includes(String(w).toLowerCase()))){alert('🚫 الرسالة تحتوي على كلمة ممنوعة.');return;}
             inp.value='';
             const roomAtSend=window.currentRoom, roomDocId=window.roomId(roomAtSend);
             const msgRef=db.collection("rooms").doc(roomDocId).collection("messages").doc();
@@ -1239,7 +1301,7 @@
             else if(type==='dice') body=`<div class="msg-text">🎲 ${ui.escapeHtml(live.name)} حصل على الرقم: <b>${extra.number}</b></div>`;
             else if(type==='attendance') body=`<div class="msg-text">🎡 عجلة الحضور: ${ui.escapeHtml(text)}</div>`;
             else if(type==='link' && ytId) body=`<div class="msg-text">🎬 ${ui.escapeHtml(live.name||'عضو')} أرسل فيديو</div><div onclick="ui.openYouTubeMessage('${ytId}')" style="position:relative;width:100%;aspect-ratio:16/9;margin-top:8px;border-radius:12px;overflow:hidden;background:#000;cursor:pointer"><img src="https://i.ytimg.com/vi/${ytId}/hqdefault.jpg" loading="lazy" style="width:100%;height:100%;object-fit:cover"><div style="position:absolute;inset:0;display:grid;place-items:center;font-size:46px;color:#fff;text-shadow:0 2px 8px #000">▶</div></div>`;
-            else if(type==='link') body=`<div class="msg-text"><a href="${ui.escapeHtml(text)}" target="_blank" rel="noopener noreferrer" style="color:#55aaff;word-break:break-all">🔗 ${ui.escapeHtml(text)}</a></div>`;
+            else if(type==='link') body=`<div style="margin-top:8px;padding:10px;border:1px solid #315b80;background:rgba(49,91,128,.12);border-radius:10px"><div style="font-weight:bold;color:#7ec8ff">🔗 رابط من ${ui.escapeHtml(live.name||'عضو')}</div><a href="${ui.escapeHtml(text)}" target="_blank" rel="noopener noreferrer" style="display:block;color:#55aaff;word-break:break-all;margin-top:5px">${ui.escapeHtml(text)}</a></div>`;
             else body=`<div class="msg-text">${ui.escapeHtml(text)}</div>`;
             div.innerHTML=`<div class="msg-header"><div class="pfp-main-frame"><img src="${live.img||''}" class="pfp-main" onclick="event.stopPropagation();ui.viewProfileCard('${live.uid}')"></div><div class="rank-standalone-icon" style="border-color:${rankObj.color}"><i class="${rankObj.icon}" style="color:${rankObj.color}"></i></div><div class="king-name-container" style="border-color:${rankObj.color}" onclick="ui.quoteUserText('${String(live.name||'').replace(/'/g,"\\'")}','')"><span class="king-name-tag" style="color:${live.nameColor||rankObj.color}">${ui.escapeHtml(live.name)}</span></div></div>${body}<div class="msg-time">${timestamp?.toDate?timestamp.toDate().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'}):'الآن'}</div>`;
             const box=document.getElementById('chatBox'); if(box){box.appendChild(div);box.scrollTop=box.scrollHeight;}
@@ -1415,7 +1477,7 @@
 
             // إذا كانت بيانات العضو موجودة في كاش الغرفة، اعرضها مباشرة بلا انتظار.
             const cached = (window.usersCache && window.usersCache[uid]) ||
-                           (Array.isArray(window._roomPresenceData) ? window._roomPresenceData.find(x => x.uid === uid) : null);
+                           (window._roomPresenceData ? Object.values(window._roomPresenceData).find(x => x.uid === uid) : null);
             const renderProfile = (u) => {
                 if (!u) return;
                 const isMe = !!window.currentUser && window.currentUser.uid === uid;
@@ -1660,7 +1722,10 @@
         },
         sendPrivateMessage: async (chatId) => {
             const inp=document.getElementById('privateInp'); const t=(inp?.value||'').trim();
-            if(!t || !window.currentUser) return; inp.value='';
+            if(!t || !window.currentUser) return;
+            const settings=window.siteSettings||{};
+            if(settings.blockPrivateLinks!==false && /https?:\/\/|www\.|t\.me\/|wa\.me\//i.test(t)){ alert('🚫 إرسال الروابط في الخاص ممنوع حالياً.'); return; }
+            inp.value='';
             const receiverUid=String(chatId).split('_').find(x=>x!==window.currentUser.uid)||'';
             const now=Date.now();
             try{
@@ -1892,7 +1957,7 @@
         }
     },15000);
 
-    window.onload = () => { updateConnectionBadge(navigator.onLine ? 'starting' : 'offline'); ui.checkSavedSessionOnLoad(); };
+    window.onload = async () => { updateConnectionBadge(navigator.onLine ? 'starting' : 'offline'); await window.loadSiteSettings(); ui.applyLoginSettings(); ui.checkSavedSessionOnLoad(); };
     window.addEventListener('beforeunload',()=>{ if(window.currentUser){ db.collection("rooms").doc(window.roomId(window.currentRoom)).collection("presence").doc(`${window.currentUser.uid}_${window.roomSessionId}`).delete().catch(()=>{}); } });
 </script>
 </body>
