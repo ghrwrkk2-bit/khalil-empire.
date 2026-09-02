@@ -109,7 +109,18 @@
         .msg-time { font-size: 10px; color: #aaa; align-self: flex-end; margin-top: 4px; }
 
         /* شريط الإدخال السفلي */
-        .input-section { position: fixed; bottom: 60px; width: 100%; height: 65px; background: #111; padding: 10px; display: flex; align-items: center; gap: 8px; border-top: 1px solid #222; z-index: 1000; }
+        
+        .input-section { position: relative; }
+        .chat-input-wrap { position: relative; flex: 1; min-width: 0; }
+        .chat-input-wrap .chat-input { width: 100%; padding-left: 46px; }
+        .emoji-inside-input { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; border: 0; border-radius: 50%; background: transparent; color: var(--gold); font-size: 20px; cursor: pointer; z-index: 2; }
+        .record-panel { text-align:center; }
+        .record-timer { font-size:28px; color:var(--gold); font-weight:800; margin:10px 0; }
+        .record-status { color:#aaa; font-size:12px; margin-bottom:10px; }
+        .record-preview { width:100%; margin:10px 0; }
+        .record-actions { display:flex; gap:8px; }
+        .record-actions .row-btn { flex:1; }
+.input-section { position: fixed; bottom: 60px; width: 100%; height: 65px; background: #111; padding: 10px; display: flex; align-items: center; gap: 8px; border-top: 1px solid #222; z-index: 1000; }
         .chat-input { flex: 1; background: #1a1a1a; border: 1px solid var(--gold); color: #fff; height: 42px; border-radius: 20px; padding: 0 15px; outline: none; }
         
         .send-btn-arrow { 
@@ -272,10 +283,11 @@
 <!-- شريط الإدخال السفلي -->
 <div class="input-section">
     <button class="send-btn-arrow" onclick="ui.sendMessage()" title="إرسال"><i class="fas fa-paper-plane"></i></button>
-    <input type="text" id="msgInp" class="chat-input" placeholder="اكتب رسالتك العامة هنا..." onkeypress="if(event.key==='Enter') ui.sendMessage()">
-    
-    <div class="right-input-btn" onclick="ui.openEmojiPicker()" title="إيموجيات"><i class="fas fa-smile"></i></div>
-    <div class="right-input-btn" onclick="ui.clickMicSlot(1)" title="صوت المايك"><i class="fas fa-microphone"></i></div>
+    <div class="chat-input-wrap">
+        <input type="text" id="msgInp" class="chat-input" placeholder="اكتب رسالتك العامة هنا..." onkeypress="if(event.key==='Enter') ui.sendMessage()">
+        <button class="emoji-inside-input" onclick="ui.openEmojiPicker()" title="إيموجي">😊</button>
+    </div>
+    <div class="right-input-btn" onclick="ui.openVoiceRecorder()" title="تسجيل صوت حقيقي"><i class="fas fa-microphone"></i></div>
     <div class="right-input-btn" onclick="ui.openPlusPlusMenu()" title="المزيد"><i class="fas fa-plus-circle"></i></div>
 </div>
 
@@ -356,6 +368,11 @@
     window.realtimeReconnectBusy = false;
     window.sessionLoadAttempts = 0;
     window.profilePresenceTimer = null;
+    window.mediaRecorder = null;
+    window.recordedAudioChunks = [];
+    window.recordingStartedAt = 0;
+    window.recordingTimer = null;
+    window.optimisticMessageIds = new Set();
 
     // نظام الـ 30 رتبة الإمبراطورية المتمايزة بالأيقونات والألوان اللامعة
     window.chatRanksData = {
@@ -995,8 +1012,15 @@
             if(!window.currentUser) return;
             document.getElementById('welcomeOverlay').style.display = 'none';
             ui.updateRoyalKeyButtonVisibility();
+            // لا نهدم مستمعي Firestore عند الدخول/إعادة الاتصال إذا كانت الجلسة نفسها تعمل بالفعل.
+            if(window._chatListenersRoom===window.currentRoom && window.activeListeners.length){
+                ui.startRealtimePresence();
+                updateConnectionBadge(navigator.onLine ? 'online' : 'offline');
+                return;
+            }
             ui.clearAllListeners();
             const generation=window.roomListenerGeneration;
+            window._chatListenersRoom=window.currentRoom;
             ui.listenToGlobalMessages(generation);
             ui.listenToActiveMics(generation);
             ui.listenToRoomSettings(generation);
@@ -1012,6 +1036,7 @@
             window.roomListenerGeneration++;
             window.activeListeners.forEach(unsub => { try{unsub();}catch(e){} });
             window.activeListeners=[];
+            window._chatListenersRoom=null;
             (window.micUnsubs||[]).forEach(unsub=>{try{unsub();}catch(e){}}); window.micUnsubs=[];
             if(window.presenceTimer){clearInterval(window.presenceTimer);window.presenceTimer=null;}
             if(window.profilePresenceTimer){clearInterval(window.profilePresenceTimer);window.profilePresenceTimer=null;}
@@ -1065,7 +1090,8 @@
                 window.lastFirestoreEventAt=Date.now(); window.firestoreReady=true; window.realtimeReconnectAttempts=0; updateConnectionBadge('online');
                 if(!chatBox)return;
                 const changes=snapshot.docChanges();
-                const hasRemovalOrModification=changes.some(ch=>ch.type==='removed'||ch.type==='modified');
+                const visibleChanges=changes.filter(ch=>{ if(ch.type==='added' && window.optimisticMessageIds.has(ch.doc.id)){ window.optimisticMessageIds.delete(ch.doc.id); return false; } return true; });
+                const hasRemovalOrModification=visibleChanges.some(ch=>ch.type==='removed'||ch.type==='modified');
                 if(hasRemovalOrModification){
                     chatBox.innerHTML='';
                     const welcome=document.createElement('div'); welcome.className='msg-wrap';
@@ -1073,7 +1099,7 @@
                     chatBox.appendChild(welcome);
                     snapshot.forEach(renderOne);
                 }else{
-                    changes.filter(ch=>ch.type==='added').forEach(ch=>renderOne(ch.doc));
+                    visibleChanges.filter(ch=>ch.type==='added').forEach(ch=>renderOne(ch.doc));
                     if(changes.length && chatBox) chatBox.scrollTop=chatBox.scrollHeight;
                 }
               },(err)=>{
@@ -1192,6 +1218,34 @@
             ui.enterChat();
             alert("تم إعادة مزامنة وغرف الشات بنجاح.");
         },
+        openVoiceRecorder: async () => {
+            if(!window.currentUser) return;
+            const modal=document.getElementById('featureModal');
+            document.getElementById('featureModalTitle').innerText='🎙️ تسجيل رسالة صوتية';
+            document.getElementById('featureModalBody').innerHTML=`<div class="record-panel"><div id="recordStatus" class="record-status">اضغط تسجيل لبدء تسجيل صوتك الحقيقي</div><div id="recordTimer" class="record-timer">00:00</div><audio id="recordPreview" class="record-preview" controls style="display:none"></audio><div class="record-actions"><button id="recordStartBtn" class="row-btn active" onclick="ui.startVoiceRecording()">🔴 تسجيل</button><button id="recordStopBtn" class="row-btn" style="display:none" onclick="ui.stopVoiceRecording()">⏹️ توقيف</button><button id="recordSendBtn" class="row-btn" style="display:none" onclick="ui.sendRecordedVoice()">📤 إرسال</button></div></div>`;
+            modal.style.display='flex';
+        },
+        startVoiceRecording: async () => {
+            try{
+                if(!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) throw new Error('UNSUPPORTED');
+                const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+                const mime=MediaRecorder.isTypeSupported('audio/webm;codecs=opus')?'audio/webm;codecs=opus':(MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')?'audio/ogg;codecs=opus':'audio/webm');
+                window.recordedAudioChunks=[]; window.mediaRecorder=new MediaRecorder(stream,{mimeType:mime}); window.recordingStartedAt=Date.now();
+                window.mediaRecorder.ondataavailable=e=>{if(e.data?.size)window.recordedAudioChunks.push(e.data);};
+                window.mediaRecorder.onstop=()=>{stream.getTracks().forEach(t=>t.stop());const blob=new Blob(window.recordedAudioChunks,{type:mime});window.recordedAudioBlob=blob;const url=URL.createObjectURL(blob);const a=document.getElementById('recordPreview');if(a){a.src=url;a.style.display='block';}const st=document.getElementById('recordStatus');if(st)st.innerText='تم إيقاف التسجيل — يمكنك الاستماع ثم الإرسال.';document.getElementById('recordSendBtn').style.display='block';};
+                window.mediaRecorder.start(250);
+                document.getElementById('recordStartBtn').style.display='none';document.getElementById('recordStopBtn').style.display='block';document.getElementById('recordSendBtn').style.display='none';
+                const tick=()=>{if(!window.mediaRecorder||window.mediaRecorder.state!=='recording')return;const sec=Math.floor((Date.now()-window.recordingStartedAt)/1000);const el=document.getElementById('recordTimer');if(el)el.innerText=`${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;window.recordingTimer=requestAnimationFrame(tick);}; tick();
+            }catch(e){alert('⚠️ اسمح للمتصفح باستخدام الميكروفون ثم أعد المحاولة.');}
+        },
+        stopVoiceRecording: () => {if(window.mediaRecorder?.state==='recording'){window.mediaRecorder.stop();if(window.recordingTimer)cancelAnimationFrame(window.recordingTimer);document.getElementById('recordStopBtn').style.display='none';}},
+        sendRecordedVoice: async () => {
+            const blob=window.recordedAudioBlob;if(!blob||!window.currentUser)return;
+            const u=window.currentUser;if(u.isMuted){alert('أنت مكتوم حالياً من قبل الإدارة.');return;}
+            const room=window.roomId(window.currentRoom);const ext=blob.type.includes('ogg')?'ogg':'webm';const path=`room_audio/${room}/${u.uid}/${Date.now()}.${ext}`;
+            const btn=document.getElementById('recordSendBtn');if(btn){btn.disabled=true;btn.innerText='⏳ جاري الإرسال...';}
+            try{const ref=storage.ref().child(path);await ref.put(blob,{contentType:blob.type});const url=await ref.getDownloadURL();const msgRef=db.collection('rooms').doc(room).collection('messages').doc();const payload={type:'audio',text:url,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',img:u.img||'',cover:u.cover||'',role:u.role||'new',nameColor:u.nameColor||''},audioMime:blob.type,timestamp:FieldValue.serverTimestamp()};window.optimisticMessageIds.add(msgRef.id);ui.renderMsg(payload.user,payload.text,new Date(),'audio',payload);await msgRef.set(payload);window.recordedAudioBlob=null;document.getElementById('featureModal').style.display='none';}catch(e){console.error(e);alert('تعذر إرسال التسجيل الصوتي.');if(btn){btn.disabled=false;btn.innerText='📤 إرسال';}}
+        },
         sendMessage: () => {
             const u=window.currentUser; if(!u) return;
             if(u.isMuted){alert("أنت مكتوم حالياً من قبل الإدارة.");return;}
@@ -1204,7 +1258,9 @@
             const type=urlMatch && /\.(mp4|webm|ogg)(\?\S*)?$/i.test(t)?'video':urlMatch?'link':'text';
             const payload={type,text:t,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',img:u.img||'',cover:u.cover||'',role:u.role||'new',nameColor:u.nameColor||''},timestamp:FieldValue.serverTimestamp()};
             // لا ننتظر الشبكة أو معاملة المكافآت قبل السماح برسالة أخرى. Firestore يزامنها تلقائياً.
-            msgRef.set(payload).catch(e=>console.error('sendMessage',e));
+            window.optimisticMessageIds.add(msgRef.id);
+            ui.renderMsg(payload.user,payload.text,new Date(),payload.type,payload);
+            msgRef.set(payload).catch(e=>{ window.optimisticMessageIds.delete(msgRef.id); console.error('sendMessage',e); });
             // المكافأة تعمل بالخلفية حتى لا تتأخر واجهة الإرسال.
             Promise.resolve().then(async()=>{
                 const uRef=db.collection('users').doc(u.uid); let reward50=false;
@@ -1447,19 +1503,14 @@
                 container.innerHTML = "";
             }
         },
-        processAndPlayYoutubeLink: (vId) => {
-            let roomDocId = window.roomId(window.currentRoom);
-            db.collection("room_settings").doc(roomDocId).set({ activeAudioId: vId }, { merge: true }).then(() => {
-                alert("🔊 تم إطلاق وتثبيت البث الصوتي بنجاح لجميع الحاضرين في الغرفة!");
-                document.getElementById('featureModal').style.display = 'none';
-            });
+        processAndPlayYoutubeLink: async (vId) => {
+            if(!vId||!window.currentUser)return;
+            const roomDocId=window.roomId(window.currentRoom), ref=db.collection('room_settings').doc(roomDocId), isOwner=window.currentUser.role==='owner';
+            try{await db.runTransaction(async tx=>{const snap=await tx.get(ref);const cur=snap.data()||{};if(cur.activeAudioId && cur.activeAudioId!==vId && !isOwner) throw new Error('SONG_ALREADY_PLAYING');tx.set(ref,{activeAudioId:vId,activeAudioOwnerUid:window.currentUser.uid,activeAudioOwnerName:window.currentUser.name||'عضو',activeAudioStartedAt:FieldValue.serverTimestamp()},{merge:true});});alert(isOwner?'👑 تم تشغيل الأغنية فوق الجميع.':'🔊 تم تشغيل الأغنية للجميع حتى تكتمل.');document.getElementById('featureModal').style.display='none';}catch(e){if(e.message==='SONG_ALREADY_PLAYING')alert('🎵 توجد أغنية شغالة الآن. انتظر حتى تكتمل أو يوقفها صاحبها.');else alert('تعذر تشغيل الأغنية حالياً.');}
         },
-        stopHiddenAudioPlayback: () => {
-            let roomDocId = window.roomId(window.currentRoom);
-            db.collection("room_settings").doc(roomDocId).set({ activeAudioId: "" }, { merge: true }).then(() => {
-                alert("تم إيقاف الصوت لدى الجميع في هذه الغرفة.");
-                document.getElementById('featureModal').style.display = 'none';
-            });
+        stopHiddenAudioPlayback: async () => {
+            if(window.currentUser?.role!=='owner'){alert('⛔ إيقاف أي أغنية شغالة للجميع متاح لصاحب الموقع فقط.');return;}
+            const roomDocId=window.roomId(window.currentRoom);await db.collection('room_settings').doc(roomDocId).set({activeAudioId:'',activeAudioOwnerUid:'',activeAudioOwnerName:''},{merge:true});alert('👑 تم إيقاف الأغنية لدى الجميع.');document.getElementById('featureModal').style.display='none';
         },
         toggleOnlineUsers: () => {
             let m = document.getElementById('onlineUsersHalfModal');
@@ -1893,6 +1944,10 @@
                     console.warn("presence",e); updateConnectionBadge(navigator.onLine?'starting':'offline');
                 });
             };
+            // أظهر العضو محلياً فوراً، ثم Firestore يكمل المزامنة مع الجميع.
+            if(!window._roomPresenceData) window._roomPresenceData={};
+            window._roomPresenceData[sessionDocId]={uid:window.currentUser.uid,sessionId:window.roomSessionId,room:window.currentRoom,name:window.currentUser.name||'عضو',role:window.currentUser.role||'new',img:window.currentUser.img||'',cover:window.currentUser.cover||'',nameColor:window.currentUser.nameColor||'',lastSeen:new Date()};
+            ui.renderOnlineUsersFromCache();
             writePresence();
             window.presenceTimer=setInterval(writePresence,10000);
             if(window.profilePresenceTimer){clearInterval(window.profilePresenceTimer);window.profilePresenceTimer=null;}
