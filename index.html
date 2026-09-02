@@ -952,46 +952,29 @@
         },
         listenToGlobalMessages: (expectedGeneration=window.roomListenerGeneration) => {
             const roomAtStart=window.currentRoom, roomDocId=window.roomId(roomAtStart);
-            const chatBox=document.getElementById('chatBox');
-            if(chatBox){
-                chatBox.innerHTML='';
-                const welcome=document.createElement('div'); welcome.className='msg-wrap';
-                welcome.innerHTML=`<div class="msg-header"><div class="king-name-container" style="border-color:var(--gold);background:rgba(0,0,0,.6)"><span class="king-name-tag" style="color:var(--gold)">الإدارة العامة - ${ui.escapeHtml(roomAtStart)}</span></div></div><div class="msg-text">مرحباً بك في غرفة ${ui.escapeHtml(roomAtStart)} - اتصال مباشر ومستمر 🔄</div>`;
-                chatBox.appendChild(welcome);
-            }
-            const seen=new Set();
-            const renderOne=(doc)=>{
-                if(seen.has(doc.id)) return; seen.add(doc.id);
-                const m=doc.data()||{};
-                if(m.isSystemGold) ui.renderSystemGoldMsg(m);
-                else if(m.isBotMsg) ui.renderBotMsg(m.text);
-                else if(m.isSystem || m.type==='system') ui.renderRoomSystemMsg(m.text,m.timestamp);
-                else if(m.user) ui.renderMsg(m.user,m.text,m.timestamp,m.type||'text',m);
-            };
             const unsub=db.collection("rooms").doc(roomDocId).collection("messages")
               .orderBy("timestamp", "asc").limitToLast(100)
               .onSnapshot((snapshot)=>{
                 if(expectedGeneration!==window.roomListenerGeneration || roomAtStart!==window.currentRoom) return;
                 window.lastFirestoreEventAt=Date.now(); window.firestoreReady=true; window.realtimeReconnectAttempts=0; updateConnectionBadge('online');
-                if(snapshot.metadata && snapshot.metadata.fromCache && !navigator.onLine) updateConnectionBadge('offline');
-                if(snapshot.docChanges){
-                    snapshot.docChanges().forEach(ch=>{
-                        if(ch.type==='added') renderOne(ch.doc);
-                    });
-                } else snapshot.forEach(renderOne);
-                // إذا تغيرت القائمة بسبب حذف/تعديل نعيد بناءها مرة واحدة فقط.
-                if(snapshot.docChanges && snapshot.docChanges().some(ch=>ch.type==='removed' || ch.type==='modified')){
-                    if(chatBox){
-                        chatBox.innerHTML=''; seen.clear();
-                        snapshot.forEach(renderOne);
-                    }
-                }
-            },(err)=>{
+                const chatBox=document.getElementById('chatBox'); if(!chatBox)return;
+                chatBox.innerHTML='';
+                const welcome=document.createElement('div'); welcome.className='msg-wrap';
+                welcome.innerHTML=`<div class="msg-header"><div class="king-name-container" style="border-color:var(--gold);background:rgba(0,0,0,.6)"><span class="king-name-tag" style="color:var(--gold)">الإدارة العامة - ${ui.escapeHtml(roomAtStart)}</span></div></div><div class="msg-text">مرحباً بك في غرفة ${ui.escapeHtml(roomAtStart)} - اتصال مباشر ومستمر 🔄</div>`;
+                chatBox.appendChild(welcome);
+                snapshot.forEach(doc=>{
+                    const m=doc.data()||{};
+                    if(m.isSystemGold) ui.renderSystemGoldMsg(m);
+                    else if(m.isBotMsg) ui.renderBotMsg(m.text);
+                    else if(m.isSystem || m.type==='system') ui.renderRoomSystemMsg(m.text,m.timestamp);
+                    else if(m.user) ui.renderMsg(m.user,m.text,m.timestamp,m.type||'text',m);
+                });
+              },(err)=>{
                 console.error('Firestore messages listener',err);
                 if(expectedGeneration!==window.roomListenerGeneration)return;
                 window.firestoreReady=false; updateConnectionBadge('starting');
                 if(navigator.onLine && err?.code!=='permission-denied') ui.scheduleRealtimeReconnect();
-            });
+              });
             window.activeListeners.push(unsub);
         },
         scheduleRealtimeReconnect: () => {
@@ -1485,29 +1468,26 @@
                 document.getElementById('featureModal').style.display = 'none';
             });
         },
-        changeUserRole: (uid, targetUserName, newRole) => {
-            db.collection("users").doc(uid).update({ role: newRole }).then(async () => {
-                if(window.currentUser && window.currentUser.uid===uid){ window.currentUser.role=newRole; localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser)); ui.startRealtimePresence(); }
-                // عكس الرتبة فوراً على كل جلسات العضو الموجودة في الغرفة، بدون انتظار heartbeat.
+        changeUserRole: async (uid, targetUserName, newRole) => {
+            if(!uid || !newRole) return;
+            try {
+                await db.collection("users").doc(uid).set({role:newRole,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
                 try {
                     const ps=await db.collection('rooms').doc(window.roomId(window.currentRoom)).collection('presence').where('uid','==',uid).get();
-                    const batch=db.batch(); ps.forEach(d=>batch.update(d.ref,{role:newRole})); await batch.commit();
-                } catch(e) { console.warn('presence role sync',e); }
-                let rankObj = window.chatRanksData[newRole] || { text: newRole };
-                let systemNotice = `🎉 تم إهداء العضو [ ${targetUserName} ] رتبة [ ${rankObj.text} ] بواسطة الإدارة العامة 👑`;
-                let roomDocId = window.roomId(window.currentRoom);
-                
-                db.collection("rooms").doc(roomDocId).collection("messages").add({
-                    isSystemGold: true,
-                    text: systemNotice,
-                    memberName: targetUserName,
-                    rank: newRole,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    if(!ps.empty){ const batch=db.batch(); ps.forEach(d=>batch.set(d.ref,{role:newRole,roleUpdatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})); await batch.commit(); }
+                } catch(e){ console.warn('presence role sync',e); }
+                if(window.currentUser && window.currentUser.uid===uid){
+                    window.currentUser.role=newRole;
+                    localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));
+                    ui.startRealtimePresence(); ui.renderOnlineUsersFromCache();
+                }
+                const rankObj=window.chatRanksData[newRole]||{text:newRole};
+                await db.collection('rooms').doc(window.roomId(window.currentRoom)).collection('messages').add({
+                    isSystemGold:true,text:`🎉 تم إهداء العضو [ ${targetUserName} ] رتبة [ ${rankObj.text} ] بواسطة الإدارة العامة 👑`,memberName:targetUserName,rank:newRole,timestamp:firebase.firestore.FieldValue.serverTimestamp()
                 });
-
-                alert("تم تحديث الرتبة وحفظها وإرسال إعلان التهنئة في الشات بنجاح!");
-                document.getElementById('featureModal').style.display = 'none';
-            });
+                alert('تم تحديث الرتبة ومزامنتها مع حساب العضو والجلسات المفتوحة بنجاح ✅');
+                document.getElementById('featureModal').style.display='none';
+            } catch(e){ console.error('changeUserRole failed',e); alert('تعذر حفظ الرتبة في Firebase. تحقق من صلاحيات Firestore.'); }
         },
         listenPrivateNotifications: () => {
             if(!window.currentUser) return;
@@ -1574,26 +1554,15 @@
                 });
             window.activeListeners.push(unsub);
         },
-        sendPrivateMessage: (chatId) => {
-            let inp = document.getElementById('privateInp');
-            let t = inp.value.trim();
-            if(!t) return;
-            inp.value = '';
-
-            db.collection("private_chats").doc(chatId).collection("messages").add({
-                senderUid: window.currentUser.uid,
-                senderName: window.currentUser.name,
-                senderImg: window.currentUser.img || "",
-                receiverUid: chatId.split("_").find(x=>x!==window.currentUser.uid) || "",
-                text: t,
-                timestamp: FieldValue.serverTimestamp()
-            }).then(()=>{
-                const receiverUid=chatId.split("_").find(x=>x!==window.currentUser.uid);
-                if(receiverUid) return db.collection("users").doc(receiverUid).collection("notifications").add({
-                    type:"private_message", senderUid:window.currentUser.uid, senderName:window.currentUser.name,
-                    chatId, text:t, read:false, timestamp:FieldValue.serverTimestamp()
-                });
-            }).catch(console.error);
+        sendPrivateMessage: async (chatId) => {
+            const inp=document.getElementById('privateInp'); const t=(inp?.value||'').trim();
+            if(!t || !window.currentUser) return; inp.value='';
+            const receiverUid=String(chatId).split('_').find(x=>x!==window.currentUser.uid)||'';
+            const now=Date.now();
+            try{
+                await db.collection('private_chats').doc(chatId).collection('messages').add({senderUid:window.currentUser.uid,senderName:window.currentUser.name,senderImg:window.currentUser.img||'',receiverUid,text:t,timestamp:firebase.firestore.Timestamp.fromMillis(now),clientTimestamp:now});
+                if(receiverUid) await db.collection('users').doc(receiverUid).collection('notifications').add({type:'private_message',senderUid:window.currentUser.uid,senderName:window.currentUser.name,chatId,text:t,read:false,timestamp:firebase.firestore.Timestamp.fromMillis(now)});
+            }catch(e){ console.error('private message failed',e); alert('لم يتم حفظ الرسالة الخاصة. تحقق من صلاحيات private_chats في Firestore.'); }
         },
         handleLocalFileProcessing: (inputEl, type) => {
             let file = inputEl.files[0];
@@ -1711,28 +1680,24 @@
             document.getElementById('featureModal').style.display = 'flex';
         },
         createNewRoomCloud: async () => { alert('الرومات المعتمدة حالياً هي: الغرفة العامة، روم المسابقات، روم اليمن، روم السجن.'); },
-        changeActiveRoom: (r) => {
+        changeActiveRoom: async (r) => {
             if(!r || r===window.currentRoom) { document.getElementById('featureModal').style.display='none'; return; }
             const oldRoom=window.currentRoom, oldId=window.roomId(oldRoom), newRoom=window.safeRoomName(r);
             const u=window.currentUser;
             window.roomListenerGeneration++;
             if(window.presenceTimer){clearInterval(window.presenceTimer);window.presenceTimer=null;}
             ui.closeAllMicPeers();
-            // نبدّل الغرفة فوراً؛ عمليات Firebase القديمة تعمل بالخلفية ولا تحجب الواجهة.
+            if(u){
+                await db.collection("rooms").doc(oldId).collection("presence").doc(`${u.uid}_${window.roomSessionId}`).delete().catch(()=>{});
+                await db.collection("rooms").doc(oldId).collection("messages").add({type:"system",isSystem:true,text:`🚪 غادر ${u.name||'عضو'} الغرفة إلى [ ${newRoom} ] — ${ui.uiRankText?ui.uiRankText(u.role):'عضو'}`,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',role:u.role||'new'},timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
+            }
             ui.clearAllListeners();
             window.currentRoom=newRoom;
             document.getElementById('chatBox').innerHTML='';
             document.getElementById('featureModal').style.display='none';
             ui.enterChat();
             if(u){
-                const oldPresence=db.collection("rooms").doc(oldId).collection("presence").doc(`${u.uid}_${window.roomSessionId}`);
-                const oldMsg=db.collection("rooms").doc(oldId).collection("messages").doc();
-                const newMsg=db.collection("rooms").doc(window.roomId(newRoom)).collection("messages").doc();
-                Promise.allSettled([
-                    oldPresence.delete(),
-                    oldMsg.set({type:"system",isSystem:true,text:`🚪 غادر ${u.name||'عضو'} الغرفة إلى [ ${newRoom} ] — ${ui.uiRankText?ui.uiRankText(u.role):'عضو'}`,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',role:u.role||'new'},timestamp:FieldValue.serverTimestamp()}),
-                    newMsg.set({type:"system",isSystem:true,text:`👋 انضم ${u.name||'عضو'} إلى الغرفة [ ${newRoom} ] — ${ui.uiRankText?ui.uiRankText(u.role):'عضو'}`,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',role:u.role||'new'},timestamp:FieldValue.serverTimestamp()})
-                ]).catch(()=>{});
+                await db.collection("rooms").doc(window.roomId(newRoom)).collection("messages").add({type:"system",isSystem:true,text:`👋 انضم ${u.name||'عضو'} إلى الغرفة [ ${newRoom} ] — ${ui.uiRankText?ui.uiRankText(u.role):'عضو'}`,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',role:u.role||'new'},timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
             }
         },
         startRealtimePresence: () => {
