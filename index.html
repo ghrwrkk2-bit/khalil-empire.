@@ -992,23 +992,39 @@
         },
         listenToGlobalMessages: (expectedGeneration=window.roomListenerGeneration) => {
             const roomAtStart=window.currentRoom, roomDocId=window.roomId(roomAtStart);
+            const chatBox=document.getElementById('chatBox');
+            if(chatBox){
+                chatBox.innerHTML='';
+                const welcome=document.createElement('div'); welcome.className='msg-wrap';
+                welcome.innerHTML=`<div class="msg-header"><div class="king-name-container" style="border-color:var(--gold);background:rgba(0,0,0,.6)"><span class="king-name-tag" style="color:var(--gold)">الإدارة العامة - ${ui.escapeHtml(roomAtStart)}</span></div></div><div class="msg-text">مرحباً بك في غرفة ${ui.escapeHtml(roomAtStart)} - اتصال مباشر ومستمر 🔄</div>`;
+                chatBox.appendChild(welcome);
+            }
+            const renderOne=(doc)=>{
+                const m=doc.data()||{};
+                if(m.type==='room_clear') return;
+                if(m.isSystemGold) ui.renderSystemGoldMsg(m);
+                else if(m.isBotMsg) ui.renderBotMsg(m.text);
+                else if(m.isSystem || m.type==='system') ui.renderRoomSystemMsg(m.text,m.timestamp);
+                else if(m.user) ui.renderMsg(m.user,m.text,m.timestamp,m.type||'text',m);
+            };
             const unsub=db.collection("rooms").doc(roomDocId).collection("messages")
               .orderBy("timestamp", "asc").limitToLast(100)
               .onSnapshot((snapshot)=>{
                 if(expectedGeneration!==window.roomListenerGeneration || roomAtStart!==window.currentRoom) return;
                 window.lastFirestoreEventAt=Date.now(); window.firestoreReady=true; window.realtimeReconnectAttempts=0; updateConnectionBadge('online');
-                const chatBox=document.getElementById('chatBox'); if(!chatBox)return;
-                chatBox.innerHTML='';
-                const welcome=document.createElement('div'); welcome.className='msg-wrap';
-                welcome.innerHTML=`<div class="msg-header"><div class="king-name-container" style="border-color:var(--gold);background:rgba(0,0,0,.6)"><span class="king-name-tag" style="color:var(--gold)">الإدارة العامة - ${ui.escapeHtml(roomAtStart)}</span></div></div><div class="msg-text">مرحباً بك في غرفة ${ui.escapeHtml(roomAtStart)} - اتصال مباشر ومستمر 🔄</div>`;
-                chatBox.appendChild(welcome);
-                snapshot.forEach(doc=>{
-                    const m=doc.data()||{};
-                    if(m.isSystemGold) ui.renderSystemGoldMsg(m);
-                    else if(m.isBotMsg) ui.renderBotMsg(m.text);
-                    else if(m.isSystem || m.type==='system') ui.renderRoomSystemMsg(m.text,m.timestamp);
-                    else if(m.user) ui.renderMsg(m.user,m.text,m.timestamp,m.type||'text',m);
-                });
+                if(!chatBox)return;
+                const changes=snapshot.docChanges();
+                const hasRemovalOrModification=changes.some(ch=>ch.type==='removed'||ch.type==='modified');
+                if(hasRemovalOrModification){
+                    chatBox.innerHTML='';
+                    const welcome=document.createElement('div'); welcome.className='msg-wrap';
+                    welcome.innerHTML=`<div class="msg-header"><div class="king-name-container" style="border-color:var(--gold);background:rgba(0,0,0,.6)"><span class="king-name-tag" style="color:var(--gold)">الإدارة العامة - ${ui.escapeHtml(roomAtStart)}</span></div></div><div class="msg-text">مرحباً بك في غرفة ${ui.escapeHtml(roomAtStart)} - اتصال مباشر ومستمر 🔄</div>`;
+                    chatBox.appendChild(welcome);
+                    snapshot.forEach(renderOne);
+                }else{
+                    changes.filter(ch=>ch.type==='added').forEach(ch=>renderOne(ch.doc));
+                    if(changes.length && chatBox) chatBox.scrollTop=chatBox.scrollHeight;
+                }
               },(err)=>{
                 console.error('Firestore messages listener',err);
                 if(expectedGeneration!==window.roomListenerGeneration)return;
@@ -1222,7 +1238,7 @@
             else if(type==='drawing') body=`<img src="${ui.escapeHtml(text)}" loading="lazy" style="width:100%;max-height:300px;object-fit:contain;background:#fff;border-radius:12px;margin-top:8px;cursor:pointer" onclick="ui.openMediaViewer(this.src,'image')">`;
             else if(type==='dice') body=`<div class="msg-text">🎲 ${ui.escapeHtml(live.name)} حصل على الرقم: <b>${extra.number}</b></div>`;
             else if(type==='attendance') body=`<div class="msg-text">🎡 عجلة الحضور: ${ui.escapeHtml(text)}</div>`;
-            else if(type==='link' && ytId) body=`<div class="msg-text">🎬 ${ui.escapeHtml(live.name||'عضو')} أرسل فيديو</div><div style="position:relative;width:100%;aspect-ratio:16/9;margin-top:8px;border-radius:12px;overflow:hidden;background:#000"><iframe src="https://www.youtube.com/embed/${ytId}?rel=0&playsinline=1" style="width:100%;height:100%;border:0" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`;
+            else if(type==='link' && ytId) body=`<div class="msg-text">🎬 ${ui.escapeHtml(live.name||'عضو')} أرسل فيديو</div><div onclick="ui.openYouTubeMessage('${ytId}')" style="position:relative;width:100%;aspect-ratio:16/9;margin-top:8px;border-radius:12px;overflow:hidden;background:#000;cursor:pointer"><img src="https://i.ytimg.com/vi/${ytId}/hqdefault.jpg" loading="lazy" style="width:100%;height:100%;object-fit:cover"><div style="position:absolute;inset:0;display:grid;place-items:center;font-size:46px;color:#fff;text-shadow:0 2px 8px #000">▶</div></div>`;
             else if(type==='link') body=`<div class="msg-text"><a href="${ui.escapeHtml(text)}" target="_blank" rel="noopener noreferrer" style="color:#55aaff;word-break:break-all">🔗 ${ui.escapeHtml(text)}</a></div>`;
             else body=`<div class="msg-text">${ui.escapeHtml(text)}</div>`;
             div.innerHTML=`<div class="msg-header"><div class="pfp-main-frame"><img src="${live.img||''}" class="pfp-main" onclick="event.stopPropagation();ui.viewProfileCard('${live.uid}')"></div><div class="rank-standalone-icon" style="border-color:${rankObj.color}"><i class="${rankObj.icon}" style="color:${rankObj.color}"></i></div><div class="king-name-container" style="border-color:${rankObj.color}" onclick="ui.quoteUserText('${String(live.name||'').replace(/'/g,"\\'")}','')"><span class="king-name-tag" style="color:${live.nameColor||rankObj.color}">${ui.escapeHtml(live.name)}</span></div></div>${body}<div class="msg-time">${timestamp?.toDate?timestamp.toDate().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'}):'الآن'}</div>`;
@@ -1466,6 +1482,14 @@
             db.collection("users").doc(uid).get()
               .then(doc => { if (doc.exists) renderProfile({uid: doc.id, ...doc.data()}); })
               .catch(err => console.warn('profile fetch failed', err));
+        },
+        openYouTubeMessage: (videoId) => {
+            if(!videoId) return;
+            const modal=document.getElementById('featureModal'),title=document.getElementById('featureModalTitle'),body=document.getElementById('featureModalBody');
+            if(!modal||!title||!body)return;
+            title.innerText='🎬 تشغيل الفيديو';
+            body.innerHTML=`<div style="width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#000"><iframe src="https://www.youtube.com/embed/${encodeURIComponent(videoId)}?rel=0&playsinline=1&autoplay=1" style="width:100%;height:100%;border:0" allow="autoplay; encrypted-media; picture-in-picture; web-share" allowfullscreen></iframe></div>`;
+            modal.style.display='flex';
         },
         copyProfileLink: async (uid) => { const link=`${location.origin}${location.pathname}?profile=${encodeURIComponent(uid)}`; try{await navigator.clipboard.writeText(link);alert('🔗 تم نسخ رابط الملف الشخصي.');}catch(e){prompt('انسخ رابط الملف الشخصي:',link);} },
         likeUserOnce: async (targetUid) => {
