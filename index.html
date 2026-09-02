@@ -557,12 +557,12 @@
             }catch(e){alert(e.message==="NO_GOLD"?"رصيد الذهب غير كافٍ.":"تعذر إتمام الشراء.");}
         },
         openSideThreeLinesMenu: () => {
-            let isOwner = (window.currentUser && window.currentUser.role === 'owner');
+            let isOwner = (window.currentUser && ['owner','prince'].includes(window.currentUser.role));
             let ownerOptionsHtml = '';
             if (isOwner) {
                 ownerOptionsHtml = `
                     <div style="background:rgba(255,215,0,0.1); border:1px solid var(--gold); border-radius:10px; padding:10px; margin-bottom:10px;">
-                        <p style="color:var(--gold); font-weight:bold; font-size:13px; text-align:center; margin:0 0 8px;">👑 لوحة تحكم صاحب الموقع للروم (${window.currentRoom})</p>
+                        <p style="color:var(--gold); font-weight:bold; font-size:13px; text-align:center; margin:0 0 8px;">👑 لوحة تحكم الإدارة للروم (${window.currentRoom})</p>
                         <label for="roomBgFileInput" class="file-input-label" style="margin-bottom:6px;"><i class="fas fa-image"></i> رفع وتغيير خلفية هذه الغرفة للجميع</label>
                         <input type="file" id="roomBgFileInput" class="file-input-hidden" accept="image/*" onchange="ui.ownerUploadRoomBg(this)">
                         <button class="row-btn active" style="width:100%; background:#e74c3c; color:#fff; border-radius:8px; padding:10px; font-size:12px;" onclick="ui.ownerClearRoomChat()"><i class="fas fa-trash-alt"></i> تنظيف وحذف محادثات الغرفة للجميع</button>
@@ -645,17 +645,15 @@
                 alert(`تمت تهيئة قاعدة الأعضاء. حذف ${n} حساباً قديماً، وحساب المالك محفوظ.`);
             }catch(e){alert('تعذر تهيئة الأعضاء؛ تحقق من صلاحيات Firestore.');}
         },
-        ownerClearRoomChat: () => {
-            if(!confirm("هل أنت متأكد من رغبتك في تنظيف وحذف كافة رسائل هذه الغرفة لدى جميع الأعضاء؟")) return;
-            let roomDocId = window.roomId(window.currentRoom);
-            db.collection("rooms").doc(roomDocId).collection("messages").get().then(snapshot => {
-                let batch = db.batch();
-                snapshot.docs.forEach(doc => { batch.delete(doc.ref); });
-                return batch.commit();
-            }).then(() => {
-                alert("🧹 تم تنظيف الغرفة وحذف المحادثات بنجاح لدى الجميع.");
-                document.getElementById('featureModal').style.display = 'none';
-            });
+        ownerClearRoomChat: async () => {
+            if(!window.currentUser || !['owner','prince'].includes(window.currentUser.role)){alert('تنظيف الروم متاح لصاحب الموقع والبرنس فقط.');return;}
+            if(!confirm('هل أنت متأكد من تنظيف وحذف رسائل هذه الغرفة عند الجميع فوراً؟')) return;
+            const roomDocId=window.roomId(window.currentRoom),roomRef=db.collection('rooms').doc(roomDocId),messagesRef=roomRef.collection('messages');
+            try{
+                const marker=messagesRef.doc('_room_clear_'); await marker.set({type:'room_clear',clearAt:FieldValue.serverTimestamp(),byUid:window.currentUser.uid,byName:window.currentUser.name},{merge:true});
+                let n=0; while(true){const snap=await messagesRef.limit(450).get(); if(snap.empty) break; let batch=db.batch(),count=0; snap.docs.forEach(d=>{if(d.id!=='_room_clear_'){batch.delete(d.ref);count++;}}); if(count) await batch.commit(); n+=count; if(snap.size<450) break;}
+                document.getElementById('chatBox').innerHTML=''; ui.enterChat(); document.getElementById('featureModal').style.display='none'; alert(`🧹 تم تنظيف ${n} رسالة ومزامنة التنظيف مع الجميع.`);
+            }catch(e){console.error(e);alert('تعذر تنظيف الروم.');}
         },
         openEmojiPicker: () => {
             const emojis = ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕','🤑','🤠','😈','👿','👹','👺','🤡','💩','👻','💀','☠️','👽','👾','🤖','🎃','❤️','🔥','⭐','👑','💎'];
@@ -702,14 +700,35 @@
         sendTikTok:async()=>{const u=document.getElementById('tiktokUrl').value.trim();if(!/^https?:\/\/(www\.)?tiktok\.com\//i.test(u)){alert('الرابط غير صحيح');return;}document.getElementById('msgInp').value=u;await ui.sendMessage();document.getElementById('featureModal').style.display='none';},
         openAttendanceWheel:()=>{document.getElementById('featureModalTitle').innerText='🎡 عجلة الحظ';document.getElementById('featureModalBody').innerHTML=`<div style="width:230px;height:230px;border-radius:50%;border:8px solid var(--gold);margin:10px auto;display:grid;place-items:center;background:conic-gradient(#ffd700 0 45deg,#333 45deg 90deg,#b8860b 90deg 135deg,#222 135deg 180deg,#9b59b6 180deg 225deg,#222 225deg 270deg,#d4af37 270deg 315deg,#444 315deg 360deg);transition:transform 3s cubic-bezier(.15,.7,.15,1)" id="luckyWheel"><div style="background:#111;border:2px solid #fff;border-radius:50%;width:58px;height:58px;display:grid;place-items:center;color:#fff;font-weight:bold">دور</div></div><div style="text-align:center;color:#ccc;font-size:12px">20 نقطة · 20 ذهب · 20 روبي · فارغ · مستوى 1 · مستوى 2 · 50 ذهب · 50 نقطة</div><button class="row-btn active" style="width:100%;margin-top:10px" onclick="ui.sendAttendanceWheel()">🎡 تدوير</button>`;document.getElementById('featureModal').style.display='flex';},
         sendAttendanceWheel:async()=>{
-            if(!window.currentUser||window.wheelBusy)return; window.wheelBusy=true;
-            const prizes=[{label:'20 نقطة',points:20},{label:'20 ذهب',gold:20},{label:'20 روبي',ruby:20},{label:'فارغ'},{label:'مستوى 1',level:1},{label:'مستوى 2',level:2},{label:'50 ذهب',gold:50},{label:'50 نقطة',points:50}];
-            const idx=Math.floor(Math.random()*prizes.length), prize=prizes[idx], wheel=document.getElementById('luckyWheel');
-            if(wheel) wheel.style.transform=`rotate(${1440+idx*45+22}deg)`;
-            setTimeout(async()=>{try{const patch={wheelUpdatedAt:FieldValue.serverTimestamp()};if(prize.points)patch.points=FieldValue.increment(prize.points);if(prize.gold)patch.gold=FieldValue.increment(prize.gold);if(prize.ruby)patch.ruby=FieldValue.increment(prize.ruby);if(prize.level)patch.level=FieldValue.increment(prize.level);await db.collection('users').doc(window.currentUser.uid).set(patch,{merge:true});Object.assign(window.currentUser,{points:(window.currentUser.points||0)+(prize.points||0),gold:(window.currentUser.gold||0)+(prize.gold||0),ruby:(window.currentUser.ruby||0)+(prize.ruby||0),level:(window.currentUser.level||0)+(prize.level||0)});localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));const r=window.roomId(window.currentRoom);await db.collection('rooms').doc(r).collection('messages').add({type:'attendance',text:`🎡 ${prize.label}`,user:{uid:window.currentUser.uid,name:window.currentUser.name,img:window.currentUser.img},userId:window.currentUser.uid,timestamp:FieldValue.serverTimestamp()});alert(`🎉 العجلة وقفت على: ${prize.label}`);}catch(e){alert('تعذر حفظ جائزة العجلة.');}window.wheelBusy=false;},3000);
+            if(!window.currentUser||window.wheelBusy)return;
+            const ref=db.collection('users').doc(window.currentUser.uid);
+            const nowMs=Date.now();
+            try{
+                const check=await ref.get(); const last=check.exists&&check.data().lastWheelAt;
+                if(last && last.toMillis && (nowMs-last.toMillis())<3600000){
+                    const mins=Math.ceil((3600000-(nowMs-last.toMillis()))/60000); alert(`⏳ يمكنك تدوير عجلة الحظ مرة واحدة كل ساعة. بقي تقريباً ${mins} دقيقة.`); return;
+                }
+                window.wheelBusy=true;
+                const prizes=[{label:'20 نقطة',points:20},{label:'20 ذهب',gold:20},{label:'20 روبي',ruby:20},{label:'فارغ'},{label:'مستوى 1',level:1},{label:'مستوى 2',level:2},{label:'50 ذهب',gold:50},{label:'50 نقطة',points:50}];
+                const idx=Math.floor(Math.random()*prizes.length),prize=prizes[idx],wheel=document.getElementById('luckyWheel');
+                if(wheel) wheel.style.transform=`rotate(${1440+idx*45+22}deg)`;
+                setTimeout(async()=>{
+                    try{
+                        await db.runTransaction(async tx=>{
+                            const snap=await tx.get(ref),u=snap.data()||{}; const last2=u.lastWheelAt;
+                            if(last2 && last2.toMillis && (Date.now()-last2.toMillis())<3600000) throw new Error('WHEEL_COOLDOWN');
+                            const patch={lastWheelAt:FieldValue.serverTimestamp()};
+                            if(prize.points)patch.points=FieldValue.increment(prize.points); if(prize.gold)patch.gold=FieldValue.increment(prize.gold); if(prize.ruby)patch.ruby=FieldValue.increment(prize.ruby); if(prize.level)patch.level=FieldValue.increment(prize.level); tx.set(ref,patch,{merge:true});
+                        });
+                        Object.assign(window.currentUser,{points:(window.currentUser.points||0)+(prize.points||0),gold:(window.currentUser.gold||0)+(prize.gold||0),ruby:(window.currentUser.ruby||0)+(prize.ruby||0),level:(window.currentUser.level||0)+(prize.level||0),lastWheelAt:{toMillis:()=>Date.now()}}); localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));
+                        const r=window.roomId(window.currentRoom); await db.collection('rooms').doc(r).collection('messages').add({type:'attendance',text:`🎡 ${prize.label}`,user:{uid:window.currentUser.uid,name:window.currentUser.name,img:window.currentUser.img},userId:window.currentUser.uid,timestamp:FieldValue.serverTimestamp()});
+                        alert(`🎉 العجلة وقفت على: ${prize.label}`);
+                    }catch(e){alert(e.message==='WHEEL_COOLDOWN'?'⏳ هذه الساعة تم استخدام العجلة بالفعل.':'تعذر حفظ جائزة العجلة.');} finally{window.wheelBusy=false;}
+                },3000);
+            }catch(e){window.wheelBusy=false;alert('تعذر التحقق من وقت العجلة.');}
         },
-        openDrawingBoard:()=>{document.getElementById('featureModalTitle').innerText='لوحة الرسم';document.getElementById('featureModalBody').innerHTML=`<canvas id="drawCanvas" width="360" height="260" style="width:100%;background:#fff;border-radius:10px;touch-action:none"></canvas><button class="row-btn active" style="width:100%;margin-top:8px" onclick="ui.sendDrawing()">إرسال الرسم</button>`;setTimeout(ui.initCanvas,0);},
-        initCanvas:()=>{const c=document.getElementById('drawCanvas'),x=c.getContext('2d');let down=false;const pos=e=>{const r=c.getBoundingClientRect(),p=e.touches?e.touches[0]:e;return{x:(p.clientX-r.left)*c.width/r.width,y:(p.clientY-r.top)*c.height/r.height}};const draw=e=>{if(!down)return;e.preventDefault();const p=pos(e);x.lineTo(p.x,p.y);x.stroke();};c.addEventListener('pointerdown',e=>{down=true;const p=pos(e);x.beginPath();x.moveTo(p.x,p.y)});c.addEventListener('pointermove',draw);['pointerup','pointerleave'].forEach(ev=>c.addEventListener(ev,()=>down=false));},
+        openDrawingBoard:()=>{document.getElementById('featureModalTitle').innerText='🎨 لوحة الرسم';document.getElementById('featureModalBody').innerHTML=`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;justify-content:center"><button class="draw-color" data-c="#000000" style="background:#000;width:30px;height:30px;border-radius:50%;border:2px solid #fff"></button><button class="draw-color" data-c="#ff0000" style="background:#f00;width:30px;height:30px;border-radius:50%;border:2px solid #fff"></button><button class="draw-color" data-c="#00aaff" style="background:#0af;width:30px;height:30px;border-radius:50%;border:2px solid #fff"></button><button class="draw-color" data-c="#00cc66" style="background:#0c6;width:30px;height:30px;border-radius:50%;border:2px solid #fff"></button><button class="draw-color" data-c="#ffd700" style="background:#ffd700;width:30px;height:30px;border-radius:50%;border:2px solid #fff"></button><button class="draw-color" data-c="#ff00aa" style="background:#f0a;width:30px;height:30px;border-radius:50%;border:2px solid #fff"></button><button class="draw-color" data-c="#ffffff" style="background:#fff;width:30px;height:30px;border-radius:50%;border:2px solid #888"></button></div><canvas id="drawCanvas" width="360" height="260" style="width:100%;background:#fff;border-radius:10px;touch-action:none"></canvas><button class="row-btn active" style="width:100%;margin-top:8px" onclick="ui.sendDrawing()">📤 إرسال الرسم للعام</button>`;setTimeout(ui.initCanvas,0);},
+        initCanvas:()=>{const c=document.getElementById('drawCanvas'),x=c.getContext('2d');let down=false; x.strokeStyle='#000';x.lineWidth=4;x.lineCap='round';document.querySelectorAll('.draw-color').forEach(b=>b.onclick=()=>x.strokeStyle=b.dataset.c);const pos=e=>{const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height}};const draw=e=>{if(!down)return;e.preventDefault();const p=pos(e);x.lineTo(p.x,p.y);x.stroke();};c.addEventListener('pointerdown',e=>{down=true;c.setPointerCapture?.(e.pointerId);const p=pos(e);x.beginPath();x.moveTo(p.x,p.y)});c.addEventListener('pointermove',draw);['pointerup','pointercancel','pointerleave'].forEach(ev=>c.addEventListener(ev,()=>down=false));},
         sendDrawing:async()=>{const c=document.getElementById('drawCanvas'),blob=await new Promise(r=>c.toBlob(r,'image/png'));const ref=storage.ref().child(`drawings/${window.currentUser.uid}/${Date.now()}.png`);await ref.put(blob);const url=await ref.getDownloadURL(),r=window.currentRoom.replace(/\s+/g,'_');await db.collection('rooms').doc(r).collection('messages').add({type:'drawing',text:url,user:{uid:window.currentUser.uid,name:window.currentUser.name,img:window.currentUser.img},userId:window.currentUser.uid,timestamp:FieldValue.serverTimestamp()});document.getElementById('featureModal').style.display='none';},
         toggleMicsVisibility: () => {
             let container = document.getElementById('micsContainer');
@@ -1037,7 +1056,7 @@
                     const data=active[i];
                     slot.classList.toggle('occupied', !!data);
                     slot.style.backgroundImage=data && data.userImg ? `url('${data.userImg}')` : 'none';
-                    name.innerText=data ? data.userName : String(i);
+                    name.innerText=data ? (data.userName || 'عضو') : String(i); name.title=data ? (data.userName || 'عضو') : `مايك ${i}`;
                     if(data && data.userId !== window.currentUser?.uid) ui.ensureMicPeer(data);
                 }
                 for(const key of Object.keys(window.micPeers)){
@@ -1196,15 +1215,17 @@
             const rankObj=window.chatRanksData[live.role]||window.chatRanksData.new;
             const div=document.createElement('div'); div.className='msg-wrap';
             let body='';
-            if(type==='video') body=`<video controls playsinline preload="metadata" style="width:100%;border-radius:12px;margin-top:8px"><source src="${text}"></video>`;
-            else if(type==='image') body=`<img src="${text}" style="width:110px;height:80px;object-fit:cover;border-radius:12px;margin-top:8px;cursor:pointer" onclick="ui.openMediaViewer('${text}','image')">`;
-            else if(type==='audio') body=`<audio controls style="width:100%;margin-top:8px"><source src="${text}"></audio>`;
-            else if(type==='drawing') body=`<img src="${text}" style="width:100%;border-radius:12px;margin-top:8px">`;
+            const ytId=typeof text==='string' ? extractYouTubeVideoId(text.trim()) : null;
+            if(type==='video') body=`<div style="position:relative;cursor:pointer" onclick="ui.openMediaViewer('${ui.escapeHtml(text)}','video')"><video controls playsinline preload="metadata" style="width:100%;max-height:260px;border-radius:12px;margin-top:8px"><source src="${ui.escapeHtml(text)}"></video><div style="font-size:11px;color:var(--gold);margin-top:3px">▶ تشغيل بالحجم الكامل</div></div>`;
+            else if(type==='image') body=`<img src="${ui.escapeHtml(text)}" loading="lazy" style="width:150px;height:100px;object-fit:cover;border-radius:12px;margin-top:8px;cursor:pointer" onclick="ui.openMediaViewer(this.src,'image')" onerror="this.outerHTML='<div style=\"color:#e74c3c;font-size:12px;margin-top:8px\">تعذر تحميل الصورة</div>'">`;
+            else if(type==='audio') body=`<audio controls preload="metadata" style="width:100%;margin-top:8px"><source src="${ui.escapeHtml(text)}"></audio>`;
+            else if(type==='drawing') body=`<img src="${ui.escapeHtml(text)}" loading="lazy" style="width:100%;max-height:300px;object-fit:contain;background:#fff;border-radius:12px;margin-top:8px;cursor:pointer" onclick="ui.openMediaViewer(this.src,'image')">`;
             else if(type==='dice') body=`<div class="msg-text">🎲 ${ui.escapeHtml(live.name)} حصل على الرقم: <b>${extra.number}</b></div>`;
             else if(type==='attendance') body=`<div class="msg-text">🎡 عجلة الحضور: ${ui.escapeHtml(text)}</div>`;
-            else if(type==='link') body=`<div class="msg-text">🔗 تم إرسال رابط</div><div style="font-size:11px;color:#e74c3c;margin-top:6px">⚠️ الرابط مخفي للحماية ولا يظهر إلا لصاحب الموقع.</div>${window.currentUser?.role==='owner'?`<div class="msg-text"><a href="${text}" target="_blank" rel="noopener noreferrer" style="color:#55aaff">فتح الرابط بعد المراجعة</a></div>`:''}`;
+            else if(type==='link' && ytId) body=`<div class="msg-text">🎬 ${ui.escapeHtml(live.name||'عضو')} أرسل فيديو</div><div style="position:relative;width:100%;aspect-ratio:16/9;margin-top:8px;border-radius:12px;overflow:hidden;background:#000"><iframe src="https://www.youtube.com/embed/${ytId}?rel=0&playsinline=1" style="width:100%;height:100%;border:0" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`;
+            else if(type==='link') body=`<div class="msg-text"><a href="${ui.escapeHtml(text)}" target="_blank" rel="noopener noreferrer" style="color:#55aaff;word-break:break-all">🔗 ${ui.escapeHtml(text)}</a></div>`;
             else body=`<div class="msg-text">${ui.escapeHtml(text)}</div>`;
-            div.innerHTML=`<div class="msg-header"><div class="pfp-main-frame"><img src="${live.img||''}" class="pfp-main" onclick="ui.viewProfileCard('${live.uid}')"></div><div class="rank-standalone-icon" style="border-color:${rankObj.color}"><i class="${rankObj.icon}" style="color:${rankObj.color}"></i></div><div class="king-name-container" style="border-color:${rankObj.color}" onclick="ui.quoteUserText('${String(live.name||'').replace(/'/g,"\\'")}','')"><span class="king-name-tag" style="color:${live.nameColor||rankObj.color}">${ui.escapeHtml(live.name)}</span></div></div>${body}<div class="msg-time">${timestamp?.toDate?timestamp.toDate().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'}):'الآن'}</div>`;
+            div.innerHTML=`<div class="msg-header"><div class="pfp-main-frame"><img src="${live.img||''}" class="pfp-main" onclick="event.stopPropagation();ui.viewProfileCard('${live.uid}')"></div><div class="rank-standalone-icon" style="border-color:${rankObj.color}"><i class="${rankObj.icon}" style="color:${rankObj.color}"></i></div><div class="king-name-container" style="border-color:${rankObj.color}" onclick="ui.quoteUserText('${String(live.name||'').replace(/'/g,"\\'")}','')"><span class="king-name-tag" style="color:${live.nameColor||rankObj.color}">${ui.escapeHtml(live.name)}</span></div></div>${body}<div class="msg-time">${timestamp?.toDate?timestamp.toDate().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'}):'الآن'}</div>`;
             const box=document.getElementById('chatBox'); if(box){box.appendChild(div);box.scrollTop=box.scrollHeight;}
         },
         renderSystemGoldMsg: (data) => {
@@ -1409,12 +1430,14 @@
                         <img src="${u.img || 'https://cdn-icons-png.flaticon.com/512/1042/1042291.png'}" class="profile-card-pfp">
                         <h2 style="color:${u.nameColor || rObj.color}; margin:5px 0 2px;">${u.name}</h2>
                         <p style="margin:0 0 5px; font-size:12px; color:${rObj.color}; font-weight:bold;"><i class="${rObj.icon}"></i> ${rObj.text}</p>
-                        <p style="margin:0 0 10px; font-size:11px; color:#aaa;">${u.status || 'لا يوجد حالة'}</p>
-                        
-                        <div style="display:flex; justify-content:center; gap:15px; margin-bottom:10px; font-size:12px;">
-                            <div><i class="fas fa-layer-group" style="color:var(--gold);"></i> العمر: ${u.age || 'غير محدد'}</div>
-                            <div><i class="fas fa-globe" style="color:#3498db;"></i> البلد: ${u.country || 'غير محدد'}</div>
-                            <div><i class="fas fa-heart" style="color:#2ecc71;"></i> ${u.likes || 0}</div>
+                        <p style="margin:0 0 6px; font-size:11px; color:#aaa;">${ui.escapeHtml(u.status || 'لا توجد حالة')}</p>
+                        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:10px;font-size:12px;text-align:right">
+                            <div>🎂 العمر: <b>${ui.escapeHtml(u.age || 'غير محدد')}</b></div><div>⚧ الجنس: <b>${ui.escapeHtml(u.gender || 'غير محدد')}</b></div>
+                            <div>🌍 البلد: <b>${ui.escapeHtml(u.country || 'غير محدد')}</b></div><div>❤️ الإعجابات: <b>${u.likes || 0}</b></div>
+                        </div>
+                        <div style="font-size:11px;color:#aaa;margin-bottom:10px">🕒 آخر ظهور: <b>${u.lastSeen?.toDate ? u.lastSeen.toDate().toLocaleString('ar') : (u.isOnline ? 'متصل الآن' : 'غير متوفر')}</b></div>
+                        <div style="display:flex;gap:6px;margin-bottom:10px">
+                          <button class="row-btn" onclick="ui.copyProfileLink('${u.uid}')">🔗 نسخ رابط الملف</button>
                         </div>
 
                         <div style="display:flex; gap:8px; margin-bottom:12px;">
@@ -1427,6 +1450,7 @@
                 document.getElementById('featureModal').style.display = 'flex';
             });
         },
+        copyProfileLink: async (uid) => { const link=`${location.origin}${location.pathname}?profile=${encodeURIComponent(uid)}`; try{await navigator.clipboard.writeText(link);alert('🔗 تم نسخ رابط الملف الشخصي.');}catch(e){prompt('انسخ رابط الملف الشخصي:',link);} },
         likeUserOnce: async (targetUid) => {
             if(!window.currentUser || targetUid===window.currentUser.uid) return;
             const likeId=`${window.currentUser.uid}_${targetUid}`;
