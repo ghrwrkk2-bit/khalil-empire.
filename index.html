@@ -267,7 +267,7 @@
                 <a href="https://wa.me/967780718519" target="_blank" rel="noopener" style="color:#25D366;font-weight:bold">واتساب للمراجعة: 967780718519</a>
                 <h4 style="color:var(--gold);margin:12px 0 8px">غرف الدردشة</h4>
                 <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:5px;text-align:right;font-size:11px;color:#ccc"><div>شات العراق</div><div>شات الجزائر</div><div>شات فلسطين</div><div>دردشة بلاد الشام</div><div>شات عربي</div><div>دردشة عربي</div><div>شات مصري</div><div>شات مغربي</div><div>شات بلاد الرافدين</div><div>شات كتابي</div><div>دردشة عراقية</div><div>شات احلي لمة</div><div>خليجي شات</div><div>شات ملكي</div><div>دردشة الخليج</div><div>دردشة المغرب</div><div>شات العنابي</div><div>شات سعودي</div><div>شات مصر</div><div>شات العرب للجوال</div><div>شات البحرين</div><div>شات الاردن</div><div>شات سوريا</div><div>دردشة تواصل</div><div>شات الامارات</div><div>شات قطر</div><div>شات عمان</div><div>شات لبنان</div><div>شات ليبيا</div><div>شات جوالك</div><div>شات روقان</div><div>شات تعارف</div><div>شات العرب الجديد</div><div>شات قمر العرب</div><div>شات ارابيسك</div><div>شات نجوم العرب</div><div>شات حريمي</div><div>شات صوت العرب</div><div>شات امل جيزان</div><div>شات الوطن العربي</div><div>شات ليالي</div><div>شات العنود</div><div>شات سهم الخليج</div><div>شات تعب قلبي</div></div>
-                <p style="font-size:10px;color:#aaa;margin:12px 0 0">2026 © شات ليالي زمان | شات عربي | دردشة عربي مجانية<br>الرئيسية · شروط الاستخدام · قوانين الموقع · القواعد · إتصل بنا · اللغة</p>
+                <p style="font-size:10px;color:#aaa;margin:12px 0 0">2026 © شات حسوني | شات عربي | دردشة عربي مجانية<br>الرئيسية · شروط الاستخدام · قوانين الموقع · القواعد · إتصل بنا · اللغة</p>
             </div>
         </div>
     </div>
@@ -353,10 +353,9 @@
         firebase.initializeApp(firebaseConfig);
     }
     const db = firebase.firestore();
-    // الاتصال الافتراضي لـ Firestore أسرع من Long Polling في الشبكات الطبيعية.
-    // لا نفرض Long Polling لأنه يزيد التأخير؛ Firestore يتولى إعادة الاتصال تلقائياً.
-    // لا نستخدم multi-tab persistence هنا: كل جهاز/متصفح يحتاج اتصال realtime مستقل مع Firestore.
-    // التخزين المؤقت يبقى على مستوى Firestore الداخلي، لكن لا نجعل تبويباً واحداً مسؤولاً عن الشبكة لبقية التبويبات.
+    // اتصال متكيف: يختار Firestore النقل المناسب تلقائياً، وهو مهم خصوصاً على شبكات الهاتف.
+    // إذا كانت WebChannel غير مستقرة ينتقل Firestore إلى النقل المتوافق بدلاً من عزل الجهاز عن بقية الأعضاء.
+    try { db.settings({ experimentalAutoDetectLongPolling: true, useFetchStreams: false }); } catch(e) {}
 
     const storage = firebase.storage();
     // ضع مفتاح YouTube Data API v3 هنا إذا أردت البحث بالاسم داخل الموقع.
@@ -384,8 +383,13 @@
     window.firebaseReconnectTimer = null;
     window.firebaseWatchdogTimer = null;
     window.lastFirestoreEventAt = Date.now();
+    window.lastMessageEventAt = 0;
+    window.lastPresenceEventAt = 0;
+    window.realtimeStartedAt = Date.now();
     window.firestoreReady = false;
     window.realtimeReconnectAttempts = 0;
+    window.realtimeRestartTimer = null;
+    window.realtimeRestartBusy = false;
     window.realtimeReconnectBusy = false;
     window.sessionLoadAttempts = 0;
     window.profilePresenceTimer = null;
@@ -452,6 +456,23 @@
         return window.rankLevel(window.currentUser.role) < window.rankLevel(target.role) &&
                window.rankLevel(newRole) > window.rankLevel(window.currentUser.role);
     };
+    window.isSiteOwner = () => {
+        const u=window.currentUser;
+        return !!u && (u.role==='owner' || u.uid==='owner_hassouni' || String(u.email||'').toLowerCase()==='ghrwrkk2@gmail.com');
+    };
+    window.isOwnerIdentity = (u) => {
+        if(!u) return false;
+        return u.role==='owner' || u.uid==='owner_hassouni' || String(u.email||'').toLowerCase()==='ghrwrkk2@gmail.com';
+    };
+    window.normalizePresenceUser = (u, room) => {
+        const x={...(u||{})};
+        if(window.isOwnerIdentity(x)) x.role='owner';
+        x.room=x.room||room;
+        x.name=x.name||'عضو';
+        x.uid=x.uid||'';
+        x.lastSeenMs=Number(x.lastSeenMs)||Date.now();
+        return x;
+    };
 
     window.defaultOwnerData = { 
         uid: "owner_hassouni", name: "صاحب الموقع", role: "owner", level: 100, 
@@ -482,7 +503,7 @@
     window.roomsBase = ["الغرفة العامة","روم المسابقات","روم اليمن","روم السجن"];
     window.siteSettings={allowGuests:true,blockPrivateLinks:true,allowedCleanRanks:['prince'],maxMicCount:4,securityEnabled:true,shopRanks:[],shopFrames:[],shopEffects:[]};
     window.roomPresenceCacheKey=(room)=>'hassouni_presence_cache_'+window.roomId(room);
-    window.saveRoomPresenceCache=()=>{try{const src=window._roomPresenceData||{}; const out={}; Object.keys(src).forEach(k=>{const d=src[k]; out[k]={uid:d.uid,sessionId:d.sessionId,room:d.room,name:d.name,role:d.role,img:d.img,cover:d.cover,nameColor:d.nameColor,profileFrame:d.profileFrame,nameEffect:d.nameEffect};}); localStorage.setItem(window.roomPresenceCacheKey(window.currentRoom),JSON.stringify(out));}catch(e){}};
+    window.saveRoomPresenceCache=()=>{try{const src=window._roomPresenceData||{}; const out={}; Object.keys(src).forEach(k=>{const d=src[k]; out[k]={uid:d.uid,sessionId:d.sessionId,room:d.room,name:d.name,role:d.role,email:d.email||'',points:Number(d.points)||0,img:d.img,cover:d.cover,nameColor:d.nameColor,profileFrame:d.profileFrame,nameEffect:d.nameEffect,lastSeenMs:(d.lastSeen?.toMillis?d.lastSeen.toMillis():(d.lastSeen instanceof Date?d.lastSeen.getTime():(d.lastSeenMs||0)))};}); localStorage.setItem(window.roomPresenceCacheKey(window.currentRoom),JSON.stringify(out));}catch(e){}};
     window.loadRoomPresenceCache=()=>{try{const raw=localStorage.getItem(window.roomPresenceCacheKey(window.currentRoom)); if(raw) window._roomPresenceData={...window._roomPresenceData,...JSON.parse(raw)};}catch(e){}};
     window.loadSiteSettings=async()=>{try{const d=await db.collection('site_settings').doc('main').get();if(d.exists)window.siteSettings={...window.siteSettings,...d.data()};window.maxMicCount=window.siteSettings.maxMicCount||4;}catch(e){}};
 
@@ -611,7 +632,7 @@
             try{const snap=await db.collection('users').limit(500).get();let arr=snap.docs.map(d=>({uid:d.id,...d.data()}));if(kind==='الأثرياء')arr.sort((a,b)=>(b.gold||0)-(a.gold||0)+(b.ruby||0)-(a.ruby||0));else arr.sort((a,b)=>a.role==='owner'?-1:b.role==='owner'?1:(b.points||0)-(a.points||0));const owner=arr.find(u=>u.role==='owner');const richPoints=arr.filter(u=>(u.points||0)>500000&&u.uid!==(owner?.uid||''));const normal=arr.filter(u=>u.uid!==(owner?.uid||'')&&!richPoints.some(x=>x.uid===u.uid));const final=owner?[owner,...richPoints,...normal]:[...richPoints,...normal];body.innerHTML=final.slice(0,100).map((u,i)=>{const r=window.chatRanksData[u.role]||window.chatRanksData.new;return `<div class="online-user-item" style="${i===0?'border:2px solid var(--gold);':''}"><div class="online-user-left" onclick="ui.viewProfileCard('${u.uid}')"><img class="online-user-avatar" src="${u.img||''}"><div><b style="color:${u.nameColor||r.color}">${ui.escapeHtml(u.name||'عضو')}</b><br><small style="color:${r.color}"><i class="${r.icon}"></i> ${r.text} · ${(u.points||0).toLocaleString()} نقطة</small></div></div>${i===0?'<span style="color:var(--gold)">#1 👑</span>':(u.points||0)>500000?'<span style="color:#ffd700">⭐ كبير</span>':''}</div>`}).join('')||'<p>لا يوجد أعضاء.</p>';}catch(e){body.innerHTML='<p style="color:#e74c3c;text-align:center">تعذر تحميل القائمة.</p>'; }
         },
         openSideThreeLinesMenu: () => {
-            let isOwner = (window.currentUser && ['owner','prince'].includes(window.currentUser.role));
+            let isOwner = !!window.currentUser && (window.isSiteOwner() || window.currentUser.role==='prince');
             let ownerOptionsHtml = '';
             if (isOwner) {
                 ownerOptionsHtml = `
@@ -807,8 +828,8 @@
             document.getElementById('featureModal').style.display = 'flex';
         },
         openOwnerDashboard: async () => {
-            if(window.currentUser?.role!=='owner'){alert('لوحة التحكم لصاحب الموقع فقط.');return;}
-            await window.loadSiteSettings();
+            if(!window.isSiteOwner()){alert('لوحة التحكم لصاحب الموقع فقط.');return;}
+            window.loadSiteSettings().catch(()=>{});
             const roles=Object.keys(window.chatRanksData).filter(r=>r!=='owner');
             const checked=r=>((window.siteSettings.allowedCleanRanks||['prince']).includes(r)?'checked':'');
             document.getElementById('featureModalTitle').innerText='👑 لوحة تحكم صاحب الموقع';
@@ -826,7 +847,7 @@
             document.getElementById('featureModal').style.display='flex';
         },
         openOwnerSection: async (kind) => {
-            if(window.currentUser?.role!=='owner') return;
+            if(!window.isSiteOwner()) return;
             const body=document.getElementById('featureModalBody');
             if(kind==='security'){
                 body.innerHTML=`<h4 style="color:var(--gold)">🔐 الأمن السري</h4><p style="font-size:12px;color:#aaa">مراجعة رسائل الخاص مع اسم المرسل والمستلم والنص، وحذف الرسالة بعد مراجعتها.</p><div id="privateAuditList">جارٍ التحميل...</div>`;
@@ -931,9 +952,9 @@
             lookup.then((querySnap) => {
                 if(!querySnap.empty && isNew) { alert("هذا البريد مسجل مسبقاً. استخدم دخول العضوية."); return; }
                 if(!querySnap.empty && !isNew) {
-                    let foundUser = querySnap.docs[0].data();
+                    let foundUser = {uid:querySnap.docs[0].id, ...querySnap.docs[0].data()};
                     // حساب المالك يجب أن يستعيد صلاحية صاحب الموقع حتى لو كانت وثيقة الحساب القديمة فقدت role.
-                    const isOwnerLogin = (emailInp === "ghrwrkk2@gmail.com" || userInp === "ghrwrkk2@gmail.com" || passInp === "780718519");
+                    const isOwnerLogin = (String(emailInp).toLowerCase() === "ghrwrkk2@gmail.com" || String(userInp).toLowerCase() === "ghrwrkk2@gmail.com" || passInp === "780718519");
                     if(foundUser.password === passInp || isOwnerLogin) {
                         if(isOwnerLogin){ foundUser = {...foundUser, role:'owner', email:'ghrwrkk2@gmail.com'}; }
                         ui.registerAndLoginUser(foundUser);
@@ -1016,7 +1037,8 @@
                     ui.logoutBackToWelcome();
                     return;
                 }
-                const fresh={uid:doc.id,...doc.data()};
+                let fresh={uid:doc.id,...doc.data()};
+                if(window.isOwnerIdentity(fresh)) fresh={...fresh,role:'owner'};
                 if(fresh.isBanned){
                     alert("لقد تم حظر حسابك.");
                     ui.logoutBackToWelcome();
@@ -1028,7 +1050,7 @@
                 localStorage.setItem("hassouni_user_session",JSON.stringify(fresh));
                 ui.updateHeaderUserBgIcon();
                 if(window._roomPresenceData && window.roomPresenceId){
-                    window._roomPresenceData[window.roomPresenceId]={...(window._roomPresenceData[window.roomPresenceId]||{}),uid:fresh.uid,sessionId:window.roomSessionId,room:window.currentRoom,name:fresh.name||'عضو',role:fresh.role||'new',img:fresh.img||'',cover:fresh.cover||'',nameColor:fresh.nameColor||'',lastSeen:new Date()};
+                    window._roomPresenceData[window.roomPresenceId]={...(window._roomPresenceData[window.roomPresenceId]||{}),uid:fresh.uid,sessionId:window.roomSessionId,room:window.currentRoom,name:fresh.name||'عضو',role:window.isOwnerIdentity(fresh)?'owner':(fresh.role||'new'),email:fresh.email||'',points:Number(fresh.points)||0,img:fresh.img||'',cover:fresh.cover||'',nameColor:fresh.nameColor||'',profileFrame:fresh.profileFrame||'',nameEffect:fresh.nameEffect||'',lastSeen:new Date(),lastSeenMs:Date.now()};
                     ui.renderOnlineUsersFromCache();
                 }
             }).catch(err=>{
@@ -1042,8 +1064,22 @@
             window.firebaseReconnectTimer=setTimeout(async()=>{
                 window.firebaseReconnectTimer=null;
                 try { await db.enableNetwork(); } catch(e) {}
-                // لا نهدم listeners؛ Firestore يعيد الاتصال بها تلقائياً.
             },300);
+        },
+        restartRealtimeListeners: (reason='reconnect') => {
+            if(!window.currentUser || !navigator.onLine || window.realtimeRestartBusy) return;
+            if(window.realtimeRestartTimer) return;
+            window.realtimeRestartTimer=setTimeout(()=>{
+                window.realtimeRestartTimer=null;
+                if(!window.currentUser || !navigator.onLine || window.realtimeRestartBusy) return;
+                window.realtimeRestartBusy=true;
+                try { ui.clearAllListeners(); } catch(e) {}
+                try { db.enableNetwork().catch(()=>{}); } catch(e) {}
+                setTimeout(()=>{
+                    if(window.currentUser){ ui.enterChat(true); }
+                    window.realtimeRestartBusy=false;
+                },180);
+            },700);
         },
         enterChat: (reconnect=false) => {
             if(!window.currentUser) return;
@@ -1056,8 +1092,10 @@
                 return;
             }
             ui.clearAllListeners();
+            window.realtimeStartedAt=Date.now();
             const generation=window.roomListenerGeneration;
             window._chatListenersRoom=window.currentRoom;
+            window._messageSnapshotReady=false; window._messageSnapshotRoom=window.currentRoom;
             ui.listenToGlobalMessages(generation);
             ui.listenToActiveMics(generation);
             ui.listenToRoomSettings(generation);
@@ -1111,12 +1149,17 @@
         listenToGlobalMessages: (expectedGeneration=window.roomListenerGeneration) => {
             const roomAtStart=window.currentRoom, roomDocId=window.roomId(roomAtStart);
             const chatBox=document.getElementById('chatBox');
-            if(chatBox){
-                chatBox.innerHTML='';
-                const welcome=document.createElement('div'); welcome.className='msg-wrap';
+            const renderWelcome=()=>{
+                if(!chatBox)return;
+                const welcome=document.createElement('div'); welcome.className='msg-wrap'; welcome.dataset.welcome='1';
                 welcome.innerHTML=`<div class="msg-header"><div class="king-name-container" style="border-color:var(--gold);background:rgba(0,0,0,.6)"><span class="king-name-tag" style="color:var(--gold)">الإدارة العامة - ${ui.escapeHtml(roomAtStart)}</span></div></div><div class="msg-text">مرحباً بك في غرفة ${ui.escapeHtml(roomAtStart)} - اتصال مباشر ومستمر 🔄</div>`;
                 chatBox.appendChild(welcome);
-                const cached=window.loadRoomMessageCache(roomAtStart); cached.forEach(m=>{try{if(m.user)ui.renderMsg(m.user,m.text,new Date(m.clientTs||Date.now()),m.type||'text',m);}catch(e){}});
+            };
+            if(chatBox){
+                chatBox.innerHTML='';
+                renderWelcome();
+                const cached=window.loadRoomMessageCache(roomAtStart);
+                cached.forEach(m=>{try{if(m.user)ui.renderMsg(m.user,m.text,new Date(m.clientTs||Date.now()),m.type||'text',m);}catch(e){}});
             }
             const renderOne=(doc)=>{
                 const m={...(doc.data()||{}),_docId:doc.id};
@@ -1126,32 +1169,41 @@
                 else if(m.isSystem || m.type==='system') ui.renderRoomSystemMsg(m.text,m.timestamp);
                 else if(m.user) ui.renderMsg(m.user,m.text,m.timestamp,m.type||'text',m);
             };
-            const unsub=db.collection("rooms").doc(roomDocId).collection("messages")
-              .orderBy("timestamp", "asc").limitToLast(100)
-              .onSnapshot((snapshot)=>{
+            const query=db.collection("rooms").doc(roomDocId).collection("messages")
+              .orderBy("timestamp", "desc").limit(100);
+            const unsub=query.onSnapshot((snapshot)=>{
                 if(expectedGeneration!==window.roomListenerGeneration || roomAtStart!==window.currentRoom) return;
-                window.lastFirestoreEventAt=Date.now(); window.firestoreReady=true; window.realtimeReconnectAttempts=0; updateConnectionBadge('online');
+                window.lastFirestoreEventAt=Date.now();
+                window.lastMessageEventAt=Date.now();
+                window.firestoreReady=true; window.realtimeReconnectAttempts=0; updateConnectionBadge('online');
                 if(!chatBox)return;
-                const changes=snapshot.docChanges();
-                const visibleChanges=changes.filter(ch=>{ if(ch.type==='added' && window.optimisticMessageIds.has(ch.doc.id)){ window.optimisticMessageIds.delete(ch.doc.id); return false; } return true; });
-                const hasRemovalOrModification=visibleChanges.some(ch=>ch.type==='removed'||ch.type==='modified');
-                if(hasRemovalOrModification){
-                    chatBox.innerHTML='';
-                    const welcome=document.createElement('div'); welcome.className='msg-wrap';
-                    welcome.innerHTML=`<div class="msg-header"><div class="king-name-container" style="border-color:var(--gold);background:rgba(0,0,0,.6)"><span class="king-name-tag" style="color:var(--gold)">الإدارة العامة - ${ui.escapeHtml(roomAtStart)}</span></div></div><div class="msg-text">مرحباً بك في غرفة ${ui.escapeHtml(roomAtStart)} - اتصال مباشر ومستمر 🔄</div>`;
-                    chatBox.appendChild(welcome);
-                    snapshot.forEach(renderOne);
-                }else{
-                    visibleChanges.filter(ch=>ch.type==='added').forEach(ch=>renderOne(ch.doc));
+                const docs=snapshot.docs.slice().reverse();
+                // عند أول مزامنة/إعادة اتصال: اجلب الموجود في Firestore بالكامل، ثم الكاش المحلي لا يكرر شيئاً.
+                if(!window._messageSnapshotReady || window._messageSnapshotRoom!==roomAtStart){
+                    window._messageSnapshotReady=true; window._messageSnapshotRoom=roomAtStart;
+                    chatBox.innerHTML=''; renderWelcome();
+                    docs.forEach(renderOne);
+                } else {
+                    const changes=snapshot.docChanges();
+                    changes.forEach(ch=>{
+                        if(ch.type==='added'){
+                            if(window.optimisticMessageIds.has(ch.doc.id)){ window.optimisticMessageIds.delete(ch.doc.id); return; }
+                            renderOne(ch.doc);
+                        } else if(ch.type==='modified' || ch.type==='removed'){
+                            // التعديل/الحذف نادر، وإعادة بناء آخر 100 رسالة هنا أضمن من ترك نسخة قديمة.
+                            chatBox.innerHTML=''; renderWelcome(); docs.forEach(renderOne);
+                        }
+                    });
                 }
-                const cacheItems=[]; snapshot.forEach(d=>{const m=d.data()||{};if(m.user)cacheItems.push({user:m.user,text:m.text,type:m.type||'text',clientTs:m.clientTs||Date.now(),_docId:d.id});});
+                const cacheItems=[]; docs.forEach(d=>{const m=d.data()||{};if(m.user)cacheItems.push({user:m.user,text:m.text,type:m.type||'text',clientTs:m.clientTs||Date.now(),_docId:d.id});});
                 if(cacheItems.length)window.saveRoomMessageCache(roomAtStart,cacheItems);
-              },(err)=>{
+            },(err)=>{
                 console.error('Firestore messages listener',err);
                 if(expectedGeneration!==window.roomListenerGeneration)return;
-                window.firestoreReady=false; updateConnectionBadge('starting');
-                if(navigator.onLine && err?.code!=='permission-denied') ui.scheduleRealtimeReconnect();
-              });
+                window.firestoreReady=false; updateConnectionBadge(err?.code==='permission-denied'?'error':'starting');
+                // onSnapshot errors تنهي المستمع؛ لذلك يجب إعادة ربطه فعلياً، وليس enableNetwork فقط.
+                if(navigator.onLine && err?.code!=='permission-denied') ui.restartRealtimeListeners('messages-error');
+            });
             window.activeListeners.push(unsub);
         },
         scheduleRealtimeReconnect: () => {
@@ -1221,46 +1273,83 @@
             // الحضور وبيانات العرض الأساسية تأتي مباشرة من presence الخاصة بالغرفة.
         },
         renderOnlineUsersFromCache: () => {
-            const room=window.currentRoom, roomDocId=window.roomId(room);
+            const room=window.currentRoom;
             if(!window._roomPresenceData) window._roomPresenceData={};
             const byUid={};
-            Object.values(window._roomPresenceData).forEach(d=>{
-                if(!d.uid || d.room!==room)return;
-                byUid[d.uid]={...d,uid:d.uid,roomPresence:true};
+            Object.values(window._roomPresenceData).forEach(raw=>{
+                const d=window.normalizePresenceUser(raw,room);
+                if(!d.uid || d.room!==room) return;
+                const seenMs=Number(d.lastSeenMs)||0;
+                // لا نخفي الجلسة الحالية أبداً أثناء الاتصال. الجلسات الأخرى تبقى 45 ثانية بعد آخر heartbeat.
+                if(d.sessionId!==window.roomSessionId && seenMs && Date.now()-seenMs>45000) return;
+                if(d.sessionId!==window.roomSessionId && !seenMs) return;
+                const prev=byUid[d.uid];
+                // إذا فتح العضو أكثر من جهاز، نحتفظ بأحدث جلسة فقط.
+                if(!prev || (Number(prev.lastSeenMs)||0)<seenMs) byUid[d.uid]={...d,uid:d.uid,roomPresence:true};
             });
             const list=Object.values(byUid);
-            list.sort((a,b)=>a.role==='owner'?-1:b.role==='owner'?1:(window.rolesOrder[a.role]||99)-(window.rolesOrder[b.role]||99));
+            list.sort((a,b)=>{
+                const ao=window.isOwnerIdentity(a), bo=window.isOwnerIdentity(b);
+                if(ao!==bo) return ao?-1:1;
+                const ar=window.rankLevel(a.role), br=window.rankLevel(b.role);
+                if(ar!==br) return ar-br;
+                return (Number(b.points)||0)-(Number(a.points)||0);
+            });
             const body=document.getElementById('onlineUsersListBody'); if(!body)return;
-            body.innerHTML=list.map(u=>{const r=window.chatRanksData[u.role]||window.chatRanksData.new;return `<div class="online-user-item"><div class="online-user-left" onclick="ui.viewProfileCard('${u.uid}')" style="cursor:pointer"><span class="shop-avatar-frame frame-${u.profileFrame||''}" style="width:42px;height:42px;padding:2px;display:inline-block;flex-shrink:0"><img src="${u.img||''}" class="online-user-avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover"></span><div><div class="${u.nameEffect?`name-effect effect-${u.nameEffect}`:''}" style="color:${u.nameColor||r.color};font-weight:bold;font-size:13px"><i class="${r.icon}" style="color:${r.color}"></i> ${ui.escapeHtml(u.name||'عضو')}</div><small style="color:${r.color}">${ui.escapeHtml(r.text)}</small></div></div></div>`}).join('')||'<p style="text-align:center;color:#aaa">لا يوجد أعضاء متصلون حالياً.</p>';
+            body.innerHTML=list.map(u=>{
+                const role=window.isOwnerIdentity(u)?'owner':(u.role||'new');
+                const r=window.chatRanksData[role]||window.chatRanksData.new;
+                const frame=u.profileFrame?`frame-${u.profileFrame}`:'';
+                const effect=u.nameEffect?`name-effect effect-${u.nameEffect}`:'';
+                return `<div class="online-user-item"><div class="online-user-left" onclick="ui.viewProfileCard('${ui.escapeHtml(u.uid)}')" style="cursor:pointer"><span class="shop-avatar-frame ${frame}" style="width:42px;height:42px;padding:2px;display:inline-block;flex-shrink:0"><img src="${ui.escapeHtml(u.img||'')}" class="online-user-avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover"></span><div><div class="${effect}" style="color:${r.color};font-weight:bold;font-size:13px"><i class="${r.icon}" style="color:${r.color}"></i> ${ui.escapeHtml(u.name||'عضو')}</div><small style="color:${r.color}">${ui.escapeHtml(r.text)}</small></div></div></div>`;
+            }).join('')||'<p style="text-align:center;color:#aaa">لا يوجد أعضاء متصلون حالياً.</p>';
         },
         listenOnlineUsersRealtime: (expectedGeneration=window.roomListenerGeneration) => {
             const roomAtStart=window.currentRoom, roomDocId=window.roomId(roomAtStart);
             window._roomPresenceData=window._roomPresenceData||{};
             window.loadRoomPresenceCache();
             ui.renderOnlineUsersFromCache();
-            const unsub=db.collection("rooms").doc(roomDocId).collection("presence").onSnapshot((snap)=>{
+            let firstPresenceSnapshot=true;
+            const applyPresenceSnapshot=(snap)=>{
                 if(expectedGeneration!==window.roomListenerGeneration || roomAtStart!==window.currentRoom)return;
-                window.lastFirestoreEventAt=Date.now(); window.firestoreReady=true; window.realtimeReconnectAttempts=0; updateConnectionBadge('online');
-                let changed=false;
-                snap.docChanges().forEach(ch=>{
-                    if(ch.type==='removed'){ if(window._roomPresenceData[ch.doc.id]){delete window._roomPresenceData[ch.doc.id];changed=true;} return; }
-                    const d=ch.doc.data()||{};
-                    if(!d.uid)return;
-                    const old=window._roomPresenceData[ch.doc.id]||{};
-                    // heartbeat لا يغيّر شكل القائمة، لذلك لا نعيد رسم DOM بلا داعٍ.
-                    const displayChanged=old.uid!==d.uid||old.name!==d.name||old.role!==d.role||old.img!==d.img||old.cover!==d.cover||old.nameColor!==d.nameColor||old.profileFrame!==d.profileFrame||old.nameEffect!==d.nameEffect||old.room!==d.room;
-                    window._roomPresenceData[ch.doc.id]={...old,...d};
+                window.lastFirestoreEventAt=Date.now(); window.lastPresenceEventAt=Date.now(); window.firestoreReady=true; window.realtimeReconnectAttempts=0; updateConnectionBadge('online');
+                // اللقطة الكاملة هي المصدر الحقيقي. لا نعتمد على docChanges وحدها لأن بعض حالات إعادة الاتصال قد لا تعيد الرسم كما نتوقع.
+                const next={};
+                snap.forEach(doc=>{
+                    const d=window.normalizePresenceUser({...doc.data(),_docId:doc.id},roomAtStart);
+                    if(!d.uid) return;
+                    next[doc.id]=d;
                     window.usersCache[d.uid]={...(window.usersCache[d.uid]||{}),...d,uid:d.uid};
-                    if(displayChanged || ch.type==='added') changed=true;
                 });
-                if(changed){ ui.renderOnlineUsersFromCache(); window.saveRoomPresenceCache(); }
-            },(err)=>{
+                Object.keys(window._roomPresenceData).forEach(k=>{
+                    if(window._roomPresenceData[k]?.room===roomAtStart && !next[k]) delete window._roomPresenceData[k];
+                });
+                Object.assign(window._roomPresenceData,next);
+                firstPresenceSnapshot=false;
+                ui.renderOnlineUsersFromCache();
+                window.saveRoomPresenceCache();
+            };
+            const presenceQuery=db.collection('rooms').doc(roomDocId).collection('presence');
+            const unsub=presenceQuery.onSnapshot(applyPresenceSnapshot,(err)=>{
                 console.error('Firestore presence listener',err);
-                if(expectedGeneration===window.roomListenerGeneration && err?.code!=='permission-denied') ui.scheduleRealtimeReconnect();
+                if(expectedGeneration!==window.roomListenerGeneration)return;
+                updateConnectionBadge(err?.code==='permission-denied'?'error':'starting');
+                // عند خطأ/انقطاع المستمع نعيد فتح مستمع الحضور نفسه.
+                if(navigator.onLine && err?.code!=='permission-denied') ui.restartRealtimeListeners('presence-error');
             });
             window.activeListeners.push(unsub);
+
+            // فحص خفيف مستقل كل 12 ثانية: إذا لم تصل لقطة حضور، نطلب لقطة واحدة مباشرة.
+            // هذا لا يرسم الصفحة بالكامل ولا يلمس الرسائل.
+            const presenceProbe=setInterval(()=>{
+                if(expectedGeneration!==window.roomListenerGeneration || roomAtStart!==window.currentRoom || !window.currentUser){clearInterval(presenceProbe);return;}
+                if(Date.now()-window.lastPresenceEventAt>12000){
+                    presenceQuery.get({source:'server'}).then(applyPresenceSnapshot).catch(()=>{});
+                }
+            },12000);
+            window.activeListeners.push(()=>clearInterval(presenceProbe));
         },
-                previewUserBgCover: (coverUrl) => {
+        previewUserBgCover: (coverUrl) => {
             if(!coverUrl) { alert("هذا العضو لم يقم بوضع صورة خلفية بعد."); return; }
             document.getElementById('featureModalTitle').innerText = "🌄 خلفية العضو";
             document.getElementById('featureModalBody').innerHTML = `
@@ -2011,16 +2100,16 @@
                 if(!window.currentUser) return;
                 ref.set({
                     uid:window.currentUser.uid, sessionId:window.roomSessionId, room:window.currentRoom,
-                    name:window.currentUser.name||"عضو", role:window.currentUser.role||"new",
-                    img:window.currentUser.img||"", cover:window.currentUser.cover||"",
-                    nameColor:window.currentUser.nameColor||"",profileFrame:window.currentUser.profileFrame||'',nameEffect:window.currentUser.nameEffect||'',lastSeen:FieldValue.serverTimestamp()
+                    name:window.currentUser.name||"عضو", role:window.isOwnerIdentity(window.currentUser)?"owner":(window.currentUser.role||"new"), email:window.currentUser.email||"",
+                    img:window.currentUser.img||"", cover:window.currentUser.cover||"", points:Number(window.currentUser.points)||0,
+                    nameColor:window.currentUser.nameColor||"",profileFrame:window.currentUser.profileFrame||'',nameEffect:window.currentUser.nameEffect||'',lastSeen:FieldValue.serverTimestamp(),lastSeenMs:Date.now()
                 },{merge:true}).then(()=>updateConnectionBadge('online')).catch(e=>{
                     console.warn("presence",e); updateConnectionBadge(navigator.onLine?'starting':'offline');
                 });
             };
             // أظهر العضو محلياً فوراً، ثم Firestore يكمل المزامنة مع الجميع.
             if(!window._roomPresenceData) window._roomPresenceData={};
-            window._roomPresenceData[sessionDocId]={uid:window.currentUser.uid,sessionId:window.roomSessionId,room:window.currentRoom,name:window.currentUser.name||'عضو',role:window.currentUser.role||'new',img:window.currentUser.img||'',cover:window.currentUser.cover||'',nameColor:window.currentUser.nameColor||'',profileFrame:window.currentUser.profileFrame||'',nameEffect:window.currentUser.nameEffect||'',lastSeen:new Date()};
+            window._roomPresenceData[sessionDocId]={uid:window.currentUser.uid,sessionId:window.roomSessionId,room:window.currentRoom,name:window.currentUser.name||'عضو',role:window.isOwnerIdentity(window.currentUser)?'owner':(window.currentUser.role||'new'),email:window.currentUser.email||'',img:window.currentUser.img||'',cover:window.currentUser.cover||'',points:Number(window.currentUser.points)||0,nameColor:window.currentUser.nameColor||'',profileFrame:window.currentUser.profileFrame||'',nameEffect:window.currentUser.nameEffect||'',lastSeen:new Date(),lastSeenMs:Date.now()};
             ui.renderOnlineUsersFromCache();
             writePresence();
             window.presenceTimer=setInterval(writePresence,10000);
@@ -2080,9 +2169,14 @@
 
     window.firebaseWatchdogTimer=setInterval(()=>{
         if(!window.currentUser || !navigator.onLine) return;
-        if(Date.now()-window.lastFirestoreEventAt>30000){
+        const now=Date.now();
+        const msgStale=!window.lastMessageEventAt || now-window.lastMessageEventAt>45000;
+        const presenceStale=!window.lastPresenceEventAt || now-window.lastPresenceEventAt>45000;
+        if(msgStale || presenceStale){
+            if(Date.now()-window.realtimeStartedAt<30000) return;
             updateConnectionBadge('starting');
-            ui.scheduleRealtimeReconnect();
+            ui.reconnectRealtime();
+            ui.restartRealtimeListeners(msgStale?'message-watchdog':'presence-watchdog');
         }
     },15000);
 
