@@ -356,6 +356,14 @@
         firebase.initializeApp(firebaseConfig);
     }
     const db = firebase.firestore();
+    window.sortRealtimeDocs = (snap) => Array.from(snap.docs).sort((a,b) => {
+      const A=a.data()||{}, B=b.data()||{};
+      const ta=Number(A.clientTs||A.clientTimestamp||0), tb=Number(B.clientTs||B.clientTimestamp||0);
+      if(ta!==tb) return ta-tb;
+      const sa=A.timestamp?.toMillis ? A.timestamp.toMillis() : Number(A.timestamp||0);
+      const sb=B.timestamp?.toMillis ? B.timestamp.toMillis() : Number(B.timestamp||0);
+      return sa-sb || String(a.id).localeCompare(String(b.id));
+    });
     // استخدم نقل Firestore الافتراضي؛ لا نفرض Long Polling حتى لا نضيف تأخيراً على شبكات الهاتف.
     try { db.enablePersistence({synchronizeTabs:true}).catch(()=>{}); } catch(e) {}
 
@@ -626,30 +634,30 @@
         },
         switchShopTab:(id,btn)=>{document.querySelectorAll('.shop-section').forEach(x=>x.classList.remove('active'));document.getElementById(id)?.classList.add('active');document.querySelectorAll('.shop-tab').forEach(x=>x.classList.remove('active'));btn?.classList.add('active');},
         buyRank: async (role,cost,isGift=false) => {
-            if(!window.currentUser) return; if(isGift && !['owner','prince'].includes(window.currentUser.role)){alert('🚫 الإهداء متاح للإدارة فقط.');return;} let targetUid=window.currentUser.uid; if(isGift){targetUid=prompt('أدخل UID العضو المراد إهداؤه الرتبة:'); if(!targetUid)return;} const ref=db.collection('users_v10').doc(window.currentUser.uid);
+            if(!window.currentUser) return; if(isGift && !['owner','prince'].includes(window.currentUser.role)){alert('🚫 الإهداء متاح للإدارة فقط.');return;} let targetUid=window.currentUser.uid; if(isGift){targetUid=prompt('أدخل UID العضو المراد إهداؤه الرتبة:'); if(!targetUid)return;} const ref=db.collection('users').doc(window.currentUser.uid);
             try{
               if(window.isUnlimitedOwner()){
-                if(isGift){ const targetRef=db.collection('users_v10').doc(targetUid); const targetSnap=await targetRef.get(); if(!targetSnap.exists)throw new Error('NO_USER'); await targetRef.set({role,rankUpdatedAt:FieldValue.serverTimestamp(),rankGiftedBy:window.currentUser.uid,rankGiftedByName:window.currentUser.name||'صاحب الموقع'},{merge:true}); }
+                if(isGift){ const targetRef=db.collection('users').doc(targetUid); const targetSnap=await targetRef.get(); if(!targetSnap.exists)throw new Error('NO_USER'); await targetRef.set({role,rankUpdatedAt:FieldValue.serverTimestamp(),rankGiftedBy:window.currentUser.uid,rankGiftedByName:window.currentUser.name||'صاحب الموقع'},{merge:true}); }
                 else { await ref.set({role,rankUpdatedAt:FieldValue.serverTimestamp(),unlimitedResources:true},{merge:true}); window.currentUser={...window.currentUser,role,unlimitedResources:true}; window.usersCache[window.currentUser.uid]={...window.currentUser}; localStorage.setItem('hassouni_user_session_v10',JSON.stringify(window.currentUser)); ui.updateHeaderUserBgIcon(); ui.startRealtimePresence(); }
                 document.getElementById('featureModal').style.display='none'; alert(isGift?'🎁 تم إهداء الرتبة للعضو من رصيد صاحب الموقع غير المحدود.':'👑 تم شراء الرتبة بدون خصم لأن رصيد صاحب الموقع غير محدود.'); return;
               }
-              await db.runTransaction(async tx=>{const snap=await tx.get(ref),u=snap.data()||{};if((u.gold||0)<cost)throw new Error('NO_GOLD');if(isGift){const targetRef=db.collection('users_v10').doc(targetUid),targetSnap=await tx.get(targetRef);if(!targetSnap.exists)throw new Error('NO_USER');const targetData={uid:targetUid,...targetSnap.data()};if(!window.canGiftRank(role,targetData))throw new Error('CANNOT_GIFT');tx.update(ref,{gold:FieldValue.increment(-cost)});tx.update(targetRef,{role,rankUpdatedAt:FieldValue.serverTimestamp(),rankGiftedBy:window.currentUser.uid,rankGiftedByName:window.currentUser.name||'الإدارة'});}else tx.update(ref,{gold:FieldValue.increment(-cost),role,rankUpdatedAt:FieldValue.serverTimestamp()});});
+              await db.runTransaction(async tx=>{const snap=await tx.get(ref),u=snap.data()||{};if((u.gold||0)<cost)throw new Error('NO_GOLD');if(isGift){const targetRef=db.collection('users').doc(targetUid),targetSnap=await tx.get(targetRef);if(!targetSnap.exists)throw new Error('NO_USER');const targetData={uid:targetUid,...targetSnap.data()};if(!window.canGiftRank(role,targetData))throw new Error('CANNOT_GIFT');tx.update(ref,{gold:FieldValue.increment(-cost)});tx.update(targetRef,{role,rankUpdatedAt:FieldValue.serverTimestamp(),rankGiftedBy:window.currentUser.uid,rankGiftedByName:window.currentUser.name||'الإدارة'});}else tx.update(ref,{gold:FieldValue.increment(-cost),role,rankUpdatedAt:FieldValue.serverTimestamp()});});
               if(!isGift){window.currentUser={...window.currentUser,role,gold:Math.max(0,(window.currentUser.gold||0)-cost)};window.usersCache[window.currentUser.uid]={...window.currentUser};localStorage.setItem('hassouni_user_session_v10',JSON.stringify(window.currentUser));ui.updateHeaderUserBgIcon();ui.startRealtimePresence();}else{window.currentUser={...window.currentUser,gold:Math.max(0,(window.currentUser.gold||0)-cost)};localStorage.setItem('hassouni_user_session_v10',JSON.stringify(window.currentUser));ui.startRealtimePresence();}document.getElementById('featureModal').style.display='none';alert(isGift?'🎁 تم إهداء الرتبة للعضو وتزامنت عبر Firebase.':'👑 تم شراء الرتبة وظهرت فوراً على حسابك.');
             }catch(e){alert(e.message==='NO_GOLD'?'رصيد الذهب غير كافٍ.':e.message==='NO_USER'?'العضو غير موجود.':e.message==='CANNOT_GIFT'?'لا يمكنك إهداء هذه الرتبة لهذا العضو.':'تعذر إتمام الشراء.');}
         },
-        buyFrame: async(frameId,cost,isGift=false)=>{if(!window.currentUser)return;if(isGift && !['owner','prince'].includes(window.currentUser.role)){alert('🚫 الإهداء متاح للإدارة فقط.');return;}let targetUid=window.currentUser.uid;if(isGift){targetUid=prompt('أدخل UID العضو المراد إهداؤه الإطار:');if(!targetUid)return;}const ref=db.collection('users_v10').doc(window.currentUser.uid);try{
-if(window.isUnlimitedOwner()){ if(isGift){const tr=db.collection('users_v10').doc(targetUid),ts=await tr.get();if(!ts.exists)throw new Error('NO_USER');await tr.set({profileFrame:frameId,frameUpdatedAt:FieldValue.serverTimestamp(),frameGiftedBy:window.currentUser.uid},{merge:true});}else{await ref.set({profileFrame:frameId,unlimitedResources:true},{merge:true});window.currentUser={...window.currentUser,profileFrame:frameId,unlimitedResources:true};window.usersCache[window.currentUser.uid]={...window.currentUser};localStorage.setItem('hassouni_user_session_v10',JSON.stringify(window.currentUser));ui.startRealtimePresence();}document.getElementById('featureModal').style.display='none';alert(isGift?'🎁 تم إهداء الإطار بدون خصم.':'⭕ تم شراء الإطار بدون خصم لصاحب الموقع.');return;}
-await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((u.gold||0)<cost)throw new Error('NO_GOLD');if(isGift){const tr=db.collection('users_v10').doc(targetUid),ts=await tx.get(tr);if(!ts.exists)throw new Error('NO_USER');tx.update(ref,{gold:FieldValue.increment(-cost)});tx.update(tr,{profileFrame:frameId,frameUpdatedAt:FieldValue.serverTimestamp(),frameGiftedBy:window.currentUser.uid});}else tx.update(ref,{gold:FieldValue.increment(-cost),profileFrame:frameId,frameUpdatedAt:FieldValue.serverTimestamp()});});if(!isGift){window.currentUser={...window.currentUser,profileFrame:frameId,gold:Math.max(0,(window.currentUser.gold||0)-cost)};window.usersCache[window.currentUser.uid]={...window.currentUser};localStorage.setItem('hassouni_user_session_v10',JSON.stringify(window.currentUser));ui.startRealtimePresence();}else{window.currentUser={...window.currentUser,gold:Math.max(0,(window.currentUser.gold||0)-cost)};localStorage.setItem('hassouni_user_session_v10',JSON.stringify(window.currentUser));}document.getElementById('featureModal').style.display='none';alert(isGift?'🎁 تم إهداء الإطار للعضو وتزامن فوراً.':'⭕ تم شراء الإطار وتفعيله فوراً.');}catch(e){alert(e.message==='NO_GOLD'?'رصيد الذهب غير كافٍ.':'تعذر شراء الإطار.');}},
+        buyFrame: async(frameId,cost,isGift=false)=>{if(!window.currentUser)return;if(isGift && !['owner','prince'].includes(window.currentUser.role)){alert('🚫 الإهداء متاح للإدارة فقط.');return;}let targetUid=window.currentUser.uid;if(isGift){targetUid=prompt('أدخل UID العضو المراد إهداؤه الإطار:');if(!targetUid)return;}const ref=db.collection('users').doc(window.currentUser.uid);try{
+if(window.isUnlimitedOwner()){ if(isGift){const tr=db.collection('users').doc(targetUid),ts=await tr.get();if(!ts.exists)throw new Error('NO_USER');await tr.set({profileFrame:frameId,frameUpdatedAt:FieldValue.serverTimestamp(),frameGiftedBy:window.currentUser.uid},{merge:true});}else{await ref.set({profileFrame:frameId,unlimitedResources:true},{merge:true});window.currentUser={...window.currentUser,profileFrame:frameId,unlimitedResources:true};window.usersCache[window.currentUser.uid]={...window.currentUser};localStorage.setItem('hassouni_user_session_v10',JSON.stringify(window.currentUser));ui.startRealtimePresence();}document.getElementById('featureModal').style.display='none';alert(isGift?'🎁 تم إهداء الإطار بدون خصم.':'⭕ تم شراء الإطار بدون خصم لصاحب الموقع.');return;}
+await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((u.gold||0)<cost)throw new Error('NO_GOLD');if(isGift){const tr=db.collection('users').doc(targetUid),ts=await tx.get(tr);if(!ts.exists)throw new Error('NO_USER');tx.update(ref,{gold:FieldValue.increment(-cost)});tx.update(tr,{profileFrame:frameId,frameUpdatedAt:FieldValue.serverTimestamp(),frameGiftedBy:window.currentUser.uid});}else tx.update(ref,{gold:FieldValue.increment(-cost),profileFrame:frameId,frameUpdatedAt:FieldValue.serverTimestamp()});});if(!isGift){window.currentUser={...window.currentUser,profileFrame:frameId,gold:Math.max(0,(window.currentUser.gold||0)-cost)};window.usersCache[window.currentUser.uid]={...window.currentUser};localStorage.setItem('hassouni_user_session_v10',JSON.stringify(window.currentUser));ui.startRealtimePresence();}else{window.currentUser={...window.currentUser,gold:Math.max(0,(window.currentUser.gold||0)-cost)};localStorage.setItem('hassouni_user_session_v10',JSON.stringify(window.currentUser));}document.getElementById('featureModal').style.display='none';alert(isGift?'🎁 تم إهداء الإطار للعضو وتزامن فوراً.':'⭕ تم شراء الإطار وتفعيله فوراً.');}catch(e){alert(e.message==='NO_GOLD'?'رصيد الذهب غير كافٍ.':'تعذر شراء الإطار.');}},
         buyNameEffect: async(effectId,cost,isGift=false)=>{
             if(!window.currentUser)return;
             if(isGift && !['owner','prince'].includes(window.currentUser.role)){alert('🚫 الإهداء متاح للإدارة فقط.');return;}
             let targetUid=window.currentUser.uid;
             if(isGift){targetUid=prompt('أدخل UID العضو المراد إهداؤه التأثير:');if(!targetUid)return;}
-            const ref=db.collection('users_v10').doc(window.currentUser.uid);
+            const ref=db.collection('users').doc(window.currentUser.uid);
             try{
                 if(window.isUnlimitedOwner()){
                     if(isGift){
-                        const tr=db.collection('users_v10').doc(targetUid),ts=await tr.get();
+                        const tr=db.collection('users').doc(targetUid),ts=await tr.get();
                         if(!ts.exists)throw new Error('NO_USER');
                         await tr.set({nameEffect:effectId,nameEffectUpdatedAt:FieldValue.serverTimestamp(),effectGiftedBy:window.currentUser.uid,effectGiftedByName:window.currentUser.name||'صاحب الموقع'},{merge:true});
                     }else{
@@ -667,7 +675,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                     const s=await tx.get(ref),u=s.data()||{};
                     if((u.gold||0)<cost)throw new Error('NO_GOLD');
                     if(isGift){
-                        const tr=db.collection('users_v10').doc(targetUid),ts=await tx.get(tr);
+                        const tr=db.collection('users').doc(targetUid),ts=await tx.get(tr);
                         if(!ts.exists)throw new Error('NO_USER');
                         tx.update(ref,{gold:FieldValue.increment(-cost)});
                         tx.update(tr,{nameEffect:effectId,nameEffectUpdatedAt:FieldValue.serverTimestamp(),effectGiftedBy:window.currentUser.uid});
@@ -688,7 +696,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
         },
         openVIPList: async(kind='الكبار') => {
             const body=document.getElementById('featureModalBody');document.getElementById('featureModalTitle').innerText=kind==='الأثرياء'?'💎 الأثرياء':'👑 الكبار';body.innerHTML='<div style="text-align:center;color:#aaa;padding:20px">جارٍ تحميل القائمة...</div>';document.getElementById('featureModal').style.display='flex';
-            try{const snap=await db.collection('users_v10').limit(500).get();let arr=snap.docs.map(d=>({uid:d.id,...d.data()}));if(kind==='الأثرياء')arr.sort((a,b)=>(b.gold||0)-(a.gold||0)+(b.ruby||0)-(a.ruby||0));else arr.sort((a,b)=>a.role==='owner'?-1:b.role==='owner'?1:(b.points||0)-(a.points||0));const owner=arr.find(u=>u.role==='owner');const richPoints=arr.filter(u=>(u.points||0)>500000&&u.uid!==(owner?.uid||''));const normal=arr.filter(u=>u.uid!==(owner?.uid||'')&&!richPoints.some(x=>x.uid===u.uid));const final=owner?[owner,...richPoints,...normal]:[...richPoints,...normal];body.innerHTML=final.slice(0,100).map((u,i)=>{const r=window.chatRanksData[u.role]||window.chatRanksData.new;return `<div class="online-user-item" style="${i===0?'border:2px solid var(--gold);':''}"><div class="online-user-left" onclick="ui.viewProfileCard('${u.uid}')"><img class="online-user-avatar" src="${u.img||''}"><div><b style="color:${u.nameColor||r.color}">${ui.escapeHtml(u.name||'عضو')}</b><br><small style="color:${r.color}"><i class="${r.icon}"></i> ${r.text} · ${(u.points||0).toLocaleString()} نقطة</small></div></div>${i===0?'<span style="color:var(--gold)">#1 👑</span>':(u.points||0)>500000?'<span style="color:#ffd700">⭐ كبير</span>':''}</div>`}).join('')||'<p>لا يوجد أعضاء.</p>';}catch(e){body.innerHTML='<p style="color:#e74c3c;text-align:center">تعذر تحميل القائمة.</p>'; }
+            try{const snap=await db.collection('users').limit(500).get();let arr=snap.docs.map(d=>({uid:d.id,...d.data()}));if(kind==='الأثرياء')arr.sort((a,b)=>(b.gold||0)-(a.gold||0)+(b.ruby||0)-(a.ruby||0));else arr.sort((a,b)=>a.role==='owner'?-1:b.role==='owner'?1:(b.points||0)-(a.points||0));const owner=arr.find(u=>u.role==='owner');const richPoints=arr.filter(u=>(u.points||0)>500000&&u.uid!==(owner?.uid||''));const normal=arr.filter(u=>u.uid!==(owner?.uid||'')&&!richPoints.some(x=>x.uid===u.uid));const final=owner?[owner,...richPoints,...normal]:[...richPoints,...normal];body.innerHTML=final.slice(0,100).map((u,i)=>{const r=window.chatRanksData[u.role]||window.chatRanksData.new;return `<div class="online-user-item" style="${i===0?'border:2px solid var(--gold);':''}"><div class="online-user-left" onclick="ui.viewProfileCard('${u.uid}')"><img class="online-user-avatar" src="${u.img||''}"><div><b style="color:${u.nameColor||r.color}">${ui.escapeHtml(u.name||'عضو')}</b><br><small style="color:${r.color}"><i class="${r.icon}"></i> ${r.text} · ${(u.points||0).toLocaleString()} نقطة</small></div></div>${i===0?'<span style="color:var(--gold)">#1 👑</span>':(u.points||0)>500000?'<span style="color:#ffd700">⭐ كبير</span>':''}</div>`}).join('')||'<p>لا يوجد أعضاء.</p>';}catch(e){body.innerHTML='<p style="color:#e74c3c;text-align:center">تعذر تحميل القائمة.</p>'; }
         },
         openSideThreeLinesMenu: () => {
             let isOwner = !!window.currentUser && (window.isSiteOwner() || window.currentUser.role==='prince');
@@ -734,7 +742,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             document.getElementById('featureModalTitle').innerText='حائط الأصدقاء';
             document.getElementById('featureModalBody').innerHTML='<div id="friendsWall" style="text-align:right;color:#aaa">جارٍ تحميل الحائط...</div>';
             document.getElementById('featureModal').style.display='flex';
-            db.collection('users_v10').orderBy('points','desc').limit(50).get().then(s=>{
+            db.collection('users').orderBy('points','desc').limit(50).get().then(s=>{
                 const el=document.getElementById('friendsWall'); if(!el)return;
                 el.innerHTML=s.docs.map(d=>{const u=d.data(),r=window.chatRanksData[u.role]||window.chatRanksData.new;return `<div class="online-user-item"><div class="online-user-left"><img class="online-user-avatar" src="${u.img||''}"><div><b style="color:${u.nameColor||r.color}">${ui.escapeHtml(u.name||'عضو')}</b><br><small style="color:${r.color}">${r.text} · ${u.points||0} نقطة</small></div></div><button class="row-btn" style="max-width:100px" onclick="ui.viewProfileCard('${d.id}')">الملف</button></div>`}).join('')||'<p style="text-align:center">لا يوجد أعضاء بعد.</p>';
             }).catch(()=>{});
@@ -743,7 +751,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             document.getElementById('featureModalTitle').innerText=kind;
             document.getElementById('featureModalBody').innerHTML='<div id="rankingBody" style="text-align:right">جارٍ تحميل القائمة...</div>';
             document.getElementById('featureModal').style.display='flex';
-            db.collection('users_v10').limit(300).get().then(s=>{
+            db.collection('users').limit(300).get().then(s=>{
                 let arr=s.docs.map(d=>({...d.data(),uid:d.id}));
                 if(kind==='الأثرياء') arr.sort((a,b)=>(b.gold||0)-(a.gold||0));
                 else if(kind==='الكبار') arr.sort((a,b)=>a.role==='owner'?-1:b.role==='owner'?1:(b.points||0)-(a.points||0));
@@ -761,7 +769,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             reader.onload = (e) => {
                 let base64Img = e.target.result;
                 let roomDocId = window.roomId(window.currentRoom);
-                db.collection("room_settings_v10").doc(roomDocId).set({ roomBg: base64Img }, { merge: true }).then(() => {
+                db.collection("room_settings").doc(roomDocId).set({ roomBg: base64Img }, { merge: true }).then(() => {
                     alert("✅ تم رفع وتحديث خلفية الغرفة بنجاح وتطبيقها لجميع الأعضاء الحاضرين!");
                     document.getElementById('featureModal').style.display = 'none';
                 });
@@ -772,7 +780,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             if(!window.currentUser || window.currentUser.role!=='owner'){alert('هذا الإجراء لصاحب الموقع فقط.');return;}
             if(!confirm('هذا الإجراء يحذف حسابات الأعضاء القديمة من users ولا يمكن التراجع عنه. هل تريد المتابعة؟')) return;
             try{
-                const snap=await db.collection('users_v10').get();
+                const snap=await db.collection('users').get();
                 let batch=db.batch(),n=0;
                 snap.docs.forEach(d=>{if(d.id!==window.currentUser.uid){batch.delete(d.ref);n++;}});
                 if(n) await batch.commit();
@@ -783,7 +791,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             if(!window.currentUser){alert('يجب تسجيل الدخول.');return;}
             if(window.currentUser.role!=='owner' && !(window.siteSettings?.allowedCleanRanks||['prince']).includes(window.currentUser.role)){alert('🚫 رتبتك لا تملك صلاحية تنظيف الروم.');return;}
             if(!confirm('هل أنت متأكد من تنظيف وحذف رسائل هذه الغرفة عند الجميع فوراً؟')) return;
-            const roomDocId=window.roomId(window.currentRoom),roomRef=db.collection('rooms_v10').doc(roomDocId),messagesRef=roomRef.collection('messages');
+            const roomDocId=window.roomId(window.currentRoom),roomRef=db.collection('rooms').doc(roomDocId),messagesRef=roomRef.collection('messages');
             try{
                 const marker=messagesRef.doc('_room_clear_'); await marker.set({type:'room_clear',clearAt:FieldValue.serverTimestamp(),byUid:window.currentUser.uid,byName:window.currentUser.name},{merge:true});
                 let n=0; while(true){const snap=await messagesRef.limit(450).get(); if(snap.empty) break; let batch=db.batch(),count=0; snap.docs.forEach(d=>{if(d.id!=='_room_clear_'){batch.delete(d.ref);count++;}}); if(count) await batch.commit(); n+=count; if(snap.size<450) break;}
@@ -827,16 +835,16 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             await ref.put(f); const url=await ref.getDownloadURL();
             const roomDocId=window.roomId(window.currentRoom);
             const type=f.type.startsWith('video/')?'video':f.type.startsWith('image/')?'image':f.type.startsWith('audio/')?'audio':'file';
-            await db.collection("rooms_v10").doc(roomDocId).collection("messages").add({clientTs:Date.now(),type,text:url,fileName:f.name,userId:window.currentUser.uid,user:{uid:window.currentUser.uid,name:window.currentUser.name,img:window.currentUser.img},timestamp:FieldValue.serverTimestamp()});
+            await db.collection("rooms").doc(roomDocId).collection("messages").add({clientTs:Date.now(),type,text:url,fileName:f.name,userId:window.currentUser.uid,user:{uid:window.currentUser.uid,name:window.currentUser.name,img:window.currentUser.img},timestamp:FieldValue.serverTimestamp()});
             input.value=''; document.getElementById('featureModal').style.display='none';
         },
-        sendDice:async()=>{const n=Math.floor(Math.random()*6)+1,roomDocId=window.currentRoom.replace(/\s+/g,'_');await db.collection("rooms_v10").doc(roomDocId).collection("messages").add({clientTs:Date.now(),type:'dice',text:'',number:n,user:{uid:window.currentUser.uid,name:window.currentUser.name,img:window.currentUser.img},userId:window.currentUser.uid,timestamp:FieldValue.serverTimestamp()});document.getElementById('featureModal').style.display='none';},
+        sendDice:async()=>{const n=Math.floor(Math.random()*6)+1,roomDocId=window.currentRoom.replace(/\s+/g,'_');await db.collection("rooms").doc(roomDocId).collection("messages").add({clientTs:Date.now(),type:'dice',text:'',number:n,user:{uid:window.currentUser.uid,name:window.currentUser.name,img:window.currentUser.img},userId:window.currentUser.uid,timestamp:FieldValue.serverTimestamp()});document.getElementById('featureModal').style.display='none';},
         openTikTokShare:()=>{document.getElementById('featureModalTitle').innerText='تيك توك';document.getElementById('featureModalBody').innerHTML=`<input id="tiktokUrl" class="form-control" placeholder="ضع رابط فيديو TikTok"><button class="row-btn active" style="width:100%" onclick="ui.sendTikTok()">إرسال</button>`;},
         sendTikTok:async()=>{const u=document.getElementById('tiktokUrl').value.trim();if(!/^https?:\/\/(www\.)?tiktok\.com\//i.test(u)){alert('الرابط غير صحيح');return;}document.getElementById('msgInp').value=u;await ui.sendMessage();document.getElementById('featureModal').style.display='none';},
         openAttendanceWheel:()=>{document.getElementById('featureModalTitle').innerText='🎡 عجلة الحظ';document.getElementById('featureModalBody').innerHTML=`<div style="width:230px;height:230px;border-radius:50%;border:8px solid var(--gold);margin:10px auto;display:grid;place-items:center;background:conic-gradient(#ffd700 0 45deg,#333 45deg 90deg,#b8860b 90deg 135deg,#222 135deg 180deg,#9b59b6 180deg 225deg,#222 225deg 270deg,#d4af37 270deg 315deg,#444 315deg 360deg);transition:transform 3s cubic-bezier(.15,.7,.15,1)" id="luckyWheel"><div style="background:#111;border:2px solid #fff;border-radius:50%;width:58px;height:58px;display:grid;place-items:center;color:#fff;font-weight:bold">دور</div></div><div style="text-align:center;color:#ccc;font-size:12px">20 نقطة · 20 ذهب · 20 روبي · فارغ · مستوى 1 · مستوى 2 · 50 ذهب · 50 نقطة</div><button class="row-btn active" style="width:100%;margin-top:10px" onclick="ui.sendAttendanceWheel()">🎡 تدوير</button>`;document.getElementById('featureModal').style.display='flex';},
         sendAttendanceWheel:async()=>{
             if(!window.currentUser||window.wheelBusy)return;
-            const ref=db.collection('users_v10').doc(window.currentUser.uid);
+            const ref=db.collection('users').doc(window.currentUser.uid);
             const nowMs=Date.now();
             try{
                 const check=await ref.get(); const last=check.exists&&check.data().lastWheelAt;
@@ -856,7 +864,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                             if(prize.points)patch.points=FieldValue.increment(prize.points); if(prize.gold)patch.gold=FieldValue.increment(prize.gold); if(prize.ruby)patch.ruby=FieldValue.increment(prize.ruby); if(prize.level)patch.level=FieldValue.increment(prize.level); tx.set(ref,patch,{merge:true});
                         });
                         Object.assign(window.currentUser,{points:(window.currentUser.points||0)+(prize.points||0),gold:(window.currentUser.gold||0)+(prize.gold||0),ruby:(window.currentUser.ruby||0)+(prize.ruby||0),level:(window.currentUser.level||0)+(prize.level||0),lastWheelAt:{toMillis:()=>Date.now()}}); localStorage.setItem('hassouni_user_session_v10',JSON.stringify(window.currentUser));
-                        const r=window.roomId(window.currentRoom); await db.collection('rooms_v10').doc(r).collection('messages').add({clientTs:Date.now(),type:'attendance',text:`🎡 ${prize.label}`,user:{uid:window.currentUser.uid,name:window.currentUser.name,img:window.currentUser.img},userId:window.currentUser.uid,timestamp:FieldValue.serverTimestamp()});
+                        const r=window.roomId(window.currentRoom); await db.collection('rooms').doc(r).collection('messages').add({clientTs:Date.now(),type:'attendance',text:`🎡 ${prize.label}`,user:{uid:window.currentUser.uid,name:window.currentUser.name,img:window.currentUser.img},userId:window.currentUser.uid,timestamp:FieldValue.serverTimestamp()});
                         alert(`🎉 العجلة وقفت على: ${prize.label}`);
                     }catch(e){alert(e.message==='WHEEL_COOLDOWN'?'⏳ هذه الساعة تم استخدام العجلة بالفعل.':'تعذر حفظ جائزة العجلة.');} finally{window.wheelBusy=false;}
                 },3000);
@@ -864,7 +872,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
         },
         openDrawingBoard:()=>{document.getElementById('featureModalTitle').innerText='🎨 لوحة الرسم';document.getElementById('featureModalBody').innerHTML=`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;justify-content:center"><button class="draw-color" data-c="#000000" style="background:#000;width:30px;height:30px;border-radius:50%;border:2px solid #fff"></button><button class="draw-color" data-c="#ff0000" style="background:#f00;width:30px;height:30px;border-radius:50%;border:2px solid #fff"></button><button class="draw-color" data-c="#00aaff" style="background:#0af;width:30px;height:30px;border-radius:50%;border:2px solid #fff"></button><button class="draw-color" data-c="#00cc66" style="background:#0c6;width:30px;height:30px;border-radius:50%;border:2px solid #fff"></button><button class="draw-color" data-c="#ffd700" style="background:#ffd700;width:30px;height:30px;border-radius:50%;border:2px solid #fff"></button><button class="draw-color" data-c="#ff00aa" style="background:#f0a;width:30px;height:30px;border-radius:50%;border:2px solid #fff"></button><button class="draw-color" data-c="#ffffff" style="background:#fff;width:30px;height:30px;border-radius:50%;border:2px solid #888"></button></div><canvas id="drawCanvas" width="360" height="260" style="width:100%;background:#fff;border-radius:10px;touch-action:none"></canvas><button class="row-btn active" style="width:100%;margin-top:8px" onclick="ui.sendDrawing()">📤 إرسال الرسم للعام</button>`;setTimeout(ui.initCanvas,0);},
         initCanvas:()=>{const c=document.getElementById('drawCanvas'),x=c.getContext('2d');let down=false; x.strokeStyle='#000';x.lineWidth=4;x.lineCap='round';document.querySelectorAll('.draw-color').forEach(b=>b.onclick=()=>x.strokeStyle=b.dataset.c);const pos=e=>{const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height}};const draw=e=>{if(!down)return;e.preventDefault();const p=pos(e);x.lineTo(p.x,p.y);x.stroke();};c.addEventListener('pointerdown',e=>{down=true;c.setPointerCapture?.(e.pointerId);const p=pos(e);x.beginPath();x.moveTo(p.x,p.y)});c.addEventListener('pointermove',draw);['pointerup','pointercancel','pointerleave'].forEach(ev=>c.addEventListener(ev,()=>down=false));},
-        sendDrawing:async()=>{const c=document.getElementById('drawCanvas'),blob=await new Promise(r=>c.toBlob(r,'image/png'));const ref=storage.ref().child(`drawings/${window.currentUser.uid}/${Date.now()}.png`);await ref.put(blob);const url=await ref.getDownloadURL(),r=window.currentRoom.replace(/\s+/g,'_');await db.collection('rooms_v10').doc(r).collection('messages').add({clientTs:Date.now(),type:'drawing',text:url,user:{uid:window.currentUser.uid,name:window.currentUser.name,img:window.currentUser.img},userId:window.currentUser.uid,timestamp:FieldValue.serverTimestamp()});document.getElementById('featureModal').style.display='none';},
+        sendDrawing:async()=>{const c=document.getElementById('drawCanvas'),blob=await new Promise(r=>c.toBlob(r,'image/png'));const ref=storage.ref().child(`drawings/${window.currentUser.uid}/${Date.now()}.png`);await ref.put(blob);const url=await ref.getDownloadURL(),r=window.currentRoom.replace(/\s+/g,'_');await db.collection('rooms').doc(r).collection('messages').add({clientTs:Date.now(),type:'drawing',text:url,user:{uid:window.currentUser.uid,name:window.currentUser.name,img:window.currentUser.img},userId:window.currentUser.uid,timestamp:FieldValue.serverTimestamp()});document.getElementById('featureModal').style.display='none';},
         toggleMicsVisibility: () => {
             let container = document.getElementById('micsContainer');
             let icon = document.getElementById('micsToggleIcon');
@@ -926,7 +934,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 body.innerHTML=`<h4 style="color:var(--gold)">🛡️ إعدادات الحماية</h4><label style="display:flex;justify-content:space-between;padding:10px"><span>تفعيل الحماية</span><input id="securityCheck" type="checkbox" ${window.siteSettings.securityEnabled!==false?'checked':''}></label><button class="row-btn active" style="width:100%" onclick="ui.saveProtection()">حفظ</button>`;
             }else if(kind==='bans'){
                 body.innerHTML='<h4 style="color:var(--gold)">🚫 المحظورون</h4><div id="banList">جارٍ التحميل...</div>';
-                try{const snap=await db.collection('users_v10').where('isBanned','==',true).limit(200).get();document.getElementById('banList').innerHTML=snap.docs.map(d=>{const u=d.data();return `<div class="online-user-item"><span>${ui.escapeHtml(u.name||d.id)}<br><small>حظر بواسطة: ${ui.escapeHtml(u.bannedByName||'غير مسجل')}</small></span><button class="row-btn" onclick="ui.unbanUser('${d.id}')">فك الحظر</button></div>`}).join('')||'<p>لا يوجد محظورون.</p>';}catch(e){document.getElementById('banList').innerHTML='<p style="color:#e74c3c">تعذر تحميل القائمة.</p>';}
+                try{const snap=await db.collection('users').where('isBanned','==',true).limit(200).get();document.getElementById('banList').innerHTML=snap.docs.map(d=>{const u=d.data();return `<div class="online-user-item"><span>${ui.escapeHtml(u.name||d.id)}<br><small>حظر بواسطة: ${ui.escapeHtml(u.bannedByName||'غير مسجل')}</small></span><button class="row-btn" onclick="ui.unbanUser('${d.id}')">فك الحظر</button></div>`}).join('')||'<p>لا يوجد محظورون.</p>';}catch(e){document.getElementById('banList').innerHTML='<p style="color:#e74c3c">تعذر تحميل القائمة.</p>';}
             }else if(kind==='system'){
                 body.innerHTML=`<h4 style="color:var(--gold)">⚙️ إعدادات النظام</h4><p>الغرف:</p><div style="color:#ccc;line-height:2">${window.roomsBase.join(' · ')}</div>`;
             }else if(kind==='public'){
@@ -940,9 +948,9 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
         saveBlockedWords: async()=>{const a=(document.getElementById('badWordsInput')?.value||'').split(/\n|,/).map(x=>x.trim()).filter(Boolean).slice(0,200);await db.collection('site_settings').doc('main').set({blockedWords:a},{merge:true});window.siteSettings.blockedWords=a;alert('🔒 تم حفظ الكلمات.');},
         saveBots: async()=>{const ids=['reminder','trivia','protection','obedience','welcome'].filter(x=>document.getElementById('bot_'+x)?.checked);await db.collection('site_settings').doc('main').set({enabledBots:ids},{merge:true});window.siteSettings.enabledBots=ids;alert('🤖 تم حفظ البوتات.');},
         saveProtection: async()=>{const enabled=document.getElementById('securityCheck')?.checked!==false;await db.collection('site_settings').doc('main').set({securityEnabled:enabled},{merge:true});window.siteSettings.securityEnabled=enabled;alert(enabled?'🛡️ الحماية مفعلة.':'⚠️ الحماية متوقفة.');},
-        unbanUser: async(uid)=>{if(window.currentUser?.role!=='owner')return;await db.collection('users_v10').doc(uid).set({isBanned:false,bannedAt:null,bannedByName:null},{merge:true});ui.openOwnerSection('bans');},
+        unbanUser: async(uid)=>{if(window.currentUser?.role!=='owner')return;await db.collection('users').doc(uid).set({isBanned:false,bannedAt:null,bannedByName:null},{merge:true});ui.openOwnerSection('bans');},
         ownerDeletePrivateMessage: async(path)=>{if(window.currentUser?.role!=='owner')return;await db.doc(path).delete();ui.openOwnerSection('security');},
-        saveAdminRoomBg: async()=>{const f=document.getElementById('adminRoomBg')?.files?.[0];if(!f)return;const r=storage.ref().child(`room_backgrounds/${window.roomId(window.currentRoom)}/${Date.now()}_${f.name.replace(/[^\w.\-]/g,'_')}`);await r.put(f);const url=await r.getDownloadURL();await db.collection('room_settings_v10').doc(window.roomId(window.currentRoom)).set({roomBg:url,updatedBy:window.currentUser.uid},{merge:true});alert('🌄 تم تحديث خلفية الروم للجميع.');},
+        saveAdminRoomBg: async()=>{const f=document.getElementById('adminRoomBg')?.files?.[0];if(!f)return;const r=storage.ref().child(`room_backgrounds/${window.roomId(window.currentRoom)}/${Date.now()}_${f.name.replace(/[^\w.\-]/g,'_')}`);await r.put(f);const url=await r.getDownloadURL();await db.collection('room_settings').doc(window.roomId(window.currentRoom)).set({roomBg:url,updatedBy:window.currentUser.uid},{merge:true});alert('🌄 تم تحديث خلفية الروم للجميع.');},
         openOwnerDashboardDirect: () => {
             if(!window.isSiteOwner()){ alert('⛔ لوحة التحكم لصاحب الموقع فقط.'); return; }
             ui.openOwnerDashboard();
@@ -1008,9 +1016,9 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
 
             // الدخول أولاً بالبريد: قراءة واحدة فقط. نلجأ للاسم فقط إذا لم نجد البريد.
             const lookup = isNew
-                ? db.collection("users_v10").where("email", "==", emailInp.toLowerCase()).limit(1).get()
-                : db.collection("users_v10").where("email", "==", emailInp.toLowerCase()).limit(1).get().then(byEmail =>
-                    byEmail.empty ? db.collection("users_v10").where("name", "==", userInp).limit(1).get() : byEmail
+                ? db.collection("users").where("email", "==", emailInp.toLowerCase()).limit(1).get()
+                : db.collection("users").where("email", "==", emailInp.toLowerCase()).limit(1).get().then(byEmail =>
+                    byEmail.empty ? db.collection("users").where("name", "==", userInp).limit(1).get() : byEmail
                   );
             lookup.then((querySnap) => {
                 if(!querySnap.empty && isNew) { alert("هذا البريد مسجل مسبقاً. استخدم دخول العضوية."); return; }
@@ -1064,11 +1072,11 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             localStorage.setItem("hassouni_user_session_v10", JSON.stringify(window.currentUser));
             document.getElementById('featureModal').style.display = 'none';
             ui.enterChat();
-            db.collection("users_v10").doc(window.currentUser.uid).set({...window.currentUser,lastSeen:FieldValue.serverTimestamp()}, { merge: true }).catch(e=>console.warn('user save',e));
+            db.collection("users").doc(window.currentUser.uid).set({...window.currentUser,lastSeen:FieldValue.serverTimestamp()}, { merge: true }).catch(e=>console.warn('user save',e));
         },
         updateUserOnlineStatus: (status) => {
             if (!window.currentUser) return;
-            db.collection("users_v10").doc(window.currentUser.uid).set({
+            db.collection("users").doc(window.currentUser.uid).set({
                 lastSeen: FieldValue.serverTimestamp(),
                 isOnline: !!status,
                 activeRoom: status ? window.currentRoom : null,
@@ -1081,7 +1089,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             if(window.sessionCheckInterval) clearInterval(window.sessionCheckInterval);
             const pulse=()=>{
                 if(!window.currentUser)return;
-                db.collection("users_v10").doc(window.currentUser.uid).set({
+                db.collection("users").doc(window.currentUser.uid).set({
                     lastSeen:FieldValue.serverTimestamp(),isOnline:true,activeRoom:window.currentRoom,activeSessionId:window.roomSessionId
                 },{merge:true}).catch(()=>{});
             };
@@ -1106,7 +1114,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             document.getElementById('welcomeOverlay').style.display='none';
             ui.enterChat();
 
-            db.collection("users_v10").doc(parsedUser.uid).get().then(doc=>{
+            db.collection("users").doc(parsedUser.uid).get().then(doc=>{
                 if(!doc.exists){
                     if(parsedUser.role==='guest') return;
                     localStorage.removeItem('hassouni_user_session_v10');
@@ -1197,7 +1205,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
         },
         listenToRoomSettings: (expectedGeneration=window.roomListenerGeneration) => {
             let roomAtStart=window.currentRoom, roomDocId = window.roomId(roomAtStart);
-            let unsub = db.collection("room_settings_v10").doc(roomDocId).onSnapshot((doc) => {
+            let unsub = db.collection("room_settings").doc(roomDocId).onSnapshot((doc) => {
                 if(expectedGeneration!==window.roomListenerGeneration || roomAtStart!==window.currentRoom)return;
                 window.lastFirestoreEventAt=Date.now(); window.firestoreReady=true; window.realtimeReconnectAttempts=0; updateConnectionBadge('online');
                 if(doc.exists) {
@@ -1250,8 +1258,8 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 else if(m.user) ui.renderMsg(m.user,m.text,m.timestamp,m.type||'text',m);
             };
             window._renderedMessageIds = new Set();
-            const query=db.collection("rooms_v10").doc(roomDocId).collection("messages")
-              .orderBy("clientTs", "desc").limit(100);
+            const query=db.collection("rooms").doc(roomDocId).collection("messages")
+              .orderBy("timestamp", "desc").limit(100);
             const unsub=query.onSnapshot((snapshot)=>{
                 if(expectedGeneration!==window.roomListenerGeneration || roomAtStart!==window.currentRoom) return;
                 window.lastFirestoreEventAt=Date.now();
@@ -1295,7 +1303,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 if(expectedGeneration!==window.roomListenerGeneration)return;
                 window.firestoreReady=false; updateConnectionBadge(err?.code==='permission-denied'?'error':'starting');
                 // onSnapshot errors تنهي المستمع؛ لذلك يجب إعادة ربطه فعلياً، وليس enableNetwork فقط.
-                if(navigator.onLine && err?.code!=='permission-denied') ui.restartRealtimeListeners('messages-error');
+                if(navigator.onLine && err?.code!=='permission-denied' && !window.firebaseReconnectTimer) ui.restartRealtimeListeners('messages-error');
             });
             window.activeListeners.push(unsub);
         },
@@ -1336,7 +1344,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
         },
         listenToActiveMics: (expectedGeneration=window.roomListenerGeneration) => {
             const roomDocId = window.roomId(window.currentRoom);
-            const unsub = db.collection("rooms_v10").doc(roomDocId).collection("mics").onSnapshot(async (snapshot) => {
+            const unsub = db.collection("rooms").doc(roomDocId).collection("mics").onSnapshot(async (snapshot) => {
                 if(expectedGeneration!==window.roomListenerGeneration || window.currentRoom===undefined)return;
                 window.lastFirestoreEventAt=Date.now();
                 const active = {};
@@ -1374,7 +1382,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 if(!d.uid || d.room!==room) return;
                 const seenMs=Number(d.lastSeenMs)||0;
                 // لا نخفي الجلسة الحالية أبداً أثناء الاتصال. الجلسات الأخرى تبقى 45 ثانية بعد آخر heartbeat.
-                if(d.sessionId!==window.roomSessionId && seenMs && Date.now()-seenMs>45000) return;
+                if(d.sessionId!==window.roomSessionId && seenMs && Date.now()-seenMs>20000) return;
                 if(d.sessionId!==window.roomSessionId && !seenMs) return;
                 const prev=byUid[d.uid];
                 // إذا فتح العضو أكثر من جهاز، نحتفظ بأحدث جلسة فقط.
@@ -1394,7 +1402,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 const r=window.chatRanksData[role]||window.chatRanksData.new;
                 const frame=u.profileFrame?`frame-${u.profileFrame}`:'';
                 const effect=u.nameEffect?`name-effect effect-${u.nameEffect}`:'';
-                return `<div class="online-user-item"><div class="online-user-left" onclick="ui.viewProfileCard('${ui.escapeHtml(u.uid)}')" style="cursor:pointer"><span class="shop-avatar-frame ${frame}" style="width:42px;height:42px;padding:2px;display:inline-block;flex-shrink:0"><img src="${ui.escapeHtml(u.img||'')}" class="online-user-avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover"></span><div><div class="${effect}" style="color:${r.color};font-weight:bold;font-size:13px"><i class="${r.icon}" style="color:${r.color}"></i> ${ui.escapeHtml(u.name||'عضو')}</div><small style="color:${r.color}">${ui.escapeHtml(r.text)}</small></div></div></div>`;
+                return `<div class="online-user-item"><div class="online-user-left" onclick="ui.viewProfileCard('${ui.escapeHtml(u.uid||'')}')" style="cursor:pointer"><span class="shop-avatar-frame ${frame}" style="width:42px;height:42px;padding:2px;display:inline-block;flex-shrink:0"><img src="${ui.escapeHtml(u.img||'')}" class="online-user-avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover"></span><div><div class="${effect}" style="color:${r.color};font-weight:bold;font-size:13px"><i class="${r.icon}" style="color:${r.color}"></i> ${ui.escapeHtml(u.name||'عضو')}</div><small style="color:${r.color}">${ui.escapeHtml(r.text)}</small></div></div></div>`;
             }).join('')||'<p style="text-align:center;color:#aaa">لا يوجد أعضاء متصلون حالياً.</p>';
         },
         listenOnlineUsersRealtime: (expectedGeneration=window.roomListenerGeneration) => {
@@ -1422,13 +1430,13 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 ui.renderOnlineUsersFromCache();
                 window.saveRoomPresenceCache();
             };
-            const presenceQuery=db.collection('rooms_v10').doc(roomDocId).collection('presence');
+            const presenceQuery=db.collection('rooms').doc(roomDocId).collection('presence');
             const unsub=presenceQuery.onSnapshot(applyPresenceSnapshot,(err)=>{
                 console.error('Firestore presence listener',err);
                 if(expectedGeneration!==window.roomListenerGeneration)return;
                 updateConnectionBadge(err?.code==='permission-denied'?'error':'starting');
                 // عند خطأ/انقطاع المستمع نعيد فتح مستمع الحضور نفسه.
-                if(navigator.onLine && err?.code!=='permission-denied') ui.restartRealtimeListeners('presence-error');
+                if(navigator.onLine && err?.code!=='permission-denied' && !window.firebaseReconnectTimer) ui.restartRealtimeListeners('presence-error');
             });
             window.activeListeners.push(unsub);
 
@@ -1483,7 +1491,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             const u=window.currentUser;if(u.isMuted){alert('أنت مكتوم حالياً من قبل الإدارة.');return;}
             const room=window.roomId(window.currentRoom);const ext=blob.type.includes('ogg')?'ogg':'webm';const path=`room_audio/${room}/${u.uid}/${Date.now()}.${ext}`;
             const btn=document.getElementById('recordSendBtn');if(btn){btn.disabled=true;btn.innerText='⏳ جاري الإرسال...';}
-            try{const ref=storage.ref().child(path);await ref.put(blob,{contentType:blob.type});const url=await ref.getDownloadURL();const msgRef=db.collection('rooms_v10').doc(room).collection('messages').doc();const payload={type:'audio',text:url,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',img:u.img||'',cover:u.cover||'',role:u.role||'new',nameColor:u.nameColor||'',profileFrame:u.profileFrame||'',nameEffect:u.nameEffect||''},audioMime:blob.type,clientTs:Date.now(),timestamp:FieldValue.serverTimestamp()};window.optimisticMessageIds.add(msgRef.id);ui.renderMsg(payload.user,payload.text,new Date(),'audio',payload);await msgRef.set(payload);window.recordedAudioBlob=null;document.getElementById('featureModal').style.display='none';}catch(e){console.error(e);alert('تعذر إرسال التسجيل الصوتي.');if(btn){btn.disabled=false;btn.innerText='📤 إرسال';}}
+            try{const ref=storage.ref().child(path);await ref.put(blob,{contentType:blob.type});const url=await ref.getDownloadURL();const msgRef=db.collection('rooms').doc(room).collection('messages').doc();const payload={type:'audio',text:url,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',img:u.img||'',cover:u.cover||'',role:u.role||'new',nameColor:u.nameColor||'',profileFrame:u.profileFrame||'',nameEffect:u.nameEffect||''},audioMime:blob.type,clientTs:Date.now(),timestamp:FieldValue.serverTimestamp()};window.optimisticMessageIds.add(msgRef.id);ui.renderMsg(payload.user,payload.text,new Date(),'audio',payload);await msgRef.set(payload);window.recordedAudioBlob=null;document.getElementById('featureModal').style.display='none';}catch(e){console.error(e);alert('تعذر إرسال التسجيل الصوتي.');if(btn){btn.disabled=false;btn.innerText='📤 إرسال';}}
         },
         sendMessage: () => {
             const u=window.currentUser; if(!u) return;
@@ -1492,26 +1500,26 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             const bad=(window.siteSettings?.blockedWords||[]); if(bad.some(w=>w && t.toLowerCase().includes(String(w).toLowerCase()))){alert('🚫 الرسالة تحتوي على كلمة ممنوعة.');return;}
             inp.value='';
             const roomAtSend=window.currentRoom, roomDocId=window.roomId(roomAtSend);
-            const msgRef=db.collection("rooms_v10").doc(roomDocId).collection("messages").doc();
+            const msgRef=db.collection("rooms").doc(roomDocId).collection("messages").doc();
             const urlMatch=t.match(/https?:\/\/\S+/i);
             const type=urlMatch && /\.(mp4|webm|ogg)(\?\S*)?$/i.test(t)?'video':urlMatch?'link':'text';
             const payload={type,text:t,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',img:u.img||'',cover:u.cover||'',role:u.role||'new',nameColor:u.nameColor||'',profileFrame:u.profileFrame||'',nameEffect:u.nameEffect||''},clientTs:Date.now(),timestamp:FieldValue.serverTimestamp()};
             // لا ننتظر الشبكة أو معاملة المكافآت قبل السماح برسالة أخرى. Firestore يزامنها تلقائياً.
             window.optimisticMessageIds.add(msgRef.id);
-                ui.renderMsg(payload.user,payload.text,new Date(),payload.type,payload);
+            ui.renderMsg(payload.user,payload.text,new Date(),payload.type,payload);
             msgRef.set(payload).catch(e=>{ window.optimisticMessageIds.delete(msgRef.id); console.error('sendMessage',e); });
             // المكافأة تعمل بالخلفية حتى لا تتأخر واجهة الإرسال.
             Promise.resolve().then(async()=>{
-                const uRef=db.collection('users_v10').doc(u.uid); let reward50=false;
+                const uRef=db.collection('users').doc(u.uid); let reward50=false;
                 try{ await db.runTransaction(async tx=>{const snap=await tx.get(uRef);const data=snap.data()||u;const sent=(Number(data.publicMessageCount)||0)+1;reward50=sent%50===0;const level=Math.min(10000,Math.max(1,Math.floor(sent/50)+1));const patch={publicMessageCount:sent,level,lastSeen:FieldValue.serverTimestamp()};if(reward50){patch.gold=FieldValue.increment(1);patch.ruby=FieldValue.increment(1);patch.points=FieldValue.increment(1);}tx.set(uRef,patch,{merge:true});});
-                    if(reward50) db.collection('rooms_v10').doc(roomDocId).collection('messages').add({clientTs:Date.now(),isBotMsg:true,text:`🎁 مبروك ${u.name}! أرسلت 50 رسالة عامة وتم منحك 1 ذهب + 1 روبي + 1 نقطة ⭐`,timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
+                    if(reward50) db.collection('rooms').doc(roomDocId).collection('messages').add({clientTs:Date.now(),isBotMsg:true,text:`🎁 مبروك ${u.name}! أرسلت 50 رسالة عامة وتم منحك 1 ذهب + 1 روبي + 1 نقطة ⭐`,timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
                 }catch(e){console.warn('reward',e);}
             });
             if(roomAtSend==='روم المسابقات') setTimeout(()=>ui.checkTriviaAnswer(t,u),0);
         },
         checkTriviaAnswer: async (text) => {
             if(window.currentRoom!=="روم المسابقات" || !window.currentUser) return;
-            const botRef=db.collection("rooms_v10").doc(window.roomId(window.currentRoom)).collection("bot").doc("trivia");
+            const botRef=db.collection("rooms").doc(window.roomId(window.currentRoom)).collection("bot").doc("trivia");
             try{
                 let won=false;
                 await db.runTransaction(async tx=>{
@@ -1524,8 +1532,8 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                     won=true;
                 });
                 if(!won) return;
-                await db.collection("users_v10").doc(window.currentUser.uid).update({points:FieldValue.increment(50)});
-                await db.collection("rooms_v10").doc(window.roomId(window.currentRoom)).collection("messages").add({clientTs:Date.now(),
+                await db.collection("users").doc(window.currentUser.uid).update({points:FieldValue.increment(50)});
+                await db.collection("rooms").doc(window.roomId(window.currentRoom)).collection("messages").add({clientTs:Date.now(),
                     isBotMsg:true,
                     text:`🎉 YES! إجابة صحيحة من العضو ${window.currentUser.name} — تم إهداؤه 50 نقطة ⭐`,
                     timestamp:FieldValue.serverTimestamp()
@@ -1546,7 +1554,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
               ["ما عاصمة البحرين؟","المنامة"],["ما عاصمة ليبيا؟","طرابلس"],["ما عاصمة تونس؟","تونس"],
               ["ما عاصمة السودان؟","الخرطوم"],["ما عاصمة اليمن؟","صنعاء"],["كم عدد أشهر السنة؟","12"],["ما اسم أقرب نجم إلى الأرض؟","الشمس"]
             ];
-            const roomRef=db.collection("rooms_v10").doc(window.roomId(window.currentRoom));
+            const roomRef=db.collection("rooms").doc(window.roomId(window.currentRoom));
             const botRef=roomRef.collection("bot").doc("trivia");
             const now=Date.now();
             try{
@@ -1651,7 +1659,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 if(window.localAudioStream) window.localAudioStream.getTracks().forEach(t=>t.stop());
                 const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
                 window.localAudioStream=stream;
-                await db.collection("rooms_v10").doc(room).collection("mics").doc(`mic_${num}`).set({
+                await db.collection("rooms").doc(room).collection("mics").doc(`mic_${num}`).set({
                     micNum:num,userId:window.currentUser.uid,userName:window.currentUser.name,userImg:window.currentUser.img||"",
                     isMuted:false,updatedAt:FieldValue.serverTimestamp()
                 });
@@ -1661,7 +1669,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
         },
         startMicBroadcaster: async (room) => {
             // المذيع ينشئ اتصالاً مستقلاً لكل مستمع؛ الإشارات محفوظة داخل الغرفة نفسها.
-            const listenersUnsub=db.collection("rooms_v10").doc(room).collection("mic_listeners").onSnapshot(async snap=>{
+            const listenersUnsub=db.collection("rooms").doc(room).collection("mic_listeners").onSnapshot(async snap=>{
                 for(const doc of snap.docs){
                     const listenerId=doc.id;
                     if(listenerId===window.currentUser?.uid) continue;
@@ -1670,7 +1678,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                     const pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"},{urls:"stun:stun1.l.google.com:19302"}]});
                     window.micPeers[key]={pc,remoteUid:listenerId};
                     (window.localAudioStream?.getTracks()||[]).forEach(t=>pc.addTrack(t,window.localAudioStream));
-                    const signal=db.collection("rooms_v10").doc(room).collection("mic_signals").doc(key);
+                    const signal=db.collection("rooms").doc(room).collection("mic_signals").doc(key);
                     pc.onicecandidate=e=>{if(e.candidate) signal.collection("callerCandidates").add({candidate:e.candidate.toJSON()});};
                     const offer=await pc.createOffer();
                     await pc.setLocalDescription(offer);
@@ -1687,7 +1695,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
         },
         toggleMicVoiceState: (num, shouldMute) => {
             let roomDocId = window.roomId(window.currentRoom);
-            db.collection("rooms_v10").doc(roomDocId).collection("mics").doc(`mic_${num}`).update({ isMuted: shouldMute });
+            db.collection("rooms").doc(roomDocId).collection("mics").doc(`mic_${num}`).update({ isMuted: shouldMute });
             if(window.localAudioStream) {
                 window.localAudioStream.getAudioTracks().forEach(track => track.enabled = !shouldMute);
             }
@@ -1695,7 +1703,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
         },
         vacateMicSlot: (num) => {
             let roomDocId = window.roomId(window.currentRoom);
-            db.collection("rooms_v10").doc(roomDocId).collection("mics").doc(`mic_${num}`).delete();
+            db.collection("rooms").doc(roomDocId).collection("mics").doc(`mic_${num}`).delete();
             if(window.localAudioStream) {
                 window.localAudioStream.getTracks().forEach(track => track.stop());
                 window.localAudioStream = null;
@@ -1747,12 +1755,12 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
         },
         processAndPlayYoutubeLink: async (vId) => {
             if(!vId||!window.currentUser)return;
-            const roomDocId=window.roomId(window.currentRoom), ref=db.collection('room_settings_v10').doc(roomDocId), isOwner=window.currentUser.role==='owner';
+            const roomDocId=window.roomId(window.currentRoom), ref=db.collection('room_settings').doc(roomDocId), isOwner=window.currentUser.role==='owner';
             try{await db.runTransaction(async tx=>{const snap=await tx.get(ref);const cur=snap.data()||{};if(cur.activeAudioId && cur.activeAudioId!==vId && !isOwner) throw new Error('SONG_ALREADY_PLAYING');tx.set(ref,{activeAudioId:vId,activeAudioOwnerUid:window.currentUser.uid,activeAudioOwnerName:window.currentUser.name||'عضو',activeAudioStartedAt:FieldValue.serverTimestamp()},{merge:true});});alert(isOwner?'👑 تم تشغيل الأغنية فوق الجميع.':'🔊 تم تشغيل الأغنية للجميع حتى تكتمل.');document.getElementById('featureModal').style.display='none';}catch(e){if(e.message==='SONG_ALREADY_PLAYING')alert('🎵 توجد أغنية شغالة الآن. انتظر حتى تكتمل أو يوقفها صاحبها.');else alert('تعذر تشغيل الأغنية حالياً.');}
         },
         stopHiddenAudioPlayback: async () => {
             if(window.currentUser?.role!=='owner'){alert('⛔ إيقاف أي أغنية شغالة للجميع متاح لصاحب الموقع فقط.');return;}
-            const roomDocId=window.roomId(window.currentRoom);await db.collection('room_settings_v10').doc(roomDocId).set({activeAudioId:'',activeAudioOwnerUid:'',activeAudioOwnerName:''},{merge:true});alert('👑 تم إيقاف الأغنية لدى الجميع.');document.getElementById('featureModal').style.display='none';
+            const roomDocId=window.roomId(window.currentRoom);await db.collection('room_settings').doc(roomDocId).set({activeAudioId:'',activeAudioOwnerUid:'',activeAudioOwnerName:''},{merge:true});alert('👑 تم إيقاف الأغنية لدى الجميع.');document.getElementById('featureModal').style.display='none';
         },
         toggleOnlineUsers: () => {
             let m = document.getElementById('onlineUsersHalfModal');
@@ -1843,7 +1851,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             if (cached) renderProfile(cached);
 
             // تحديث صامت من Firestore؛ لا يمنع فتح الكرت ولا يعلّق الواجهة.
-            db.collection("users_v10").doc(uid).get()
+            db.collection("users").doc(uid).get()
               .then(doc => {
                   if (doc.exists) {
                       const presence = window._roomPresenceData ? Object.values(window._roomPresenceData).find(x => x.uid === uid) : null;
@@ -1872,11 +1880,11 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 await db.runTransaction(async tx=>{
                     const existing=await tx.get(likeRef);
                     if(existing.exists) throw new Error("ALREADY_LIKED");
-                    const targetRef=db.collection("users_v10").doc(targetUid);
+                    const targetRef=db.collection("users").doc(targetUid);
                     tx.set(likeRef,{fromUid:window.currentUser.uid,toUid:targetUid,createdAt:FieldValue.serverTimestamp()});
                     tx.set(targetRef,{likes:FieldValue.increment(1)},{merge:true});
                 });
-                await db.collection("users_v10").doc(targetUid).collection("notifications").add({
+                await db.collection("users").doc(targetUid).collection("notifications").add({
                     type:"like",senderUid:window.currentUser.uid,senderName:window.currentUser.name,
                     text:`تم وضع لايك من العضو ${window.currentUser.name} على بروفايلك ❤️`,read:false,timestamp:FieldValue.serverTimestamp()
                 });
@@ -1888,7 +1896,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             const labels={points:'النقاط',gold:'الذهب',ruby:'الروبي'};
             const amount=Number(prompt(`كم تريد إهداء ${labels[type]}؟`,type==='points'?'1000':'100'));
             if(!Number.isFinite(amount)||amount<=0)return;
-            const ref=db.collection('users_v10').doc(uid);
+            const ref=db.collection('users').doc(uid);
             try{
                 await ref.set({[type]:FieldValue.increment(Math.floor(amount)),lastGiftType:type,lastGiftAmount:Math.floor(amount),lastGiftByUid:window.currentUser.uid,lastGiftByName:window.currentUser.name||'صاحب الموقع',lastGiftAt:FieldValue.serverTimestamp()},{merge:true});
                 if(window.usersCache[uid]) window.usersCache[uid][type]=(window.usersCache[uid][type]||0)+Math.floor(amount);
@@ -1896,38 +1904,38 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             }catch(e){alert('تعذر تنفيذ الهدية.');}
         },
         adminToggleMute: async (uid, muteState) => {
-            const snap=await db.collection('users_v10').doc(uid).get().catch(()=>null), target=snap?.data();
+            const snap=await db.collection('users').doc(uid).get().catch(()=>null), target=snap?.data();
             if(!target || !window.canManageUser(target)){alert('لا تملك صلاحية كتم هذا العضو.');return;}
-            await db.collection("users_v10").doc(uid).set({isMuted:muteState},{merge:true});
+            await db.collection("users").doc(uid).set({isMuted:muteState},{merge:true});
             alert(muteState ? "تم كتم العضو ومزامنته." : "تم إلغاء الكتم.");
         },
         adminKickUser: async (uid) => {
-            const snap=await db.collection('users_v10').doc(uid).get().catch(()=>null), target=snap?.data();
+            const snap=await db.collection('users').doc(uid).get().catch(()=>null), target=snap?.data();
             if(!target || !window.canManageUser(target)){alert('لا تملك صلاحية طرد هذا العضو.');return;}
             const room=window.roomId(window.currentRoom);
-            const ps=await db.collection('rooms_v10').doc(room).collection('presence').where('uid','==',uid).get().catch(()=>null);
+            const ps=await db.collection('rooms').doc(room).collection('presence').where('uid','==',uid).get().catch(()=>null);
             if(ps){const b=db.batch();ps.forEach(d=>b.delete(d.ref));await b.commit().catch(()=>{});}
-            await db.collection('users_v10').doc(uid).set({isOnline:false,kickedAt:FieldValue.serverTimestamp()},{merge:true});
+            await db.collection('users').doc(uid).set({isOnline:false,kickedAt:FieldValue.serverTimestamp()},{merge:true});
             alert('تم طرد العضو من الغرفة.');
             document.getElementById('featureModal').style.display='none';
         },
         adminBlockUser: async (uid) => {
-            const snap=await db.collection('users_v10').doc(uid).get().catch(()=>null), target=snap?.data();
+            const snap=await db.collection('users').doc(uid).get().catch(()=>null), target=snap?.data();
             if(!target || !window.canManageUser(target)){alert('لا تملك صلاحية حجب هذا العضو.');return;}
-            await db.collection('users_v10').doc(uid).set({isMuted:true,status:"محجوب من الإدارة"},{merge:true});
+            await db.collection('users').doc(uid).set({isMuted:true,status:"محجوب من الإدارة"},{merge:true});
             alert('تم حجب العضو ومزامنة حالته.');
         },
         adminBanUser: async (uid) => {
-            const snap=await db.collection('users_v10').doc(uid).get().catch(()=>null), target=snap?.data();
+            const snap=await db.collection('users').doc(uid).get().catch(()=>null), target=snap?.data();
             if(!target || !window.canManageUser(target)){alert('لا تملك صلاحية حظر هذا العضو.');return;}
-            await db.collection('users_v10').doc(uid).set({isBanned:true,isOnline:false,bannedAt:FieldValue.serverTimestamp()},{merge:true});
+            await db.collection('users').doc(uid).set({isBanned:true,isOnline:false,bannedAt:FieldValue.serverTimestamp()},{merge:true});
             alert('تم حظر العضو.');
             document.getElementById('featureModal').style.display='none';
         },
         adminDeleteAccount: (uid) => {
             if(window.currentUser?.role!=='owner'){alert('حذف الحساب متاح لصاحب الموقع فقط.');return;}
             if(!confirm("هل أنت متأكد تماماً من حذف هذا الحساب نهائياً من قاعدة البيانات؟")) return;
-            db.collection("users_v10").doc(uid).delete().then(() => {
+            db.collection("users").doc(uid).delete().then(() => {
                 alert("تم حذف الحساب نهائياً.");
                 document.getElementById('featureModal').style.display = 'none';
             });
@@ -1935,7 +1943,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
         createGiftedGuestCredentials: async (uid, targetUserName) => {
             const email = `guest_${String(uid).replace(/[^a-zA-Z0-9_]/g,'')}_${Date.now()}@hassouni.local`;
             const password = Math.random().toString(36).slice(-8) + Math.floor(1000+Math.random()*9000);
-            await db.collection("users_v10").doc(uid).set({
+            await db.collection("users").doc(uid).set({
                 email, password, guestConvertedToMember:true,
                 loginProvisionedAt:FieldValue.serverTimestamp()
             },{merge:true});
@@ -1944,7 +1952,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
         changeUserRole: async (uid, targetUserName, newRole) => {
             if(!uid || !newRole || !window.currentUser) return;
             if(!window.isSiteOwner()){alert('هذه العملية لصاحب الموقع فقط.');return;}
-            const targetSnap=await db.collection('users_v10').doc(uid).get().catch(()=>null);
+            const targetSnap=await db.collection('users').doc(uid).get().catch(()=>null);
             const target=targetSnap&&targetSnap.exists?{uid,...targetSnap.data()}:null;
             if(!target || !window.canGiftRank(newRole,target)){ alert('لا يمكنك إهداء هذه الرتبة: يجب أن تكون رتبتك أعلى من العضو والرتبة الجديدة أدنى من رتبتك.'); return; }
             try {
@@ -1958,9 +1966,9 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                     patch.guestConvertedToMember=true;
                     patch.hideRegistrationShortcut=true;
                 }
-                await db.collection("users_v10").doc(uid).set(patch,{merge:true});
+                await db.collection("users").doc(uid).set(patch,{merge:true});
                 try {
-                    const ps=await db.collection('rooms_v10').doc(window.roomId(window.currentRoom)).collection('presence').where('uid','==',uid).get();
+                    const ps=await db.collection('rooms').doc(window.roomId(window.currentRoom)).collection('presence').where('uid','==',uid).get();
                     if(!ps.empty){ const batch=db.batch(); ps.forEach(d=>batch.set(d.ref,{role:newRole,roleUpdatedAt:FieldValue.serverTimestamp(),hideRegistrationShortcut:!!isGuest,email:credentials?.email||target.email||''},{merge:true})); await batch.commit(); }
                 } catch(e){ console.warn('presence role sync',e); }
                 if(window._roomPresenceData){
@@ -1968,7 +1976,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                     ui.renderOnlineUsersFromCache();
                 }
                 const rankObj=window.chatRanksData[newRole]||{text:newRole};
-                await db.collection('rooms_v10').doc(window.roomId(window.currentRoom)).collection('messages').add({clientTs:Date.now(),
+                await db.collection('rooms').doc(window.roomId(window.currentRoom)).collection('messages').add({clientTs:Date.now(),
                     isSystemGold:true,text:`🎉 تم إهداء العضو [ ${targetUserName} ] رتبة [ ${rankObj.text} ] بواسطة الإدارة العامة 👑`,memberName:targetUserName,rank:newRole,timestamp:FieldValue.serverTimestamp()
                 });
                 alert(credentials ? `🎁 تم إهداء الرتبة وتحويل الزائر إلى حساب محفوظ.\n\nالبريد: ${credentials.email}\nكلمة المرور: ${credentials.password}\n\nاحتفظ بهما للعودة بنفس الحساب والرتبة.` : 'تم تحديث الرتبة ومزامنتها مع حساب العضو والجلسات المفتوحة بنجاح ✅');
@@ -1977,7 +1985,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
         },
         listenPrivateNotifications: () => {
             if(!window.currentUser) return;
-            const unsub=db.collection("users_v10").doc(window.currentUser.uid).collection("notifications")
+            const unsub=db.collection("users").doc(window.currentUser.uid).collection("notifications")
               .where("read","==",false).onSnapshot(snap=>{
                 const btn=document.querySelector('.header-btn[onclick*="openPrivateConversationsList"]');
                 if(btn){
@@ -1991,7 +1999,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             document.getElementById('featureModalBody').innerHTML = `<div id="privateInbox" style="text-align:right">جارٍ تحميل المحادثات...</div>`;
             document.getElementById('featureModal').style.display='flex';
             if(!window.currentUser) return;
-            db.collection("users_v10").doc(window.currentUser.uid).collection("notifications")
+            db.collection("users").doc(window.currentUser.uid).collection("notifications")
               .where("type","==","private_message").orderBy("timestamp","desc").limit(50).get().then(snap=>{
                 const el=document.getElementById('privateInbox'); if(!el)return;
                 if(snap.empty){el.innerHTML='<p style="color:#aaa;text-align:center">لا توجد رسائل خاصة بعد.</p>';return;}
@@ -2005,7 +2013,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 const el=document.getElementById('privateInbox'); if(el) el.innerHTML='<p style="color:#aaa;text-align:center">لا توجد رسائل خاصة بعد.</p>';
               });
         },
-        markNotificationRead: (id) => db.collection("users_v10").doc(window.currentUser.uid).collection("notifications").doc(id).set({read:true},{merge:true}).catch(()=>{}),
+        markNotificationRead: (id) => db.collection("users").doc(window.currentUser.uid).collection("notifications").doc(id).set({read:true},{merge:true}).catch(()=>{}),
         startPrivateChatWith: (targetUid, targetName) => {
             if(window.currentUser.uid === targetUid) { alert("لا يمكنك مراسلة نفسك."); return; }
             let chatId = generateChatroomId(window.currentUser.uid, targetUid);
@@ -2026,12 +2034,12 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             document.getElementById('featureModal').style.display = 'flex';
 
             let unsub = db.collection("private_chats").doc(chatId).collection("messages")
-                .orderBy("timestamp", "asc")
+                .orderBy("clientTs", "asc")
                 .onSnapshot(snap => {
                     let box = document.getElementById('privateMsgContainer');
                     if(!box) return;
                     box.innerHTML = "";
-                    snap.forEach(doc => {
+                    window.sortRealtimeDocs(snap).forEach(doc => {
                         let data = doc.data();
                         let isMine = data.senderUid === window.currentUser.uid;
                         let msgDiv = document.createElement('div');
@@ -2058,7 +2066,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 const receiverUid=String(chatId).split('_').find(x=>x!==window.currentUser.uid)||'';
                 const type=f.type.startsWith('video/')?'video':'image', now=Date.now();
                 await db.collection('private_chats').doc(chatId).collection('messages').add({clientTs:Date.now(),senderUid:window.currentUser.uid,senderName:window.currentUser.name,senderImg:window.currentUser.img||'',receiverUid,text:url,mediaUrl:url,mediaType:type,fileName:f.name,timestamp:firebase.firestore.Timestamp.fromMillis(now),clientTimestamp:now});
-                if(receiverUid) await db.collection('users_v10').doc(receiverUid).collection('notifications').add({type:'private_message',senderUid:window.currentUser.uid,senderName:window.currentUser.name,chatId,text:type==='image'?'📷 صورة':'🎥 فيديو',read:false,timestamp:firebase.firestore.Timestamp.fromMillis(now)});
+                if(receiverUid) await db.collection('users').doc(receiverUid).collection('notifications').add({type:'private_message',senderUid:window.currentUser.uid,senderName:window.currentUser.name,chatId,text:type==='image'?'📷 صورة':'🎥 فيديو',read:false,timestamp:firebase.firestore.Timestamp.fromMillis(now)});
             }catch(e){console.error(e);alert('تعذر إرسال الوسائط الخاصة.');} finally{input.value='';}
         },
         sendPrivateMessage: async (chatId) => {
@@ -2071,7 +2079,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             const now=Date.now();
             try{
                 await db.collection('private_chats').doc(chatId).collection('messages').add({clientTs:Date.now(),senderUid:window.currentUser.uid,senderName:window.currentUser.name,senderImg:window.currentUser.img||'',receiverUid,text:t,timestamp:firebase.firestore.Timestamp.fromMillis(now),clientTimestamp:now});
-                if(receiverUid) await db.collection('users_v10').doc(receiverUid).collection('notifications').add({type:'private_message',senderUid:window.currentUser.uid,senderName:window.currentUser.name,chatId,text:t,read:false,timestamp:firebase.firestore.Timestamp.fromMillis(now)});
+                if(receiverUid) await db.collection('users').doc(receiverUid).collection('notifications').add({type:'private_message',senderUid:window.currentUser.uid,senderName:window.currentUser.name,chatId,text:t,read:false,timestamp:firebase.firestore.Timestamp.fromMillis(now)});
             }catch(e){ console.error('private message failed',e); alert('لم يتم حفظ الرسالة الخاصة. تحقق من صلاحيات private_chats في Firestore.'); }
         },
         openMediaViewer: (url,type='image') => {
@@ -2134,7 +2142,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 document.getElementById('featureModalBody').innerHTML='<div style="text-align:center;padding:25px;color:#aaa">جارٍ تحميل بيانات الحساب...</div>';
                 document.getElementById('featureModal').style.display='flex';
             }
-            db.collection("users_v10").doc(uid).get().then(doc=>{if(doc.exists)renderEditor({uid:doc.id,...doc.data()});}).catch(e=>console.warn('edit profile fetch',e));
+            db.collection("users").doc(uid).get().then(doc=>{if(doc.exists)renderEditor({uid:doc.id,...doc.data()});}).catch(e=>console.warn('edit profile fetch',e));
         },
         saveProfileEdits: async (uid) => {
             let updated = {
@@ -2157,13 +2165,13 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 localStorage.setItem("hassouni_user_session_v10",JSON.stringify(window.currentUser));
                 ui.updateHeaderUserBgIcon();
             }
-            db.collection("users_v10").doc(uid).update(updated).then(async () => {
+            db.collection("users").doc(uid).update(updated).then(async () => {
                 alert("تم تحديث ومزامنة البيانات والصور بنجاح لجميع الأعضاء!");
                 if(window.currentUser && window.currentUser.uid===uid && typeof window.roomPresenceId==='string'){
                     ui.startRealtimePresence();
                 } else {
                     try {
-                        const ps=await db.collection('rooms_v10').doc(window.roomId(window.currentRoom)).collection('presence').where('uid','==',uid).get();
+                        const ps=await db.collection('rooms').doc(window.roomId(window.currentRoom)).collection('presence').where('uid','==',uid).get();
                         const batch=db.batch(); ps.forEach(d=>batch.update(d.ref,{name:updated.name,img:updated.img,cover:updated.cover,nameColor:updated.nameColor})); await batch.commit();
                     } catch(e) {}
                 }
@@ -2198,17 +2206,17 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             if(window.presenceTimer){clearInterval(window.presenceTimer);window.presenceTimer=null;}
             ui.closeAllMicPeers();
             if(u){
-                db.collection("rooms_v10").doc(oldId).collection("presence").doc(`${u.uid}_${window.roomSessionId}`).delete().catch(()=>{});
-                db.collection("rooms_v10").doc(oldId).collection("messages").add({clientTs:Date.now(),type:"system",isSystem:true,text:`🚪 غادر ${u.name||'عضو'} الغرفة إلى [ ${newRoom} ] — ${ui.uiRankText?ui.uiRankText(u.role):'عضو'}`,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',role:u.role||'new'},timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
+                db.collection("rooms").doc(oldId).collection("presence").doc(`${u.uid}_${window.roomSessionId}`).delete().catch(()=>{});
+                db.collection("rooms").doc(oldId).collection("messages").add({clientTs:Date.now(),type:"system",isSystem:true,text:`🚪 غادر ${u.name||'عضو'} الغرفة إلى [ ${newRoom} ] — ${ui.uiRankText?ui.uiRankText(u.role):'عضو'}`,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',role:u.role||'new'},timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
             }
             ui.clearAllListeners();
-            window.currentRoom=newRoom;
-            if(u) db.collection('users_v10').doc(u.uid).set({activeRoom:newRoom,isOnline:true,activeSessionId:window.roomSessionId,lastSeen:FieldValue.serverTimestamp()},{merge:true}).catch(()=>{});
+            window.currentRoom=newRoom; window._roomPresenceData={};
+            if(u) db.collection('users').doc(u.uid).set({activeRoom:newRoom,isOnline:true,activeSessionId:window.roomSessionId,lastSeen:FieldValue.serverTimestamp()},{merge:true}).catch(()=>{});
             document.getElementById('chatBox').innerHTML='';
             document.getElementById('featureModal').style.display='none';
             ui.enterChat();
             if(u){
-                db.collection("rooms_v10").doc(window.roomId(newRoom)).collection("messages").add({clientTs:Date.now(),type:"system",isSystem:true,text:`👋 انضم ${u.name||'عضو'} إلى الغرفة [ ${newRoom} ] — ${ui.uiRankText?ui.uiRankText(u.role):'عضو'}`,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',role:u.role||'new'},timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
+                db.collection("rooms").doc(window.roomId(newRoom)).collection("messages").add({clientTs:Date.now(),type:"system",isSystem:true,text:`👋 انضم ${u.name||'عضو'} إلى الغرفة [ ${newRoom} ] — ${ui.uiRankText?ui.uiRankText(u.role):'عضو'}`,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',role:u.role||'new'},timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
             }
         },
         startRealtimePresence: () => {
@@ -2216,7 +2224,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             if(window.presenceTimer) clearInterval(window.presenceTimer);
             const roomDocId = window.roomId(window.currentRoom);
             const sessionDocId = `${window.currentUser.uid}_${window.roomSessionId}`;
-            const ref = db.collection("rooms_v10").doc(roomDocId).collection("presence").doc(sessionDocId);
+            const ref = db.collection("rooms").doc(roomDocId).collection("presence").doc(sessionDocId);
             window.roomPresenceId = sessionDocId;
             const writePresence = () => {
                 if(!window.currentUser) return;
@@ -2224,7 +2232,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                     uid:window.currentUser.uid, sessionId:window.roomSessionId, room:window.currentRoom,
                     name:window.currentUser.name||"عضو", role:window.isOwnerIdentity(window.currentUser)?"owner":(window.currentUser.role||"new"), email:window.currentUser.email||"",
                     img:window.currentUser.img||"", cover:window.currentUser.cover||"", points:Number(window.currentUser.points)||0,
-                    nameColor:window.currentUser.nameColor||"",profileFrame:window.currentUser.profileFrame||'',nameEffect:window.currentUser.nameEffect||'',lastSeen:FieldValue.serverTimestamp(),lastSeenMs:Date.now()
+                    nameColor:window.currentUser.nameColor||"",profileFrame:window.currentUser.profileFrame||'',nameEffect:window.currentUser.nameEffect||'',lastSeen:FieldValue.serverTimestamp(),lastSeenMs:Date.now(),heartbeatAt:Date.now()
                 },{merge:true}).then(()=>updateConnectionBadge('online')).catch(e=>{
                     console.warn("presence",e); updateConnectionBadge(navigator.onLine?'starting':'offline');
                 });
@@ -2244,7 +2252,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
         ensureMicPeer: async (micData) => {
             const room=window.roomId(window.currentRoom), remoteUid=micData.userId;
             if(!window.currentUser||remoteUid===window.currentUser.uid) return;
-            const listenerRef=db.collection("rooms_v10").doc(room).collection("mic_listeners").doc(window.currentUser.uid);
+            const listenerRef=db.collection("rooms").doc(room).collection("mic_listeners").doc(window.currentUser.uid);
             await listenerRef.set({uid:window.currentUser.uid,updatedAt:FieldValue.serverTimestamp()},{merge:true}).catch(()=>{});
             const key=`${remoteUid}_${window.currentUser.uid}`;
             if(window.micPeers[key]) return;
@@ -2260,7 +2268,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 play();
                 document.addEventListener('click',play,{once:true});
             };
-            const signal=db.collection("rooms_v10").doc(room).collection("mic_signals").doc(key);
+            const signal=db.collection("rooms").doc(room).collection("mic_signals").doc(key);
             pc.onicecandidate=e=>{if(e.candidate) signal.collection("listenerCandidates").add({candidate:e.candidate.toJSON()});};
             const callerCandidatesUnsub=signal.collection("callerCandidates").onSnapshot(s=>{s.docChanges().forEach(ch=>{if(ch.type==='added'){pc.addIceCandidate(new RTCIceCandidate(ch.doc.data().candidate)).catch(()=>{});}});});
             const unsub=signal.onSnapshot(async d=>{
@@ -2277,7 +2285,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             if(window.sessionCheckInterval) clearInterval(window.sessionCheckInterval);
             ui.updateUserOnlineStatus(false);
             if(window.currentUser){
-                db.collection("rooms_v10").doc(window.roomId(window.currentRoom)).collection("presence").doc(`${window.currentUser.uid}_${window.roomSessionId}`).delete().catch(()=>{});
+                db.collection("rooms").doc(window.roomId(window.currentRoom)).collection("presence").doc(`${window.currentUser.uid}_${window.roomSessionId}`).delete().catch(()=>{});
             }
             localStorage.removeItem("hassouni_user_session_v10");
             window.currentUser = null;
@@ -2309,7 +2317,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
         ui.checkSavedSessionOnLoad();
         window.loadSiteSettings().then(()=>ui.applyLoginSettings()).catch(()=>{});
     };
-    window.addEventListener('beforeunload',()=>{ if(window.currentUser){ db.collection("rooms_v10").doc(window.roomId(window.currentRoom)).collection("presence").doc(`${window.currentUser.uid}_${window.roomSessionId}`).delete().catch(()=>{}); } });
+    window.addEventListener('beforeunload',()=>{ if(window.currentUser){ db.collection("rooms").doc(window.roomId(window.currentRoom)).collection("presence").doc(`${window.currentUser.uid}_${window.roomSessionId}`).delete().catch(()=>{}); } });
 </script>
 </body>
 </html>
