@@ -214,6 +214,7 @@
         #youtubeVideoFrameContainer { position: fixed; right: 8px; bottom: 132px; width: 1px; height: 1px; overflow: hidden; opacity: 0.01; pointer-events:none; }
         #liveAudioBroadcastContainer { display: none; }
     </style>
+<meta name="hassouni-version" content="v9-message-order-presence-profile-dashboard">
 </head>
 <body>
 
@@ -940,6 +941,10 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
         unbanUser: async(uid)=>{if(window.currentUser?.role!=='owner')return;await db.collection('users').doc(uid).set({isBanned:false,bannedAt:null,bannedByName:null},{merge:true});ui.openOwnerSection('bans');},
         ownerDeletePrivateMessage: async(path)=>{if(window.currentUser?.role!=='owner')return;await db.doc(path).delete();ui.openOwnerSection('security');},
         saveAdminRoomBg: async()=>{const f=document.getElementById('adminRoomBg')?.files?.[0];if(!f)return;const r=storage.ref().child(`room_backgrounds/${window.roomId(window.currentRoom)}/${Date.now()}_${f.name.replace(/[^\w.\-]/g,'_')}`);await r.put(f);const url=await r.getDownloadURL();await db.collection('room_settings').doc(window.roomId(window.currentRoom)).set({roomBg:url,updatedBy:window.currentUser.uid},{merge:true});alert('🌄 تم تحديث خلفية الروم للجميع.');},
+        openOwnerDashboardDirect: () => {
+            if(!window.isSiteOwner()){ alert('⛔ لوحة التحكم لصاحب الموقع فقط.'); return; }
+            ui.openOwnerDashboard();
+        },
         showAuthBranchDirect: () => {
             if(window.currentUser && window.currentUser.role === 'owner') { ui.openOwnerDashboard(); return; } else {
                 document.getElementById('featureModalTitle').innerText = "🔑 تفعيل المفتاح الماسي الفوري";
@@ -1044,8 +1049,16 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
         registerAndLoginUser: (userObj) => {
             // الحساب السحابي هو المصدر الوحيد للحقيقة؛ لا ننشئ sessionToken جديداً عند كل جهاز.
             window.currentUser = {...userObj};
-            if(window.isOwnerIdentity(window.currentUser)) { window.currentUser.role='owner'; window.currentUser.unlimitedResources=true; window.currentUser.points=999999999; window.currentUser.gold=999999999; window.currentUser.ruby=999999999; }
-            window.usersCache[userObj.uid] = {...userObj};
+            if(window.isOwnerIdentity(window.currentUser)) {
+                window.currentUser.role='owner';
+                window.currentUser.unlimitedResources=true;
+                window.currentUser.points=999999999;
+                window.currentUser.gold=999999999;
+                window.currentUser.ruby=999999999;
+                window.currentUser.uid='owner_hassouni';
+                window.currentUser.email='ghrwrkk2@gmail.com';
+            }
+            window.usersCache[window.currentUser.uid] = {...window.currentUser};
             localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser));
             document.getElementById('featureModal').style.display = 'none';
             ui.enterChat();
@@ -1219,8 +1232,9 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             if(chatBox){
                 chatBox.innerHTML='';
                 renderWelcome();
-                const cached=window.loadRoomMessageCache(roomAtStart);
-                cached.forEach(m=>{try{if(m.user)ui.renderMsg(m.user,m.text,new Date(m.clientTs||Date.now()),m.type||'text',m);}catch(e){}});
+                // الكاش يُستخدم للاسترجاع المحلي فقط، لكن لا نخلطه مع اللقطة الحية؛
+                // Firestore هو المصدر النهائي لترتيب الرسائل بين جميع الأجهزة.
+                window.loadRoomMessageCache(roomAtStart);
             }
             const renderOne=(doc)=>{
                 if(window._renderedMessageIds?.has(doc.id)) return;
@@ -1241,26 +1255,38 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 window.lastMessageEventAt=Date.now();
                 window.firestoreReady=true; window.realtimeReconnectAttempts=0; updateConnectionBadge('online');
                 if(!chatBox)return;
-                const docs=snapshot.docs.slice().reverse();
-                // عند أول مزامنة/إعادة اتصال: اجلب الموجود في Firestore بالكامل، ثم الكاش المحلي لا يكرر شيئاً.
-                if(!window._messageSnapshotReady || window._messageSnapshotRoom!==roomAtStart){
-                    window._messageSnapshotReady=true; window._messageSnapshotRoom=roomAtStart;
-                    chatBox.innerHTML=''; renderWelcome(); window._renderedMessageIds=new Set();
-                    docs.forEach(renderOne);
-                } else {
-                    const changes=snapshot.docChanges();
-                    changes.forEach(ch=>{
-                        if(ch.type==='added'){
-                            if(window.optimisticMessageIds.has(ch.doc.id)){ window.optimisticMessageIds.delete(ch.doc.id); return; }
-                            renderOne(ch.doc);
-                        } else if(ch.type==='modified' || ch.type==='removed'){
-                            // التعديل/الحذف نادر، وإعادة بناء آخر 100 رسالة هنا أضمن من ترك نسخة قديمة.
-                            chatBox.innerHTML=''; renderWelcome(); docs.forEach(renderOne);
-                        }
-                    });
-                }
-                const cacheItems=[]; docs.forEach(d=>{const m=d.data()||{};if(m.user)cacheItems.push({user:m.user,text:m.text,type:m.type||'text',clientTs:m.clientTs||Date.now(),_docId:d.id});});
+
+                // مهم جداً: لا نضيف الرسائل الجديدة في نهاية القائمة فقط؛ هذا كان سبب
+                // ظهور رسالة أحياناً في الوسط أو اختفائها ثم ظهورها بعد لحظات.
+                // كل لقطة Firestore أصبحت تُرتب محلياً بوقت إنشاء الرسالة ثم تُرسم من الأقدم للأحدث.
+                const docs=snapshot.docs.slice().sort((a,b)=>{
+                    const A=a.data()||{}, B=b.data()||{};
+                    const at=Number(A.clientTs)||0, bt=Number(B.clientTs)||0;
+                    if(at!==bt) return at-bt;
+                    const ats=A.timestamp?.toMillis?A.timestamp.toMillis():0;
+                    const bts=B.timestamp?.toMillis?B.timestamp.toMillis():0;
+                    if(ats!==bts) return ats-bts;
+                    return String(a.id).localeCompare(String(b.id));
+                });
+
+                // إعادة بناء القائمة من اللقطة الحالية تمنع أي ترتيب خاطئ بسبب وصول
+                // onSnapshot events بترتيب مختلف بين الهاتف والمتصفح.
+                chatBox.innerHTML='';
+                renderWelcome();
+                window._renderedMessageIds=new Set();
+                docs.forEach(renderOne);
+                window._messageSnapshotReady=true;
+                window._messageSnapshotRoom=roomAtStart;
+
+                const cacheItems=[];
+                docs.forEach(d=>{
+                    const m=d.data()||{};
+                    if(m.user) cacheItems.push({user:m.user,text:m.text,type:m.type||'text',clientTs:Number(m.clientTs)||0,_docId:d.id});
+                });
                 if(cacheItems.length)window.saveRoomMessageCache(roomAtStart,cacheItems);
+
+                // آخر رسالة تبقى ظاهرة مباشرة فوق شريط الإدخال عند وصول رسالة جديدة.
+                requestAnimationFrame(()=>{ chatBox.scrollTop=chatBox.scrollHeight; });
             },(err)=>{
                 console.error('Firestore messages listener',err);
                 if(expectedGeneration!==window.roomListenerGeneration)return;
@@ -1472,7 +1498,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             ui.renderMsg(payload.user,payload.text,new Date(),payload.type,payload);
             msgRef.set(payload).catch(e=>{ window.optimisticMessageIds.delete(msgRef.id); console.error('sendMessage',e); });
             // المكافأة تعمل بالخلفية حتى لا تتأخر واجهة الإرسال.
-            Promise.resolve().then(async()=>{
+                    Promise.resolve().then(async()=>{
                 const uRef=db.collection('users').doc(u.uid); let reward50=false;
                 try{ await db.runTransaction(async tx=>{const snap=await tx.get(uRef);const data=snap.data()||u;const sent=(Number(data.publicMessageCount)||0)+1;reward50=sent%50===0;const level=Math.min(10000,Math.max(1,Math.floor(sent/50)+1));const patch={publicMessageCount:sent,level,lastSeen:FieldValue.serverTimestamp()};if(reward50){patch.gold=FieldValue.increment(1);patch.ruby=FieldValue.increment(1);patch.points=FieldValue.increment(1);}tx.set(uRef,patch,{merge:true});});
                     if(reward50) db.collection('rooms').doc(roomDocId).collection('messages').add({clientTs:Date.now(),isBotMsg:true,text:`🎁 مبروك ${u.name}! أرسلت 50 رسالة عامة وتم منحك 1 ذهب + 1 روبي + 1 نقطة ⭐`,timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
@@ -1498,7 +1524,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 await db.collection("users").doc(window.currentUser.uid).update({points:FieldValue.increment(50)});
                 await db.collection("rooms").doc(window.roomId(window.currentRoom)).collection("messages").add({clientTs:Date.now(),
                     isBotMsg:true,
-    text:`🎉 YES! إجابة صحيحة من العضو ${window.currentUser.name} — تم إهداؤه 50 نقطة ⭐`,
+                    text:`🎉 YES! إجابة صحيحة من العضو ${window.currentUser.name} — تم إهداؤه 50 نقطة ⭐`,
                     timestamp:FieldValue.serverTimestamp()
                 });
             }catch(e){console.warn('trivia answer',e);}
@@ -1815,7 +1841,15 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
 
             // تحديث صامت من Firestore؛ لا يمنع فتح الكرت ولا يعلّق الواجهة.
             db.collection("users").doc(uid).get()
-              .then(doc => { if (doc.exists) { const fresh={uid: doc.id, ...doc.data()}; window.usersCache[uid]=fresh; renderProfile(fresh); } })
+              .then(doc => {
+                  if (doc.exists) {
+                      const presence = window._roomPresenceData ? Object.values(window._roomPresenceData).find(x => x.uid === uid) : null;
+                      const fresh={...(presence||{}), uid: doc.id, ...doc.data()};
+                      if(window.isOwnerIdentity(fresh)){ fresh.role='owner'; fresh.unlimitedResources=true; }
+                      window.usersCache[uid]=fresh;
+                      renderProfile(fresh);
+                  }
+              })
               .catch(err => console.warn('profile fetch failed', err));
         },
         openYouTubeMessage: (videoId) => {
@@ -2256,4 +2290,3 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
     window.addEventListener('beforeunload',()=>{ if(window.currentUser){ db.collection("rooms").doc(window.roomId(window.currentRoom)).collection("presence").doc(`${window.currentUser.uid}_${window.roomSessionId}`).delete().catch(()=>{}); } });
 </script>
 </body>
-</html>
