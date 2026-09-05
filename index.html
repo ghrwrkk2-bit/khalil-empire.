@@ -75,7 +75,7 @@
             display: flex; align-items: center; justify-content: center; font-size: 12px; margin-top: -1px;
         }
 
-        #chatBox { height: calc(100vh - 185px); overflow-y: auto; padding: 140px 15px 85px; display: flex; flex-direction: column; gap: 12px; background: #0f0f0f url('https://i.ibb.co/6wXbYm2/butterflies.jpg') center center/cover no-repeat; }
+        #chatBox { position: fixed; left: 0; right: 0; top: 65px; bottom: 125px; height: auto; overflow-y: auto; padding: 140px 15px 12px; display: flex; flex-direction: column; gap: 12px; background: #0f0f0f url('https://i.ibb.co/6wXbYm2/butterflies.jpg') center center/cover no-repeat; }
         
         .msg-wrap { display: flex; flex-direction: column; align-self: flex-start; width: 95%; max-width: 420px; background: rgba(18, 22, 28, 0.94); padding: 12px; border-radius: 18px; border: 1.5px solid rgba(255, 215, 0, 0.4); box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         .msg-wrap.system-gold-gift {
@@ -263,13 +263,15 @@
             <input type="password" id="rPass" class="form-control" placeholder="كلمة المرور السرية...">
             <button class="row-btn active" style="width:100%; border-radius:8px; padding:12px;" onclick="ui.loginAsRegistered(true)">إتمام التسجيل ودخول</button>
     
+
+        </div>
+
             <div style="margin-top:15px;border-top:1px solid #333;padding-top:12px;text-align:center">
                 <a href="https://wa.me/967780718519" target="_blank" rel="noopener" style="color:#25D366;font-weight:bold">واتساب للمراجعة: 967780718519</a>
                 <h4 style="color:var(--gold);margin:12px 0 8px">غرف الدردشة</h4>
                 <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:5px;text-align:right;font-size:11px;color:#ccc"><div>شات العراق</div><div>شات الجزائر</div><div>شات فلسطين</div><div>دردشة بلاد الشام</div><div>شات عربي</div><div>دردشة عربي</div><div>شات مصري</div><div>شات مغربي</div><div>شات بلاد الرافدين</div><div>شات كتابي</div><div>دردشة عراقية</div><div>شات احلي لمة</div><div>خليجي شات</div><div>شات ملكي</div><div>دردشة الخليج</div><div>دردشة المغرب</div><div>شات العنابي</div><div>شات سعودي</div><div>شات مصر</div><div>شات العرب للجوال</div><div>شات البحرين</div><div>شات الاردن</div><div>شات سوريا</div><div>دردشة تواصل</div><div>شات الامارات</div><div>شات قطر</div><div>شات عمان</div><div>شات لبنان</div><div>شات ليبيا</div><div>شات جوالك</div><div>شات روقان</div><div>شات تعارف</div><div>شات العرب الجديد</div><div>شات قمر العرب</div><div>شات ارابيسك</div><div>شات نجوم العرب</div><div>شات حريمي</div><div>شات صوت العرب</div><div>شات امل جيزان</div><div>شات الوطن العربي</div><div>شات ليالي</div><div>شات العنود</div><div>شات سهم الخليج</div><div>شات تعب قلبي</div></div>
                 <p style="font-size:10px;color:#aaa;margin:12px 0 0">2026 © شات حسوني | شات عربي | دردشة عربي مجانية<br>الرئيسية · شروط الاستخدام · قوانين الموقع · القواعد · إتصل بنا · اللغة</p>
             </div>
-        </div>
     </div>
 </div>
 
@@ -353,9 +355,8 @@
         firebase.initializeApp(firebaseConfig);
     }
     const db = firebase.firestore();
-    // اتصال متكيف: يختار Firestore النقل المناسب تلقائياً، وهو مهم خصوصاً على شبكات الهاتف.
-    // إذا كانت WebChannel غير مستقرة ينتقل Firestore إلى النقل المتوافق بدلاً من عزل الجهاز عن بقية الأعضاء.
-    try { db.settings({ experimentalAutoDetectLongPolling: true, useFetchStreams: false }); } catch(e) {}
+    // استخدم نقل Firestore الافتراضي؛ لا نفرض Long Polling حتى لا نضيف تأخيراً على شبكات الهاتف.
+    try { db.enablePersistence({synchronizeTabs:true}).catch(()=>{}); } catch(e) {}
 
     const storage = firebase.storage();
     // ضع مفتاح YouTube Data API v3 هنا إذا أردت البحث بالاسم داخل الموقع.
@@ -460,6 +461,8 @@
         const u=window.currentUser;
         return !!u && (u.role==='owner' || u.uid==='owner_hassouni' || String(u.email||'').toLowerCase()==='ghrwrkk2@gmail.com');
     };
+    window.isUnlimitedOwner = (u=window.currentUser) => !!u && (u.role==='owner' || u.uid==='owner_hassouni' || String(u.email||'').toLowerCase()==='ghrwrkk2@gmail.com' || u.unlimitedResources===true);
+    window.ownerBalanceText = (u=window.currentUser) => window.isUnlimitedOwner(u) ? '∞ غير محدود' : '';
     window.isOwnerIdentity = (u) => {
         if(!u) return false;
         return u.role==='owner' || u.uid==='owner_hassouni' || String(u.email||'').toLowerCase()==='ghrwrkk2@gmail.com';
@@ -479,7 +482,7 @@
         img: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=150", 
         cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400",
         likes: 999, status: "المالك والمؤسس العام - جميع الصلاحيات مفعلة ⚡👑",
-        points: 99999, isMuted: false, isBanned: false, isOnline: true,
+        points: 999999999, gold: 999999999, ruby: 999999999, unlimitedResources: true, isMuted: false, isBanned: false, isOnline: true,
         age: "25", gender: "ذكر", country: "العراق", nameColor: "#ffd700"
     };
 
@@ -615,18 +618,71 @@
             const frameHtml=frames.map(r=>card(r[1],r[2],`ui.buyFrame('${r[0]}',${r[2]})`,framePreview(r))).join('');
             const effectHtml=effects.map(r=>card(r[1],r[2],`ui.buyNameEffect('${r[0]}',${r[2]})`,effectPreview(r))).join('');
             document.getElementById('featureModalTitle').innerText='🛍️ متجر شات حسوني';
-            document.getElementById('featureModalBody').innerHTML=`<div style="background:#fff;color:#29251f;margin:-8px;padding:10px;border-radius:16px;max-height:76vh;overflow:auto"><div class="shop-balance">💰 الذهب: <b>${(window.currentUser?.gold||0).toLocaleString()}</b> &nbsp;|&nbsp; 💎 الروبي: <b>${(window.currentUser?.ruby||0).toLocaleString()}</b> &nbsp;|&nbsp; ⭐ النقاط: <b>${(window.currentUser?.points||0).toLocaleString()}</b></div><div class="shop-tabs"><button class="shop-tab active" onclick="ui.switchShopTab('shopRanks',this)">👑 شراء رتبة</button><button class="shop-tab" onclick="ui.switchShopTab('shopFrames',this)">⭕ إطارات</button><button class="shop-tab" onclick="ui.switchShopTab('shopEffects',this)">✨ تأثيرات البروفيل</button></div><section id="shopRanks" class="shop-section active"><div class="shop-title-line"><b>👑 شراء الرتب</b><span>10 رتب</span></div><div class="shop-grid">${rankHtml}</div></section><section id="shopFrames" class="shop-section"><div class="shop-title-line"><b>⭕ الإطارات</b><span>10 إطارات</span></div><div class="shop-grid">${frameHtml}</div></section><section id="shopEffects" class="shop-section"><div class="shop-title-line"><b>✨ تأثيرات خلفية الاسم</b><span>15 تأثيراً</span></div><div class="shop-grid">${effectHtml}</div></section></div>`;
+            document.getElementById('featureModalBody').innerHTML=`<div style="background:#fff;color:#29251f;margin:-8px;padding:10px;border-radius:16px;max-height:76vh;overflow:auto"><div class="shop-balance">💰 الذهب: <b>${window.isUnlimitedOwner()?'∞ غير محدود':(Number(window.currentUser?.gold)||0).toLocaleString()}</b> &nbsp;|&nbsp; 💎 الروبي: <b>${window.isUnlimitedOwner()?'∞ غير محدود':(Number(window.currentUser?.ruby)||0).toLocaleString()}</b> &nbsp;|&nbsp; ⭐ النقاط: <b>${window.isUnlimitedOwner()?'∞ غير محدود':(Number(window.currentUser?.points)||0).toLocaleString()}</b></div><div class="shop-tabs"><button class="shop-tab active" onclick="ui.switchShopTab('shopRanks',this)">👑 شراء رتبة</button><button class="shop-tab" onclick="ui.switchShopTab('shopFrames',this)">⭕ إطارات</button><button class="shop-tab" onclick="ui.switchShopTab('shopEffects',this)">✨ تأثيرات البروفيل</button></div><section id="shopRanks" class="shop-section active"><div class="shop-title-line"><b>👑 شراء الرتب</b><span>10 رتب</span></div><div class="shop-grid">${rankHtml}</div></section><section id="shopFrames" class="shop-section"><div class="shop-title-line"><b>⭕ الإطارات</b><span>10 إطارات</span></div><div class="shop-grid">${frameHtml}</div></section><section id="shopEffects" class="shop-section"><div class="shop-title-line"><b>✨ تأثيرات خلفية الاسم</b><span>15 تأثيراً</span></div><div class="shop-grid">${effectHtml}</div></section></div>`;
             document.getElementById('featureModal').style.display='flex';
         },
         switchShopTab:(id,btn)=>{document.querySelectorAll('.shop-section').forEach(x=>x.classList.remove('active'));document.getElementById(id)?.classList.add('active');document.querySelectorAll('.shop-tab').forEach(x=>x.classList.remove('active'));btn?.classList.add('active');},
         buyRank: async (role,cost,isGift=false) => {
-            if(!window.currentUser || (!isGift && window.currentUser.role==='owner')) return; if(isGift && !['owner','prince'].includes(window.currentUser.role)){alert('🚫 الإهداء متاح للإدارة فقط.');return;} let targetUid=window.currentUser.uid; if(isGift){targetUid=prompt('أدخل UID العضو المراد إهداؤه الرتبة:'); if(!targetUid)return;} const ref=db.collection('users').doc(window.currentUser.uid);
-            try{await db.runTransaction(async tx=>{const snap=await tx.get(ref),u=snap.data()||{};if((u.gold||0)<cost)throw new Error('NO_GOLD');if(isGift){const targetRef=db.collection('users').doc(targetUid),targetSnap=await tx.get(targetRef);if(!targetSnap.exists)throw new Error('NO_USER');const targetData={uid:targetUid,...targetSnap.data()};if(!window.canGiftRank(role,targetData))throw new Error('CANNOT_GIFT');tx.update(ref,{gold:FieldValue.increment(-cost)});tx.update(targetRef,{role,rankUpdatedAt:FieldValue.serverTimestamp(),rankGiftedBy:window.currentUser.uid,rankGiftedByName:window.currentUser.name||'الإدارة'});}else tx.update(ref,{gold:FieldValue.increment(-cost),role,rankUpdatedAt:FieldValue.serverTimestamp()});});
+            if(!window.currentUser) return; if(isGift && !['owner','prince'].includes(window.currentUser.role)){alert('🚫 الإهداء متاح للإدارة فقط.');return;} let targetUid=window.currentUser.uid; if(isGift){targetUid=prompt('أدخل UID العضو المراد إهداؤه الرتبة:'); if(!targetUid)return;} const ref=db.collection('users').doc(window.currentUser.uid);
+            try{
+              if(window.isUnlimitedOwner()){
+                if(isGift){ const targetRef=db.collection('users').doc(targetUid); const targetSnap=await targetRef.get(); if(!targetSnap.exists)throw new Error('NO_USER'); await targetRef.set({role,rankUpdatedAt:FieldValue.serverTimestamp(),rankGiftedBy:window.currentUser.uid,rankGiftedByName:window.currentUser.name||'صاحب الموقع'},{merge:true}); }
+                else { await ref.set({role,rankUpdatedAt:FieldValue.serverTimestamp(),unlimitedResources:true},{merge:true}); window.currentUser={...window.currentUser,role,unlimitedResources:true}; window.usersCache[window.currentUser.uid]={...window.currentUser}; localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser)); ui.updateHeaderUserBgIcon(); ui.startRealtimePresence(); }
+                document.getElementById('featureModal').style.display='none'; alert(isGift?'🎁 تم إهداء الرتبة للعضو من رصيد صاحب الموقع غير المحدود.':'👑 تم شراء الرتبة بدون خصم لأن رصيد صاحب الموقع غير محدود.'); return;
+              }
+              await db.runTransaction(async tx=>{const snap=await tx.get(ref),u=snap.data()||{};if((u.gold||0)<cost)throw new Error('NO_GOLD');if(isGift){const targetRef=db.collection('users').doc(targetUid),targetSnap=await tx.get(targetRef);if(!targetSnap.exists)throw new Error('NO_USER');const targetData={uid:targetUid,...targetSnap.data()};if(!window.canGiftRank(role,targetData))throw new Error('CANNOT_GIFT');tx.update(ref,{gold:FieldValue.increment(-cost)});tx.update(targetRef,{role,rankUpdatedAt:FieldValue.serverTimestamp(),rankGiftedBy:window.currentUser.uid,rankGiftedByName:window.currentUser.name||'الإدارة'});}else tx.update(ref,{gold:FieldValue.increment(-cost),role,rankUpdatedAt:FieldValue.serverTimestamp()});});
               if(!isGift){window.currentUser={...window.currentUser,role,gold:Math.max(0,(window.currentUser.gold||0)-cost)};window.usersCache[window.currentUser.uid]={...window.currentUser};localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));ui.updateHeaderUserBgIcon();ui.startRealtimePresence();}else{window.currentUser={...window.currentUser,gold:Math.max(0,(window.currentUser.gold||0)-cost)};localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));ui.startRealtimePresence();}document.getElementById('featureModal').style.display='none';alert(isGift?'🎁 تم إهداء الرتبة للعضو وتزامنت عبر Firebase.':'👑 تم شراء الرتبة وظهرت فوراً على حسابك.');
             }catch(e){alert(e.message==='NO_GOLD'?'رصيد الذهب غير كافٍ.':e.message==='NO_USER'?'العضو غير موجود.':e.message==='CANNOT_GIFT'?'لا يمكنك إهداء هذه الرتبة لهذا العضو.':'تعذر إتمام الشراء.');}
         },
-        buyFrame: async(frameId,cost,isGift=false)=>{if(!window.currentUser)return;if(isGift && !['owner','prince'].includes(window.currentUser.role)){alert('🚫 الإهداء متاح للإدارة فقط.');return;}let targetUid=window.currentUser.uid;if(isGift){targetUid=prompt('أدخل UID العضو المراد إهداؤه الإطار:');if(!targetUid)return;}const ref=db.collection('users').doc(window.currentUser.uid);try{await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((u.gold||0)<cost)throw new Error('NO_GOLD');if(isGift){const tr=db.collection('users').doc(targetUid),ts=await tx.get(tr);if(!ts.exists)throw new Error('NO_USER');tx.update(ref,{gold:FieldValue.increment(-cost)});tx.update(tr,{profileFrame:frameId,frameUpdatedAt:FieldValue.serverTimestamp(),frameGiftedBy:window.currentUser.uid});}else tx.update(ref,{gold:FieldValue.increment(-cost),profileFrame:frameId,frameUpdatedAt:FieldValue.serverTimestamp()});});if(!isGift){window.currentUser={...window.currentUser,profileFrame:frameId,gold:Math.max(0,(window.currentUser.gold||0)-cost)};window.usersCache[window.currentUser.uid]={...window.currentUser};localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));ui.startRealtimePresence();}else{window.currentUser={...window.currentUser,gold:Math.max(0,(window.currentUser.gold||0)-cost)};localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));}document.getElementById('featureModal').style.display='none';alert(isGift?'🎁 تم إهداء الإطار للعضو وتزامن فوراً.':'⭕ تم شراء الإطار وتفعيله فوراً.');}catch(e){alert(e.message==='NO_GOLD'?'رصيد الذهب غير كافٍ.':'تعذر شراء الإطار.');}},
-        buyNameEffect: async(effectId,cost,isGift=false)=>{if(!window.currentUser)return;if(isGift && !['owner','prince'].includes(window.currentUser.role)){alert('🚫 الإهداء متاح للإدارة فقط.');return;}let targetUid=window.currentUser.uid;if(isGift){targetUid=prompt('أدخل UID العضو المراد إهداؤه التأثير:');if(!targetUid)return;}const ref=db.collection('users').doc(window.currentUser.uid);try{await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((u.gold||0)<cost)throw new Error('NO_GOLD');if(isGift){const tr=db.collection('users').doc(targetUid),ts=await tx.get(tr);if(!ts.exists)throw new Error('NO_USER');tx.update(ref,{gold:FieldValue.increment(-cost)});tx.update(tr,{nameEffect:effectId,nameEffectUpdatedAt:FieldValue.serverTimestamp(),effectGiftedBy:window.currentUser.uid});}else tx.update(ref,{gold:FieldValue.increment(-cost),nameEffect:effectId,nameEffectUpdatedAt:FieldValue.serverTimestamp()});});if(!isGift){window.currentUser={...window.currentUser,nameEffect:effectId,gold:Math.max(0,(window.currentUser.gold||0)-cost)};window.usersCache[window.currentUser.uid]={...window.currentUser};localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));ui.startRealtimePresence();}else{window.currentUser={...window.currentUser,gold:Math.max(0,(window.currentUser.gold||0)-cost)};localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));}document.getElementById('featureModal').style.display='none';alert(isGift?'🎁 تم إهداء التأثير للعضو وتزامن فوراً.':'✨ تم شراء تأثير الاسم وتفعيله فوراً.');}catch(e){alert(e.message==='NO_GOLD'?'رصيد الذهب غير كافٍ.':'تعذر شراء التأثير.');}},
+        buyFrame: async(frameId,cost,isGift=false)=>{if(!window.currentUser)return;if(isGift && !['owner','prince'].includes(window.currentUser.role)){alert('🚫 الإهداء متاح للإدارة فقط.');return;}let targetUid=window.currentUser.uid;if(isGift){targetUid=prompt('أدخل UID العضو المراد إهداؤه الإطار:');if(!targetUid)return;}const ref=db.collection('users').doc(window.currentUser.uid);try{
+if(window.isUnlimitedOwner()){ if(isGift){const tr=db.collection('users').doc(targetUid),ts=await tr.get();if(!ts.exists)throw new Error('NO_USER');await tr.set({profileFrame:frameId,frameUpdatedAt:FieldValue.serverTimestamp(),frameGiftedBy:window.currentUser.uid},{merge:true});}else{await ref.set({profileFrame:frameId,unlimitedResources:true},{merge:true});window.currentUser={...window.currentUser,profileFrame:frameId,unlimitedResources:true};window.usersCache[window.currentUser.uid]={...window.currentUser};localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));ui.startRealtimePresence();}document.getElementById('featureModal').style.display='none';alert(isGift?'🎁 تم إهداء الإطار بدون خصم.':'⭕ تم شراء الإطار بدون خصم لصاحب الموقع.');return;}
+await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((u.gold||0)<cost)throw new Error('NO_GOLD');if(isGift){const tr=db.collection('users').doc(targetUid),ts=await tx.get(tr);if(!ts.exists)throw new Error('NO_USER');tx.update(ref,{gold:FieldValue.increment(-cost)});tx.update(tr,{profileFrame:frameId,frameUpdatedAt:FieldValue.serverTimestamp(),frameGiftedBy:window.currentUser.uid});}else tx.update(ref,{gold:FieldValue.increment(-cost),profileFrame:frameId,frameUpdatedAt:FieldValue.serverTimestamp()});});if(!isGift){window.currentUser={...window.currentUser,profileFrame:frameId,gold:Math.max(0,(window.currentUser.gold||0)-cost)};window.usersCache[window.currentUser.uid]={...window.currentUser};localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));ui.startRealtimePresence();}else{window.currentUser={...window.currentUser,gold:Math.max(0,(window.currentUser.gold||0)-cost)};localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));}document.getElementById('featureModal').style.display='none';alert(isGift?'🎁 تم إهداء الإطار للعضو وتزامن فوراً.':'⭕ تم شراء الإطار وتفعيله فوراً.');}catch(e){alert(e.message==='NO_GOLD'?'رصيد الذهب غير كافٍ.':'تعذر شراء الإطار.');}},
+        buyNameEffect: async(effectId,cost,isGift=false)=>{
+            if(!window.currentUser)return;
+            if(isGift && !['owner','prince'].includes(window.currentUser.role)){alert('🚫 الإهداء متاح للإدارة فقط.');return;}
+            let targetUid=window.currentUser.uid;
+            if(isGift){targetUid=prompt('أدخل UID العضو المراد إهداؤه التأثير:');if(!targetUid)return;}
+            const ref=db.collection('users').doc(window.currentUser.uid);
+            try{
+                if(window.isUnlimitedOwner()){
+                    if(isGift){
+                        const tr=db.collection('users').doc(targetUid),ts=await tr.get();
+                        if(!ts.exists)throw new Error('NO_USER');
+                        await tr.set({nameEffect:effectId,nameEffectUpdatedAt:FieldValue.serverTimestamp(),effectGiftedBy:window.currentUser.uid,effectGiftedByName:window.currentUser.name||'صاحب الموقع'},{merge:true});
+                    }else{
+                        await ref.set({nameEffect:effectId,unlimitedResources:true},{merge:true});
+                        window.currentUser={...window.currentUser,nameEffect:effectId,unlimitedResources:true};
+                        window.usersCache[window.currentUser.uid]={...window.currentUser};
+                        localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));
+                        ui.startRealtimePresence();
+                    }
+                    document.getElementById('featureModal').style.display='none';
+                    alert(isGift?'🎁 تم إهداء التأثير بدون خصم.':'✨ تم شراء التأثير بدون خصم لصاحب الموقع.');
+                    return;
+                }
+                await db.runTransaction(async tx=>{
+                    const s=await tx.get(ref),u=s.data()||{};
+                    if((u.gold||0)<cost)throw new Error('NO_GOLD');
+                    if(isGift){
+                        const tr=db.collection('users').doc(targetUid),ts=await tx.get(tr);
+                        if(!ts.exists)throw new Error('NO_USER');
+                        tx.update(ref,{gold:FieldValue.increment(-cost)});
+                        tx.update(tr,{nameEffect:effectId,nameEffectUpdatedAt:FieldValue.serverTimestamp(),effectGiftedBy:window.currentUser.uid});
+                    }else tx.update(ref,{gold:FieldValue.increment(-cost),nameEffect:effectId,nameEffectUpdatedAt:FieldValue.serverTimestamp()});
+                });
+                if(!isGift){
+                    window.currentUser={...window.currentUser,nameEffect:effectId,gold:Math.max(0,(window.currentUser.gold||0)-cost)};
+                    window.usersCache[window.currentUser.uid]={...window.currentUser};
+                    localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));
+                    ui.startRealtimePresence();
+                }else{
+                    window.currentUser={...window.currentUser,gold:Math.max(0,(window.currentUser.gold||0)-cost)};
+                    localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));
+                }
+                document.getElementById('featureModal').style.display='none';
+                alert(isGift?'🎁 تم إهداء التأثير وتزامن عبر Firebase.':'✨ تم شراء تأثير الاسم وتفعيله فوراً.');
+            }catch(e){alert(e.message==='NO_GOLD'?'رصيد الذهب غير كافٍ.':e.message==='NO_USER'?'العضو غير موجود.':'تعذر شراء التأثير.');}
+        },
         openVIPList: async(kind='الكبار') => {
             const body=document.getElementById('featureModalBody');document.getElementById('featureModalTitle').innerText=kind==='الأثرياء'?'💎 الأثرياء':'👑 الكبار';body.innerHTML='<div style="text-align:center;color:#aaa;padding:20px">جارٍ تحميل القائمة...</div>';document.getElementById('featureModal').style.display='flex';
             try{const snap=await db.collection('users').limit(500).get();let arr=snap.docs.map(d=>({uid:d.id,...d.data()}));if(kind==='الأثرياء')arr.sort((a,b)=>(b.gold||0)-(a.gold||0)+(b.ruby||0)-(a.ruby||0));else arr.sort((a,b)=>a.role==='owner'?-1:b.role==='owner'?1:(b.points||0)-(a.points||0));const owner=arr.find(u=>u.role==='owner');const richPoints=arr.filter(u=>(u.points||0)>500000&&u.uid!==(owner?.uid||''));const normal=arr.filter(u=>u.uid!==(owner?.uid||'')&&!richPoints.some(x=>x.uid===u.uid));const final=owner?[owner,...richPoints,...normal]:[...richPoints,...normal];body.innerHTML=final.slice(0,100).map((u,i)=>{const r=window.chatRanksData[u.role]||window.chatRanksData.new;return `<div class="online-user-item" style="${i===0?'border:2px solid var(--gold);':''}"><div class="online-user-left" onclick="ui.viewProfileCard('${u.uid}')"><img class="online-user-avatar" src="${u.img||''}"><div><b style="color:${u.nameColor||r.color}">${ui.escapeHtml(u.name||'عضو')}</b><br><small style="color:${r.color}"><i class="${r.icon}"></i> ${r.text} · ${(u.points||0).toLocaleString()} نقطة</small></div></div>${i===0?'<span style="color:var(--gold)">#1 👑</span>':(u.points||0)>500000?'<span style="color:#ffd700">⭐ كبير</span>':''}</div>`}).join('')||'<p>لا يوجد أعضاء.</p>';}catch(e){body.innerHTML='<p style="color:#e74c3c;text-align:center">تعذر تحميل القائمة.</p>'; }
@@ -768,10 +824,10 @@
             await ref.put(f); const url=await ref.getDownloadURL();
             const roomDocId=window.roomId(window.currentRoom);
             const type=f.type.startsWith('video/')?'video':f.type.startsWith('image/')?'image':f.type.startsWith('audio/')?'audio':'file';
-            await db.collection("rooms").doc(roomDocId).collection("messages").add({type,text:url,fileName:f.name,userId:window.currentUser.uid,user:{uid:window.currentUser.uid,name:window.currentUser.name,img:window.currentUser.img},timestamp:FieldValue.serverTimestamp()});
+            await db.collection("rooms").doc(roomDocId).collection("messages").add({clientTs:Date.now(),type,text:url,fileName:f.name,userId:window.currentUser.uid,user:{uid:window.currentUser.uid,name:window.currentUser.name,img:window.currentUser.img},timestamp:FieldValue.serverTimestamp()});
             input.value=''; document.getElementById('featureModal').style.display='none';
         },
-        sendDice:async()=>{const n=Math.floor(Math.random()*6)+1,roomDocId=window.currentRoom.replace(/\s+/g,'_');await db.collection("rooms").doc(roomDocId).collection("messages").add({type:'dice',text:'',number:n,user:{uid:window.currentUser.uid,name:window.currentUser.name,img:window.currentUser.img},userId:window.currentUser.uid,timestamp:FieldValue.serverTimestamp()});document.getElementById('featureModal').style.display='none';},
+        sendDice:async()=>{const n=Math.floor(Math.random()*6)+1,roomDocId=window.currentRoom.replace(/\s+/g,'_');await db.collection("rooms").doc(roomDocId).collection("messages").add({clientTs:Date.now(),type:'dice',text:'',number:n,user:{uid:window.currentUser.uid,name:window.currentUser.name,img:window.currentUser.img},userId:window.currentUser.uid,timestamp:FieldValue.serverTimestamp()});document.getElementById('featureModal').style.display='none';},
         openTikTokShare:()=>{document.getElementById('featureModalTitle').innerText='تيك توك';document.getElementById('featureModalBody').innerHTML=`<input id="tiktokUrl" class="form-control" placeholder="ضع رابط فيديو TikTok"><button class="row-btn active" style="width:100%" onclick="ui.sendTikTok()">إرسال</button>`;},
         sendTikTok:async()=>{const u=document.getElementById('tiktokUrl').value.trim();if(!/^https?:\/\/(www\.)?tiktok\.com\//i.test(u)){alert('الرابط غير صحيح');return;}document.getElementById('msgInp').value=u;await ui.sendMessage();document.getElementById('featureModal').style.display='none';},
         openAttendanceWheel:()=>{document.getElementById('featureModalTitle').innerText='🎡 عجلة الحظ';document.getElementById('featureModalBody').innerHTML=`<div style="width:230px;height:230px;border-radius:50%;border:8px solid var(--gold);margin:10px auto;display:grid;place-items:center;background:conic-gradient(#ffd700 0 45deg,#333 45deg 90deg,#b8860b 90deg 135deg,#222 135deg 180deg,#9b59b6 180deg 225deg,#222 225deg 270deg,#d4af37 270deg 315deg,#444 315deg 360deg);transition:transform 3s cubic-bezier(.15,.7,.15,1)" id="luckyWheel"><div style="background:#111;border:2px solid #fff;border-radius:50%;width:58px;height:58px;display:grid;place-items:center;color:#fff;font-weight:bold">دور</div></div><div style="text-align:center;color:#ccc;font-size:12px">20 نقطة · 20 ذهب · 20 روبي · فارغ · مستوى 1 · مستوى 2 · 50 ذهب · 50 نقطة</div><button class="row-btn active" style="width:100%;margin-top:10px" onclick="ui.sendAttendanceWheel()">🎡 تدوير</button>`;document.getElementById('featureModal').style.display='flex';},
@@ -797,7 +853,7 @@
                             if(prize.points)patch.points=FieldValue.increment(prize.points); if(prize.gold)patch.gold=FieldValue.increment(prize.gold); if(prize.ruby)patch.ruby=FieldValue.increment(prize.ruby); if(prize.level)patch.level=FieldValue.increment(prize.level); tx.set(ref,patch,{merge:true});
                         });
                         Object.assign(window.currentUser,{points:(window.currentUser.points||0)+(prize.points||0),gold:(window.currentUser.gold||0)+(prize.gold||0),ruby:(window.currentUser.ruby||0)+(prize.ruby||0),level:(window.currentUser.level||0)+(prize.level||0),lastWheelAt:{toMillis:()=>Date.now()}}); localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));
-                        const r=window.roomId(window.currentRoom); await db.collection('rooms').doc(r).collection('messages').add({type:'attendance',text:`🎡 ${prize.label}`,user:{uid:window.currentUser.uid,name:window.currentUser.name,img:window.currentUser.img},userId:window.currentUser.uid,timestamp:FieldValue.serverTimestamp()});
+                        const r=window.roomId(window.currentRoom); await db.collection('rooms').doc(r).collection('messages').add({clientTs:Date.now(),type:'attendance',text:`🎡 ${prize.label}`,user:{uid:window.currentUser.uid,name:window.currentUser.name,img:window.currentUser.img},userId:window.currentUser.uid,timestamp:FieldValue.serverTimestamp()});
                         alert(`🎉 العجلة وقفت على: ${prize.label}`);
                     }catch(e){alert(e.message==='WHEEL_COOLDOWN'?'⏳ هذه الساعة تم استخدام العجلة بالفعل.':'تعذر حفظ جائزة العجلة.');} finally{window.wheelBusy=false;}
                 },3000);
@@ -805,7 +861,7 @@
         },
         openDrawingBoard:()=>{document.getElementById('featureModalTitle').innerText='🎨 لوحة الرسم';document.getElementById('featureModalBody').innerHTML=`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;justify-content:center"><button class="draw-color" data-c="#000000" style="background:#000;width:30px;height:30px;border-radius:50%;border:2px solid #fff"></button><button class="draw-color" data-c="#ff0000" style="background:#f00;width:30px;height:30px;border-radius:50%;border:2px solid #fff"></button><button class="draw-color" data-c="#00aaff" style="background:#0af;width:30px;height:30px;border-radius:50%;border:2px solid #fff"></button><button class="draw-color" data-c="#00cc66" style="background:#0c6;width:30px;height:30px;border-radius:50%;border:2px solid #fff"></button><button class="draw-color" data-c="#ffd700" style="background:#ffd700;width:30px;height:30px;border-radius:50%;border:2px solid #fff"></button><button class="draw-color" data-c="#ff00aa" style="background:#f0a;width:30px;height:30px;border-radius:50%;border:2px solid #fff"></button><button class="draw-color" data-c="#ffffff" style="background:#fff;width:30px;height:30px;border-radius:50%;border:2px solid #888"></button></div><canvas id="drawCanvas" width="360" height="260" style="width:100%;background:#fff;border-radius:10px;touch-action:none"></canvas><button class="row-btn active" style="width:100%;margin-top:8px" onclick="ui.sendDrawing()">📤 إرسال الرسم للعام</button>`;setTimeout(ui.initCanvas,0);},
         initCanvas:()=>{const c=document.getElementById('drawCanvas'),x=c.getContext('2d');let down=false; x.strokeStyle='#000';x.lineWidth=4;x.lineCap='round';document.querySelectorAll('.draw-color').forEach(b=>b.onclick=()=>x.strokeStyle=b.dataset.c);const pos=e=>{const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height}};const draw=e=>{if(!down)return;e.preventDefault();const p=pos(e);x.lineTo(p.x,p.y);x.stroke();};c.addEventListener('pointerdown',e=>{down=true;c.setPointerCapture?.(e.pointerId);const p=pos(e);x.beginPath();x.moveTo(p.x,p.y)});c.addEventListener('pointermove',draw);['pointerup','pointercancel','pointerleave'].forEach(ev=>c.addEventListener(ev,()=>down=false));},
-        sendDrawing:async()=>{const c=document.getElementById('drawCanvas'),blob=await new Promise(r=>c.toBlob(r,'image/png'));const ref=storage.ref().child(`drawings/${window.currentUser.uid}/${Date.now()}.png`);await ref.put(blob);const url=await ref.getDownloadURL(),r=window.currentRoom.replace(/\s+/g,'_');await db.collection('rooms').doc(r).collection('messages').add({type:'drawing',text:url,user:{uid:window.currentUser.uid,name:window.currentUser.name,img:window.currentUser.img},userId:window.currentUser.uid,timestamp:FieldValue.serverTimestamp()});document.getElementById('featureModal').style.display='none';},
+        sendDrawing:async()=>{const c=document.getElementById('drawCanvas'),blob=await new Promise(r=>c.toBlob(r,'image/png'));const ref=storage.ref().child(`drawings/${window.currentUser.uid}/${Date.now()}.png`);await ref.put(blob);const url=await ref.getDownloadURL(),r=window.currentRoom.replace(/\s+/g,'_');await db.collection('rooms').doc(r).collection('messages').add({clientTs:Date.now(),type:'drawing',text:url,user:{uid:window.currentUser.uid,name:window.currentUser.name,img:window.currentUser.img},userId:window.currentUser.uid,timestamp:FieldValue.serverTimestamp()});document.getElementById('featureModal').style.display='none';},
         toggleMicsVisibility: () => {
             let container = document.getElementById('micsContainer');
             let icon = document.getElementById('micsToggleIcon');
@@ -988,6 +1044,7 @@
         registerAndLoginUser: (userObj) => {
             // الحساب السحابي هو المصدر الوحيد للحقيقة؛ لا ننشئ sessionToken جديداً عند كل جهاز.
             window.currentUser = {...userObj};
+            if(window.isOwnerIdentity(window.currentUser)) { window.currentUser.role='owner'; window.currentUser.unlimitedResources=true; window.currentUser.points=999999999; window.currentUser.gold=999999999; window.currentUser.ruby=999999999; }
             window.usersCache[userObj.uid] = {...userObj};
             localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser));
             document.getElementById('featureModal').style.display = 'none';
@@ -995,23 +1052,26 @@
             db.collection("users").doc(userObj.uid).set({...userObj,lastSeen:FieldValue.serverTimestamp()}, { merge: true }).catch(e=>console.warn('user save',e));
         },
         updateUserOnlineStatus: (status) => {
-            // لا نستخدم isOnline العام لطرد/عزل الأجهزة؛ حضور العضو الحقيقي محفوظ داخل الغرفة.
             if (!window.currentUser) return;
             db.collection("users").doc(window.currentUser.uid).set({
-                lastSeen: FieldValue.serverTimestamp()
+                lastSeen: FieldValue.serverTimestamp(),
+                isOnline: !!status,
+                activeRoom: status ? window.currentRoom : null,
+                activeSessionId: status ? window.roomSessionId : null
             }, {merge:true}).catch(()=>{});
         },
         startSingleSessionMonitor: () => {
             // لا يتم طرد الحساب من جهاز/متصفح آخر: الحساب نفسه يمكنه العمل من عدة أجهزة.
             // المزامنة الحقيقية تتم من Firestore، بينما presence يعتمد على كل جلسة داخل الغرفة.
             if(window.sessionCheckInterval) clearInterval(window.sessionCheckInterval);
-            window.sessionCheckInterval = setInterval(() => {
-                if(!window.currentUser) return;
+            const pulse=()=>{
+                if(!window.currentUser)return;
                 db.collection("users").doc(window.currentUser.uid).set({
-                    lastSeen: FieldValue.serverTimestamp(),
-                    isOnline: true
-                }, {merge:true}).catch(()=>{});
-            }, 60000);
+                    lastSeen:FieldValue.serverTimestamp(),isOnline:true,activeRoom:window.currentRoom,activeSessionId:window.roomSessionId
+                },{merge:true}).catch(()=>{});
+            };
+            pulse();
+            window.sessionCheckInterval=setInterval(pulse,8000);
         },
         checkSavedSessionOnLoad: () => {
             const savedUser = localStorage.getItem("hassouni_user_session");
@@ -1025,6 +1085,7 @@
 
             // دخول فوري من الكاش المحلي، ثم التحقق من Firestore في الخلفية.
             window.currentUser = parsedUser;
+            if(window.isOwnerIdentity(window.currentUser)) { window.currentUser.role='owner'; window.currentUser.unlimitedResources=true; window.currentUser.points=999999999; window.currentUser.gold=999999999; window.currentUser.ruby=999999999; }
             window.usersCache[parsedUser.uid] = {...parsedUser};
             window.sessionLoadAttempts=0;
             document.getElementById('welcomeOverlay').style.display='none';
@@ -1038,7 +1099,7 @@
                     return;
                 }
                 let fresh={uid:doc.id,...doc.data()};
-                if(window.isOwnerIdentity(fresh)) fresh={...fresh,role:'owner'};
+                if(window.isOwnerIdentity(fresh)) fresh={...fresh,role:'owner',unlimitedResources:true,points:999999999,gold:999999999,ruby:999999999};
                 if(fresh.isBanned){
                     alert("لقد تم حظر حسابك.");
                     ui.logoutBackToWelcome();
@@ -1162,6 +1223,8 @@
                 cached.forEach(m=>{try{if(m.user)ui.renderMsg(m.user,m.text,new Date(m.clientTs||Date.now()),m.type||'text',m);}catch(e){}});
             }
             const renderOne=(doc)=>{
+                if(window._renderedMessageIds?.has(doc.id)) return;
+                window._renderedMessageIds?.add(doc.id);
                 const m={...(doc.data()||{}),_docId:doc.id};
                 if(m.type==='room_clear') return;
                 if(m.isSystemGold) ui.renderSystemGoldMsg(m);
@@ -1169,8 +1232,9 @@
                 else if(m.isSystem || m.type==='system') ui.renderRoomSystemMsg(m.text,m.timestamp);
                 else if(m.user) ui.renderMsg(m.user,m.text,m.timestamp,m.type||'text',m);
             };
+            window._renderedMessageIds = new Set();
             const query=db.collection("rooms").doc(roomDocId).collection("messages")
-              .orderBy("timestamp", "desc").limit(100);
+              .orderBy("clientTs", "desc").limit(100);
             const unsub=query.onSnapshot((snapshot)=>{
                 if(expectedGeneration!==window.roomListenerGeneration || roomAtStart!==window.currentRoom) return;
                 window.lastFirestoreEventAt=Date.now();
@@ -1181,7 +1245,7 @@
                 // عند أول مزامنة/إعادة اتصال: اجلب الموجود في Firestore بالكامل، ثم الكاش المحلي لا يكرر شيئاً.
                 if(!window._messageSnapshotReady || window._messageSnapshotRoom!==roomAtStart){
                     window._messageSnapshotReady=true; window._messageSnapshotRoom=roomAtStart;
-                    chatBox.innerHTML=''; renderWelcome();
+                    chatBox.innerHTML=''; renderWelcome(); window._renderedMessageIds=new Set();
                     docs.forEach(renderOne);
                 } else {
                     const changes=snapshot.docChanges();
@@ -1339,6 +1403,7 @@
             });
             window.activeListeners.push(unsub);
 
+            // قناة حضور احتياطية خفيفة من users: تمنع ظهور كل جهاز كأنه معزول إذا تعذر مسار presence.
             // فحص خفيف مستقل كل 12 ثانية: إذا لم تصل لقطة حضور، نطلب لقطة واحدة مباشرة.
             // هذا لا يرسم الصفحة بالكامل ولا يلمس الرسائل.
             const presenceProbe=setInterval(()=>{
@@ -1410,7 +1475,7 @@
             Promise.resolve().then(async()=>{
                 const uRef=db.collection('users').doc(u.uid); let reward50=false;
                 try{ await db.runTransaction(async tx=>{const snap=await tx.get(uRef);const data=snap.data()||u;const sent=(Number(data.publicMessageCount)||0)+1;reward50=sent%50===0;const level=Math.min(10000,Math.max(1,Math.floor(sent/50)+1));const patch={publicMessageCount:sent,level,lastSeen:FieldValue.serverTimestamp()};if(reward50){patch.gold=FieldValue.increment(1);patch.ruby=FieldValue.increment(1);patch.points=FieldValue.increment(1);}tx.set(uRef,patch,{merge:true});});
-                    if(reward50) db.collection('rooms').doc(roomDocId).collection('messages').add({isBotMsg:true,text:`🎁 مبروك ${u.name}! أرسلت 50 رسالة عامة وتم منحك 1 ذهب + 1 روبي + 1 نقطة ⭐`,timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
+                    if(reward50) db.collection('rooms').doc(roomDocId).collection('messages').add({clientTs:Date.now(),isBotMsg:true,text:`🎁 مبروك ${u.name}! أرسلت 50 رسالة عامة وتم منحك 1 ذهب + 1 روبي + 1 نقطة ⭐`,timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
                 }catch(e){console.warn('reward',e);}
             });
             if(roomAtSend==='روم المسابقات') setTimeout(()=>ui.checkTriviaAnswer(t,u),0);
@@ -1431,9 +1496,9 @@
                 });
                 if(!won) return;
                 await db.collection("users").doc(window.currentUser.uid).update({points:FieldValue.increment(50)});
-                await db.collection("rooms").doc(window.roomId(window.currentRoom)).collection("messages").add({
+                await db.collection("rooms").doc(window.roomId(window.currentRoom)).collection("messages").add({clientTs:Date.now(),
                     isBotMsg:true,
-                    text:`🎉 YES! إجابة صحيحة من العضو ${window.currentUser.name} — تم إهداؤه 50 نقطة ⭐`,
+    text:`🎉 YES! إجابة صحيحة من العضو ${window.currentUser.name} — تم إهداؤه 50 نقطة ⭐`,
                     timestamp:FieldValue.serverTimestamp()
                 });
             }catch(e){console.warn('trivia answer',e);}
@@ -1508,7 +1573,7 @@
             else if(type==='link') body=`<div style="margin-top:8px;padding:10px;border:1px solid #315b80;background:rgba(49,91,128,.12);border-radius:10px"><div style="font-weight:bold;color:#7ec8ff">🔗 رابط من ${ui.escapeHtml(live.name||'عضو')}</div><a href="${ui.escapeHtml(text)}" target="_blank" rel="noopener noreferrer" style="display:block;color:#55aaff;word-break:break-all;margin-top:5px">${ui.escapeHtml(text)}</a></div>`;
             else body=`<div class="msg-text">${ui.escapeHtml(text)}</div>`;
             div.innerHTML=`<div class="msg-header"><div class="pfp-main-frame shop-avatar-frame frame-${live.profileFrame||''}"><img src="${live.img||''}" class="pfp-main" onclick="event.stopPropagation();ui.viewProfileCard('${live.uid}')"></div><div class="rank-standalone-icon" style="border-color:${rankObj.color}"><i class="${rankObj.icon}" style="color:${rankObj.color}"></i></div><div class="king-name-container" style="border-color:${rankObj.color}" onclick="ui.quoteUserText('${String(live.name||'').replace(/'/g,"\\'")}','')"><span class="king-name-tag ${live.nameEffect?`name-effect effect-${live.nameEffect}`:''}" style="color:${live.nameColor||rankObj.color}">${ui.escapeHtml(live.name)}</span></div></div>${body}<div class="msg-time">${timestamp?.toDate?timestamp.toDate().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'}):'الآن'}</div>`;
-            if(box){const nearBottom=(box.scrollHeight-box.scrollTop-box.clientHeight)<180;box.appendChild(div);if(nearBottom)box.scrollTop=box.scrollHeight;}
+            if(box){const nearBottom=(box.scrollHeight-box.scrollTop-box.clientHeight)<240;box.appendChild(div);requestAnimationFrame(()=>{if(nearBottom || document.activeElement===document.getElementById('msgInp')) box.scrollTop=box.scrollHeight;});}
         },
         renderSystemGoldMsg: (data) => {
             const d=typeof data==='string'?{text:data}:data;
@@ -1847,7 +1912,7 @@
                     ui.startRealtimePresence(); ui.renderOnlineUsersFromCache();
                 }
                 const rankObj=window.chatRanksData[newRole]||{text:newRole};
-                await db.collection('rooms').doc(window.roomId(window.currentRoom)).collection('messages').add({
+                await db.collection('rooms').doc(window.roomId(window.currentRoom)).collection('messages').add({clientTs:Date.now(),
                     isSystemGold:true,text:`🎉 تم إهداء العضو [ ${targetUserName} ] رتبة [ ${rankObj.text} ] بواسطة الإدارة العامة 👑`,memberName:targetUserName,rank:newRole,timestamp:firebase.firestore.FieldValue.serverTimestamp()
                 });
                 alert('تم تحديث الرتبة ومزامنتها مع حساب العضو والجلسات المفتوحة بنجاح ✅');
@@ -1936,7 +2001,7 @@
                 await ref.put(f); const url=await ref.getDownloadURL();
                 const receiverUid=String(chatId).split('_').find(x=>x!==window.currentUser.uid)||'';
                 const type=f.type.startsWith('video/')?'video':'image', now=Date.now();
-                await db.collection('private_chats').doc(chatId).collection('messages').add({senderUid:window.currentUser.uid,senderName:window.currentUser.name,senderImg:window.currentUser.img||'',receiverUid,text:url,mediaUrl:url,mediaType:type,fileName:f.name,timestamp:firebase.firestore.Timestamp.fromMillis(now),clientTimestamp:now});
+                await db.collection('private_chats').doc(chatId).collection('messages').add({clientTs:Date.now(),senderUid:window.currentUser.uid,senderName:window.currentUser.name,senderImg:window.currentUser.img||'',receiverUid,text:url,mediaUrl:url,mediaType:type,fileName:f.name,timestamp:firebase.firestore.Timestamp.fromMillis(now),clientTimestamp:now});
                 if(receiverUid) await db.collection('users').doc(receiverUid).collection('notifications').add({type:'private_message',senderUid:window.currentUser.uid,senderName:window.currentUser.name,chatId,text:type==='image'?'📷 صورة':'🎥 فيديو',read:false,timestamp:firebase.firestore.Timestamp.fromMillis(now)});
             }catch(e){console.error(e);alert('تعذر إرسال الوسائط الخاصة.');} finally{input.value='';}
         },
@@ -1949,7 +2014,7 @@
             const receiverUid=String(chatId).split('_').find(x=>x!==window.currentUser.uid)||'';
             const now=Date.now();
             try{
-                await db.collection('private_chats').doc(chatId).collection('messages').add({senderUid:window.currentUser.uid,senderName:window.currentUser.name,senderImg:window.currentUser.img||'',receiverUid,text:t,timestamp:firebase.firestore.Timestamp.fromMillis(now),clientTimestamp:now});
+                await db.collection('private_chats').doc(chatId).collection('messages').add({clientTs:Date.now(),senderUid:window.currentUser.uid,senderName:window.currentUser.name,senderImg:window.currentUser.img||'',receiverUid,text:t,timestamp:firebase.firestore.Timestamp.fromMillis(now),clientTimestamp:now});
                 if(receiverUid) await db.collection('users').doc(receiverUid).collection('notifications').add({type:'private_message',senderUid:window.currentUser.uid,senderName:window.currentUser.name,chatId,text:t,read:false,timestamp:firebase.firestore.Timestamp.fromMillis(now)});
             }catch(e){ console.error('private message failed',e); alert('لم يتم حفظ الرسالة الخاصة. تحقق من صلاحيات private_chats في Firestore.'); }
         },
@@ -2078,15 +2143,16 @@
             ui.closeAllMicPeers();
             if(u){
                 db.collection("rooms").doc(oldId).collection("presence").doc(`${u.uid}_${window.roomSessionId}`).delete().catch(()=>{});
-                db.collection("rooms").doc(oldId).collection("messages").add({type:"system",isSystem:true,text:`🚪 غادر ${u.name||'عضو'} الغرفة إلى [ ${newRoom} ] — ${ui.uiRankText?ui.uiRankText(u.role):'عضو'}`,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',role:u.role||'new'},timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
+                db.collection("rooms").doc(oldId).collection("messages").add({clientTs:Date.now(),type:"system",isSystem:true,text:`🚪 غادر ${u.name||'عضو'} الغرفة إلى [ ${newRoom} ] — ${ui.uiRankText?ui.uiRankText(u.role):'عضو'}`,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',role:u.role||'new'},timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
             }
             ui.clearAllListeners();
             window.currentRoom=newRoom;
+            if(u) db.collection('users').doc(u.uid).set({activeRoom:newRoom,isOnline:true,activeSessionId:window.roomSessionId,lastSeen:FieldValue.serverTimestamp()},{merge:true}).catch(()=>{});
             document.getElementById('chatBox').innerHTML='';
             document.getElementById('featureModal').style.display='none';
             ui.enterChat();
             if(u){
-                db.collection("rooms").doc(window.roomId(newRoom)).collection("messages").add({type:"system",isSystem:true,text:`👋 انضم ${u.name||'عضو'} إلى الغرفة [ ${newRoom} ] — ${ui.uiRankText?ui.uiRankText(u.role):'عضو'}`,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',role:u.role||'new'},timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
+                db.collection("rooms").doc(window.roomId(newRoom)).collection("messages").add({clientTs:Date.now(),type:"system",isSystem:true,text:`👋 انضم ${u.name||'عضو'} إلى الغرفة [ ${newRoom} ] — ${ui.uiRankText?ui.uiRankText(u.role):'عضو'}`,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',role:u.role||'new'},timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
             }
         },
         startRealtimePresence: () => {
@@ -2112,7 +2178,7 @@
             window._roomPresenceData[sessionDocId]={uid:window.currentUser.uid,sessionId:window.roomSessionId,room:window.currentRoom,name:window.currentUser.name||'عضو',role:window.isOwnerIdentity(window.currentUser)?'owner':(window.currentUser.role||'new'),email:window.currentUser.email||'',img:window.currentUser.img||'',cover:window.currentUser.cover||'',points:Number(window.currentUser.points)||0,nameColor:window.currentUser.nameColor||'',profileFrame:window.currentUser.profileFrame||'',nameEffect:window.currentUser.nameEffect||'',lastSeen:new Date(),lastSeenMs:Date.now()};
             ui.renderOnlineUsersFromCache();
             writePresence();
-            window.presenceTimer=setInterval(writePresence,10000);
+            window.presenceTimer=setInterval(writePresence,5000);
             if(window.profilePresenceTimer){clearInterval(window.profilePresenceTimer);window.profilePresenceTimer=null;}
         },
         listenRoomDirectory: () => {
@@ -2170,8 +2236,8 @@
     window.firebaseWatchdogTimer=setInterval(()=>{
         if(!window.currentUser || !navigator.onLine) return;
         const now=Date.now();
-        const msgStale=!window.lastMessageEventAt || now-window.lastMessageEventAt>45000;
-        const presenceStale=!window.lastPresenceEventAt || now-window.lastPresenceEventAt>45000;
+        const msgStale=!window.lastMessageEventAt || now-window.lastMessageEventAt>120000;
+        const presenceStale=!window.lastPresenceEventAt || now-window.lastPresenceEventAt>120000;
         if(msgStale || presenceStale){
             if(Date.now()-window.realtimeStartedAt<30000) return;
             updateConnectionBadge('starting');
