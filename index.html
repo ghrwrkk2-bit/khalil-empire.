@@ -376,8 +376,8 @@
     window.micUnsubs = [];
     window.presenceTimer = null;
     window.roomPresenceId = null;
-    window.roomSessionId = localStorage.getItem("hassouni_room_session_id") || (Date.now().toString(36)+"_"+Math.random().toString(36).slice(2));
-    localStorage.setItem("hassouni_room_session_id", window.roomSessionId);
+    window.roomSessionId = sessionStorage.getItem("hassouni_room_session_id") || (Date.now().toString(36)+"_"+Math.random().toString(36).slice(2));
+    sessionStorage.setItem("hassouni_room_session_id", window.roomSessionId);
     window.roomListenerGeneration = 0;
 
     window.currentRoom = "الغرفة العامة";
@@ -788,15 +788,26 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             }catch(e){alert('تعذر تهيئة الأعضاء؛ تحقق من صلاحيات Firestore.');}
         },
         ownerClearRoomChat: async () => {
-            if(!window.currentUser){alert('يجب تسجيل الدخول.');return;}
-            if(window.currentUser.role!=='owner'){alert('🚫 تنظيف الروم متاح لصاحب الموقع فقط.');return;}
-            if(!confirm('هل أنت متأكد من تنظيف وحذف رسائل هذه الغرفة عند الجميع فوراً؟')) return;
-            const roomDocId=window.roomId(window.currentRoom),roomRef=db.collection('rooms').doc(roomDocId),messagesRef=roomRef.collection('messages');
+            if(!window.currentUser || window.currentUser.role!=='owner'){alert('🚫 تنظيف الروم متاح لصاحب الموقع فقط.');return;}
+            if(!confirm('هل تريد حذف جميع رسائل هذه الغرفة من Firebase عند الجميع؟'))return;
+            const roomDocId=window.roomId(window.currentRoom), messagesRef=db.collection('rooms').doc(roomDocId).collection('messages');
             try{
-                const marker=messagesRef.doc('_room_clear_'); await marker.set({type:'room_clear',clearAt:FieldValue.serverTimestamp(),byUid:window.currentUser.uid,byName:window.currentUser.name},{merge:true});
-                let n=0; while(true){const snap=await messagesRef.limit(450).get(); if(snap.empty) break; let batch=db.batch(),count=0; snap.docs.forEach(d=>{if(d.id!=='_room_clear_'){batch.delete(d.ref);count++;}}); if(count) await batch.commit(); n+=count; if(snap.size<450) break;}
-                document.getElementById('chatBox').innerHTML=''; ui.enterChat(); document.getElementById('featureModal').style.display='none'; alert(`🧹 تم تنظيف ${n} رسالة ومزامنة التنظيف مع الجميع.`);
-            }catch(e){console.error(e);alert('تعذر تنظيف الروم.');}
+                let total=0;
+                while(true){
+                    const snap=await messagesRef.limit(450).get();
+                    if(snap.empty)break;
+                    const batch=db.batch(); snap.docs.forEach(d=>batch.delete(d.ref));
+                    await batch.commit(); total+=snap.size;
+                    if(snap.size<450)break;
+                }
+                try{localStorage.removeItem(window.roomMessageCacheKey(window.currentRoom));}catch(e){}
+                window._renderedMessageIds=new Set();
+                document.getElementById('chatBox').innerHTML='';
+                // لا نكتب رسالة تنظيف؛ النتيجة النهائية في Firebase يجب أن تكون فارغة للجميع.
+                ui.clearAllListeners(); ui.enterChat(true);
+                document.getElementById('featureModal').style.display='none';
+                alert(`🧹 تم حذف ${total} رسالة من Firebase. سيظهر الشات نظيفاً على جميع الأجهزة.`);
+            }catch(e){console.error('ownerClearRoomChat',e);alert(e?.code==='permission-denied'?'🚫 Firebase يمنع حذف رسائل الروم.':'تعذر تنظيف الروم بالكامل.');}
         },
         openEmojiPicker: () => {
             const emojis = ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕','🤑','🤠','😈','👿','👹','👺','🤡','💩','👻','💀','☠️','👽','👾','🤖','🎃','❤️','🔥','⭐','👑','💎'];
@@ -1187,6 +1198,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             ui.listenToRoomSettings(generation);
             ui.listenOnlineUsersRealtime(generation);
             ui.startRealtimePresence();
+            ui.listenCurrentUserRealtime(generation);
             ui.listenPrivateNotifications(generation);
             ui.startSingleSessionMonitor();
             ui.startTriviaScheduler();
@@ -1781,101 +1793,30 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             m.style.display = (m.style.display === 'block') ? 'none' : 'block';
         },
         viewProfileCard: (uid) => {
-            // افتح الكرت فوراً ولا تنتظر Firestore؛ نعرض البيانات المحلية أولاً ثم نحدّثها من الخادم.
-            const modal = document.getElementById('featureModal');
-            const title = document.getElementById('featureModalTitle');
-            const body = document.getElementById('featureModalBody');
-            if (!modal || !title || !body || !uid) return;
-            title.innerText = "الملف الشخصي";
-            modal.style.display = 'flex';
-
-            // إذا كانت بيانات العضو موجودة، افتح الكرت فوراً بدون شاشة انتظار.
-            const cached = (window.usersCache && window.usersCache[uid]) ||
-                           (window._roomPresenceData ? Object.values(window._roomPresenceData).find(x => x.uid === uid) : null);
-            if(!cached) body.innerHTML = '<div style="text-align:center;padding:20px;color:#aaa">جارٍ جلب الملف...</div>';
-            const renderProfile = (u) => {
-                if (!u) return;
-                const isMe = !!window.currentUser && window.currentUser.uid === uid;
-                const isAmOwner = !!window.currentUser && window.currentUser.role === 'owner';
-                
-                let pencilHtml = (isMe || isAmOwner) ? 
-                    `<div class="profile-edit-pencil" onclick="ui.openEditProfileModal('${uid}')"><i class="fas fa-pencil-alt"></i></div>` : '';
-                
-                let ownerAdminPanelHtml = '';
-                if (!isMe && ui.canManageUser(u)) {
-                    ownerAdminPanelHtml = `
-                        <div style="background:rgba(231,76,60,0.15); border:1px solid #e74c3c; border-radius:10px; padding:10px; margin-top:12px; text-align:right;">
-                            <p style="color:#e74c3c; font-weight:bold; font-size:13px; text-align:center; margin:0 0 8px;">👑 لوحة تحكم صاحب الموقع للإدارة</p>
-                            
-                            <label style="font-size:11px; color:var(--gold);">إهداء وتغيير الرتبة:</label>
-                            <select id="changeRoleSelect" class="form-select" style="font-size:12px; padding:6px;" onchange="ui.changeUserRole('${uid}', '${u.name}', this.value)">
-                                ${Object.keys(window.chatRanksData).filter(role=>window.rankLevel(role)>window.rankLevel(window.currentUser.role)).map(role=>{const rr=window.chatRanksData[role];return `<option value="${role}" ${u.role===role?'selected':''}>${rr.text}</option>`}).join('')}
-                            </select>
-
-                            <div style="background:#111;border:1px solid #6b5520;border-radius:8px;padding:8px;margin-top:8px;">
-                                <div style="color:var(--gold);font-size:11px;font-weight:bold;margin-bottom:6px;">🎁 هدايا صاحب الموقع</div>
-                                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;">
-                                  <button class="row-btn active" style="font-size:10px;padding:6px" onclick="ui.adminGiftResource('${uid}','points')">+ نقاط</button>
-                                  <button class="row-btn active" style="font-size:10px;padding:6px" onclick="ui.adminGiftResource('${uid}','gold')">+ ذهب</button>
-                                  <button class="row-btn active" style="font-size:10px;padding:6px" onclick="ui.adminGiftResource('${uid}','ruby')">+ روبي</button>
-                                </div>
-                            </div>
-
-                            <div style="display:flex; gap:5px; margin-top:8px;">
-                                <button class="row-btn" style="background:${u.isMuted ? '#2ecc71':'#f39c12'}; color:#000; font-size:11px; padding:6px;" onclick="ui.adminToggleMute('${uid}', ${!u.isMuted})">${u.isMuted ? 'إلغاء الكتم':'كتم'}</button>
-                                <button class="row-btn" style="background:#e67e22; color:#fff; font-size:11px; padding:6px;" onclick="ui.adminKickUser('${uid}')">طرد</button>
-                                <button class="row-btn" style="background:#8e44ad; color:#fff; font-size:11px; padding:6px;" onclick="ui.adminBlockUser('${uid}')">حجب</button>
-                                <button class="row-btn" style="background:#c0392b; color:#fff; font-size:11px; padding:6px;" onclick="ui.adminBanUser('${uid}')">حظر</button>
-                            </div>
-                            <button class="row-btn" style="width:100%; background:#2c3e50; color:#e74c3c; font-size:11px; padding:8px; margin-top:6px;" onclick="ui.adminDeleteAccount('${uid}')"><i class="fas fa-user-slash"></i> حذف الحساب نهائياً</button>
-                        </div>
-                    `;
-                }
-
-                let rObj = window.chatRanksData[u.role] || { icon: "fas fa-user", color: "#fff", text: "عضو" };
-
-                document.getElementById('featureModalBody').innerHTML = `
-                    <div class="profile-card-wrapper">
-                        ${pencilHtml}
-                        <img src="${u.cover || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400'}" class="profile-card-cover">
-                        <div class="shop-avatar-frame frame-${u.profileFrame||''}" style="width:104px;height:104px;margin:0 auto 6px;"><img src="${u.img || 'https://cdn-icons-png.flaticon.com/512/1042/1042291.png'}" class="profile-card-pfp"></div>
-                        <h2 style="color:${u.nameColor || rObj.color}; margin:5px 0 2px;"><span class="name-effect effect-${u.nameEffect||'0'}">${ui.escapeHtml(u.name||'عضو')}</span></h2>
-                        <p style="margin:0 0 5px; font-size:12px; color:${rObj.color}; font-weight:bold;"><i class="${rObj.icon}"></i> ${rObj.text}</p>
-                        <p style="margin:0 0 6px; font-size:11px; color:#aaa;">${ui.escapeHtml(u.status || 'لا توجد حالة')}</p>
-                        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:10px;font-size:12px;text-align:right">
-                            <div>🎂 العمر: <b>${ui.escapeHtml(u.age || 'غير محدد')}</b></div><div>⚧ الجنس: <b>${ui.escapeHtml(u.gender || 'غير محدد')}</b></div>
-                            <div>🌍 البلد: <b>${ui.escapeHtml(u.country || 'غير محدد')}</b></div><div>❤️ الإعجابات: <b>${u.likes || 0}</b></div>
-                        </div>
-                        <div style="font-size:11px;color:#aaa;margin-bottom:10px">🕒 آخر ظهور: <b>${u.lastSeen?.toDate ? u.lastSeen.toDate().toLocaleString('ar') : (u.isOnline ? 'متصل الآن' : 'غير متوفر')}</b></div>
-                        <div style="display:flex;gap:6px;margin-bottom:10px">
-                          <button class="row-btn" onclick="ui.copyProfileLink('${u.uid}')">🔗 نسخ رابط الملف</button>
-                        </div>
-
-                        <div style="display:flex; gap:8px; margin-bottom:12px;">
-                            ${!isMe ? `<button class="row-btn" style="border-radius:8px;padding:6px;flex:1;" onclick="ui.likeUserOnce('${u.uid}')"><i class="fas fa-heart"></i> إعجاب</button>` : ''}
-                            <button class="row-btn active" style="border-radius:8px; padding:6px; flex:1;" onclick="ui.startPrivateChatWith('${u.uid}', '${u.name}')"><i class="fas fa-comment"></i> مراسلة خاصة</button>
-                        </div>
-                        ${ownerAdminPanelHtml}
-                    </div>
-                `;
-                modal.style.display = 'flex';
+            uid=String(uid||'').trim();
+            if(!uid) return;
+            const modal=document.getElementById('featureModal'),title=document.getElementById('featureModalTitle'),body=document.getElementById('featureModalBody');
+            if(!modal||!title||!body)return;
+            title.innerText='الملف الشخصي'; modal.style.display='flex';
+            const presence=window._roomPresenceData ? Object.values(window._roomPresenceData).find(x=>String(x.uid)===uid) : null;
+            const cached=window.usersCache?.[uid] || presence || (window.currentUser?.uid===uid ? window.currentUser : null);
+            const renderProfile=(u)=>{
+                if(!u || String(u.uid||uid)!==uid)return;
+                const x={...u,uid}; window.usersCache[uid]={...(window.usersCache[uid]||{}),...x};
+                const isMe=window.currentUser?.uid===uid, canAdmin=!!window.currentUser && (window.currentUser.role==='owner'||window.rankLevel(window.currentUser.role)<window.rankLevel(x.role));
+                const r=window.chatRanksData[x.role]||window.chatRanksData.new;
+                body.innerHTML=`<div class="profile-card-wrapper">${(isMe||canAdmin)?`<div class="profile-edit-pencil" onclick="ui.openEditProfileModal('${uid}')"><i class="fas fa-pencil-alt"></i></div>`:''}
+                <img src="${ui.escapeHtml(x.cover||'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400')}" class="profile-card-cover">
+                <div class="shop-avatar-frame frame-${ui.escapeHtml(x.profileFrame||'')}" style="width:104px;height:104px;margin:0 auto 6px"><img src="${ui.escapeHtml(x.img||'https://cdn-icons-png.flaticon.com/512/1042/1042291.png')}" class="profile-card-pfp"></div>
+                <h2 style="color:${x.nameColor||r.color};margin:5px 0 2px">${ui.escapeHtml(x.name||'عضو')}</h2>
+                <p style="margin:0 0 5px;color:${r.color};font-weight:bold"><i class="${r.icon}"></i> ${ui.escapeHtml(r.text)}</p>
+                <p style="color:#aaa;font-size:11px">${ui.escapeHtml(x.status||'لا توجد حالة')}</p>
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:7px;text-align:right;font-size:12px"><div>🎂 العمر: <b>${ui.escapeHtml(x.age||'غير محدد')}</b></div><div>⚧ الجنس: <b>${ui.escapeHtml(x.gender||'غير محدد')}</b></div><div>🌍 البلد: <b>${ui.escapeHtml(x.country||'غير محدد')}</b></div><div>❤️ الإعجابات: <b>${Number(x.likes)||0}</b></div><div>⭐ المستوى: <b>${Number(x.level)||1}</b></div><div>🏆 النقاط: <b>${Number(x.points)||0}</b></div><div>💰 الذهب: <b>${window.isUnlimitedOwner(x)?'∞':(Number(x.gold)||0)}</b></div><div>💎 الروبي: <b>${window.isUnlimitedOwner(x)?'∞':(Number(x.ruby)||0)}</b></div></div>
+                ${!isMe?`<button class="row-btn active" style="width:100%;margin-top:12px" onclick="ui.startPrivateChatWith('${uid}','${ui.escapeHtml(x.name||'عضو')}')">💬 مراسلة خاصة</button>`:''}</div>`;
             };
-
-            // العرض الفوري من الكاش.
-            if (cached) renderProfile(cached);
-
-            // تحديث صامت من Firestore؛ لا يمنع فتح الكرت ولا يعلّق الواجهة.
-            db.collection("users").doc(uid).get()
-              .then(doc => {
-                  if (doc.exists) {
-                      const presence = window._roomPresenceData ? Object.values(window._roomPresenceData).find(x => x.uid === uid) : null;
-                      const fresh={...(presence||{}), uid: doc.id, ...doc.data()};
-                      if(window.isOwnerIdentity(fresh)){ fresh.role='owner'; fresh.unlimitedResources=true; }
-                      window.usersCache[uid]=fresh;
-                      renderProfile(fresh);
-                  }
-              })
-              .catch(err => console.warn('profile fetch failed', err));
+            if(cached) renderProfile(cached); else body.innerHTML='<div style="text-align:center;padding:20px;color:#aaa">الملف غير موجود.</div>';
+            // تحديث صامت للعضو المطلوب فقط؛ لا نستخدم currentUser كبديل أبداً.
+            db.collection('users').doc(uid).get().then(doc=>{if(doc.exists){const fresh={uid:doc.id,...doc.data()};if(window.isOwnerIdentity(fresh)){fresh.role='owner';fresh.unlimitedResources=true;}renderProfile(fresh);}}).catch(e=>console.warn('profile fetch',e));
         },
         openYouTubeMessage: (videoId) => {
             if(!videoId) return;
@@ -1996,6 +1937,26 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 alert(credentials ? `🎁 تم إهداء الرتبة وتحويل الزائر إلى حساب محفوظ.\n\nالبريد: ${credentials.email}\nكلمة المرور: ${credentials.password}\n\nاحتفظ بهما للعودة بنفس الحساب والرتبة.` : 'تم تحديث الرتبة ومزامنتها مع حساب العضو والجلسات المفتوحة بنجاح ✅');
                 document.getElementById('featureModal').style.display='none';
             } catch(e){ console.error('changeUserRole failed',e); alert('تعذر حفظ الرتبة في Firebase. تحقق من صلاحيات Firestore.'); }
+        },
+        listenCurrentUserRealtime: (expectedGeneration=window.roomListenerGeneration) => {
+            if(!window.currentUser?.uid) return;
+            const uid=window.currentUser.uid;
+            const unsub=db.collection('users').doc(uid).onSnapshot(doc=>{
+                if(expectedGeneration!==window.roomListenerGeneration || !doc.exists) return;
+                const cloud={uid:doc.id,...doc.data()};
+                if(window.isOwnerIdentity(cloud)){ cloud.role='owner'; cloud.unlimitedResources=true; cloud.points=999999999; cloud.gold=999999999; cloud.ruby=999999999; }
+                // Firestore account document is the single source of truth for profile, rank and balances.
+                window.currentUser={...window.currentUser,...cloud};
+                window.usersCache[uid]={...window.usersCache[uid],...cloud,uid};
+                try{localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));}catch(e){}
+                ui.updateHeaderUserBgIcon();
+                ui.updateRoyalKeyButtonVisibility();
+                if(window._roomPresenceData && window.roomPresenceId){
+                    window._roomPresenceData[window.roomPresenceId]={...(window._roomPresenceData[window.roomPresenceId]||{}),uid,sessionId:window.roomSessionId,room:window.currentRoom,name:cloud.name||'عضو',role:window.isOwnerIdentity(cloud)?'owner':(cloud.role||'new'),email:cloud.email||'',points:Number(cloud.points)||0,img:cloud.img||'',cover:cloud.cover||'',nameColor:cloud.nameColor||'',profileFrame:cloud.profileFrame||'',nameEffect:cloud.nameEffect||'',lastSeenMs:Date.now()};
+                    ui.renderOnlineUsersFromCache();
+                }
+            },err=>console.warn('current user realtime',err));
+            window.activeListeners.push(unsub);
         },
         listenPrivateNotifications: () => {
             if(!window.currentUser) return;
