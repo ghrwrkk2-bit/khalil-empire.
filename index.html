@@ -214,7 +214,7 @@
         #youtubeVideoFrameContainer { position: fixed; right: 8px; bottom: 132px; width: 1px; height: 1px; overflow: hidden; opacity: 0.01; pointer-events:none; }
         #liveAudioBroadcastContainer { display: none; }
     </style>
-<meta name="hassouni-version" content="v10-fresh-data-profile-sync">
+<meta name="hassouni-version" content="v13-true-cross-device-sync">
 </head>
 <body>
 
@@ -376,8 +376,8 @@
     window.micUnsubs = [];
     window.presenceTimer = null;
     window.roomPresenceId = null;
-    window.roomSessionId = localStorage.getItem("hassouni_room_session_id_v11") || (Date.now().toString(36)+"_"+Math.random().toString(36).slice(2));
-    localStorage.setItem("hassouni_room_session_id_v11", window.roomSessionId);
+    window.roomSessionId = localStorage.getItem("hassouni_room_session_id") || (Date.now().toString(36)+"_"+Math.random().toString(36).slice(2));
+    localStorage.setItem("hassouni_room_session_id", window.roomSessionId);
     window.roomListenerGeneration = 0;
 
     window.currentRoom = "الغرفة العامة";
@@ -514,7 +514,7 @@
     window.uiRankText = (role) => (window.chatRanksData[role] || {text:"عضو"}).text;
     window.roomsBase = ["الغرفة العامة","روم المسابقات","روم اليمن","روم السجن"];
     window.siteSettings={allowGuests:true,blockPrivateLinks:true,allowedCleanRanks:['prince'],maxMicCount:4,securityEnabled:true,shopRanks:[],shopFrames:[],shopEffects:[]};
-    window.roomPresenceCacheKey=(room)=>'hassouni_presence_cache_v11_'+window.roomId(room);
+    window.roomPresenceCacheKey=(room)=>'hassouni_presence_cache_'+window.roomId(room);
     window.saveRoomPresenceCache=()=>{try{const src=window._roomPresenceData||{}; const out={}; Object.keys(src).forEach(k=>{const d=src[k]; out[k]={uid:d.uid,sessionId:d.sessionId,room:d.room,name:d.name,role:d.role,email:d.email||'',points:Number(d.points)||0,img:d.img,cover:d.cover,nameColor:d.nameColor,profileFrame:d.profileFrame,nameEffect:d.nameEffect,lastSeenMs:(d.lastSeen?.toMillis?d.lastSeen.toMillis():(d.lastSeen instanceof Date?d.lastSeen.getTime():(d.lastSeenMs||0)))};}); localStorage.setItem(window.roomPresenceCacheKey(window.currentRoom),JSON.stringify(out));}catch(e){}};
     window.loadRoomPresenceCache=()=>{try{const raw=localStorage.getItem(window.roomPresenceCacheKey(window.currentRoom)); if(raw) window._roomPresenceData={...window._roomPresenceData,...JSON.parse(raw)};}catch(e){}};
     window.loadSiteSettings=async()=>{try{const d=await db.collection('site_settings').doc('main').get();if(d.exists)window.siteSettings={...window.siteSettings,...d.data()};window.maxMicCount=window.siteSettings.maxMicCount||4;}catch(e){}};
@@ -638,16 +638,16 @@
             try{
               if(window.isUnlimitedOwner()){
                 if(isGift){ const targetRef=db.collection('users').doc(targetUid); const targetSnap=await targetRef.get(); if(!targetSnap.exists)throw new Error('NO_USER'); await targetRef.set({role,rankUpdatedAt:FieldValue.serverTimestamp(),rankGiftedBy:window.currentUser.uid,rankGiftedByName:window.currentUser.name||'صاحب الموقع'},{merge:true}); }
-                else { await ref.set({role,rankUpdatedAt:FieldValue.serverTimestamp(),unlimitedResources:true},{merge:true}); window.currentUser={...window.currentUser,role,unlimitedResources:true}; window.usersCache[window.currentUser.uid]={...window.currentUser}; localStorage.setItem('hassouni_user_session_v11',JSON.stringify(window.currentUser)); ui.updateHeaderUserBgIcon(); ui.startRealtimePresence(); }
+                else { await ref.set({role,rankUpdatedAt:FieldValue.serverTimestamp(),unlimitedResources:true},{merge:true}); window.currentUser={...window.currentUser,role,unlimitedResources:true}; window.usersCache[window.currentUser.uid]={...window.currentUser}; localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser)); ui.updateHeaderUserBgIcon(); ui.startRealtimePresence(); }
                 document.getElementById('featureModal').style.display='none'; alert(isGift?'🎁 تم إهداء الرتبة للعضو من رصيد صاحب الموقع غير المحدود.':'👑 تم شراء الرتبة بدون خصم لأن رصيد صاحب الموقع غير محدود.'); return;
               }
               await db.runTransaction(async tx=>{const snap=await tx.get(ref),u=snap.data()||{};if((u.gold||0)<cost)throw new Error('NO_GOLD');if(isGift){const targetRef=db.collection('users').doc(targetUid),targetSnap=await tx.get(targetRef);if(!targetSnap.exists)throw new Error('NO_USER');const targetData={uid:targetUid,...targetSnap.data()};if(!window.canGiftRank(role,targetData))throw new Error('CANNOT_GIFT');tx.update(ref,{gold:FieldValue.increment(-cost)});tx.update(targetRef,{role,rankUpdatedAt:FieldValue.serverTimestamp(),rankGiftedBy:window.currentUser.uid,rankGiftedByName:window.currentUser.name||'الإدارة'});}else tx.update(ref,{gold:FieldValue.increment(-cost),role,rankUpdatedAt:FieldValue.serverTimestamp()});});
-              if(!isGift){window.currentUser={...window.currentUser,role,gold:Math.max(0,(window.currentUser.gold||0)-cost)};window.usersCache[window.currentUser.uid]={...window.currentUser};localStorage.setItem('hassouni_user_session_v11',JSON.stringify(window.currentUser));ui.updateHeaderUserBgIcon();ui.startRealtimePresence();}else{window.currentUser={...window.currentUser,gold:Math.max(0,(window.currentUser.gold||0)-cost)};localStorage.setItem('hassouni_user_session_v11',JSON.stringify(window.currentUser));ui.startRealtimePresence();}document.getElementById('featureModal').style.display='none';alert(isGift?'🎁 تم إهداء الرتبة للعضو وتزامنت عبر Firebase.':'👑 تم شراء الرتبة وظهرت فوراً على حسابك.');
+              if(!isGift){window.currentUser={...window.currentUser,role,gold:Math.max(0,(window.currentUser.gold||0)-cost)};window.usersCache[window.currentUser.uid]={...window.currentUser};localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));ui.updateHeaderUserBgIcon();ui.startRealtimePresence();}else{window.currentUser={...window.currentUser,gold:Math.max(0,(window.currentUser.gold||0)-cost)};localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));ui.startRealtimePresence();}document.getElementById('featureModal').style.display='none';alert(isGift?'🎁 تم إهداء الرتبة للعضو وتزامنت عبر Firebase.':'👑 تم شراء الرتبة وظهرت فوراً على حسابك.');
             }catch(e){alert(e.message==='NO_GOLD'?'رصيد الذهب غير كافٍ.':e.message==='NO_USER'?'العضو غير موجود.':e.message==='CANNOT_GIFT'?'لا يمكنك إهداء هذه الرتبة لهذا العضو.':'تعذر إتمام الشراء.');}
         },
         buyFrame: async(frameId,cost,isGift=false)=>{if(!window.currentUser)return;if(isGift && !['owner','prince'].includes(window.currentUser.role)){alert('🚫 الإهداء متاح للإدارة فقط.');return;}let targetUid=window.currentUser.uid;if(isGift){targetUid=prompt('أدخل UID العضو المراد إهداؤه الإطار:');if(!targetUid)return;}const ref=db.collection('users').doc(window.currentUser.uid);try{
-if(window.isUnlimitedOwner()){ if(isGift){const tr=db.collection('users').doc(targetUid),ts=await tr.get();if(!ts.exists)throw new Error('NO_USER');await tr.set({profileFrame:frameId,frameUpdatedAt:FieldValue.serverTimestamp(),frameGiftedBy:window.currentUser.uid},{merge:true});}else{await ref.set({profileFrame:frameId,unlimitedResources:true},{merge:true});window.currentUser={...window.currentUser,profileFrame:frameId,unlimitedResources:true};window.usersCache[window.currentUser.uid]={...window.currentUser};localStorage.setItem('hassouni_user_session_v11',JSON.stringify(window.currentUser));ui.startRealtimePresence();}document.getElementById('featureModal').style.display='none';alert(isGift?'🎁 تم إهداء الإطار بدون خصم.':'⭕ تم شراء الإطار بدون خصم لصاحب الموقع.');return;}
-await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((u.gold||0)<cost)throw new Error('NO_GOLD');if(isGift){const tr=db.collection('users').doc(targetUid),ts=await tx.get(tr);if(!ts.exists)throw new Error('NO_USER');tx.update(ref,{gold:FieldValue.increment(-cost)});tx.update(tr,{profileFrame:frameId,frameUpdatedAt:FieldValue.serverTimestamp(),frameGiftedBy:window.currentUser.uid});}else tx.update(ref,{gold:FieldValue.increment(-cost),profileFrame:frameId,frameUpdatedAt:FieldValue.serverTimestamp()});});if(!isGift){window.currentUser={...window.currentUser,profileFrame:frameId,gold:Math.max(0,(window.currentUser.gold||0)-cost)};window.usersCache[window.currentUser.uid]={...window.currentUser};localStorage.setItem('hassouni_user_session_v11',JSON.stringify(window.currentUser));ui.startRealtimePresence();}else{window.currentUser={...window.currentUser,gold:Math.max(0,(window.currentUser.gold||0)-cost)};localStorage.setItem('hassouni_user_session_v11',JSON.stringify(window.currentUser));}document.getElementById('featureModal').style.display='none';alert(isGift?'🎁 تم إهداء الإطار للعضو وتزامن فوراً.':'⭕ تم شراء الإطار وتفعيله فوراً.');}catch(e){alert(e.message==='NO_GOLD'?'رصيد الذهب غير كافٍ.':'تعذر شراء الإطار.');}},
+if(window.isUnlimitedOwner()){ if(isGift){const tr=db.collection('users').doc(targetUid),ts=await tr.get();if(!ts.exists)throw new Error('NO_USER');await tr.set({profileFrame:frameId,frameUpdatedAt:FieldValue.serverTimestamp(),frameGiftedBy:window.currentUser.uid},{merge:true});}else{await ref.set({profileFrame:frameId,unlimitedResources:true},{merge:true});window.currentUser={...window.currentUser,profileFrame:frameId,unlimitedResources:true};window.usersCache[window.currentUser.uid]={...window.currentUser};localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));ui.startRealtimePresence();}document.getElementById('featureModal').style.display='none';alert(isGift?'🎁 تم إهداء الإطار بدون خصم.':'⭕ تم شراء الإطار بدون خصم لصاحب الموقع.');return;}
+await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((u.gold||0)<cost)throw new Error('NO_GOLD');if(isGift){const tr=db.collection('users').doc(targetUid),ts=await tx.get(tr);if(!ts.exists)throw new Error('NO_USER');tx.update(ref,{gold:FieldValue.increment(-cost)});tx.update(tr,{profileFrame:frameId,frameUpdatedAt:FieldValue.serverTimestamp(),frameGiftedBy:window.currentUser.uid});}else tx.update(ref,{gold:FieldValue.increment(-cost),profileFrame:frameId,frameUpdatedAt:FieldValue.serverTimestamp()});});if(!isGift){window.currentUser={...window.currentUser,profileFrame:frameId,gold:Math.max(0,(window.currentUser.gold||0)-cost)};window.usersCache[window.currentUser.uid]={...window.currentUser};localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));ui.startRealtimePresence();}else{window.currentUser={...window.currentUser,gold:Math.max(0,(window.currentUser.gold||0)-cost)};localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));}document.getElementById('featureModal').style.display='none';alert(isGift?'🎁 تم إهداء الإطار للعضو وتزامن فوراً.':'⭕ تم شراء الإطار وتفعيله فوراً.');}catch(e){alert(e.message==='NO_GOLD'?'رصيد الذهب غير كافٍ.':'تعذر شراء الإطار.');}},
         buyNameEffect: async(effectId,cost,isGift=false)=>{
             if(!window.currentUser)return;
             if(isGift && !['owner','prince'].includes(window.currentUser.role)){alert('🚫 الإهداء متاح للإدارة فقط.');return;}
@@ -664,7 +664,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                         await ref.set({nameEffect:effectId,unlimitedResources:true},{merge:true});
                         window.currentUser={...window.currentUser,nameEffect:effectId,unlimitedResources:true};
                         window.usersCache[window.currentUser.uid]={...window.currentUser};
-                        localStorage.setItem('hassouni_user_session_v11',JSON.stringify(window.currentUser));
+                        localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));
                         ui.startRealtimePresence();
                     }
                     document.getElementById('featureModal').style.display='none';
@@ -684,11 +684,11 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 if(!isGift){
                     window.currentUser={...window.currentUser,nameEffect:effectId,gold:Math.max(0,(window.currentUser.gold||0)-cost)};
                     window.usersCache[window.currentUser.uid]={...window.currentUser};
-                    localStorage.setItem('hassouni_user_session_v11',JSON.stringify(window.currentUser));
+                    localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));
                     ui.startRealtimePresence();
                 }else{
                     window.currentUser={...window.currentUser,gold:Math.max(0,(window.currentUser.gold||0)-cost)};
-                    localStorage.setItem('hassouni_user_session_v11',JSON.stringify(window.currentUser));
+                    localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));
                 }
                 document.getElementById('featureModal').style.display='none';
                 alert(isGift?'🎁 تم إهداء التأثير وتزامن عبر Firebase.':'✨ تم شراء تأثير الاسم وتفعيله فوراً.');
@@ -789,7 +789,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
         },
         ownerClearRoomChat: async () => {
             if(!window.currentUser){alert('يجب تسجيل الدخول.');return;}
-            if(window.currentUser.role!=='owner' && !(window.siteSettings?.allowedCleanRanks||['prince']).includes(window.currentUser.role)){alert('🚫 رتبتك لا تملك صلاحية تنظيف الروم.');return;}
+            if(window.currentUser.role!=='owner'){alert('🚫 تنظيف الروم متاح لصاحب الموقع فقط.');return;}
             if(!confirm('هل أنت متأكد من تنظيف وحذف رسائل هذه الغرفة عند الجميع فوراً؟')) return;
             const roomDocId=window.roomId(window.currentRoom),roomRef=db.collection('rooms').doc(roomDocId),messagesRef=roomRef.collection('messages');
             try{
@@ -863,7 +863,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                             const patch={lastWheelAt:FieldValue.serverTimestamp()};
                             if(prize.points)patch.points=FieldValue.increment(prize.points); if(prize.gold)patch.gold=FieldValue.increment(prize.gold); if(prize.ruby)patch.ruby=FieldValue.increment(prize.ruby); if(prize.level)patch.level=FieldValue.increment(prize.level); tx.set(ref,patch,{merge:true});
                         });
-                        Object.assign(window.currentUser,{points:(window.currentUser.points||0)+(prize.points||0),gold:(window.currentUser.gold||0)+(prize.gold||0),ruby:(window.currentUser.ruby||0)+(prize.ruby||0),level:(window.currentUser.level||0)+(prize.level||0),lastWheelAt:{toMillis:()=>Date.now()}}); localStorage.setItem('hassouni_user_session_v11',JSON.stringify(window.currentUser));
+                        Object.assign(window.currentUser,{points:(window.currentUser.points||0)+(prize.points||0),gold:(window.currentUser.gold||0)+(prize.gold||0),ruby:(window.currentUser.ruby||0)+(prize.ruby||0),level:(window.currentUser.level||0)+(prize.level||0),lastWheelAt:{toMillis:()=>Date.now()}}); localStorage.setItem('hassouni_user_session',JSON.stringify(window.currentUser));
                         const r=window.roomId(window.currentRoom); await db.collection('rooms').doc(r).collection('messages').add({clientTs:Date.now(),type:'attendance',text:`🎡 ${prize.label}`,user:{uid:window.currentUser.uid,name:window.currentUser.name,img:window.currentUser.img},userId:window.currentUser.uid,timestamp:FieldValue.serverTimestamp()});
                         alert(`🎉 العجلة وقفت على: ${prize.label}`);
                     }catch(e){alert(e.message==='WHEEL_COOLDOWN'?'⏳ هذه الساعة تم استخدام العجلة بالفعل.':'تعذر حفظ جائزة العجلة.');} finally{window.wheelBusy=false;}
@@ -942,8 +942,8 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             }
         },
         saveCleanRanks: async()=>{const a=[...document.querySelectorAll('.clean-rank:checked')].map(x=>x.value).slice(0,10);await db.collection('site_settings').doc('main').set({allowedCleanRanks:a},{merge:true});window.siteSettings.allowedCleanRanks=a;alert('✅ تم حفظ الأذونات.');},
-        saveMicCount: async()=>{const n=Math.max(4,Math.min(30,Number(document.getElementById('maxMicInput')?.value)||4));await db.collection('site_settings').doc('main').set({maxMicCount:n},{merge:true});window.maxMicCount=n;ui.renderMicSlots(n);alert('🎙️ تم تحديث عدد المايكات.');},
-        saveLoginSettings: async()=>{const allow=document.getElementById('allowGuestsCheck')?.checked!==false;const f=document.getElementById('loginBgFile')?.files?.[0],ic=document.getElementById('loginIconFile')?.files?.[0];let patch={allowGuests:allow};if(f){const r=storage.ref().child(`site/login/${Date.now()}_${f.name.replace(/[^\w.\-]/g,'_')}`);await r.put(f);patch.loginBg=await r.getDownloadURL();}if(ic){const r2=storage.ref().child(`site/login/icons/${Date.now()}_${ic.name.replace(/[^\w.\-]/g,'_')}`);await r2.put(ic);patch.loginIcon=await r2.getDownloadURL();}await db.collection('site_settings').doc('main').set(patch,{merge:true});window.siteSettings={...window.siteSettings,...patch};ui.applyLoginSettings();alert('🚪 تم حفظ لوحة الدخول والأيقونة.');},
+        saveMicCount: async()=>{const n=Math.max(4,Math.min(30,Number(document.getElementById('maxMicInput')?.value)||4));try{await db.collection('site_settings').doc('main').set({maxMicCount:n,updatedAt:FieldValue.serverTimestamp(),updatedBy:window.currentUser.uid},{merge:true});window.maxMicCount=n;window.siteSettings.maxMicCount=n;ui.renderMicSlots(n);alert(`🎙️ تم تحديث عدد المايكات إلى ${n} ومزامنته مع جميع الأجهزة المفتوحة.`);}catch(e){console.error(e);alert('تعذر حفظ عدد المايكات؛ تحقق من صلاحيات Firestore.');}},
+        saveLoginSettings: async()=>{const allow=document.getElementById('allowGuestsCheck')?.checked!==false;const f=document.getElementById('loginBgFile')?.files?.[0],ic=document.getElementById('loginIconFile')?.files?.[0];let patch={allowGuests:allow,updatedAt:FieldValue.serverTimestamp(),updatedBy:window.currentUser?.uid||''};try{if(f){const r=storage.ref().child(`site/login/${Date.now()}_${f.name.replace(/[^\w.\-]/g,'_')}`);await r.put(f);patch.loginBg=await r.getDownloadURL();}if(ic){const r2=storage.ref().child(`site/login/icons/${Date.now()}_${ic.name.replace(/[^\w.\-]/g,'_')}`);await r2.put(ic);patch.loginIcon=await r2.getDownloadURL();}await db.collection('site_settings').doc('main').set(patch,{merge:true});window.siteSettings={...window.siteSettings,...patch};ui.applyLoginSettings();alert('🚪 تم حفظ لوحة الدخول والأيقونة ومزامنتها لجميع الأجهزة.');}catch(e){console.error(e);alert('تعذر حفظ إعدادات لوحة الدخول. تحقق من Firebase Storage وFirestore Rules.');}},
         applyLoginSettings:()=>{const ov=document.getElementById('welcomeOverlay'),ic=document.getElementById('loginPanelIcon');if(ic){ic.style.display='grid';ic.style.visibility='visible';ic.style.opacity='1';ic.style.backgroundColor='#111';}if(window.siteSettings.loginBg&&ov)ov.style.backgroundImage=`url('${window.siteSettings.loginBg}')`;if(window.siteSettings.loginIcon&&ic){ic.style.backgroundImage=`url('${window.siteSettings.loginIcon}')`;const i=ic.querySelector('i');if(i)i.style.display='none';}const b=document.querySelector('#b1 button[onclick*="loginAsGuest"]');if(b)b.disabled=window.siteSettings.allowGuests===false;},
         saveBlockedWords: async()=>{const a=(document.getElementById('badWordsInput')?.value||'').split(/\n|,/).map(x=>x.trim()).filter(Boolean).slice(0,200);await db.collection('site_settings').doc('main').set({blockedWords:a},{merge:true});window.siteSettings.blockedWords=a;alert('🔒 تم حفظ الكلمات.');},
         saveBots: async()=>{const ids=['reminder','trivia','protection','obedience','welcome'].filter(x=>document.getElementById('bot_'+x)?.checked);await db.collection('site_settings').doc('main').set({enabledBots:ids},{merge:true});window.siteSettings.enabledBots=ids;alert('🤖 تم حفظ البوتات.');},
@@ -1069,7 +1069,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 window.currentUser.email='ghrwrkk2@gmail.com';
             }
             window.usersCache[window.currentUser.uid] = {...window.currentUser};
-            localStorage.setItem("hassouni_user_session_v11", JSON.stringify(window.currentUser));
+            localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser));
             document.getElementById('featureModal').style.display = 'none';
             ui.enterChat();
             db.collection("users").doc(window.currentUser.uid).set({...window.currentUser,lastSeen:FieldValue.serverTimestamp()}, { merge: true }).catch(e=>console.warn('user save',e));
@@ -1097,14 +1097,14 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             window.sessionCheckInterval=setInterval(pulse,8000);
         },
         checkSavedSessionOnLoad: () => {
-            const savedUser = localStorage.getItem("hassouni_user_session_v11");
+            const savedUser = localStorage.getItem("hassouni_user_session");
             if(!savedUser){
                 document.getElementById('welcomeOverlay').style.display='flex';
                 ui.switchBranch('b1');
                 return;
             }
             let parsedUser;
-            try{ parsedUser=JSON.parse(savedUser); }catch(e){ localStorage.removeItem('hassouni_user_session_v11'); document.getElementById('welcomeOverlay').style.display='flex'; ui.switchBranch('b1'); return; }
+            try{ parsedUser=JSON.parse(savedUser); }catch(e){ localStorage.removeItem('hassouni_user_session'); document.getElementById('welcomeOverlay').style.display='flex'; ui.switchBranch('b1'); return; }
 
             // دخول فوري من الكاش المحلي، ثم التحقق من Firestore في الخلفية.
             window.currentUser = parsedUser;
@@ -1117,7 +1117,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             db.collection("users").doc(parsedUser.uid).get().then(doc=>{
                 if(!doc.exists){
                     if(parsedUser.role==='guest') return;
-                    localStorage.removeItem('hassouni_user_session_v11');
+                    localStorage.removeItem('hassouni_user_session');
                     ui.logoutBackToWelcome();
                     return;
                 }
@@ -1131,7 +1131,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 // حدّث الكاش والواجهة فقط إذا وصلت بيانات أحدث.
                 window.currentUser=fresh;
                 window.usersCache[fresh.uid]=fresh;
-                localStorage.setItem("hassouni_user_session_v11",JSON.stringify(fresh));
+                localStorage.setItem("hassouni_user_session",JSON.stringify(fresh));
                 ui.updateHeaderUserBgIcon();
                 ui.updateRoyalKeyButtonVisibility();
                 if(window._roomPresenceData && window.roomPresenceId){
@@ -1181,6 +1181,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             const generation=window.roomListenerGeneration;
             window._chatListenersRoom=window.currentRoom;
             window._messageSnapshotReady=false; window._messageSnapshotRoom=window.currentRoom;
+            ui.listenToSiteSettingsRealtime(generation);
             ui.listenToGlobalMessages(generation);
             ui.listenToActiveMics(generation);
             ui.listenToRoomSettings(generation);
@@ -1202,6 +1203,17 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             if(window.profilePresenceTimer){clearInterval(window.profilePresenceTimer);window.profilePresenceTimer=null;}
             if(window.triviaTimer){clearInterval(window.triviaTimer);window.triviaTimer=null;}
             ui.closeAllMicPeers();
+        },
+        listenToSiteSettingsRealtime: (expectedGeneration=window.roomListenerGeneration) => {
+            const unsub=db.collection('site_settings').doc('main').onSnapshot((doc)=>{
+                if(expectedGeneration!==window.roomListenerGeneration)return;
+                if(!doc.exists)return;
+                window.siteSettings={...window.siteSettings,...doc.data()};
+                window.maxMicCount=Math.max(4,Math.min(30,Number(window.siteSettings.maxMicCount)||4));
+                ui.renderMicSlots(window.maxMicCount);
+                ui.applyLoginSettings();
+            },(err)=>{ console.warn('site settings realtime',err); });
+            window.activeListeners.push(unsub);
         },
         listenToRoomSettings: (expectedGeneration=window.roomListenerGeneration) => {
             let roomAtStart=window.currentRoom, roomDocId = window.roomId(roomAtStart);
@@ -1258,8 +1270,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 else if(m.user) ui.renderMsg(m.user,m.text,m.timestamp,m.type||'text',m);
             };
             window._renderedMessageIds = new Set();
-            const query=db.collection("rooms").doc(roomDocId).collection("messages")
-              .orderBy("timestamp", "desc").limit(100);
+            const query=db.collection("rooms").doc(roomDocId).collection("messages").orderBy("clientTs","desc").limit(200);
             const unsub=query.onSnapshot((snapshot)=>{
                 if(expectedGeneration!==window.roomListenerGeneration || roomAtStart!==window.currentRoom) return;
                 window.lastFirestoreEventAt=Date.now();
@@ -1510,7 +1521,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             // لا ننتظر الشبكة أو معاملة المكافآت قبل السماح برسالة أخرى. Firestore يزامنها تلقائياً.
             window.optimisticMessageIds.add(msgRef.id);
             ui.renderMsg(payload.user,payload.text,new Date(),payload.type,payload);
-            msgRef.set(payload).catch(e=>{ window.optimisticMessageIds.delete(msgRef.id); console.error('sendMessage',e); });
+            msgRef.set(payload).catch(e=>{ window.optimisticMessageIds.delete(msgRef.id); console.error('sendMessage',e); const bad=document.querySelector(`[data-message-id=\"${msgRef.id}\"]`); if(bad) bad.remove(); updateConnectionBadge(e?.code==='permission-denied'?'error':'starting'); alert('⚠️ لم تُحفظ الرسالة في Firebase، لذلك لن تظهر للأعضاء الآخرين.'); });
             // المكافأة تعمل بالخلفية حتى لا تتأخر واجهة الإرسال.
             Promise.resolve().then(async()=>{
                 const uRef=db.collection('users').doc(u.uid); let reward50=false;
@@ -1980,7 +1991,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 }
                 const rankObj=window.chatRanksData[newRole]||{text:newRole};
                 await db.collection('rooms').doc(window.roomId(window.currentRoom)).collection('messages').add({clientTs:Date.now(),
-                    isSystemGold:true,text:`🎉 تم إهداء العضو [ ${targetUserName} ] رتبة [ ${rankObj.text} ] بواسطة الإدارة العامة 👑`,memberName:targetUserName,rank:newRole,timestamp:FieldValue.serverTimestamp()
+                    isSystemGold:true,text:`🎉 تم إهداء العضو [ ${targetUserName} ] رتبة [ ${rankObj.text} ] بواسطة الإدارة العامة 👑`,memberName:targetUserName,rank:newRole,clientTs:Date.now(),timestamp:FieldValue.serverTimestamp()
                 });
                 alert(credentials ? `🎁 تم إهداء الرتبة وتحويل الزائر إلى حساب محفوظ.\n\nالبريد: ${credentials.email}\nكلمة المرور: ${credentials.password}\n\nاحتفظ بهما للعودة بنفس الحساب والرتبة.` : 'تم تحديث الرتبة ومزامنتها مع حساب العضو والجلسات المفتوحة بنجاح ✅');
                 document.getElementById('featureModal').style.display='none';
@@ -2165,7 +2176,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             window.usersCache[uid]={...(window.usersCache[uid]||{}),...updated,uid};
             if(window.currentUser && window.currentUser.uid===uid){
                 window.currentUser={...window.currentUser,...updated};
-                localStorage.setItem("hassouni_user_session_v11",JSON.stringify(window.currentUser));
+                localStorage.setItem("hassouni_user_session",JSON.stringify(window.currentUser));
                 ui.updateHeaderUserBgIcon();
             }
             db.collection("users").doc(uid).update(updated).then(async () => {
@@ -2210,7 +2221,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             ui.closeAllMicPeers();
             if(u){
                 db.collection("rooms").doc(oldId).collection("presence").doc(`${u.uid}_${window.roomSessionId}`).delete().catch(()=>{});
-                db.collection("rooms").doc(oldId).collection("messages").add({clientTs:Date.now(),type:"system",isSystem:true,text:`🚪 غادر ${u.name||'عضو'} الغرفة إلى [ ${newRoom} ] — ${ui.uiRankText?ui.uiRankText(u.role):'عضو'}`,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',role:u.role||'new'},timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
+                db.collection("rooms").doc(oldId).collection("messages").add({clientTs:Date.now(),type:"system",isSystem:true,text:`🚪 غادر ${u.name||'عضو'} الغرفة إلى [ ${newRoom} ] — ${ui.uiRankText?ui.uiRankText(u.role):'عضو'}`,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',role:u.role||'new'},clientTs:Date.now(),timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
             }
             ui.clearAllListeners();
             window.currentRoom=newRoom; window._roomPresenceData={};
@@ -2219,7 +2230,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             document.getElementById('featureModal').style.display='none';
             ui.enterChat();
             if(u){
-                db.collection("rooms").doc(window.roomId(newRoom)).collection("messages").add({clientTs:Date.now(),type:"system",isSystem:true,text:`👋 انضم ${u.name||'عضو'} إلى الغرفة [ ${newRoom} ] — ${ui.uiRankText?ui.uiRankText(u.role):'عضو'}`,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',role:u.role||'new'},timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
+                db.collection("rooms").doc(window.roomId(newRoom)).collection("messages").add({clientTs:Date.now(),type:"system",isSystem:true,text:`👋 انضم ${u.name||'عضو'} إلى الغرفة [ ${newRoom} ] — ${ui.uiRankText?ui.uiRankText(u.role):'عضو'}`,userId:u.uid,user:{uid:u.uid,name:u.name||'عضو',role:u.role||'new'},clientTs:Date.now(),timestamp:FieldValue.serverTimestamp()}).catch(()=>{});
             }
         },
         startRealtimePresence: () => {
@@ -2290,7 +2301,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             if(window.currentUser){
                 db.collection("rooms").doc(window.roomId(window.currentRoom)).collection("presence").doc(`${window.currentUser.uid}_${window.roomSessionId}`).delete().catch(()=>{});
             }
-            localStorage.removeItem("hassouni_user_session_v11");
+            localStorage.removeItem("hassouni_user_session");
             window.currentUser = null;
             ui.clearAllListeners();
             document.getElementById('featureModal').style.display = 'none';
@@ -2303,7 +2314,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
     window.firebaseWatchdogTimer=setInterval(()=>{
         if(!window.currentUser || !navigator.onLine) return;
         const now=Date.now();
-        const msgStale=!window.lastMessageEventAt || now-window.lastMessageEventAt>120000;
+        const msgStale=(!window._messageSnapshotReady && now-window.realtimeStartedAt>30000) || (window.lastMessageEventAt>0 && now-window.lastMessageEventAt>120000);
         const presenceStale=!window.lastPresenceEventAt || now-window.lastPresenceEventAt>120000;
         if(msgStale || presenceStale){
             if(Date.now()-window.realtimeStartedAt<30000) return;
@@ -2322,6 +2333,6 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
     };
     window.addEventListener('beforeunload',()=>{ if(window.currentUser){ db.collection("rooms").doc(window.roomId(window.currentRoom)).collection("presence").doc(`${window.currentUser.uid}_${window.roomSessionId}`).delete().catch(()=>{}); } });
 </script>
-<script>window.HASSONI_BUILD="V12-FIREBASE-SYNC-FIX";</script>
+<script>window.HASSONI_BUILD="V13-TRUE-CROSS-DEVICE-SYNC";</script>
 </body>
 </html>
