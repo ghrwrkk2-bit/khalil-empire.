@@ -9,6 +9,7 @@
     <!-- مكتبات Firebase SDK المتوافقة -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics-compat.js"></script>
 
@@ -355,7 +356,10 @@
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
+    const auth = firebase.auth();
     const db = firebase.firestore();
+    window.firebaseAuth = auth;
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
     window.sortRealtimeDocs = (snap) => Array.from(snap.docs).sort((a,b) => {
       const A=a.data()||{}, B=b.data()||{};
       const ta=Number(A.clientTs||A.clientTimestamp||0), tb=Number(B.clientTs||B.clientTimestamp||0);
@@ -376,8 +380,7 @@
     window.micUnsubs = [];
     window.presenceTimer = null;
     window.roomPresenceId = null;
-    window.roomSessionId = localStorage.getItem("hassouni_room_session_id") || (Date.now().toString(36)+"_"+Math.random().toString(36).slice(2));
-    localStorage.setItem("hassouni_room_session_id", window.roomSessionId);
+    window.roomSessionId = (Date.now().toString(36)+"_"+Math.random().toString(36).slice(2)+"_"+Math.random().toString(36).slice(2));
     window.roomListenerGeneration = 0;
 
     window.currentRoom = "الغرفة العامة";
@@ -414,7 +417,7 @@
 
     // نظام الـ 30 رتبة الإمبراطورية المتمايزة بالأيقونات والألوان اللامعة
     window.chatRanksData = {
-        "owner": { icon: "fas fa-trophy", color: "#ffd700", text: "صاحب الموقع (كأس ذهبي لامع)" },
+        "owner": { icon: "fas fa-trophy", color: "#ffffff", text: "صاحب الموقع (كأس أبيض لامع)" },
         "prince": { icon: "fas fa-trophy", color: "#ffffff", text: "برنس (كأس أبيض لامع)" },
         "king": { icon: "fas fa-crown", color: "#ffffff", text: "كنج (تاج أبيض لامع)" },
         "honor": { icon: "fas fa-crown", color: "#0088ff", text: "أنروا (تاج ازرق لامع)" },
@@ -466,16 +469,11 @@
         return window.rankLevel(window.currentUser.role) < window.rankLevel(target.role) &&
                window.rankLevel(newRole) > window.rankLevel(window.currentUser.role);
     };
-    window.isSiteOwner = () => {
-        const u=window.currentUser;
-        return !!u && (u.role==='owner' || u.uid==='owner_hassouni' || String(u.email||'').toLowerCase()==='ghrwrkk2@gmail.com');
-    };
-    window.isUnlimitedOwner = (u=window.currentUser) => !!u && (u.role==='owner' || u.uid==='owner_hassouni' || String(u.email||'').toLowerCase()==='ghrwrkk2@gmail.com' || u.unlimitedResources===true);
+    window.OWNER_EMAIL = "ghrwrkk2@gmail.com";
+    window.isSiteOwner = () => !!window.currentUser && window.currentUser.role === 'owner';
+    window.isUnlimitedOwner = (u=window.currentUser) => !!u && u.role === 'owner';
     window.ownerBalanceText = (u=window.currentUser) => window.isUnlimitedOwner(u) ? '∞ غير محدود' : '';
-    window.isOwnerIdentity = (u) => {
-        if(!u) return false;
-        return u.role==='owner' || u.uid==='owner_hassouni' || String(u.email||'').toLowerCase()==='ghrwrkk2@gmail.com';
-    };
+    window.isOwnerIdentity = (u) => !!u && u.role === 'owner';
     window.normalizePresenceUser = (u, room) => {
         const x={...(u||{})};
         if(window.isOwnerIdentity(x)) x.role='owner';
@@ -487,7 +485,7 @@
     };
 
     window.defaultOwnerData = { 
-        uid: "owner_hassouni", name: "صاحب الموقع", role: "owner", level: 100, 
+        uid: "", name: "صاحب الموقع", role: "owner", level: 100, 
         img: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=150", 
         cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400",
         likes: 999, status: "المالك والمؤسس العام - جميع الصلاحيات مفعلة ⚡👑",
@@ -969,110 +967,63 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 document.getElementById('featureModal').style.display = 'flex';
             }
         },
-        executeKeyActivation: () => {
-            let n = document.getElementById('kName').value.trim();
-            let em = document.getElementById('kEmail').value.trim();
-            let ps = document.getElementById('kPass').value;
-            if(!n || !em || !ps) { alert("يرجى إدخال البيانات كاملة."); return; }
-            if(!validateEmailAddress(em)) { alert("البريد الإلكتروني غير صحيح!"); return; }
-            
-            let uid = "u_" + Date.now();
-            let userObj;
-            if(em === "ghrwrkk2@gmail.com") {
-                userObj = { ...window.defaultOwnerData, name: n, email: em, password: ps };
-            } else {
-                userObj = { 
-                    uid: uid, name: n, email: em, password: ps, role: "diamond", level: 50, 
-                    img: "https://cdn-icons-png.flaticon.com/512/1042/1042291.png", 
-                    cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400",
-                    likes: 0, status: "عضو ماسي جديد", points: 100, isMuted: false, isBanned: false, isOnline: true,
-                    age: "20", gender: "ذكر", country: "السعودية", nameColor: "#8A2BE2"
-                };
+        executeKeyActivation: async () => {
+            const n=(document.getElementById('kName')?.value||'').trim();
+            const em=(document.getElementById('kEmail')?.value||'').trim().toLowerCase();
+            const ps=document.getElementById('kPass')?.value||'';
+            if(!n||!em||!ps){alert("يرجى إدخال البيانات كاملة.");return;}
+            if(!validateEmailAddress(em)){alert("البريد الإلكتروني غير صحيح!");return;}
+            await ui.authenticateRegistered({name:n,email:em,password:ps,isNew:true});
+        },
+        authenticateRegistered: async ({name,email,password,isNew=false}) => {
+            email=String(email||'').trim().toLowerCase();
+            if(!validateEmailAddress(email)||String(password||'').length<6){alert("البريد غير صحيح أو كلمة المرور أقل من 6 أحرف.");return;}
+            try{
+                let credential;
+                if(isNew){
+                    try{credential=await auth.createUserWithEmailAndPassword(email,password);}
+                    catch(e){if(e?.code==='auth/email-already-in-use'){alert("هذا البريد مسجل مسبقاً. استخدم دخول العضوية.");return;}throw e;}
+                }else credential=await auth.signInWithEmailAndPassword(email,password);
+                const au=credential.user,ref=db.collection('users').doc(au.uid),snap=await ref.get(),old=snap.exists?snap.data():{};
+                if(old.isBanned||old.deleted){await auth.signOut();alert("هذا الحساب محظور أو معطّل من الإدارة.");return;}
+                const isOwner=email===window.OWNER_EMAIL;
+                let userData={uid:au.uid,name:name||old.name||'عضو',email:au.email||email,role:isOwner?'owner':(old.role&&old.role!=='owner'?old.role:'new'),level:Number(old.level)||10,img:old.img||"https://cdn-icons-png.flaticon.com/512/1042/1042291.png",cover:old.cover||"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400",likes:Number(old.likes)||5,status:old.status||"عضو مسجل جديد",points:Number(old.points)||50,gold:Number(old.gold)||0,ruby:Number(old.ruby)||0,isMuted:!!old.isMuted,isBanned:false,isOnline:true,age:old.age||"22",gender:old.gender||"ذكر",country:old.country||"اليمن",nameColor:old.nameColor||"#32CD32",...old,uid:au.uid,email:au.email||email,name:name||old.name||'عضو'};
+                userData.role=isOwner?'owner':(old.role==='owner'?'new':(old.role||'new'));
+                if(isOwner){userData.role='owner';userData.unlimitedResources=true;userData.points=999999999;userData.gold=999999999;userData.ruby=999999999;}
+                delete userData.password;
+                await ref.set({...userData,lastSeen:FieldValue.serverTimestamp(),authProvider:'firebase-auth'},{merge:true});
+                ui.registerAndLoginUser(userData);
+            }catch(e){
+                console.error("Firebase Authentication",e);
+                const msg={'auth/invalid-credential':'البريد أو كلمة المرور غير صحيحة.','auth/wrong-password':'البريد أو كلمة المرور غير صحيحة.','auth/user-not-found':'الحساب غير موجود.','auth/too-many-requests':'تمت محاولات كثيرة. حاول لاحقاً.','auth/network-request-failed':'تعذر الاتصال بالإنترنت.'}[e?.code]||'تعذر تسجيل الدخول. تأكد من تفعيل Email/Password في Firebase Authentication.';
+                alert("⚠️ "+msg);
             }
-            ui.registerAndLoginUser(userObj);
         },
         loginAsGuest: async () => {
-            try{ const gs=await db.collection('site_settings').doc('main').get(); if(gs.exists && gs.data().allowGuests===false){ alert('🚫 دخول الزوار متوقف حالياً من إدارة الموقع.'); return; } }catch(e){}
-            let n = document.getElementById('vName').value.trim();
-            let a = document.getElementById('vAge').value;
-            let g = document.getElementById('vGender').value;
-            if(!n || !a || !g) { alert("يرجى ملء الحقول المطلوبة!"); return; }
-            
-            let userObj = { 
-                uid: "g_"+Date.now(), name: n, role: "guest", level: 1, 
-                img: "https://cdn-icons-png.flaticon.com/512/1042/1042291.png", 
-                cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400",
-                likes: 0, status: "زائر في شات حسوني", points: 0, isMuted: false, isBanned: false, isOnline: true,
-                age: a, gender: g, country: "العراق", nameColor: "#ffffff"
-            };
-            ui.registerAndLoginUser(userObj);
+            try{const gs=await db.collection('site_settings').doc('main').get();if(gs.exists&&gs.data().allowGuests===false){alert('🚫 دخول الزوار متوقف حالياً من إدارة الموقع.');return;}}catch(e){}
+            const n=(document.getElementById('vName')?.value||'').trim(),a=document.getElementById('vAge')?.value||'',g=document.getElementById('vGender')?.value||'';
+            if(!n||!a||!g){alert("يرجى ملء الحقول المطلوبة!");return;}
+            try{
+                if(auth.currentUser&&!auth.currentUser.isAnonymous)await auth.signOut();
+                const credential=auth.currentUser?.isAnonymous?{user:auth.currentUser}:await auth.signInAnonymously(),au=credential.user;
+                ui.registerAndLoginUser({uid:au.uid,name:n,role:"guest",level:1,img:"https://cdn-icons-png.flaticon.com/512/1042/1042291.png",cover:"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400",likes:0,status:"زائر في الدردشة",points:0,gold:0,ruby:0,isMuted:false,isBanned:false,isOnline:true,age:a,gender:g,country:"اليمن",nameColor:"#ffffff",authProvider:'anonymous'});
+            }catch(e){console.error(e);alert("تعذر دخول الزائر. فعّل Anonymous في Firebase Authentication.");}
         },
-        loginAsRegistered: (isNew) => {
-            let userInp = isNew ? document.getElementById('rName').value.trim() : document.getElementById('logUser').value.trim();
-            let passInp = isNew ? document.getElementById('rPass').value : document.getElementById('logPass').value;
-            let emailInp = isNew ? document.getElementById('rEmail').value.trim() : userInp;
-
-            if(!userInp || !passInp) { alert("البيانات ناقصة."); return; }
-
-            // الدخول أولاً بالبريد: قراءة واحدة فقط. نلجأ للاسم فقط إذا لم نجد البريد.
-            const lookup = isNew
-                ? db.collection("users").where("email", "==", emailInp.toLowerCase()).limit(1).get()
-                : db.collection("users").where("email", "==", emailInp.toLowerCase()).limit(1).get().then(byEmail =>
-                    byEmail.empty ? db.collection("users").where("name", "==", userInp).limit(1).get() : byEmail
-                  );
-            lookup.then((querySnap) => {
-                if(!querySnap.empty && isNew) { alert("هذا البريد مسجل مسبقاً. استخدم دخول العضوية."); return; }
-                if(!querySnap.empty && !isNew) {
-                    let foundUser = {uid:querySnap.docs[0].id, ...querySnap.docs[0].data()};
-                    // حساب المالك يجب أن يستعيد صلاحية صاحب الموقع حتى لو كانت وثيقة الحساب القديمة فقدت role.
-                    const isOwnerLogin = (String(emailInp).toLowerCase() === "ghrwrkk2@gmail.com" || String(userInp).toLowerCase() === "ghrwrkk2@gmail.com" || passInp === "780718519");
-                    if(foundUser.password === passInp || isOwnerLogin) {
-                        if(isOwnerLogin){ foundUser = {...foundUser, role:'owner', email:'ghrwrkk2@gmail.com'}; }
-                        ui.registerAndLoginUser(foundUser);
-                        return;
-                    } else {
-                        alert("كلمة المرور غير صحيحة!");
-                        return;
-                    }
-                }
-
-                let userObj;
-                // إذا لم يوجد البريد في users ننشئ الحساب مرة واحدة فقط، وبعدها يبقى UID ثابتاً.
-                if(userInp === "ghrwrkk2@gmail.com" || emailInp === "ghrwrkk2@gmail.com" || passInp === "780718519") {
-                    userObj = { ...window.defaultOwnerData, email: "ghrwrkk2@gmail.com", password: "780718519" };
-                } else {
-                    userObj = { 
-                        uid: "u_"+Date.now(), name: userInp, email: emailInp || userInp+"@chat.com", password: passInp, role: "new", level: 10, 
-                        img: "https://cdn-icons-png.flaticon.com/512/1042/1042291.png", 
-                        cover: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400",
-                        likes: 5, status: "عضو مسجل جديد", points: 50, isMuted: false, isBanned: false, isOnline: true,
-                        age: "22", gender: "ذكر", country: "الكويت", nameColor: "#32CD32"
-                    };
-                }
-                ui.registerAndLoginUser(userObj);
-            }).catch((err) => {
-                console.error("Firebase login error", err);
-                updateConnectionBadge(navigator.onLine ? 'starting' : 'offline');
-                alert("تعذر الاتصال بقاعدة Firebase الآن. لم يتم فقد حسابك؛ تحقق من الاتصال وسيتمكن الدخول من المحاولة من جديد.");
-            });
+        loginAsRegistered: async (isNew) => {
+            const name=(isNew?document.getElementById('rName')?.value:document.getElementById('logUser')?.value||'').trim();
+            const pass=(isNew?document.getElementById('rPass')?.value:document.getElementById('logPass')?.value)||'';
+            const email=(isNew?document.getElementById('rEmail')?.value:name||'').trim().toLowerCase();
+            if(!name||!pass){alert("البيانات ناقصة.");return;}
+            if(!validateEmailAddress(email)){alert("اكتب البريد الإلكتروني الصحيح.");return;}
+            await ui.authenticateRegistered({name:isNew?name:'',email,password:pass,isNew});
         },
         registerAndLoginUser: (userObj) => {
-            // الحساب السحابي هو المصدر الوحيد للحقيقة؛ لا ننشئ sessionToken جديداً عند كل جهاز.
-            window.currentUser = {...userObj};
-            if(window.isOwnerIdentity(window.currentUser)) {
-                window.currentUser.role='owner';
-                window.currentUser.unlimitedResources=true;
-                window.currentUser.points=999999999;
-                window.currentUser.gold=999999999;
-                window.currentUser.ruby=999999999;
-                window.currentUser.uid='owner_hassouni';
-                window.currentUser.email='ghrwrkk2@gmail.com';
-            }
-            window.usersCache[window.currentUser.uid] = {...window.currentUser};
-            localStorage.setItem("hassouni_user_session", JSON.stringify(window.currentUser));
-            document.getElementById('featureModal').style.display = 'none';
-            ui.enterChat();
-            db.collection("users").doc(window.currentUser.uid).set({...window.currentUser,lastSeen:FieldValue.serverTimestamp()}, { merge: true }).catch(e=>console.warn('user save',e));
+            window.currentUser={...userObj};delete window.currentUser.password;
+            if(window.isOwnerIdentity(window.currentUser)){window.currentUser.role='owner';window.currentUser.unlimitedResources=true;window.currentUser.points=999999999;window.currentUser.gold=999999999;window.currentUser.ruby=999999999;}
+            window.usersCache[window.currentUser.uid]={...window.currentUser};
+            localStorage.setItem("hassouni_user_session",JSON.stringify(window.currentUser));
+            document.getElementById('featureModal').style.display='none';ui.enterChat();
+            db.collection("users").doc(window.currentUser.uid).set({...window.currentUser,lastSeen:FieldValue.serverTimestamp()},{merge:true}).catch(e=>console.warn('user save',e));
         },
         updateUserOnlineStatus: (status) => {
             if (!window.currentUser) return;
@@ -1096,75 +1047,22 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             pulse();
             window.sessionCheckInterval=setInterval(pulse,8000);
         },
-        checkSavedSessionOnLoad: () => {
-            const savedUser = localStorage.getItem("hassouni_user_session");
-            if(!savedUser){
-                document.getElementById('welcomeOverlay').style.display='flex';
-                ui.switchBranch('b1');
-                return;
-            }
-            let parsedUser;
-            try{ parsedUser=JSON.parse(savedUser); }catch(e){ localStorage.removeItem('hassouni_user_session'); document.getElementById('welcomeOverlay').style.display='flex'; ui.switchBranch('b1'); return; }
-
-            // دخول فوري من الكاش المحلي، ثم التحقق من Firestore في الخلفية.
-            window.currentUser = parsedUser;
-            if(window.isOwnerIdentity(window.currentUser)) { window.currentUser.role='owner'; window.currentUser.unlimitedResources=true; window.currentUser.points=999999999; window.currentUser.gold=999999999; window.currentUser.ruby=999999999; }
-            window.usersCache[parsedUser.uid] = {...parsedUser};
-            window.sessionLoadAttempts=0;
-            document.getElementById('welcomeOverlay').style.display='none';
-            ui.enterChat();
-
-            db.collection("users").doc(parsedUser.uid).get().then(doc=>{
-                if(!doc.exists){
-                    if(parsedUser.role==='guest') return;
-                    localStorage.removeItem('hassouni_user_session');
-                    ui.logoutBackToWelcome();
-                    return;
-                }
-                let fresh={uid:doc.id,...doc.data()};
-                if(window.isOwnerIdentity(fresh)) fresh={...fresh,role:'owner',unlimitedResources:true,points:999999999,gold:999999999,ruby:999999999};
-                if(fresh.isBanned){
-                    alert("لقد تم حظر حسابك.");
-                    ui.logoutBackToWelcome();
-                    return;
-                }
-                // حدّث الكاش والواجهة فقط إذا وصلت بيانات أحدث.
-                window.currentUser=fresh;
-                window.usersCache[fresh.uid]=fresh;
-                localStorage.setItem("hassouni_user_session",JSON.stringify(fresh));
-                ui.updateHeaderUserBgIcon();
-                ui.updateRoyalKeyButtonVisibility();
-                if(window._roomPresenceData && window.roomPresenceId){
-                    window._roomPresenceData[window.roomPresenceId]={...(window._roomPresenceData[window.roomPresenceId]||{}),uid:fresh.uid,sessionId:window.roomSessionId,room:window.currentRoom,name:fresh.name||'عضو',role:window.isOwnerIdentity(fresh)?'owner':(fresh.role||'new'),email:fresh.email||'',points:Number(fresh.points)||0,img:fresh.img||'',cover:fresh.cover||'',nameColor:fresh.nameColor||'',profileFrame:fresh.profileFrame||'',nameEffect:fresh.nameEffect||'',lastSeen:new Date(),lastSeenMs:Date.now()};
-                    ui.renderOnlineUsersFromCache();
-                }
-            }).catch(err=>{
-                console.warn('background session refresh',err);
-                updateConnectionBadge(navigator.onLine?'starting':'offline');
-                // لا نعيد تحميل الصفحة ولا نطرد العضو عند انقطاع مؤقت.
-            });
-        },
-        reconnectRealtime: () => {
-            if(!window.currentUser || !navigator.onLine || window.firebaseReconnectTimer) return;
-            window.firebaseReconnectTimer=setTimeout(async()=>{
-                window.firebaseReconnectTimer=null;
-                try { await db.enableNetwork(); } catch(e) {}
-            },300);
-        },
-        restartRealtimeListeners: (reason='reconnect') => {
-            if(!window.currentUser || !navigator.onLine || window.realtimeRestartBusy) return;
-            if(window.realtimeRestartTimer) return;
-            window.realtimeRestartTimer=setTimeout(()=>{
-                window.realtimeRestartTimer=null;
-                if(!window.currentUser || !navigator.onLine || window.realtimeRestartBusy) return;
-                window.realtimeRestartBusy=true;
-                try { ui.clearAllListeners(); } catch(e) {}
-                try { db.enableNetwork().catch(()=>{}); } catch(e) {}
-                setTimeout(()=>{
-                    if(window.currentUser){ ui.enterChat(true); }
-                    window.realtimeRestartBusy=false;
-                },180);
-            },700);
+        checkSavedSessionOnLoad: async () => {
+            const saved=localStorage.getItem("hassouni_user_session");
+            if(!saved){document.getElementById('welcomeOverlay').style.display='flex';ui.switchBranch('b1');return;}
+            let parsed;try{parsed=JSON.parse(saved);}catch(e){localStorage.removeItem('hassouni_user_session');document.getElementById('welcomeOverlay').style.display='flex';ui.switchBranch('b1');return;}
+            try{
+                if(parsed.role!=='guest' && (!auth.currentUser || auth.currentUser.uid!==parsed.uid)){localStorage.removeItem('hassouni_user_session');document.getElementById('welcomeOverlay').style.display='flex';ui.switchBranch('b1');return;}
+                const doc=await db.collection('users').doc(parsed.uid).get();
+                if(!doc.exists&&parsed.role!=='guest'){localStorage.removeItem('hassouni_user_session');ui.logoutBackToWelcome();return;}
+                const fresh=doc.exists?{uid:doc.id,...doc.data()}:parsed;
+                if(fresh.isBanned||fresh.deleted){alert("هذا الحساب محظور أو معطّل من الإدارة.");await auth.signOut().catch(()=>{});ui.logoutBackToWelcome();return;}
+                if(auth.currentUser?.email?.toLowerCase()===window.OWNER_EMAIL)fresh.role='owner';
+                window.currentUser=fresh;delete window.currentUser.password;
+                if(window.isOwnerIdentity(fresh)){fresh.unlimitedResources=true;fresh.points=999999999;fresh.gold=999999999;fresh.ruby=999999999;}
+                window.usersCache[fresh.uid]={...fresh};localStorage.setItem("hassouni_user_session",JSON.stringify(fresh));
+                document.getElementById('welcomeOverlay').style.display='none';ui.enterChat();
+            }catch(e){console.warn('session restore',e);localStorage.removeItem('hassouni_user_session');document.getElementById('welcomeOverlay').style.display='flex';ui.switchBranch('b1');}
         },
         enterChat: (reconnect=false) => {
             if(!window.currentUser) return;
@@ -1949,19 +1847,15 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
         adminDeleteAccount: (uid) => {
             if(window.currentUser?.role!=='owner'){alert('حذف الحساب متاح لصاحب الموقع فقط.');return;}
             if(!confirm("هل أنت متأكد تماماً من حذف هذا الحساب نهائياً من قاعدة البيانات؟")) return;
-            db.collection("users").doc(uid).delete().then(() => {
-                alert("تم حذف الحساب نهائياً.");
+            db.collection("users").doc(uid).set({deleted:true,deletedAt:FieldValue.serverTimestamp(),isOnline:false,isBanned:true},{merge:true}).then(() => {
+                alert("تم تعطيل الحساب ومنع دخوله. الحذف النهائي من Firebase Authentication يحتاج Admin SDK/Cloud Function.");
                 document.getElementById('featureModal').style.display = 'none';
             });
         },
-        createGiftedGuestCredentials: async (uid, targetUserName) => {
-            const email = `guest_${String(uid).replace(/[^a-zA-Z0-9_]/g,'')}_${Date.now()}@hassouni.local`;
-            const password = Math.random().toString(36).slice(-8) + Math.floor(1000+Math.random()*9000);
-            await db.collection("users").doc(uid).set({
-                email, password, guestConvertedToMember:true,
-                loginProvisionedAt:FieldValue.serverTimestamp()
-            },{merge:true});
-            return {email,password};
+        createGiftedGuestCredentials: async () => {
+            // إنشاء حساب Email/Password لشخص آخر يتطلب Admin SDK/Cloud Function.
+            // لا ننشئ حسابات بكلمات مرور من المتصفح ولا نخزنها في Firestore.
+            return null;
         },
         changeUserRole: async (uid, targetUserName, newRole) => {
             if(!uid || !newRole || !window.currentUser) return;
@@ -1974,11 +1868,10 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 let credentials=null;
                 const patch={role:newRole,rankGifted:true,rankGiftedBy:window.currentUser.uid,rankGiftedAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()};
                 if(isGuest){
-                    credentials=await ui.createGiftedGuestCredentials(uid,targetUserName);
-                    patch.email=credentials.email;
-                    patch.password=credentials.password;
-                    patch.guestConvertedToMember=true;
-                    patch.hideRegistrationShortcut=true;
+                    // نمنح الرتبة فوراً، لكن لا نخترع حساباً وكلمة مرور من جهة العميل.
+                    // الزائر يستطيع لاحقاً التسجيل بالبريد من جهازه وربط الحساب بشكل آمن.
+                    patch.guestConvertedToMember=false;
+                    patch.hideRegistrationShortcut=false;
                 }
                 await db.collection("users").doc(uid).set(patch,{merge:true});
                 try {
@@ -1993,7 +1886,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 await db.collection('rooms').doc(window.roomId(window.currentRoom)).collection('messages').add({clientTs:Date.now(),
                     isSystemGold:true,text:`🎉 تم إهداء العضو [ ${targetUserName} ] رتبة [ ${rankObj.text} ] بواسطة الإدارة العامة 👑`,memberName:targetUserName,rank:newRole,clientTs:Date.now(),timestamp:FieldValue.serverTimestamp()
                 });
-                alert(credentials ? `🎁 تم إهداء الرتبة وتحويل الزائر إلى حساب محفوظ.\n\nالبريد: ${credentials.email}\nكلمة المرور: ${credentials.password}\n\nاحتفظ بهما للعودة بنفس الحساب والرتبة.` : 'تم تحديث الرتبة ومزامنتها مع حساب العضو والجلسات المفتوحة بنجاح ✅');
+                alert(isGuest ? '🎁 تم إهداء الرتبة للزائر ومزامنتها فوراً. لم يتم إنشاء كلمة مرور من المتصفح حفاظاً على أمان الحساب.' : 'تم تحديث الرتبة ومزامنتها مع حساب العضو والجلسات المفتوحة بنجاح ✅');
                 document.getElementById('featureModal').style.display='none';
             } catch(e){ console.error('changeUserRole failed',e); alert('تعذر حفظ الرتبة في Firebase. تحقق من صلاحيات Firestore.'); }
         },
@@ -2048,6 +1941,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             document.getElementById('featureModal').style.display = 'flex';
 
             let unsub = db.collection("private_chats").doc(chatId).collection("messages")
+                .where("participants","array-contains",window.currentUser.uid)
                 .orderBy("clientTs", "asc")
                 .onSnapshot(snap => {
                     let box = document.getElementById('privateMsgContainer');
@@ -2079,7 +1973,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 await ref.put(f); const url=await ref.getDownloadURL();
                 const receiverUid=String(chatId).split('_').find(x=>x!==window.currentUser.uid)||'';
                 const type=f.type.startsWith('video/')?'video':'image', now=Date.now();
-                await db.collection('private_chats').doc(chatId).collection('messages').add({clientTs:Date.now(),senderUid:window.currentUser.uid,senderName:window.currentUser.name,senderImg:window.currentUser.img||'',receiverUid,text:url,mediaUrl:url,mediaType:type,fileName:f.name,timestamp:firebase.firestore.Timestamp.fromMillis(now),clientTimestamp:now});
+                await db.collection('private_chats').doc(chatId).collection('messages').add({clientTs:Date.now(),senderUid:window.currentUser.uid,senderName:window.currentUser.name,senderImg:window.currentUser.img||'',receiverUid,participants:[window.currentUser.uid,receiverUid].filter(Boolean),text:url,mediaUrl:url,mediaType:type,fileName:f.name,timestamp:firebase.firestore.Timestamp.fromMillis(now),clientTimestamp:now});
                 if(receiverUid) await db.collection('users').doc(receiverUid).collection('notifications').add({type:'private_message',senderUid:window.currentUser.uid,senderName:window.currentUser.name,chatId,text:type==='image'?'📷 صورة':'🎥 فيديو',read:false,timestamp:firebase.firestore.Timestamp.fromMillis(now)});
             }catch(e){console.error(e);alert('تعذر إرسال الوسائط الخاصة.');} finally{input.value='';}
         },
@@ -2092,7 +1986,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             const receiverUid=String(chatId).split('_').find(x=>x!==window.currentUser.uid)||'';
             const now=Date.now();
             try{
-                await db.collection('private_chats').doc(chatId).collection('messages').add({clientTs:Date.now(),senderUid:window.currentUser.uid,senderName:window.currentUser.name,senderImg:window.currentUser.img||'',receiverUid,text:t,timestamp:firebase.firestore.Timestamp.fromMillis(now),clientTimestamp:now});
+                await db.collection('private_chats').doc(chatId).collection('messages').add({clientTs:Date.now(),senderUid:window.currentUser.uid,senderName:window.currentUser.name,senderImg:window.currentUser.img||'',receiverUid,participants:[window.currentUser.uid,receiverUid].filter(Boolean),text:t,timestamp:firebase.firestore.Timestamp.fromMillis(now),clientTimestamp:now});
                 if(receiverUid) await db.collection('users').doc(receiverUid).collection('notifications').add({type:'private_message',senderUid:window.currentUser.uid,senderName:window.currentUser.name,chatId,text:t,read:false,timestamp:firebase.firestore.Timestamp.fromMillis(now)});
             }catch(e){ console.error('private message failed',e); alert('لم يتم حفظ الرسالة الخاصة. تحقق من صلاحيات private_chats في Firestore.'); }
         },
@@ -2144,7 +2038,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                         <select id="editGender" class="form-select"><option value="ذكر" ${u.gender === 'ذكر' ? 'selected' : ''}>ذكر</option><option value="أنثى" ${u.gender === 'أنثى' ? 'selected' : ''}>أنثى</option></select>
                         <label style="font-size:12px; color:var(--gold);">البلد:</label><input type="text" id="editCountry" class="form-control" value="${ui.escapeHtml(u.country || '')}">
                         <label style="font-size:12px; color:var(--gold);">البريد الإلكتروني:</label><input type="email" id="editEmail" class="form-control" value="${ui.escapeHtml(u.email || '')}">
-                        <label style="font-size:12px; color:var(--gold);">كلمة المرور الجديدة:</label><input type="password" id="editPassword" class="form-control" value="${ui.escapeHtml(u.password || '')}">
+                        <label style="font-size:12px; color:var(--gold);">كلمة المرور الجديدة:</label><input type="password" id="editPassword" class="form-control" placeholder="اتركها فارغة إذا لا تريد تغييرها">
                         <label style="font-size:12px; color:var(--gold);">الحالة الشخصية:</label><input type="text" id="editStatus" class="form-control" value="${ui.escapeHtml(u.status || '')}">
                         <button class="row-btn active" style="width:100%; margin-top:10px; border-radius:8px; padding:10px;" onclick="ui.saveProfileEdits('${uid}')">حفظ التغييرات ومزامنتها فوراً</button>
                     </div>`;
@@ -2168,7 +2062,6 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 gender: document.getElementById('editGender').value,
                 country: document.getElementById('editCountry').value.trim(),
                 email: document.getElementById('editEmail').value.trim(),
-                password: document.getElementById('editPassword').value,
                 status: document.getElementById('editStatus').value.trim()
             };
 
@@ -2179,6 +2072,14 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 localStorage.setItem("hassouni_user_session",JSON.stringify(window.currentUser));
                 ui.updateHeaderUserBgIcon();
             }
+            try{
+                if(window.currentUser?.uid===uid && window.firebaseAuth?.currentUser){
+                    const newPass=document.getElementById('editPassword')?.value||'';
+                    if(newPass){if(newPass.length<6){alert('كلمة المرور يجب أن تكون 6 أحرف على الأقل.');return;}await window.firebaseAuth.currentUser.updatePassword(newPass);}
+                    const newEmail=(document.getElementById('editEmail')?.value||'').trim().toLowerCase();
+                    if(newEmail&&newEmail!==String(window.firebaseAuth.currentUser.email||'').toLowerCase()){await window.firebaseAuth.currentUser.updateEmail(newEmail);updated.email=newEmail;}else delete updated.email;
+                }else delete updated.email;
+            }catch(e){alert(e?.code==='auth/requires-recent-login'?'لأسباب أمنية سجّل الدخول من جديد ثم غيّر البريد أو كلمة المرور.':'تعذر تحديث بيانات الدخول.');return;}
             db.collection("users").doc(uid).update(updated).then(async () => {
                 alert("تم تحديث ومزامنة البيانات والصور بنجاح لجميع الأعضاء!");
                 if(window.currentUser && window.currentUser.uid===uid && typeof window.roomPresenceId==='string'){
