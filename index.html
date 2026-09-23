@@ -694,7 +694,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
         },
         openVIPList: async(kind='الكبار') => {
             const body=document.getElementById('featureModalBody');document.getElementById('featureModalTitle').innerText=kind==='الأثرياء'?'💎 الأثرياء':'👑 الكبار';body.innerHTML='<div style="text-align:center;color:#aaa;padding:20px">جارٍ تحميل القائمة...</div>';document.getElementById('featureModal').style.display='flex';
-            try{const snap=await db.collection('users').limit(500).get();let arr=snap.docs.map(d=>({uid:d.id,...d.data()}));if(kind==='الأثرياء')arr.sort((a,b)=>(b.gold||0)-(a.gold||0)+(b.ruby||0)-(a.ruby||0));else arr.sort((a,b)=>a.role==='owner'?-1:b.role==='owner'?1:(b.points||0)-(a.points||0));const owner=arr.find(u=>u.role==='owner');const richPoints=arr.filter(u=>(u.points||0)>500000&&u.uid!==(owner?.uid||''));const normal=arr.filter(u=>u.uid!==(owner?.uid||'')&&!richPoints.some(x=>x.uid===u.uid));const final=owner?[owner,...richPoints,...normal]:[...richPoints,...normal];body.innerHTML=final.slice(0,100).map((u,i)=>{const r=window.chatRanksData[u.role]||window.chatRanksData.new;return `<div class="online-user-item" style="${i===0?'border:2px solid var(--gold);':''}"><div class="online-user-left" onclick="ui.viewProfileCard('${u.uid}')"><img class="online-user-avatar" src="${u.img||''}"><div><b style="color:${u.nameColor||r.color}">${ui.escapeHtml(u.name||'عضو')}</b><br><small style="color:${r.color}"><i class="${r.icon}"></i> ${r.text} · ${(u.points||0).toLocaleString()} نقطة</small></div></div>${i===0?'<span style="color:var(--gold)">#1 👑</span>':(u.points||0)>500000?'<span style="color:#ffd700">⭐ كبير</span>':''}</div>`}).join('')||'<p>لا يوجد أعضاء.</p>';}catch(e){body.innerHTML='<p style="color:#e74c3c;text-align:center">تعذر تحميل القائمة.</p>'; }
+            try{const snap=await db.collection('users').limit(500).get();let arr=snap.docs.map(d=>({uid:d.id,...d.data()}));if(kind==='الأثرياء')arr.sort((a,b)=>(b.gold||0)-(a.gold||0)+(b.ruby||0)-(a.ruby||0));else arr.sort((a,b)=>a.role==='owner'?-1:b.role==='owner'?1:(b.points||0)-(a.points||0));const owner=arr.find(u=>u.role==='owner');const richPoints=arr.filter(u=>(u.points||0)>500000&&u.uid!==(owner?.uid||''));const normal=arr.filter(u=>u.uid!==(owner?.uid||'')&&!richPoints.some(x=>x.uid===u.uid));const final=owner?[owner,...richPoints,...normal]:[...richPoints,...normal];body.innerHTML=final.slice(0,100).map((u,i)=>{const r=window.chatRanksData[u.role]||window.chatRanksData.new;return `<div class="online-user-item" style="${i===0?'border:2px solid var(--gold);':''}"><div class="online-user-left" onclick="ui.viewProfileCard('${u.uid}')"><img class="online-user-avatar" src="${u.img||''}" onclick="event.stopPropagation();ui.viewProfileCard('${ui.escapeHtml(u.uid||'')}')" style="cursor:pointer"><div><b style="color:${u.nameColor||r.color}">${ui.escapeHtml(u.name||'عضو')}</b><br><small style="color:${r.color}"><i class="${r.icon}"></i> ${r.text} · ${(u.points||0).toLocaleString()} نقطة</small></div></div>${i===0?'<span style="color:var(--gold)">#1 👑</span>':(u.points||0)>500000?'<span style="color:#ffd700">⭐ كبير</span>':''}</div>`}).join('')||'<p>لا يوجد أعضاء.</p>';}catch(e){body.innerHTML='<p style="color:#e74c3c;text-align:center">تعذر تحميل القائمة.</p>'; }
         },
         openSideThreeLinesMenu: () => {
             let isOwner = !!window.currentUser && (window.isSiteOwner() || window.currentUser.role==='prince');
@@ -742,7 +742,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             document.getElementById('featureModal').style.display='flex';
             db.collection('users').orderBy('points','desc').limit(50).get().then(s=>{
                 const el=document.getElementById('friendsWall'); if(!el)return;
-                el.innerHTML=s.docs.map(d=>{const u=d.data(),r=window.chatRanksData[u.role]||window.chatRanksData.new;return `<div class="online-user-item"><div class="online-user-left"><img class="online-user-avatar" src="${u.img||''}"><div><b style="color:${u.nameColor||r.color}">${ui.escapeHtml(u.name||'عضو')}</b><br><small style="color:${r.color}">${r.text} · ${u.points||0} نقطة</small></div></div><button class="row-btn" style="max-width:100px" onclick="ui.viewProfileCard('${d.id}')">الملف</button></div>`}).join('')||'<p style="text-align:center">لا يوجد أعضاء بعد.</p>';
+                el.innerHTML=s.docs.map(d=>{const u=d.data(),r=window.chatRanksData[u.role]||window.chatRanksData.new;return `<div class="online-user-item"><div class="online-user-left"><img class="online-user-avatar" src="${u.img||''}" onclick="event.stopPropagation();ui.viewProfileCard('${ui.escapeHtml(u.uid||'')}')" style="cursor:pointer"><div><b style="color:${u.nameColor||r.color}">${ui.escapeHtml(u.name||'عضو')}</b><br><small style="color:${r.color}">${r.text} · ${u.points||0} نقطة</small></div></div><button class="row-btn" style="max-width:100px" onclick="ui.viewProfileCard('${d.id}')">الملف</button></div>`}).join('')||'<p style="text-align:center">لا يوجد أعضاء بعد.</p>';
             }).catch(()=>{});
         },
         openRanking: (kind) => {
@@ -940,7 +940,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             }
         },
         saveCleanRanks: async()=>{const a=[...document.querySelectorAll('.clean-rank:checked')].map(x=>x.value).slice(0,10);await db.collection('site_settings').doc('main').set({allowedCleanRanks:a},{merge:true});window.siteSettings.allowedCleanRanks=a;alert('✅ تم حفظ الأذونات.');},
-        saveMicCount: async()=>{const n=Math.max(4,Math.min(30,Number(document.getElementById('maxMicInput')?.value)||4));try{await db.collection('site_settings').doc('main').set({maxMicCount:n,updatedAt:FieldValue.serverTimestamp(),updatedBy:window.currentUser.uid},{merge:true});window.maxMicCount=n;window.siteSettings.maxMicCount=n;ui.renderMicSlots(n);alert(`🎙️ تم تحديث عدد المايكات إلى ${n} ومزامنته مع جميع الأجهزة المفتوحة.`);}catch(e){console.error(e);alert('تعذر حفظ عدد المايكات؛ تحقق من صلاحيات Firestore.');}},
+        saveMicCount: async()=>{const n=Math.max(1,Math.min(30,Number(document.getElementById('maxMicInput')?.value)||4));try{await db.collection('site_settings').doc('main').set({maxMicCount:n,updatedAt:FieldValue.serverTimestamp(),updatedBy:window.currentUser.uid},{merge:true});window.maxMicCount=n;window.siteSettings.maxMicCount=n;ui.renderMicSlots(n);alert(`🎙️ تم تحديث عدد المايكات إلى ${n} ومزامنته مع جميع الأجهزة المفتوحة.`);}catch(e){console.error(e);alert('تعذر حفظ عدد المايكات؛ تحقق من صلاحيات Firestore.');}},
         saveLoginSettings: async()=>{const allow=document.getElementById('allowGuestsCheck')?.checked!==false;const f=document.getElementById('loginBgFile')?.files?.[0],ic=document.getElementById('loginIconFile')?.files?.[0];let patch={allowGuests:allow,updatedAt:FieldValue.serverTimestamp(),updatedBy:window.currentUser?.uid||''};try{if(f){const r=storage.ref().child(`site/login/${Date.now()}_${f.name.replace(/[^\w.\-]/g,'_')}`);await r.put(f);patch.loginBg=await r.getDownloadURL();}if(ic){const r2=storage.ref().child(`site/login/icons/${Date.now()}_${ic.name.replace(/[^\w.\-]/g,'_')}`);await r2.put(ic);patch.loginIcon=await r2.getDownloadURL();}await db.collection('site_settings').doc('main').set(patch,{merge:true});window.siteSettings={...window.siteSettings,...patch};ui.applyLoginSettings();alert('🚪 تم حفظ لوحة الدخول والأيقونة ومزامنتها لجميع الأجهزة.');}catch(e){console.error(e);alert('تعذر حفظ إعدادات لوحة الدخول. تحقق من Firebase Storage وFirestore Rules.');}},
         applyLoginSettings:()=>{const ov=document.getElementById('welcomeOverlay'),ic=document.getElementById('loginPanelIcon');if(ic){ic.style.display='grid';ic.style.visibility='visible';ic.style.opacity='1';ic.style.backgroundColor='#111';}if(window.siteSettings.loginBg&&ov)ov.style.backgroundImage=`url('${window.siteSettings.loginBg}')`;if(window.siteSettings.loginIcon&&ic){ic.style.backgroundImage=`url('${window.siteSettings.loginIcon}')`;const i=ic.querySelector('i');if(i)i.style.display='none';}const b=document.querySelector('#b1 button[onclick*="loginAsGuest"]');if(b)b.disabled=window.siteSettings.allowGuests===false;},
         saveBlockedWords: async()=>{const a=(document.getElementById('badWordsInput')?.value||'').split(/\n|,/).map(x=>x.trim()).filter(Boolean).slice(0,200);await db.collection('site_settings').doc('main').set({blockedWords:a},{merge:true});window.siteSettings.blockedWords=a;alert('🔒 تم حفظ الكلمات.');},
@@ -1052,7 +1052,13 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             if(!saved){document.getElementById('welcomeOverlay').style.display='flex';ui.switchBranch('b1');return;}
             let parsed;try{parsed=JSON.parse(saved);}catch(e){localStorage.removeItem('hassouni_user_session');document.getElementById('welcomeOverlay').style.display='flex';ui.switchBranch('b1');return;}
             try{
-                if(parsed.role!=='guest' && (!auth.currentUser || auth.currentUser.uid!==parsed.uid)){localStorage.removeItem('hassouni_user_session');document.getElementById('welcomeOverlay').style.display='flex';ui.switchBranch('b1');return;}
+                // للعضو والضيف نتحقق من هوية Firebase نفسها. لا نعتمد على localStorage لإثبات الهوية.
+                if(!auth.currentUser || auth.currentUser.uid!==parsed.uid){
+                    localStorage.removeItem('hassouni_user_session');
+                    document.getElementById('welcomeOverlay').style.display='flex';
+                    ui.switchBranch('b1');
+                    return;
+                }
                 const doc=await db.collection('users').doc(parsed.uid).get();
                 if(!doc.exists&&parsed.role!=='guest'){localStorage.removeItem('hassouni_user_session');ui.logoutBackToWelcome();return;}
                 const fresh=doc.exists?{uid:doc.id,...doc.data()}:parsed;
@@ -1107,7 +1113,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 if(expectedGeneration!==window.roomListenerGeneration)return;
                 if(!doc.exists)return;
                 window.siteSettings={...window.siteSettings,...doc.data()};
-                window.maxMicCount=Math.max(4,Math.min(30,Number(window.siteSettings.maxMicCount)||4));
+                window.maxMicCount=Math.max(1,Math.min(30,Number(window.siteSettings.maxMicCount)||4));
                 ui.renderMicSlots(window.maxMicCount);
                 ui.applyLoginSettings();
             },(err)=>{ console.warn('site settings realtime',err); });
@@ -1243,8 +1249,13 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
         },
         renderMicSlots: (count=4) => {
             const c=document.getElementById('micsContainer'); if(!c)return;
+            const safeCount=Math.max(1,Math.min(30,Number(count)||4));
             const control=c.querySelector('.mic-control-btn');
-            for(let i=1;i<=count;i++){
+            c.querySelectorAll('.floating-mic-circle[id^="mic_"]').forEach(el=>{
+                const n=Number(String(el.id).replace('mic_',''));
+                if(n>safeCount) el.remove();
+            });
+            for(let i=1;i<=safeCount;i++){
                 if(document.getElementById(`mic_${i}`)) continue;
                 const d=document.createElement('div'); d.className='floating-mic-circle'; d.id=`mic_${i}`; d.onclick=()=>ui.clickMicSlot(i);
                 d.innerHTML=`<i class="fas fa-microphone"></i><span class="mic-num-sub" id="micName_${i}">${i}</span>`;
@@ -1258,7 +1269,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
                 window.lastFirestoreEventAt=Date.now();
                 const active = {};
                 snapshot.forEach(doc => active[doc.data().micNum] = doc.data());
-                const maxMics=Math.max(4,Math.min(30,Number(window.maxMicCount)||4));
+                const maxMics=Math.max(1,Math.min(30,Number(window.maxMicCount)||4));
                 ui.renderMicSlots(maxMics);
                 for(let i=1;i<=maxMics;i++){
                     const slot=document.getElementById(`mic_${i}`), name=document.getElementById(`micName_${i}`);
@@ -1521,7 +1532,7 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
             else if(type==='link' && ytId) body=`<div class="msg-text">🎬 ${ui.escapeHtml(live.name||'عضو')} أرسل فيديو</div><div onclick="ui.openYouTubeMessage('${ytId}')" style="position:relative;width:100%;aspect-ratio:16/9;margin-top:8px;border-radius:12px;overflow:hidden;background:#000;cursor:pointer"><img src="https://i.ytimg.com/vi/${ytId}/hqdefault.jpg" loading="lazy" style="width:100%;height:100%;object-fit:cover"><div style="position:absolute;inset:0;display:grid;place-items:center;font-size:46px;color:#fff;text-shadow:0 2px 8px #000">▶</div></div>`;
             else if(type==='link') body=`<div style="margin-top:8px;padding:10px;border:1px solid #315b80;background:rgba(49,91,128,.12);border-radius:10px"><div style="font-weight:bold;color:#7ec8ff">🔗 رابط من ${ui.escapeHtml(live.name||'عضو')}</div><a href="${ui.escapeHtml(text)}" target="_blank" rel="noopener noreferrer" style="display:block;color:#55aaff;word-break:break-all;margin-top:5px">${ui.escapeHtml(text)}</a></div>`;
             else body=`<div class="msg-text">${ui.escapeHtml(text)}</div>`;
-            div.innerHTML=`<div class="msg-header"><div class="pfp-main-frame shop-avatar-frame frame-${live.profileFrame||''}"><img src="${live.img||''}" class="pfp-main" onclick="event.stopPropagation();ui.viewProfileCard('${live.uid}')"></div><div class="rank-standalone-icon" style="border-color:${rankObj.color}"><i class="${rankObj.icon}" style="color:${rankObj.color}"></i></div><div class="king-name-container" style="border-color:${rankObj.color}" onclick="ui.quoteUserText('${String(live.name||'').replace(/'/g,"\\'")}','')"><span class="king-name-tag ${live.nameEffect?`name-effect effect-${live.nameEffect}`:''}" style="color:${live.nameColor||rankObj.color}">${ui.escapeHtml(live.name)}</span></div></div>${body}<div class="msg-time">${timestamp?.toDate?timestamp.toDate().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'}):'الآن'}</div>`;
+            div.innerHTML=`<div class="msg-header"><div class="pfp-main-frame shop-avatar-frame frame-${live.profileFrame||''}"><img src="${live.img||''}" class="pfp-main" onclick="event.stopPropagation();ui.viewProfileCard('${live.uid}')" style="cursor:pointer"></div><div class="rank-standalone-icon" style="border-color:${rankObj.color}"><i class="${rankObj.icon}" style="color:${rankObj.color}"></i></div><div class="king-name-container" style="border-color:${rankObj.color}" onclick="ui.quoteUserText('${String(live.name||'').replace(/'/g,"\\'")}','')"><span class="king-name-tag ${live.nameEffect?`name-effect effect-${live.nameEffect}`:''}" style="color:${live.nameColor||rankObj.color}">${ui.escapeHtml(live.name)}</span></div></div>${body}<div class="msg-time">${timestamp?.toDate?timestamp.toDate().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'}):'الآن'}</div>`;
             if(box){const nearBottom=(box.scrollHeight-box.scrollTop-box.clientHeight)<240;box.appendChild(div);requestAnimationFrame(()=>{if(nearBottom || document.activeElement===document.getElementById('msgInp')) box.scrollTop=box.scrollHeight;});}
         },
         renderSystemGoldMsg: (data) => {
@@ -2225,11 +2236,20 @@ await db.runTransaction(async tx=>{const s=await tx.get(ref),u=s.data()||{};if((
         }
     },15000);
 
-    window.onload = () => {
+    // ننتظر استعادة Firebase Authentication قبل فحص الجلسة المحلية.
+    // هذا يمنع ظهور لوحة الدخول لحظياً بعد إغلاق/إعادة فتح المتصفح رغم أن العضو ما زال مسجلاً.
+    window.firebaseAuthReady = new Promise(resolve => {
+        let done = false;
+        const finish = user => { if(done) return; done=true; resolve(user||null); };
+        const unsub = auth.onAuthStateChanged(user => { finish(user); try{unsub();}catch(e){} });
+        setTimeout(() => finish(auth.currentUser || null), 7000);
+    });
+
+    window.onload = async () => {
         updateConnectionBadge(navigator.onLine ? 'starting' : 'offline');
-        // لا نوقف شاشة الدخول بانتظار إعدادات الموقع؛ طبّقها فور وصولها.
         ui.applyLoginSettings();
-        ui.checkSavedSessionOnLoad();
+        try { await window.firebaseAuthReady; } catch(e) {}
+        await ui.checkSavedSessionOnLoad();
         window.loadSiteSettings().then(()=>ui.applyLoginSettings()).catch(()=>{});
     };
     window.addEventListener('beforeunload',()=>{ if(window.currentUser){ db.collection("rooms").doc(window.roomId(window.currentRoom)).collection("presence").doc(`${window.currentUser.uid}_${window.roomSessionId}`).delete().catch(()=>{}); } });
