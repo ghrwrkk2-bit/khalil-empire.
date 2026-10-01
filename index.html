@@ -102,9 +102,8 @@
     .user-header { display: flex; align-items: center; gap: 6px; font-weight: bold; font-size: 0.85rem; color: #0f172a; }
     
     .rank-badge-icon {
-      font-size: 0.95rem; display: inline-flex; align-items: center; margin-left: 2px;
+      font-size: 1rem; display: inline-flex; align-items: center; margin-left: 2px;
     }
-    .rank-tag-name { font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; background: #e2e8f0; color: #1e293b; font-weight: bold; margin-left: 4px; }
     
     .msg-text-plain { font-size: 0.9rem; color: #1e293b; margin-top: 2px; word-break: break-word; }
 
@@ -197,13 +196,12 @@
 
     const OWNER_EMAILS = ["ghrwrkk2@gmail.com", "ghrwrkk2@gmamil.com"];
 
-    // قائمة الـ 20 رتبة بالترتيب مع إيقوناتها
     const RANKS_LIST = [
-      { id: 1, title: "صاحب الموقع", icon: "fa-solid fa-trophy", color: "#f59e0b" }, // 1. كأس ذهبي لامع
-      { id: 2, title: "كنج", icon: "fa-solid fa-trophy", color: "#ffffff" },       // 2. كأس أبيض لامع
-      { id: 3, title: "برنس", icon: "fa-solid fa-crown", color: "#ffffff" },       // 3. تاج أبيض لامع
-      { id: 4, title: "إمبراطور", icon: "fa-solid fa-crown", color: "#ef4444" },   // 4. تاج أحمر لامع
-      { id: 5, title: "أدمن", icon: "fa-solid fa-crown", color: "#f59e0b" },       // 5. تاج ذهبي لامع
+      { id: 1, title: "صاحب الموقع", icon: "fa-solid fa-trophy", color: "#f59e0b" },
+      { id: 2, title: "كنج", icon: "fa-solid fa-trophy", color: "#ffffff" },
+      { id: 3, title: "برنس", icon: "fa-solid fa-crown", color: "#ffffff" },
+      { id: 4, title: "إمبراطور", icon: "fa-solid fa-crown", color: "#ef4444" },
+      { id: 5, title: "أدمن", icon: "fa-solid fa-crown", color: "#f59e0b" },
       { id: 6, title: "نائب المالك", icon: "fa-solid fa-shield-halved", color: "#8b5cf6" },
       { id: 7, title: "إدارة العليا", icon: "fa-solid fa-user-shield", color: "#06b6d4" },
       { id: 8, title: "مشرف عام", icon: "fa-solid fa-star", color: "#3b82f6" },
@@ -244,15 +242,23 @@
     let micSlotsState = [null, null, null, null, null];
     let privateMessages = [];
 
-    function checkSavedSession() {
+    async function checkSavedSession() {
       const savedUser = localStorage.getItem('chat_user_session');
       if (savedUser) {
         currentUser = JSON.parse(savedUser);
+
+        // التحقق المباشر من بريد المالك عند التحديث لمنع تحوله إلى زائر
+        if (currentUser.email && OWNER_EMAILS.includes(currentUser.email.toLowerCase())) {
+          currentUser.isOwner = true;
+          currentUser.isVisitor = false;
+          currentUser.rankId = 1;
+        }
+
         document.getElementById('login-modal').style.display = 'none';
         updateKeyButtonVisibility();
-        syncUserDataToFirestore();
-        listenMessages();
+        await syncUserDataToFirestore();
         listenUsersSync();
+        listenMessages();
       } else {
         document.getElementById('login-modal').style.display = 'flex';
       }
@@ -267,7 +273,9 @@
         
         if (docSnap.exists()) {
           const dbData = docSnap.data();
-          currentUser.rankId = dbData.rankId || currentUser.rankId;
+          currentUser.rankId = dbData.rankId !== undefined ? dbData.rankId : currentUser.rankId;
+          currentUser.isOwner = dbData.isOwner !== undefined ? dbData.isOwner : currentUser.isOwner;
+          currentUser.isVisitor = dbData.isVisitor !== undefined ? dbData.isVisitor : currentUser.isVisitor;
           currentUser.isMuted = dbData.isMuted || false;
           currentUser.isBanned = dbData.isBanned || false;
           currentUser.avatar = dbData.avatar || currentUser.avatar;
@@ -277,6 +285,12 @@
           currentUser.gender = dbData.gender || currentUser.gender;
           currentUser.country = dbData.country || currentUser.country;
           currentUser.info = dbData.info || currentUser.info;
+          
+          if (currentUser.email && OWNER_EMAILS.includes(currentUser.email.toLowerCase())) {
+            currentUser.isOwner = true;
+            currentUser.rankId = 1;
+          }
+
           localStorage.setItem('chat_user_session', JSON.stringify(currentUser));
         } else {
           await setDoc(userRef, currentUser, { merge: true });
@@ -287,7 +301,7 @@
           logout();
         }
       } catch (err) {
-        console.error("خطأ في المزامنة مع Firestore:", err);
+        console.error("خطأ في المزامنة:", err);
       }
     }
 
@@ -338,8 +352,8 @@
       localStorage.setItem('chat_user_session', JSON.stringify(currentUser));
       document.getElementById('login-modal').style.display = 'none';
       updateKeyButtonVisibility();
-      listenMessages();
       listenUsersSync();
+      listenMessages();
     };
 
     window.registerVisitorToDiamond = async () => {
@@ -352,7 +366,7 @@
       currentUser.name = name;
       currentUser.email = email;
       currentUser.isVisitor = false;
-      currentUser.rankId = 11; // VIP/ماس
+      currentUser.rankId = 11;
 
       await setDoc(doc(db, "users", currentUser.name), currentUser, { merge: true });
       localStorage.setItem('chat_user_session', JSON.stringify(currentUser));
@@ -390,7 +404,15 @@
           const uData = docSnap.data();
           onlineUsersMap.set(uData.name, uData);
           if (uData.name === currentUser.name) {
-            currentUser = uData;
+            currentUser.rankId = uData.rankId !== undefined ? uData.rankId : currentUser.rankId;
+            currentUser.isMuted = uData.isMuted || false;
+            currentUser.isBanned = uData.isBanned || false;
+            
+            if (currentUser.email && OWNER_EMAILS.includes(currentUser.email.toLowerCase())) {
+              currentUser.isOwner = true;
+              currentUser.rankId = 1;
+            }
+
             localStorage.setItem('chat_user_session', JSON.stringify(currentUser));
             if(currentUser.isBanned) {
               alert("تم حظر حسابك!");
@@ -421,7 +443,8 @@
             };
 
             const rankInfo = getRankObj(senderData.rankId);
-            const rankHtml = `<i class="${rankInfo.icon} rank-badge-icon" style="color:${rankInfo.color};" title="${rankInfo.title}"></i><span class="rank-tag-name">${rankInfo.title}</span>`;
+            // إظهار الأيقونة فقط بدون النص داخل الشات العام
+            const rankHtml = `<i class="${rankInfo.icon} rank-badge-icon" style="color:${rankInfo.color};" title="${rankInfo.title}"></i>`;
 
             area.innerHTML += `
               <div class="msg-item" onclick="openProfileByName('${data.sender}')">
@@ -448,7 +471,7 @@
 
       sortedUsers.forEach(user => {
         const rankInfo = getRankObj(user.rankId || 20);
-        const rankHtml = `<i class="${rankInfo.icon} rank-badge-icon" style="color:${rankInfo.color};" title="${rankInfo.title}"></i><span class="rank-tag-name">${rankInfo.title}</span>`;
+        const rankHtml = `<i class="${rankInfo.icon} rank-badge-icon" style="color:${rankInfo.color};" title="${rankInfo.title}"></i><span style="font-size:0.75rem; background:#e2e8f0; padding:2px 6px; border-radius:10px; font-weight:bold; margin-left:4px;">${rankInfo.title}</span>`;
 
         container.innerHTML += `
           <div class="online-item" onclick="openProfileByName('${user.name}')">
@@ -485,7 +508,10 @@
       selectedUserForProfile = userObj;
       const isSelf = (currentUser.name === userObj.name);
 
+      const rankInfo = getRankObj(userObj.rankId || 20);
+
       document.getElementById('prof-name').innerText = userObj.name;
+      document.getElementById('prof-rank-display').innerHTML = `<i class="${rankInfo.icon}" style="color:${rankInfo.color};"></i> ${rankInfo.title}`;
       document.getElementById('prof-img').src = userObj.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userObj.name)}`;
       
       if(userObj.cover) {
@@ -502,7 +528,6 @@
       document.getElementById('self-edit-box').style.display = isSelf ? 'block' : 'none';
       document.getElementById('profile-actions').style.display = !isSelf ? 'grid' : 'none';
 
-      // لوحة التحكم الخاصة بصاحب الموقع (إهداء رتبة، طرد، حظر، كتم)
       const ownerControlBox = document.getElementById('owner-gift-rank-box');
       if (currentUser.isOwner && !isSelf) {
         ownerControlBox.style.display = 'block';
@@ -529,16 +554,8 @@
       const targetName = selectedUserForProfile.name;
       const rankObj = getRankObj(selectedRankId);
 
-      // تحديث الرتبة فوراً في Firestore
       await setDoc(doc(db, "users", targetName), { rankId: selectedRankId }, { merge: true });
 
-      // إذا كان المستخدم المتأثر متصل أونلاين
-      if (onlineUsersMap.has(targetName)) {
-        const u = onlineUsersMap.get(targetName);
-        u.rankId = selectedRankId;
-      }
-
-      // إرسال إعلان عام للجميع في الشات
       await addDoc(collection(db, "chat_messages"), {
         isSystem: true,
         text: `🎉 تم إهداء العضو [ ${targetName} ] من قبل مالك الموقع حسوني رتبة [ ${rankObj.title} ]!`,
@@ -549,7 +566,6 @@
       closeModal('profile-modal');
     };
 
-    // إدارة الصلاحيات للمالك (حظر / طرد / كتم)
     window.ownerAction = async (actionType) => {
       if (!currentUser.isOwner) return alert("عذراً، هذه الصلاحية لمالك الموقع فقط!");
       const targetName = selectedUserForProfile.name;
@@ -918,6 +934,7 @@
         <img src="" id="prof-img" class="profile-avatar" alt="Avatar">
       </div>
       <h3 id="prof-name">اسم العضو</h3>
+      <div id="prof-rank-display" style="font-size:0.85rem; font-weight:bold; color:#2563eb; margin-bottom:8px;"></div>
 
       <div class="profile-actions-grid" id="profile-actions">
         <div class="action-btn" onclick="openPrivateChatFromProfile()"><i class="fa-solid fa-envelope"></i>خاص</div>
@@ -1082,7 +1099,7 @@
   <div class="modal-overlay" id="icon-menu-modal">
     <div class="modal-card">
       <span class="close-modal" onclick="closeModal('icon-menu-modal')">&times;</span>
-      <h3 style="padding:12px; background:#1e293b; color:#fff;">أيقونة الحساب ⚙️</h3>
+      <h3 style="padding:12px; background:#1e293b; color:#fff;">أيقونة الحساب ⚙️️</h3>
       <div class="menu-list">
         <div class="menu-item"><i class="fa-solid fa-gear"></i> إعدادات الدردشة</div>
         <div class="menu-item"><i class="fa-solid fa-wallet"></i> محفظة</div>
