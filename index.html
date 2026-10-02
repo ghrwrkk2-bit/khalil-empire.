@@ -18,34 +18,58 @@
       height: 100dvh; 
       width: 100%; 
       overflow: hidden; 
-      background: #e2e8f0; 
+      background: #0f172a; 
       display: flex; 
       flex-direction: column; 
     }
 
-    /* 1. نافذة تسجيل الدخول */
+    /* 1. نافذة تسجيل الدخول الشاملة */
     #login-modal, #register-modal {
-      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px);
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px);
       z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 15px;
+      overflow-y: auto;
     }
     .login-box {
-      background: #ffffff; width: 100%; max-width: 360px; border-radius: 20px; overflow: hidden;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.5); text-align: center;
+      background: #1e293b; width: 100%; max-width: 420px; border-radius: 20px; overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6); text-align: center; border: 1px solid #334155;
+      color: #fff; margin: auto;
     }
-    .login-header { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; padding: 20px 15px; }
-    .login-header h2 { font-size: 1.2rem; margin-bottom: 4px; color: #38bdf8; }
-    .login-tabs { display: flex; background: #f1f5f9; border-bottom: 1px solid #cbd5e1; }
-    .tab-btn { flex: 1; padding: 12px; border: none; background: none; font-weight: bold; color: #64748b; cursor: pointer; }
-    .tab-btn.active { background: #fff; color: #2563eb; border-bottom: 3px solid #2563eb; }
+    .login-header-banner {
+      background: linear-gradient(135deg, #1e1b4b, #312e81);
+      padding: 20px 15px; border-bottom: 2px solid #ec4899;
+    }
+    .chat-logo-title {
+      font-size: 1.6rem; font-weight: bold; color: #ec4899; margin-bottom: 5px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .chat-subtitle { font-size: 0.85rem; color: #cbd5e1; }
+    
+    .login-tabs { display: flex; background: #0f172a; padding: 4px; border-bottom: 1px solid #334155; }
+    .tab-btn { flex: 1; padding: 12px; border: none; background: none; font-weight: bold; color: #94a3b8; cursor: pointer; border-radius: 8px; transition: 0.3s; }
+    .tab-btn.active { background: #ec4899; color: #fff; }
+
     .login-body { padding: 20px; text-align: right; }
-    .input-group { margin-bottom: 12px; }
-    .input-group label { font-size: 0.75rem; font-weight: bold; color: #475569; display: block; margin-bottom: 4px; }
+    .input-group { margin-bottom: 14px; }
+    .input-group label { font-size: 0.8rem; font-weight: bold; color: #cbd5e1; display: block; margin-bottom: 6px; }
     .input-group input, .edit-input, .edit-select {
-      width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; font-size: 0.85rem; margin-bottom: 6px;
+      width: 100%; padding: 12px; border: 1px solid #334155; border-radius: 8px; outline: none; font-size: 0.9rem;
+      background: #0f172a; color: #fff;
     }
+    .input-group input:focus { border-color: #ec4899; }
+    
     .btn-submit {
-      width: 100%; padding: 12px; background: #2563eb; color: #fff; border: none; border-radius: 10px;
-      font-weight: bold; cursor: pointer; font-size: 0.95rem; margin-top: 5px;
+      width: 100%; padding: 12px; background: #ec4899; color: #fff; border: none; border-radius: 10px;
+      font-weight: bold; cursor: pointer; font-size: 0.95rem; margin-top: 8px; transition: 0.3s;
+    }
+    .btn-submit:hover { background: #db2777; }
+
+    /* خيارات الدخول الإضافية */
+    .quick-entry-box {
+      margin-top: 15px; padding-top: 15px; border-top: 1px solid #334155; text-align: center;
+    }
+    .btn-guest-direct {
+      width: 100%; padding: 10px; background: #3b82f6; color: #fff; border: none; border-radius: 8px;
+      font-weight: bold; cursor: pointer; font-size: 0.85rem; margin-top: 6px;
     }
 
     /* 2. الشريط العلوي */
@@ -64,25 +88,25 @@
     }
     .mics-group-frame {
       display: inline-flex; justify-content: center; gap: 10px; padding: 6px 14px;
-      border: 2px solid #3b82f6; border-radius: 30px; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(4px);
+      border: 2px solid #ec4899; border-radius: 30px; background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(4px);
       transition: all 0.3s ease;
     }
     .mics-group-frame.hidden-mics { display: none !important; }
     
     .mic-slot-wrapper { display: flex; flex-direction: column; align-items: center; width: 45px; }
     .mic-slot {
-      width: 40px; height: 40px; border-radius: 50%; background: #2563eb; background-size: cover; background-position: center;
+      width: 40px; height: 40px; border-radius: 50%; background: #ec4899; background-size: cover; background-position: center;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      color: white; font-size: 0.7rem; border: 2px solid #60a5fa; cursor: pointer; position: relative;
+      color: white; font-size: 0.7rem; border: 2px solid #f472b6; cursor: pointer; position: relative;
     }
     .mic-slot.occupied { border-color: #10b981; }
     .mic-slot.muted::after { content: "🔇"; position: absolute; top:-5px; right:-5px; font-size: 0.75rem; }
-    .mic-user-name { font-size: 0.6rem; color: #0f172a; font-weight: bold; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 45px; text-align: center; }
+    .mic-user-name { font-size: 0.6rem; color: #ffffff; font-weight: bold; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 45px; text-align: center; }
 
     .mic-toggle-controls {
       display: flex; align-items: center; justify-content: center; gap: 8px;
-      padding: 2px 12px; margin-top: 4px; background: #cbd5e1; border-radius: 12px;
-      cursor: pointer; font-size: 0.75rem; color: #1e293b; font-weight: bold;
+      padding: 2px 12px; margin-top: 4px; background: #334155; border-radius: 12px;
+      cursor: pointer; font-size: 0.75rem; color: #fff; font-weight: bold;
     }
 
     /* 4. منطقة الشات */
@@ -90,22 +114,22 @@
       flex: 1; 
       overflow-y: auto; 
       padding: 10px; 
-      background: #f1f5f9; 
+      background: #0f172a; 
       display: flex; 
       flex-direction: column; 
       gap: 10px; 
     }
-    .msg-item { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
+    .msg-item { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; background: #1e293b; padding: 8px; border-radius: 10px; border: 1px solid #334155; }
     .system-msg-item { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 10px; padding: 8px 12px; text-align: center; font-size: 0.85rem; color: #92400e; font-weight: bold; margin: 4px 0; }
-    .user-avatar { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid #3b82f6; }
+    .user-avatar { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899; }
     .msg-content { display: flex; flex-direction: column; }
-    .user-header { display: flex; align-items: center; gap: 6px; font-weight: bold; font-size: 0.85rem; color: #0f172a; }
+    .user-header { display: flex; align-items: center; gap: 6px; font-weight: bold; font-size: 0.85rem; color: #ffffff; }
     
     .rank-badge-icon {
       font-size: 1rem; display: inline-flex; align-items: center; margin-left: 2px;
     }
     
-    .msg-text-plain { font-size: 0.9rem; color: #1e293b; margin-top: 2px; word-break: break-word; }
+    .msg-text-plain { font-size: 0.9rem; color: #cbd5e1; margin-top: 2px; word-break: break-word; }
 
     /* إطارات الاسم */
     .frame-none { border: none; padding: 0; }
@@ -115,66 +139,66 @@
 
     /* 5. شريط الكتابة */
     .input-bar {
-      background: #fff; padding: 6px 10px; display: flex; align-items: center; gap: 8px;
-      border-top: 1px solid #cbd5e1; direction: rtl; flex-shrink: 0;
+      background: #1e293b; padding: 6px 10px; display: flex; align-items: center; gap: 8px;
+      border-top: 1px solid #334155; direction: rtl; flex-shrink: 0;
     }
-    .icon-btn { background: none; border: none; font-size: 1.2rem; color: #475569; cursor: pointer; }
-    .input-wrapper { flex: 1; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 20px; display: flex; align-items: center; padding: 0 10px; }
-    .input-wrapper input { width: 100%; padding: 8px; border: none; outline: none; font-size: 0.9rem; background: transparent; }
+    .icon-btn { background: none; border: none; font-size: 1.2rem; color: #94a3b8; cursor: pointer; }
+    .input-wrapper { flex: 1; background: #0f172a; border: 1px solid #334155; border-radius: 20px; display: flex; align-items: center; padding: 0 10px; }
+    .input-wrapper input { width: 100%; padding: 8px; border: none; outline: none; font-size: 0.9rem; background: transparent; color: #fff; }
     .send-btn-main {
-      background: #2563eb; color: white; border: none; width: 38px; height: 38px;
+      background: #ec4899; color: white; border: none; width: 38px; height: 38px;
       border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;
     }
 
     /* 6. الشريط السفلي */
     .bottom-main-nav {
-      background: #ffffff; border-top: 1px solid #cbd5e1; display: flex;
+      background: #1e293b; border-top: 1px solid #334155; display: flex;
       justify-content: space-around; padding: 6px 0; direction: rtl; flex-shrink: 0;
     }
-    .bottom-tab { text-align: center; color: #64748b; font-size: 0.65rem; text-decoration: none; flex: 1; cursor: pointer; }
+    .bottom-tab { text-align: center; color: #94a3b8; font-size: 0.65rem; text-decoration: none; flex: 1; cursor: pointer; }
     .bottom-tab i { font-size: 1.1rem; display: block; margin-bottom: 2px; }
 
     /* النوافذ المنبثقة */
     .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 10000;
+      position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000;
       display: none; align-items: center; justify-content: center; padding: 15px;
     }
     .modal-card {
-      background: #fff; width: 100%; max-width: 380px; border-radius: 16px; overflow: hidden;
-      box-shadow: 0 5px 25px rgba(0,0,0,0.3); position: relative; text-align: center;
-      max-height: 90vh; overflow-y: auto;
+      background: #1e293b; width: 100%; max-width: 380px; border-radius: 16px; overflow: hidden;
+      box-shadow: 0 5px 25px rgba(0,0,0,0.5); position: relative; text-align: center;
+      max-height: 90vh; overflow-y: auto; color: #fff; border: 1px solid #334155;
     }
     .close-modal { position: absolute; top: 10px; left: 10px; font-size: 1.2rem; cursor: pointer; color: #fff; background: rgba(0,0,0,0.4); width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; z-index: 10; }
 
-    .profile-cover { height: 110px; background: linear-gradient(135deg, #2563eb, #0f172a); background-size: cover; background-position: center; position: relative; }
+    .profile-cover { height: 110px; background: linear-gradient(135deg, #ec4899, #0f172a); background-size: cover; background-position: center; position: relative; }
     .profile-avatar-container { position: relative; width: 75px; height: 75px; margin: -38px auto 6px; }
-    .profile-avatar { width: 100%; height: 100%; border-radius: 50%; border: 3px solid #fff; object-fit: cover; background: #fff; }
+    .profile-avatar { width: 100%; height: 100%; border-radius: 50%; border: 3px solid #1e293b; object-fit: cover; background: #fff; }
 
-    .profile-actions-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 10px 15px; border-bottom: 1px solid #f1f5f9; }
-    .action-btn { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px; font-size: 0.75rem; color: #1e293b; cursor: pointer; font-weight: bold; }
-    .action-btn i { color: #2563eb; margin-bottom: 3px; display: block; font-size: 0.9rem; }
+    .profile-actions-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 10px 15px; border-bottom: 1px solid #334155; }
+    .action-btn { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 8px; font-size: 0.75rem; color: #fff; cursor: pointer; font-weight: bold; }
+    .action-btn i { color: #ec4899; margin-bottom: 3px; display: block; font-size: 0.9rem; }
 
-    .profile-info-list { text-align: right; padding: 10px 15px; font-size: 0.8rem; color: #334155; }
-    .profile-info-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #e2e8f0; }
+    .profile-info-list { text-align: right; padding: 10px 15px; font-size: 0.8rem; color: #cbd5e1; }
+    .profile-info-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #334155; }
 
     .plus-menu-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 15px; text-align: center; }
-    .plus-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 5px; cursor: pointer; font-size: 0.75rem; font-weight: bold; color: #1e293b; }
-    .plus-item i { font-size: 1.4rem; display: block; margin-bottom: 5px; color: #2563eb; }
+    .plus-item { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 10px 5px; cursor: pointer; font-size: 0.75rem; font-weight: bold; color: #fff; }
+    .plus-item i { font-size: 1.4rem; display: block; margin-bottom: 5px; color: #ec4899; }
 
     .menu-list { text-align: right; padding: 10px; max-height: 350px; overflow-y: auto; }
-    .menu-item { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #1e293b; cursor: pointer; font-weight: bold; }
-    .menu-item:hover { background: #f8fafc; color: #2563eb; }
-    .menu-item i { width: 20px; color: #2563eb; text-align: center; }
+    .menu-item { padding: 10px 12px; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #fff; cursor: pointer; font-weight: bold; }
+    .menu-item:hover { background: #0f172a; color: #ec4899; }
+    .menu-item i { width: 20px; color: #ec4899; text-align: center; }
 
     .online-list { max-height: 300px; overflow-y: auto; text-align: right; padding: 10px; }
-    .online-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
+    .online-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #334155; cursor: pointer; }
 
     /* محادثة خاصة */
     .private-chat-box { display: flex; flex-direction: column; height: 350px; }
-    .private-messages { flex: 1; overflow-y: auto; padding: 10px; background: #f8fafc; display: flex; flex-direction: column; gap: 8px; text-align: right; }
+    .private-messages { flex: 1; overflow-y: auto; padding: 10px; background: #0f172a; display: flex; flex-direction: column; gap: 8px; text-align: right; }
     .p-msg { max-width: 80%; padding: 8px 12px; border-radius: 12px; font-size: 0.85rem; }
-    .p-msg.me { background: #2563eb; color: #fff; align-self: flex-start; }
-    .p-msg.other { background: #e2e8f0; color: #0f172a; align-self: flex-end; }
+    .p-msg.me { background: #ec4899; color: #fff; align-self: flex-start; }
+    .p-msg.other { background: #334155; color: #fff; align-self: flex-end; }
   </style>
 
   <!-- Firebase JS SDK -->
@@ -230,8 +254,8 @@
       nameFrame: "frame-none",
       age: "غير محدد",
       gender: "غير محدد",
-      country: "غير محدد",
-      info: "مرحباً بي في شات نرمين أحلى شات عربي!",
+      country: "اليمن",
+      info: "أهلاً وسهلاً بكم في شات نرمين .. أفضل شات عربي",
       isMuted: false,
       isBanned: false
     };
@@ -247,7 +271,6 @@
       if (savedUser) {
         currentUser = JSON.parse(savedUser);
 
-        // التحقق المباشر من بريد المالك عند التحديث لمنع تحوله إلى زائر
         if (currentUser.email && OWNER_EMAILS.includes(currentUser.email.toLowerCase())) {
           currentUser.isOwner = true;
           currentUser.isVisitor = false;
@@ -332,7 +355,7 @@
       const isMember = document.getElementById('tab-member').classList.contains('active');
 
       currentUser = {
-        name: name,
+        name: name + (!isMember && !isOwner ? " (زائر)" : ""),
         email: email,
         isOwner: isOwner,
         isVisitor: !isMember && !isOwner,
@@ -343,7 +366,7 @@
         age: "22",
         gender: "ذكر",
         country: "اليمن",
-        info: "عضو في شات نرمين أحلى شات عربي",
+        info: "أهلاً وسهلاً بكم في شات نرمين .. أفضل شات عربي",
         isMuted: false,
         isBanned: false
       };
@@ -443,7 +466,6 @@
             };
 
             const rankInfo = getRankObj(senderData.rankId);
-            // إظهار الأيقونة فقط بدون النص داخل الشات العام
             const rankHtml = `<i class="${rankInfo.icon} rank-badge-icon" style="color:${rankInfo.color};" title="${rankInfo.title}"></i>`;
 
             area.innerHTML += `
@@ -471,7 +493,7 @@
 
       sortedUsers.forEach(user => {
         const rankInfo = getRankObj(user.rankId || 20);
-        const rankHtml = `<i class="${rankInfo.icon} rank-badge-icon" style="color:${rankInfo.color};" title="${rankInfo.title}"></i><span style="font-size:0.75rem; background:#e2e8f0; padding:2px 6px; border-radius:10px; font-weight:bold; margin-left:4px;">${rankInfo.title}</span>`;
+        const rankHtml = `<i class="${rankInfo.icon} rank-badge-icon" style="color:${rankInfo.color};" title="${rankInfo.title}"></i><span style="font-size:0.75rem; background:#334155; color:#fff; padding:2px 6px; border-radius:10px; font-weight:bold; margin-left:4px;">${rankInfo.title}</span>`;
 
         container.innerHTML += `
           <div class="online-item" onclick="openProfileByName('${user.name}')">
@@ -498,8 +520,8 @@
         avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`,
         age: "20",
         gender: "غير محدد",
-        country: "غير محدد",
-        info: "عضو في الشات"
+        country: "اليمن",
+        info: "عضو في شات نرمين"
       };
       openProfile(u);
     };
@@ -517,7 +539,7 @@
       if(userObj.cover) {
         document.getElementById('prof-cover').style.backgroundImage = `url('${userObj.cover}')`;
       } else {
-        document.getElementById('prof-cover').style.backgroundImage = 'linear-gradient(135deg, #2563eb, #0f172a)';
+        document.getElementById('prof-cover').style.backgroundImage = 'linear-gradient(135deg, #ec4899, #0f172a)';
       }
 
       document.getElementById('prof-age').innerText = userObj.age || "22";
@@ -558,7 +580,7 @@
 
       await addDoc(collection(db, "chat_messages"), {
         isSystem: true,
-        text: `🎉 تم إهداء العضو [ ${targetName} ] من قبل مالك الموقع حسوني رتبة [ ${rankObj.title} ]!`,
+        text: `🎉 تم إهداء العضو [ ${targetName} ] من قبل مالك الموقع رتبة [ ${rankObj.title} ]!`,
         timestamp: serverTimestamp()
       });
 
@@ -575,14 +597,14 @@
         await setDoc(doc(db, "users", targetName), { isMuted: newMuteState }, { merge: true });
         await addDoc(collection(db, "chat_messages"), {
           isSystem: true,
-          text: `🚨 قام مالك الموقع حسوني بـ ${newMuteState ? 'كتم' : 'فك كتم'} العضو [ ${targetName} ].`,
+          text: `🚨 قام مالك الموقع بـ ${newMuteState ? 'كتم' : 'فك كتم'} العضو [ ${targetName} ].`,
           timestamp: serverTimestamp()
         });
         alert(`تم ${newMuteState ? 'كتم' : 'فك كتم'} العضو بنجاح!`);
       } else if (actionType === 'kick') {
         await addDoc(collection(db, "chat_messages"), {
           isSystem: true,
-          text: `👞 قام مالك الموقع حسوني بطرد العضو [ ${targetName} ] من الشات!`,
+          text: `👞 قام مالك الموقع بطرد العضو [ ${targetName} ] من الشات!`,
           timestamp: serverTimestamp()
         });
         alert(`تم طرد العضو ${targetName}!`);
@@ -590,7 +612,7 @@
         await setDoc(doc(db, "users", targetName), { isBanned: true }, { merge: true });
         await addDoc(collection(db, "chat_messages"), {
           isSystem: true,
-          text: `🚫 قام مالك الموقع حسوني بحظر العضو [ ${targetName} ] نهائياً من الشات!`,
+          text: `🚫 قام مالك الموقع بحظر العضو [ ${targetName} ] نهائياً من الشات!`,
           timestamp: serverTimestamp()
         });
         alert(`تم حظر العضو ${targetName} بنجاح!`);
@@ -806,35 +828,47 @@
 </head>
 <body>
 
-  <!-- 1. نافذة تسجيل الدخول الرئيسية -->
+  <!-- 1. نافذة تسجيل الدخول الرئيسية بنفس تصميم الصورة ورائعة الاسم -->
   <div id="login-modal">
     <div class="login-box">
-      <div class="login-header">
-        <h2>شات نرمين أحلى شات عربي ✨</h2>
+      <div class="login-header-banner">
+        <div class="chat-logo-title">
+          <i class="fa-solid fa-comments"></i> شات نرمين
+        </div>
+        <p class="chat-subtitle">أهلاً وسهلاً بكم في شات نرمين .. أفضل شات عربي</p>
       </div>
+
       <div class="login-tabs">
-        <button class="tab-btn active" id="tab-visitor" onclick="switchTab('visitor')">دخول زائر</button>
-        <button class="tab-btn" id="tab-member" onclick="switchTab('member')">دخول عضوية</button>
+        <button class="tab-btn active" id="tab-visitor" onclick="switchTab('visitor')">دخول الزوار</button>
+        <button class="tab-btn" id="tab-member" onclick="switchTab('member')">دخول الأعضاء</button>
       </div>
+
       <div class="login-body">
         <div class="input-group">
-          <label>اسم المستخدم:</label>
-          <input type="text" id="username" placeholder="اكتب اسمك...">
+          <label>اسم المستخدم / الزائر:</label>
+          <input type="text" id="username" placeholder="أدخل اسمك أو لقبك هنا...">
         </div>
+
         <div class="input-group" id="member-fields" style="display:none;">
           <label>البريد الإلكتروني:</label>
-          <input type="email" id="email" placeholder="أدخل بريد المالك أو العضو">
+          <input type="email" id="email" placeholder="أدخل البريد المسجل...">
         </div>
+
         <button class="btn-submit" onclick="login()">دخول الشات</button>
+
+        <div class="quick-entry-box">
+          <p style="font-size:0.75rem; color:#94a3b8;">جديد هنا؟ انضم إلينا فوراً</p>
+          <button class="btn-guest-direct" onclick="openModal('register-modal')">سجل الآن للحصول على مميزات VIP 💎</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- نافذة تسجيل الزائر -->
+  <!-- نافذة تسجيل الزائر إلى عضوية -->
   <div id="register-modal" class="modal-overlay">
     <div class="modal-card">
       <span class="close-modal" onclick="closeModal('register-modal')">&times;</span>
-      <h3 style="padding:15px; background:#2563eb; color:#fff;">تسجيل حساب جديد 🔑</h3>
+      <h3 style="padding:15px; background:#ec4899; color:#fff;">تسجيل حساب جديد في شات نرمين 🔑</h3>
       <div class="login-body">
         <div class="input-group">
           <label>الاسم الكامل:</label>
@@ -848,7 +882,7 @@
           <label>كلمة المرور:</label>
           <input type="password" id="reg-pass" placeholder="أدخل كلمة المرور...">
         </div>
-        <button class="btn-submit" style="background:#10b981;" onclick="registerVisitorToDiamond()">تسجيل الحساب 💎</button>
+        <button class="btn-submit" style="background:#10b981;" onclick="registerVisitorToDiamond()">إنشاء الحساب 💎</button>
       </div>
     </div>
   </div>
@@ -934,7 +968,7 @@
         <img src="" id="prof-img" class="profile-avatar" alt="Avatar">
       </div>
       <h3 id="prof-name">اسم العضو</h3>
-      <div id="prof-rank-display" style="font-size:0.85rem; font-weight:bold; color:#2563eb; margin-bottom:8px;"></div>
+      <div id="prof-rank-display" style="font-size:0.85rem; font-weight:bold; color:#ec4899; margin-bottom:8px;"></div>
 
       <div class="profile-actions-grid" id="profile-actions">
         <div class="action-btn" onclick="openPrivateChatFromProfile()"><i class="fa-solid fa-envelope"></i>خاص</div>
@@ -950,7 +984,7 @@
         <h4 style="font-size:0.8rem; color:#b45309; margin-bottom:5px;"><i class="fa-solid fa-crown"></i> لوحة صاحب الموقع: إدارة العضو</h4>
         
         <label style="font-size:0.75rem; font-weight:bold; color:#78350f;">إهداء رتبة:</label>
-        <select id="owner-rank-select" class="edit-select"></select>
+        <select id="owner-rank-select" class="edit-select" style="background:#fff; color:#000;"></select>
         <button class="btn-submit" style="background:#f59e0b; padding:6px; font-size:0.8rem; margin-bottom:8px;" onclick="giveRankToUser()">منح الرتبة وإعلان بالعام 🎁</button>
 
         <div style="display:flex; gap:5px; margin-top:5px;">
@@ -964,11 +998,11 @@
         <div class="profile-info-item"><span>العمر:</span> <strong id="prof-age">22</strong></div>
         <div class="profile-info-item"><span>الجنس:</span> <strong id="prof-gender">ذكر</strong></div>
         <div class="profile-info-item"><span>البلاد:</span> <strong id="prof-country">اليمن</strong></div>
-        <div class="profile-info-item"><span>المعلومات:</span> <strong id="prof-info">مرحباً بي في الشات!</strong></div>
+        <div class="profile-info-item"><span>المعلومات:</span> <strong id="prof-info">شات نرمين أحلى لمة</strong></div>
       </div>
 
-      <div class="edit-profile-section" id="self-edit-box" style="display:none; text-align:right; padding:12px; background:#f8fafc; border-top:1px solid #cbd5e1;">
-        <h4 style="font-size:0.85rem; color:#2563eb; margin-bottom:8px;"><i class="fa-solid fa-pen-to-square"></i> تعديل البروفايل الشخصي</h4>
+      <div class="edit-profile-section" id="self-edit-box" style="display:none; text-align:right; padding:12px; background:#0f172a; border-top:1px solid #334155;">
+        <h4 style="font-size:0.85rem; color:#ec4899; margin-bottom:8px;"><i class="fa-solid fa-pen-to-square"></i> تعديل البروفايل الشخصي</h4>
         
         <label style="font-size:0.75rem;">تعديل الاسم:</label>
         <input type="text" id="edit-name-input" class="edit-input" placeholder="الاسم الجديد...">
@@ -997,13 +1031,13 @@
         <input type="text" id="edit-info-input" class="edit-input" placeholder="نبذة...">
 
         <div style="display:flex; gap:6px; margin-top:10px;">
-          <label for="avatar-file" style="flex:1; background:#cbd5e1; text-align:center; padding:6px; border-radius:6px; cursor:pointer; font-size:0.75rem;">
+          <label for="avatar-file" style="flex:1; background:#334155; text-align:center; padding:6px; border-radius:6px; cursor:pointer; font-size:0.75rem;">
             📸 تغيير الصورة
           </label>
           <input type="file" id="avatar-file" accept="image/*" style="display:none;" onchange="uploadAvatar(event)">
 
-          <label for="cover-file" style="flex:1; background:#cbd5e1; text-align:center; padding:6px; border-radius:6px; cursor:pointer; font-size:0.75rem;">
-            🖼️ تغيير الغلاف
+          <label for="cover-file" style="flex:1; background:#334155; text-align:center; padding:6px; border-radius:6px; cursor:pointer; font-size:0.75rem;">
+            🖼️️ تغيير الغلاف
           </label>
           <input type="file" id="cover-file" accept="image/*" style="display:none;" onchange="uploadCover(event)">
         </div>
@@ -1016,7 +1050,7 @@
   <div class="modal-overlay" id="private-chat-modal">
     <div class="modal-card">
       <span class="close-modal" onclick="closeModal('private-chat-modal')">&times;</span>
-      <h3 style="padding:12px; background:#1e293b; color:#fff;">محادثة خاصة مع: <span id="private-target-name">...</span></h3>
+      <h3 style="padding:12px; background:#0f172a; color:#fff;">محادثة خاصة مع: <span id="private-target-name">...</span></h3>
       <div class="private-chat-box">
         <div class="private-messages" id="private-messages-box"></div>
         <div class="input-bar">
@@ -1032,7 +1066,7 @@
   <div class="modal-overlay" id="rooms-modal">
     <div class="modal-card">
       <span class="close-modal" onclick="closeModal('rooms-modal')">&times;</span>
-      <h3 style="padding:12px; background:#1e293b; color:#fff;">قائمة الغرف المتاحة 🚪</h3>
+      <h3 style="padding:12px; background:#0f172a; color:#fff;">قائمة الغرف المتاحة 🚪</h3>
       <div class="menu-list">
         <div class="menu-item" onclick="switchRoom('الغرفة العامة الرئيسية')"><i class="fa-solid fa-comments"></i> الغرفة العامة الرئيسية</div>
         <div class="menu-item" onclick="switchRoom('غرفة المسابقات والفعاليات')"><i class="fa-solid fa-trophy"></i> غرفة المسابقات والفعاليات</div>
@@ -1057,7 +1091,7 @@
   <div class="modal-overlay" id="mic-options-modal">
     <div class="modal-card">
       <span class="close-modal" onclick="closeModal('mic-options-modal')">&times;</span>
-      <h3 style="padding:12px; background:#1e293b; color:#fff;">إعدادات المايك 🎙️</h3>
+      <h3 style="padding:12px; background:#0f172a; color:#fff;">إعدادات المايك 🎙️</h3>
       <div class="menu-list">
         <div class="menu-item" onclick="toggleMuteMic()"><i class="fa-solid fa-microphone-slash"></i> كتم المايك / فتح الكتم</div>
         <div class="menu-item" onclick="openYoutubeMusicSearch()"><i class="fa-brands fa-youtube" style="color:#ef4444;"></i> تشغيل أغنية من يوتيوب</div>
@@ -1082,13 +1116,13 @@
   <div class="modal-overlay" id="plus-menu-modal">
     <div class="modal-card">
       <span class="close-modal" onclick="closeModal('plus-menu-modal')">&times;</span>
-      <h3 style="padding:12px; background:#1e293b; color:#fff;">الأدوات والألعاب 🎮</h3>
+      <h3 style="padding:12px; background:#0f172a; color:#fff;">الأدوات والألعاب 🎮</h3>
       <div class="plus-menu-grid">
         <div class="plus-item" onclick="alert('فتح يوتيوب')"><i class="fa-brands fa-youtube" style="color:#ef4444;"></i>يوتيوب</div>
         <div class="plus-item" onclick="alert('فتح الرسم')"><i class="fa-solid fa-paint-brush"></i>رسم</div>
         <div class="plus-item" onclick="alert('رمي النرد')"><i class="fa-solid fa-dice"></i>نرد</div>
         <div class="plus-item" onclick="alert('إرسال ملف')"><i class="fa-solid fa-folder-open"></i>ملف</div>
-        <div class="plus-item" onclick="alert('فتح تيك توك')"><i class="fa-brands fa-tiktok" style="color:#000;"></i>تيك توك</div>
+        <div class="plus-item" onclick="alert('فتح تيك توك')"><i class="fa-brands fa-tiktok" style="color:#fff;"></i>تيك توك</div>
         <div class="plus-item" onclick="alert('لعبة حجرة ورقة مقص')"><i class="fa-solid fa-hand-scissors"></i>مقص ورقة</div>
         <div class="plus-item" onclick="alert('لعبة X-O')"><i class="fa-solid fa-xmark"></i>لعبة X-O</div>
         <div class="plus-item" onclick="alert('فتح عجلة الحظ')"><i class="fa-solid fa-arrows-spin"></i>عجلة الحظ</div>
@@ -1099,7 +1133,7 @@
   <div class="modal-overlay" id="icon-menu-modal">
     <div class="modal-card">
       <span class="close-modal" onclick="closeModal('icon-menu-modal')">&times;</span>
-      <h3 style="padding:12px; background:#1e293b; color:#fff;">أيقونة الحساب ⚙️️</h3>
+      <h3 style="padding:12px; background:#0f172a; color:#fff;">أيقونة الحساب ⚙</h3>
       <div class="menu-list">
         <div class="menu-item"><i class="fa-solid fa-gear"></i> إعدادات الدردشة</div>
         <div class="menu-item"><i class="fa-solid fa-wallet"></i> محفظة</div>
@@ -1114,7 +1148,7 @@
   <div class="modal-overlay" id="options-menu-modal">
     <div class="modal-card">
       <span class="close-modal" onclick="closeModal('options-menu-modal')">&times;</span>
-      <h3 style="padding:12px; background:#1e293b; color:#fff;">قائمة الخيارات 📜</h3>
+      <h3 style="padding:12px; background:#0f172a; color:#fff;">قائمة الخيارات 📜</h3>
       <div class="menu-list">
         <div class="menu-item" onclick="openModal('rooms-modal')"><i class="fa-solid fa-door-open"></i> الرومات</div>
         <div class="menu-item"><i class="fa-solid fa-user-group"></i> حائط الأصدقاء</div>
@@ -1139,7 +1173,7 @@
   <div class="modal-overlay" id="online-modal">
     <div class="modal-card">
       <span class="close-modal" onclick="closeModal('online-modal')">&times;</span>
-      <h3 style="padding: 12px; border-bottom:1px solid #e2e8f0; color:#0f172a;">المتواجدون الآن 👥</h3>
+      <h3 style="padding: 12px; border-bottom:1px solid #334155; color:#fff;">المتواجدون الآن 👥</h3>
       <div class="online-list" id="online-users-container"></div>
     </div>
   </div>
