@@ -29,7 +29,7 @@ button{cursor:pointer}
 .quick-entry-box{margin-top:14px;padding-top:14px;border-top:1px solid #334155;text-align:center}
 .btn-guest-direct{width:100%;padding:10px;background:#3b82f6;border:0;border-radius:8px;color:#fff;font-weight:bold;margin-top:7px}
 .top-bar-icons{height:55px;flex-shrink:0;background:#050505;border-bottom:2px solid #d4a017;display:flex;align-items:center;direction:rtl}
-.nav-item-top{flex:1;text-align:center;color:#d7d7d7;font-size:.58rem;min-width:0}
+.nav-item-top{position:relative;flex:1;text-align:center;color:#d7d7d7;font-size:.58rem;min-width:0}
 .nav-item-top i{display:block;font-size:1rem;color:#f0c34b;margin-bottom:2px}
 .badge{position:absolute;top:-5px;right:45%;background:#ef4444;color:#fff;border-radius:20px;padding:1px 5px;font-size:.55rem}
 .mics-section-container{background:#111827;flex-shrink:0;text-align:center;padding:5px 0 3px}
@@ -136,6 +136,32 @@ body>.input-bar{position:fixed!important}
   .bottom-main-nav{height:53px!important}
 }
 
+
+/* ===== إضافات النسخة الجديدة ===== */
+.name-frame{display:inline-block;padding:1px 7px;border-radius:8px;line-height:1.35}
+.frame-none{border:0;background:transparent}
+.frame-gold{border:1px solid #d4a017;background:linear-gradient(90deg,rgba(212,160,23,.16),rgba(255,255,255,.04));box-shadow:0 0 6px rgba(212,160,23,.28)}
+.frame-neon{border:1px solid #22d3ee;background:rgba(34,211,238,.08);box-shadow:0 0 7px rgba(34,211,238,.55)}
+.frame-royal{border:1px solid #a855f7;background:rgba(168,85,247,.1);box-shadow:0 0 7px rgba(168,85,247,.45)}
+.online-item .name-line{display:flex;align-items:center;gap:4px}
+.owner-mic-action{display:none}
+body.owner-view .owner-mic-action{display:block}
+.drawing-wrap{padding:10px}
+#drawing-canvas{display:block;width:100%;height:330px;background:#fff;border:2px solid #d4a017;border-radius:10px;touch-action:none}
+.draw-tools{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;align-items:center}
+.draw-tools button{border:1px solid #475569;background:#0f172a;color:#fff;border-radius:8px;padding:7px 9px;font-size:.7rem}
+.draw-color{width:32px;height:32px;padding:2px!important;border-radius:50%!important}
+.wheel-wrap{padding:12px;text-align:center}
+#wheel-canvas{width:280px;height:280px;max-width:80vw;display:block;margin:5px auto}
+.wheel-pointer{font-size:1.7rem;color:#f0c34b;margin-bottom:-14px;position:relative;z-index:2}
+.dice-result{font-size:4rem;text-align:center;padding:22px;color:#f0c34b}
+.room-owner-note{font-size:.62rem;color:#94a3b8;margin-top:3px}
+.media-card{margin-top:5px;border:1px solid #475569;border-radius:10px;overflow:hidden;background:#0b1220}
+.media-card img{max-width:100%;display:block;margin:auto}
+.media-card iframe{width:100%;height:230px;border:0}
+.private-attachment{margin:6px 0}
+.private-attachment img,.private-attachment video{max-width:100%;max-height:260px;border-radius:9px}
+
 </style>
 </head>
 <body>
@@ -188,7 +214,7 @@ body>.input-bar{position:fixed!important}
   <div class="nav-item-top"><i class="fa-solid fa-bell"></i>إشعار</div>
   <div class="nav-item-top"><i class="fa-solid fa-triangle-exclamation"></i>بلاغ</div>
   <div class="nav-item-top" onclick="openOnlineList()"><i class="fa-solid fa-user-plus"></i>متواجدون</div>
-  <div class="nav-item-top" onclick="openPrivateInbox()"><i class="fa-solid fa-comments"></i>خاص</div>
+  <div class="nav-item-top" onclick="openPrivateInbox()"><i class="fa-solid fa-comments"></i><span id="privateBadgeDot" class="badge hidden">0</span>خاص</div>
   <div class="nav-item-top" onclick="openFeature('قائمة الكبار')"><i class="fa-solid fa-crown"></i>الكبار</div>
   <div class="nav-item-top" onclick="openFeature('قائمة الأثرياء')"><i class="fa-solid fa-sack-dollar"></i>الأثرياء</div>
   <div class="nav-item-top" onclick="openModal('side-menu-modal')"><i class="fa-solid fa-bars"></i>المزيد</div>
@@ -224,6 +250,7 @@ body>.input-bar{position:fixed!important}
   <div class="bottom-tab" onclick="openModal('rooms-modal')"><i class="fa-solid fa-door-open"></i>الغرف</div>
   <div class="bottom-tab" onclick="location.reload()"><i class="fa-solid fa-rotate-right"></i>تحديث</div>
   <div class="bottom-tab" onclick="openModal('plus-menu-modal')"><i class="fa-solid fa-store"></i>المتجر</div>
+  <div id="visitor-key-tab" class="bottom-tab hidden" onclick="openVisitorMemberEntry()"><i class="fa-solid fa-key"></i>عضوية</div>
   <div class="bottom-tab" onclick="openModal('radio-modal')"><i class="fa-solid fa-radio"></i>راديو</div>
 </div>
 
@@ -233,7 +260,7 @@ body>.input-bar{position:fixed!important}
     <span class="close-modal" onclick="closeModal('profile-modal')">&times;</span>
     <div id="prof-cover" class="profile-cover"></div>
     <div class="profile-avatar-container"><img id="prof-img" class="profile-avatar"></div>
-    <h3 id="prof-name" style="text-align:center"></h3>
+    <h3 id="prof-name" class="name-frame frame-none" style="text-align:center"></h3>
     <div id="prof-rank-display" style="text-align:center;color:#f0c34b;font-size:.8rem;font-weight:bold;margin:4px"></div>
     <div id="profile-actions" class="profile-actions-grid">
       <div class="action-btn" onclick="openPrivateChatFromProfile()"><i class="fa-solid fa-envelope"></i>خاص</div>
@@ -261,7 +288,7 @@ body>.input-bar{position:fixed!important}
       <div class="profile-info-item"><span>النبذة</span><strong id="prof-info"></strong></div>
     </div>
     <div id="self-edit-box" class="login-body hidden">
-      <h4 style="color:#ec4899;margin-bottom:8px">تعديل البروفايل</h4>
+      <h4 id="profile-edit-title" style="color:#ec4899;margin-bottom:8px">تعديل البروفايل</h4>
       <div class="input-group"><label>الاسم</label><input id="edit-name-input"></div>
       <div class="input-group"><label>إطار الاسم</label><select id="edit-frame-select" class="edit-select"><option value="frame-none">بدون</option><option value="frame-gold">ذهبي</option><option value="frame-neon">نيون</option><option value="frame-royal">ملكي</option></select></div>
       <div class="input-group"><label>العمر</label><input id="edit-age-input"></div>
@@ -284,7 +311,11 @@ body>.input-bar{position:fixed!important}
     <div class="modal-title">محادثة خاصة مع <span id="private-target-name"></span></div>
     <div class="private-chat-box">
       <div id="private-messages-box" class="private-messages"></div>
-      <div class="input-bar"><button class="send-btn-main" onclick="sendPrivateMessage()"><i class="fa-solid fa-paper-plane"></i></button><div class="input-wrapper"><input id="private-msg-input" placeholder="رسالتك..." onkeydown="if(event.key==='Enter')sendPrivateMessage()"></div></div>
+      <div class="input-bar">
+    <button class="send-btn-main" onclick="sendPrivateMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+    <div class="input-wrapper"><input id="private-msg-input" placeholder="رسالتك..." onkeydown="if(event.key==='Enter')sendPrivateMessage()"></div>
+    <label class="icon-btn" title="إرسال صورة/فيديو"><i class="fa-solid fa-paperclip"></i><input id="private-file-input" type="file" accept="image/*,video/*" style="display:none" onchange="sendPrivateFile(event)"></label>
+  </div>
     </div>
   </div>
 </div>
@@ -311,16 +342,65 @@ body>.input-bar{position:fixed!important}
 
 <div id="online-modal" class="modal-overlay hidden"><div class="modal-card"><span class="close-modal" onclick="closeModal('online-modal')">&times;</span><div class="modal-title">المتواجدون الآن 👥</div><div id="online-users-container" class="online-list"></div></div></div>
 
-<div id="rooms-modal" class="modal-overlay hidden"><div class="modal-card"><span class="close-modal" onclick="closeModal('rooms-modal')">&times;</span><div class="modal-title">الغرف</div><div id="rooms-container" class="rooms-list"></div></div></div>
+<div id="rooms-modal" class="modal-overlay hidden">
+  <div class="modal-card"><span class="close-modal" onclick="closeModal('rooms-modal')">&times;</span>
+  <div class="modal-title">الغرف</div>
+  <div id="owner-room-create-box" class="login-body hidden" style="padding:8px">
+    <button class="btn-submit" style="background:#10b981" onclick="createRoomPrompt()">➕ إنشاء روم جديد — للمالك فقط</button>
+  </div>
+  <div id="rooms-container" class="rooms-list"></div>
+  </div>
+</div>
 
 <div id="plus-menu-modal" class="modal-overlay hidden"><div class="modal-card"><span class="close-modal" onclick="closeModal('plus-menu-modal')">&times;</span><div class="modal-title">الإضافات</div><div class="plus-menu-grid">
 <div class="plus-item" onclick="openYoutubePrompt()"><i class="fa-brands fa-youtube"></i>YouTube</div>
 <div class="plus-item" onclick="alert('رفع الملفات يحتاج Firebase Storage')"><i class="fa-solid fa-file"></i>ملف</div>
-<div class="plus-item" onclick="alert('🎲 نرد')"><i class="fa-solid fa-dice"></i>نرد</div>
-<div class="plus-item" onclick="alert('🎡 عجلة الحظ')"><i class="fa-solid fa-circle-notch"></i>العجلة</div>
-<div class="plus-item" onclick="alert('🎨 لوحة الرسم')"><i class="fa-solid fa-palette"></i>رسم</div>
+<div class="plus-item" onclick="openDiceFromPlus()"><i class="fa-solid fa-dice"></i>نرد</div>
+<div class="plus-item" onclick="openWheelFromPlus()"><i class="fa-solid fa-circle-notch"></i>العجلة</div>
+<div class="plus-item" onclick="openDrawingFromPlus()"><i class="fa-solid fa-palette"></i>رسم</div>
 <div class="plus-item" onclick="alert('TikTok يمكن إضافته كرابط/بطاقة')"><i class="fa-brands fa-tiktok"></i>TikTok</div>
 </div></div></div>
+
+
+<div id="drawing-modal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <span class="close-modal" onclick="closeModal('drawing-modal')">&times;</span>
+    <div class="modal-title">لوحة الرسم 🎨</div>
+    <div class="drawing-wrap">
+      <div class="draw-tools">
+        <button onclick="setDrawTool('pen')">✏️ قلم</button>
+        <button onclick="setDrawTool('eraser')">🧽 ممحاة</button>
+        <button onclick="clearDrawing()">🗑 مسح الكل</button>
+        <label class="draw-color" style="background:#000"><input type="color" id="draw-color" value="#000000" style="opacity:0;width:100%;height:100%" onchange="setDrawColor(this.value)"></label>
+        <label style="font-size:.65rem">الحجم <input id="draw-size" type="range" min="1" max="30" value="5"></label>
+      </div>
+      <canvas id="drawing-canvas"></canvas>
+      <button class="btn-submit" style="background:#10b981;margin-top:8px" onclick="sendDrawingToPublic()">📤 إرسال الرسم للعام</button>
+    </div>
+  </div>
+</div>
+
+<div id="dice-modal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <span class="close-modal" onclick="closeModal('dice-modal')">&times;</span>
+    <div class="modal-title">🎲 حجر النرد</div>
+    <div id="dice-result" class="dice-result">🎲</div>
+    <div style="padding:0 15px 15px"><button class="btn-submit" onclick="rollDice()">رمي النرد</button></div>
+  </div>
+</div>
+
+<div id="wheel-modal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <span class="close-modal" onclick="closeModal('wheel-modal')">&times;</span>
+    <div class="modal-title">🎡 عجلة الحظ</div>
+    <div class="wheel-wrap">
+      <div class="wheel-pointer">▼</div>
+      <canvas id="wheel-canvas" width="560" height="560"></canvas>
+      <div id="wheel-result" style="font-weight:bold;color:#f0c34b;margin:5px">اضغط لتدوير العجلة</div>
+      <button class="btn-submit" onclick="spinWheel()">🎡 تدوير</button>
+    </div>
+  </div>
+</div>
 
 <div id="radio-modal" class="modal-overlay hidden"><div class="modal-card"><span class="close-modal" onclick="closeModal('radio-modal')">&times;</span><div class="modal-title">الراديو</div><div style="padding:20px;text-align:center">ضع رابط بث الراديو في إعدادات المالك.</div></div></div>
 
@@ -377,6 +457,7 @@ body>.input-bar{position:fixed!important}
 <div class="menu-item" onclick="openYoutubePrompt()"><i class="fa-brands fa-youtube"></i>تشغيل أغنية YouTube</div>
 <div class="menu-item" onclick="stopMyMusic()"><i class="fa-solid fa-stop"></i>إيقاف الأغنية</div>
 <div class="menu-item" onclick="leaveMic()"><i class="fa-solid fa-arrow-down"></i>النزول من المايك</div>
+  <div id="owner-drop-mic-item" class="menu-item owner-mic-action" style="color:#ef4444" onclick="ownerDropCurrentMic()"><i class="fa-solid fa-user-minus"></i>إنزال العضو من المايك</div>
 </div></div></div>
 
 <script type="module">
@@ -420,6 +501,9 @@ const RANKS=[
 {id:20,title:"زائر جديد",icon:"fa-solid fa-user",color:"#94a3b8"}];
 
 let currentUser=null, users=new Map(), selectedUser=null, privateTarget=null;
+let currentRoomId=localStorage.getItem("chat_active_room_v2")||"main";
+let currentRoomName=localStorage.getItem("chat_active_room_name_v2")||"الغرفة الرئيسية";
+let unsubRoomSettings=null, unsubPrivateInbox=null, selectedMicOwnerSlot=null;
 let replyTo=null, currentMicSlot=null, unsubMessages=null, unsubUsers=null, unsubPresence=null, unsubMics=null, unsubPrivate=null;
 let privatePairId="";
 let presenceTimer=null;
@@ -441,7 +525,7 @@ window.switchTab=t=>{
  $("tab-member").classList.toggle("active",t==="member");
  $("member-fields").classList.toggle("hidden",t!=="member");
 }
-window.openModal=id=>$(id).classList.remove("hidden");
+window.openModal=id=>{ $(id).classList.remove("hidden"); if(id==="rooms-modal"&&currentUser)$("owner-room-create-box").classList.toggle("hidden",!owner()); };
 window.closeModal=id=>$(id).classList.add("hidden");
 
 window.openFeature=(title)=>{
@@ -466,14 +550,18 @@ window.openFeature=(title)=>{
 
 
 async function createPresence(){
- if(!currentUser||currentUser.isVisitor)return;
- await setDoc(doc(db,"presence",currentUser.uid),{
-   uid:currentUser.uid,name:currentUser.name,avatar:currentUser.avatar||avatarFor(currentUser.name),
-   rankId:currentUser.rankId,isOnline:true,lastSeen:serverTimestamp()
- },{merge:true});
+ if(!currentUser)return;
+ try{
+   await setDoc(doc(db,"presence",currentUser.uid),{
+     uid:currentUser.uid,name:currentUser.name,avatar:currentUser.avatar||avatarFor(currentUser.name),
+     rankId:currentUser.rankId||20,nameFrame:currentUser.nameFrame||"frame-none",
+     isOwner:!!currentUser.isOwner,isVisitor:!!currentUser.isVisitor,
+     isOnline:true,roomId:currentRoomId,roomName:currentRoomName,lastSeen:serverTimestamp()
+   },{merge:true});
+ }catch(e){console.error(e)}
 }
 async function stopPresence(){
- if(!currentUser||currentUser.isVisitor)return;
+ if(!currentUser)return;
  try{await setDoc(doc(db,"presence",currentUser.uid),{isOnline:false,lastSeen:serverTimestamp()},{merge:true})}catch{}
 }
 window.addEventListener("beforeunload",()=>{stopPresence()});
@@ -518,7 +606,7 @@ window.registerMember=async()=>{
  if(!name||!email||!pass)return alert("أكمل البيانات");
  if(await getUserByName(name))return alert("الاسم مستخدم مسبقاً");
  const u={uid:crypto.randomUUID(),name,email,passwordHash:btoa(unescape(encodeURIComponent(pass))),
-   isOwner:OWNER_EMAILS.includes(email),isVisitor:false,rankId:OWNER_EMAILS.includes(email)?1:11,
+   isOwner:OWNER_EMAILS.includes(email),isVisitor:false,rankId:OWNER_EMAILS.includes(email)?1:16,
    avatar:avatarFor(name),cover:"",age:$("reg-age").value||"22",gender:$("reg-gender").value,
    country:$("reg-country").value||"اليمن",info:"عضو في شات نرمين",nameFrame:"frame-none",
    isMuted:false,isBanned:false,createdAt:serverTimestamp()};
@@ -526,7 +614,7 @@ window.registerMember=async()=>{
  await saveUser(u);
  currentUser=u;
  localStorage.setItem(sessionKey,JSON.stringify(u));
- closeModal("register-modal");$("login-modal").style.display="none";await startApp();toast("تم إنشاء الحساب ومزامنته للجميع");
+ closeModal("register-modal");$("login-modal").style.display="none";await startApp();updateVisitorKey();document.body.classList.toggle("owner-view",!!currentUser.isOwner);toast("تم إنشاء الحساب ومزامنته للجميع");
 }
 
 async function startApp(){
@@ -561,37 +649,51 @@ function listenPresence(){
  if(unsubPresence)unsubPresence();
  unsubPresence=onSnapshot(collection(db,"presence"),snap=>{
    const online=[];
-   snap.forEach(d=>{const x=d.data();if(x.isOnline)online.push(x)});
+   snap.forEach(d=>{const x=d.data();if(x.isOnline&&(x.roomId||"main")===currentRoomId)online.push(x)});
    renderOnline(online);
  });
 }
+
 function listenMessages(){
  if(unsubMessages)unsubMessages();
- const q=query(collection(db,"roomMessages"),orderBy("createdAt","asc"));
- unsubMessages=onSnapshot(q,snap=>{
+ unsubMessages=onSnapshot(collection(db,"roomMessages"),snap=>{
    const area=$("chat-area");area.innerHTML="";
-   snap.forEach(d=>{
-     const m=d.data();
+   const docs=[];
+   snap.forEach(d=>{const m=d.data();if((m.roomId||"main")===currentRoomId)docs.push({id:d.id,m})});
+   docs.sort((a,b)=>{
+     const ta=a.m.createdAt?.toMillis?a.m.createdAt.toMillis():0;
+     const tb=b.m.createdAt?.toMillis?b.m.createdAt.toMillis():0;
+     return ta-tb;
+   });
+   docs.forEach(({id:dId,m})=>{
      if(m.isSystem){area.insertAdjacentHTML("beforeend",`<div class="system-msg-item">${safe(m.text)}</div>`);return}
      const u=users.get(m.sender)||{name:m.sender,rankId:20,avatar:avatarFor(m.sender),nameFrame:"frame-none"};
      const r=rank(u.rankId);
      const qhtml=m.reply?`<div class="quote-preview"><b>${safe(m.reply.sender)}</b>: ${safe(m.reply.text)}</div>`:"";
+     let media="";
+     if(m.imageUrl)media=`<div class="media-card"><img src="${safe(m.imageUrl)}" alt="رسم"></div>`;
+     if(m.videoUrl)media=`<div class="media-card"><video src="${safe(m.videoUrl)}" controls playsinline></video></div>`;
+     if(m.youtubeUrl){
+       const vid=getYoutubeId(m.youtubeUrl);
+       media=vid?`<div class="media-card"><iframe src="https://www.youtube.com/embed/${safe(vid)}" allowfullscreen></iframe></div>`:`<div class="media-card" style="padding:8px"><a href="${safe(m.youtubeUrl)}" target="_blank" rel="noopener" style="color:#f0c34b">YouTube</a></div>`;
+     }
      area.insertAdjacentHTML("beforeend",`
-       <div class="msg-item" data-name="${safe(m.sender)}" data-id="${d.id}">
+       <div class="msg-item" data-name="${safe(m.sender)}" data-id="${dId}">
         <img class="user-avatar" src="${safe(u.avatar||avatarFor(u.name))}" onclick="openProfileByName('${slug(m.sender)}')">
         <div class="msg-content">
-         <div class="user-header" ondblclick="quoteMessage('${d.id}')">
+         <div class="user-header" ondblclick="quoteMessage('${dId}')">
           <i class="${r.icon} rank-badge-icon" style="color:${r.color}" title="${safe(r.title)}"></i>
-          <span class="${u.nameFrame||"frame-none"}">✿ ${safe(m.sender)} ✿</span>
+          <span class="name-frame ${u.nameFrame||"frame-none"}">✿ ${safe(m.sender)} ✿</span>
           <span class="msg-time">${safe(m.time||"")}</span>
          </div>
-         ${qhtml}<div class="msg-text-plain">${safe(m.text)}</div>
+         ${qhtml}<div class="msg-text-plain">${safe(m.text||"")}</div>${media}
         </div>
        </div>`);
    });
    area.scrollTop=area.scrollHeight;
  });
 }
+
 window.quoteMessage=async id=>{
  const s=await getDoc(doc(db,"roomMessages",id));if(!s.exists())return;
  const m=s.data();replyTo={sender:m.sender,text:m.text,id};
@@ -609,31 +711,48 @@ window.repeatMessage=async id=>{
 window.sendMessage=async()=>{
  if(!currentUser||currentUser.isMuted)return alert("أنت مكتوم");
  const input=$("msg-input"),text=input.value.trim();if(!text)return;
- const payload={sender:currentUser.name,text,time:nowTime(),createdAt:serverTimestamp(),reply:replyTo?{sender:replyTo.sender,text:replyTo.text,id:replyTo.id}:null};
+ const payload={roomId:currentRoomId,sender:currentUser.name,text,time:nowTime(),createdAt:serverTimestamp(),reply:replyTo?{sender:replyTo.sender,text:replyTo.text,id:replyTo.id}:null};
  await addDoc(collection(db,"roomMessages"),payload);input.value="";cancelQuote();
 }
 
 async function renderChatUsersRefresh(){/* messages render through listener; user changes are picked up on next snapshot */}
 function renderOnline(arr){
  const c=$("online-users-container");if(!c)return;c.innerHTML="";
- arr.sort((a,b)=>(a.rankId||20)-(b.rankId||20)).forEach(u=>{
-   const r=rank(u.rankId);
+ arr.sort((a,b)=>{
+   if(!!a.isOwner!==!!b.isOwner)return a.isOwner?-1:1;
+   const av=a.isVisitor?999:(a.rankId||19),bv=b.isVisitor?999:(b.rankId||19);
+   return av-bv || String(a.name||"").localeCompare(String(b.name||""));
+ }).forEach(u=>{
+   const r=rank(u.isVisitor?20:(u.rankId||20));
+   const frame=u.nameFrame||"frame-none";
    c.insertAdjacentHTML("beforeend",`<div class="online-item" onclick="openProfileByName('${slug(u.name)}')">
-   <div style="display:flex;align-items:center;gap:8px"><img class="user-avatar" src="${safe(u.avatar||avatarFor(u.name))}">
-   <div><div><i class="${r.icon}" style="color:${r.color}"></i> ${safe(u.name)}</div><small style="color:#f0c34b">${safe(r.title)}</small></div></div>
-   <span style="color:#22c55e;font-size:.65rem">● متصل</span></div>`);
+   <div style="display:flex;align-items:center;gap:8px">
+    <img class="user-avatar" src="${safe(u.avatar||avatarFor(u.name))}">
+    <div><div class="name-line"><i class="${r.icon}" style="color:${r.color}"></i><span class="name-frame ${frame}">${safe(u.name)}</span></div>
+    <small style="color:#f0c34b">${safe(r.title)}${u.isVisitor?" — زائر":""}</small></div>
+   </div><span style="color:#22c55e;font-size:.65rem">● متصل</span></div>`);
  });
 }
+
 window.openOnlineList=()=>{openModal("online-modal");renderOnlinePresenceFromFirestore()}
 async function renderOnlinePresenceFromFirestore(){
- const s=await getDocs(collection(db,"presence"));const a=[];s.forEach(d=>{if(d.data().isOnline)a.push(d.data())});renderOnline(a);
+ const s=await getDocs(collection(db,"presence"));const a=[];s.forEach(d=>{if(d.data().isOnline&&(d.data().roomId||"main")===currentRoomId)a.push(d.data())});renderOnline(a);
 }
-window.openProfileByName=async encoded=>{const name=decodeURIComponent(encoded);const u=await getUserByName(name)||{name,rankId:20,avatar:avatarFor(name)};openProfile(u)}
+window.openProfileByName=async encoded=>{
+ const name=decodeURIComponent(encoded);
+ let u=await getUserByName(name);
+ if(!u){
+   const ps=await getDocs(collection(db,"presence"));
+   ps.forEach(d=>{const x=d.data();if(!u&&x.name===name)u=x});
+ }
+ u=u||{name,uid:"guest_"+name,rankId:20,isVisitor:true,avatar:avatarFor(name)};
+ openProfile(u);
+}
 window.openOwnProfile=()=>{closeModal("icon-menu-modal");openProfile(currentUser)}
 
 function openProfile(u){
  selectedUser=u;const self=currentUser.name===u.name,r=rank(u.rankId);
- $("prof-name").textContent=u.name;$("prof-rank-display").innerHTML=`<i class="${r.icon}" style="color:${r.color}"></i> ${safe(r.title)}`;
+ $("prof-name").textContent=u.name;$("prof-name").className="name-frame "+(u.nameFrame||"frame-none");$("prof-rank-display").innerHTML=`<i class="${r.icon}" style="color:${r.color}"></i> ${safe(r.title)}`;
  $("prof-img").src=u.avatar||avatarFor(u.name);
  $("prof-cover").style.backgroundImage=u.cover?`url("${u.cover}")`:"linear-gradient(135deg,#ec4899,#0f172a)";
  $("prof-age").textContent=u.age||"غير محدد";$("prof-gender").textContent=u.gender||"غير محدد";
@@ -648,38 +767,55 @@ function openProfile(u){
 }
 window.openProfile=openProfile;
 
+function profileEditTarget(){
+ const self=!selectedUser||selectedUser.name===currentUser.name;
+ return {self,target:self?currentUser:selectedUser};
+}
 window.saveProfileChanges=async()=>{
- const old=currentUser.name,newName=$("edit-name-input").value.trim()||old;
- const updated={...currentUser,name:newName,nameFrame:$("edit-frame-select").value,age:$("edit-age-input").value||"غير محدد",
+ const {self,target}=profileEditTarget();
+ if(!target||(!self&&!owner()))return;
+ const old=target.name,newName=$("edit-name-input").value.trim()||old;
+ const updated={...target,name:newName,nameFrame:$("edit-frame-select").value,age:$("edit-age-input").value||"غير محدد",
  gender:$("edit-gender-input").value,country:$("edit-country-input").value||"غير محدد",info:$("edit-info-input").value||""};
  if(OWNER_EMAILS.includes((updated.email||"").toLowerCase())){updated.isOwner=true;updated.rankId=1}
  if(newName!==old){
    if(await getUserByName(newName))return alert("الاسم الجديد مستخدم");
-   await saveUser(updated);
-   await deleteDoc(doc(db,"usersByName",old));
+   await saveUser(updated);await deleteDoc(doc(db,"usersByName",old));
  }else await saveUser(updated);
- currentUser=updated;localStorage.setItem(sessionKey,JSON.stringify(updated));await createPresence();closeModal("profile-modal");toast("تم حفظ البروفايل ومزامنته");
+ if(self){
+   currentUser=updated;localStorage.setItem(sessionKey,JSON.stringify(updated));await createPresence();
+ }else{
+   await setDoc(doc(db,"presence",target.uid),{
+     name:updated.name,avatar:updated.avatar||avatarFor(updated.name),rankId:updated.rankId||20,
+     nameFrame:updated.nameFrame||"frame-none",isOwner:!!updated.isOwner
+   },{merge:true});
+ }
+ closeModal("profile-modal");toast("تم حفظ البروفايل ومزامنته للجميع");
 }
-async function uploadToStorage(file,path){
- const ref=storageRef(storage,path+"/"+crypto.randomUUID()+"_"+file.name);
- await uploadBytes(ref,file);return await getDownloadURL(ref)
+async function uploadProfileImageForTarget(file,type){
+ const {self,target}=profileEditTarget();if(!target||(!self&&!owner()))return;
+ try{
+   const url=await uploadToStorage(file,type==="avatar"?"avatars":"covers");
+   const patch=type==="avatar"?{avatar:url}:{cover:url};
+   await saveUser({name:target.name,...patch});
+   if(self){
+     currentUser={...currentUser,...patch};localStorage.setItem(sessionKey,JSON.stringify(currentUser));await createPresence();
+   }else{
+     await setDoc(doc(db,"presence",target.uid),patch,{merge:true});
+     selectedUser={...selectedUser,...patch};
+   }
+   if(type==="avatar")$("prof-img").src=url;else $("prof-cover").style.backgroundImage=`url("${url}")`;
+   toast("تمت مزامنة الصورة للجميع");
+ }catch(err){console.error(err);alert("تعذر رفع الصورة. تحقق من قواعد Firebase Storage")}
 }
-window.uploadAvatar=async e=>{
- const f=e.target.files?.[0];if(!f)return;
- try{const url=await uploadToStorage(f,"avatars");currentUser.avatar=url;await saveUser({name:currentUser.name,avatar:url});$("prof-img").src=url;localStorage.setItem(sessionKey,JSON.stringify(currentUser));toast("تمت مزامنة الصورة")}
- catch(err){console.error(err);alert("تعذر رفع الصورة. تحقق من قواعد Firebase Storage")}
-}
-window.uploadCover=async e=>{
- const f=e.target.files?.[0];if(!f)return;
- try{const url=await uploadToStorage(f,"covers");currentUser.cover=url;await saveUser({name:currentUser.name,cover:url});$("prof-cover").style.backgroundImage=`url("${url}")`;localStorage.setItem(sessionKey,JSON.stringify(currentUser));toast("تمت مزامنة الغلاف")}
- catch(err){console.error(err);alert("تعذر رفع الغلاف. تحقق من قواعد Firebase Storage")}
-}
+window.uploadAvatar=async e=>{const f=e.target.files?.[0];if(f)await uploadProfileImageForTarget(f,"avatar")}
+window.uploadCover=async e=>{const f=e.target.files?.[0];if(f)await uploadProfileImageForTarget(f,"cover")}
 
 window.giveRankToUser=async()=>{
  if(!owner()||!selectedUser)return;
  const id=Number($("owner-rank-select").value),r=rank(id);
  await saveUser({name:selectedUser.name,rankId:id});
- await addDoc(collection(db,"roomMessages"),{isSystem:true,text:`🎉 تم منح ${selectedUser.name} رتبة ${r.title} من قبل صاحب الموقع.`,createdAt:serverTimestamp()});
+ await addDoc(collection(db,"roomMessages"),{roomId:currentRoomId,isSystem:true,text:`🎉 تم منح ${selectedUser.name} رتبة ${r.title} من قبل صاحب الموقع.`,createdAt:serverTimestamp()});
  closeModal("profile-modal");toast("تمت مزامنة الرتبة فورياً");
 }
 window.ownerAction=async type=>{
@@ -690,95 +826,181 @@ window.ownerAction=async type=>{
  if(type==="kick"){await saveUser({name,kickToken:Date.now()});await addSystem(`👞 تم طرد ${name}`)}
  closeModal("profile-modal");
 }
-async function addSystem(text){await addDoc(collection(db,"roomMessages"),{isSystem:true,text,createdAt:serverTimestamp()})}
+async function addSystem(text){await addDoc(collection(db,"roomMessages"),{roomId:currentRoomId,isSystem:true,text,createdAt:serverTimestamp()})}
 
 window.openPrivateChatFromProfile=async()=>{
  if(!selectedUser||selectedUser.name===currentUser.name)return;
- closeModal("profile-modal");privateTarget=selectedUser;privatePairId=keyFor(currentUser.name,privateTarget.name);
+ closeModal("profile-modal");privateTarget=selectedUser;privatePairId=keyFor(currentUser.uid,privateTarget.uid||privateTarget.name);
  $("private-target-name").textContent=privateTarget.name;openModal("private-chat-modal");listenPrivate();
+ await markPrivateThreadRead(privatePairId);
+}
+function privateThreadRef(){
+ return doc(db,"privateInbox",currentUser.uid,"threads",privatePairId);
+}
+async function markPrivateThreadRead(pairId){
+ if(!currentUser||!pairId)return;
+ try{await setDoc(doc(db,"privateInbox",currentUser.uid,"threads",pairId),{unread:0},{merge:true})}catch{}
 }
 function listenPrivate(){
  if(unsubPrivate)unsubPrivate();
  const q=query(collection(db,"privateMessages",privatePairId,"messages"),orderBy("createdAt","asc"));
  unsubPrivate=onSnapshot(q,snap=>{
    const box=$("private-messages-box");box.innerHTML="";
-   snap.forEach(d=>{const m=d.data();box.insertAdjacentHTML("beforeend",`<div class="p-msg ${m.sender===currentUser.name?"me":"other"}">${safe(m.text)}<span class="p-time">${safe(m.time||"")}</span></div>`)});
+   snap.forEach(d=>{
+     const m=d.data();let media="";
+     if(m.imageUrl)media=`<div class="private-attachment"><img src="${safe(m.imageUrl)}"></div>`;
+     if(m.videoUrl)media=`<div class="private-attachment"><video src="${safe(m.videoUrl)}" controls playsinline></video></div>`;
+     box.insertAdjacentHTML("beforeend",`<div class="p-msg ${m.sender===currentUser.name?"me":"other"}">${safe(m.text||"")}${media}<span class="p-time">${safe(m.time||"")}</span></div>`)
+   });
    box.scrollTop=box.scrollHeight;
+   markPrivateThreadRead(privatePairId);
  });
 }
 window.sendPrivateMessage=async()=>{
  const text=$("private-msg-input").value.trim();if(!text||!privateTarget)return;
- await addDoc(collection(db,"privateMessages",privatePairId,"messages"),{sender:currentUser.name,receiver:privateTarget.name,text,time:nowTime(),createdAt:serverTimestamp()});
+ const now=serverTimestamp();
+ await addDoc(collection(db,"privateMessages",privatePairId,"messages"),{sender:currentUser.name,receiver:privateTarget.name,text,time:nowTime(),createdAt:now});
+ await setDoc(doc(db,"privateInbox",privateTarget.uid||privateTarget.name,"threads",privatePairId),{
+   pairId:privatePairId,otherName:currentUser.name,otherUid:currentUser.uid,lastText:text,lastTime:now,unread:((privateTarget.uid===currentUser.uid)?0:1)
+ },{merge:true});
+ await setDoc(privateThreadRef(),{pairId:privatePairId,otherName:privateTarget.name,otherUid:privateTarget.uid||privateTarget.name,lastText:text,lastTime:now,unread:0},{merge:true});
  $("private-msg-input").value="";
 }
-window.openPrivateInbox=async()=>{
- openModal("private-inbox-modal");const c=$("private-inbox");c.innerHTML="<div style='padding:15px'>المحادثات الخاصة تظهر عند فتح محادثة مع عضو.</div>";
+window.sendPrivateFile=async e=>{
+ const f=e.target.files?.[0];if(!f||!privateTarget)return;
+ try{
+   const isVideo=f.type.startsWith("video/");
+   const url=await uploadToStorage(f,isVideo?"private-videos":"private-images");
+   const text=isVideo?"🎬 فيديو":"🖼 صورة";
+   await addDoc(collection(db,"privateMessages",privatePairId,"messages"),{
+     sender:currentUser.name,receiver:privateTarget.name,text,time:nowTime(),createdAt:serverTimestamp(),
+     ...(isVideo?{videoUrl:url}:{imageUrl:url})
+   });
+   await setDoc(doc(db,"privateInbox",privateTarget.uid||privateTarget.name,"threads",privatePairId),{
+     pairId:privatePairId,otherName:currentUser.name,otherUid:currentUser.uid,lastText:text,lastTime:serverTimestamp(),unread:1
+   },{merge:true});
+   await setDoc(privateThreadRef(),{pairId:privatePairId,otherName:privateTarget.name,otherUid:privateTarget.uid||privateTarget.name,lastText:text,lastTime:serverTimestamp(),unread:0},{merge:true});
+   e.target.value="";toast("تم إرسال الملف في الخاص");
+ }catch(err){console.error(err);alert("تعذر إرسال الملف")}
 }
+function listenPrivateInbox(){
+ if(unsubPrivateInbox)unsubPrivateInbox();
+ if(!currentUser)return;
+ unsubPrivateInbox=onSnapshot(collection(db,"privateInbox",currentUser.uid,"threads"),snap=>{
+   const c=$("private-inbox");if(!c)return;c.innerHTML="";
+   let unread=0;
+   const arr=[];snap.forEach(d=>arr.push(d.data()));
+   arr.sort((a,b)=>(b.lastTime?.toMillis?a.lastTime.toMillis():0)-(a.lastTime?.toMillis?b.lastTime.toMillis():0));
+   arr.forEach(t=>{
+     unread+=Number(t.unread)||0;
+     const other=users.get(t.otherName)||{name:t.otherName,uid:t.otherUid,avatar:avatarFor(t.otherName),rankId:20};
+     c.insertAdjacentHTML("beforeend",`<div class="online-item" style="cursor:pointer" onclick="openPrivateThreadByUid('${slug(t.otherName)}','${slug(t.otherUid||t.otherName)}')">
+       <div style="display:flex;align-items:center;gap:8px"><img class="user-avatar" src="${safe(other.avatar||avatarFor(other.name))}">
+       <div><b>${safe(t.otherName||"عضو")}</b><div style="font-size:.68rem;color:#94a3b8">${safe(t.lastText||"")}</div></div></div>
+       ${Number(t.unread)>0?`<span style="background:#ef4444;border-radius:12px;padding:2px 6px;font-size:.6rem">${Number(t.unread)}</span>`:""}
+     </div>`);
+   });
+   if(!arr.length)c.innerHTML="<div style='padding:15px;text-align:center;color:#94a3b8'>لا توجد رسائل خاصة بعد.</div>";
+   const badge=$("privateBadgeDot");badge.textContent=unread>99?"99+":String(unread);badge.classList.toggle("hidden",unread===0);
+ });
+}
+window.openPrivateThreadByUid=async(encodedName,encodedUid)=>{
+ const name=decodeURIComponent(encodedName),uid=decodeURIComponent(encodedUid);
+ const u=users.get(name)||await getUserByName(name)||{name,uid,avatar:avatarFor(name),rankId:20};
+ selectedUser=u;privateTarget=u;privatePairId=keyFor(currentUser.uid,u.uid||u.name);
+ $("private-target-name").textContent=u.name;openModal("private-inbox-modal");closeModal("private-inbox-modal");openModal("private-chat-modal");listenPrivate();await markPrivateThreadRead(privatePairId);
+}
+window.openPrivateInbox=async()=>{openModal("private-inbox-modal");if(currentUser)listenPrivateInbox()}
 
 function listenRoomSettings(){
- onSnapshot(doc(db,"roomSettings","main"),snap=>{
+ if(unsubRoomSettings)unsubRoomSettings();
+ unsubRoomSettings=onSnapshot(doc(db,"roomSettings",currentRoomId),snap=>{
    const d=snap.exists()?snap.data():{};
    $("mics-count-select").value=String(d.micsCount??5);renderMicCount(Number(d.micsCount??5));
-   if(d.bgUrl)$("chat-area").style.backgroundImage=`url("${d.bgUrl}")`; else $("chat-area").style.backgroundImage="";
+   if(d.bgUrl)$("chat-area").style.backgroundImage=`url("${d.bgUrl}")`;else $("chat-area").style.backgroundImage="";
  });
 }
 function renderMicCount(n){for(let i=0;i<5;i++)$("mic-wrapper-"+i).style.display=i<n?"flex":"none"}
 
-window.openChatSettingsModal=()=>{closeModal("icon-menu-modal");if(!owner())return alert("لوحة التحكم للمالك فقط");openModal("owner-chat-settings-modal")}
-window.updateMicsCount=async()=>{if(!owner())return;await setDoc(doc(db,"roomSettings","main"),{micsCount:Number($("mics-count-select").value)},{merge:true});toast("تمت مزامنة عدد المايكات")}
-window.uploadRoomBackground=async e=>{
- if(!owner())return;const f=e.target.files?.[0];if(!f)return;
- try{const url=await uploadToStorage(f,"room-backgrounds");await setDoc(doc(db,"roomSettings","main"),{bgUrl:url},{merge:true});toast("تم حفظ خلفية الغرفة لجميع الأجهزة")}
- catch(err){console.error(err);alert("تعذر رفع الخلفية. تحقق من Storage Rules")}
+window.createRoomPrompt=async()=>{
+ if(!owner())return alert("إنشاء الغرف لصاحب الموقع فقط");
+ const name=prompt("اسم الروم الجديد:");
+ if(!name?.trim())return;
+ const clean=name.trim();const id=slug(clean).replace(/%/g,"_").slice(0,80);
+ const exists=await getDoc(doc(db,"rooms",id));if(exists.exists())return alert("هذا الروم موجود");
+ await setDoc(doc(db,"rooms",id),{name:clean,description:"روم أنشأه صاحب الموقع",createdAt:serverTimestamp(),createdBy:currentUser.uid});
+ toast("تم إنشاء الروم للجميع");
 }
-window.clearAllRoomMessages=async()=>{
- if(!owner()||!confirm("حذف جميع الرسائل للجميع؟"))return;
- const s=await getDocs(collection(db,"roomMessages"));await Promise.all(s.docs.map(d=>deleteDoc(d.ref)));
- await addSystem("🧹 قام صاحب الموقع بتنظيف رسائل الغرفة للجميع");toast("تم تنظيف الرسائل");
+window.deleteRoom=async id=>{
+ if(!owner()||id==="main")return;
+ if(!confirm("حذف هذا الروم نهائياً للجميع؟"))return;
+ await deleteDoc(doc(db,"rooms",id));
+ if(currentRoomId===id)await selectRoom("main","main","الغرفة الرئيسية");
 }
-window.toggleRoomProtection=async()=>{if(owner()){await setDoc(doc(db,"roomSettings","main"),{protection:true},{merge:true});toast("تم تفعيل الحماية")}}
-
-window.selectRoom=async name=>{
-  await setDoc(doc(db,"roomSettings","main"),{activeRoom:name},{merge:true});
-  closeModal("rooms-modal");toast("تم اختيار "+name);
-};
+window.selectRoom=async(name,id="main",displayName=name)=>{
+ if(id===currentRoomId){closeModal("rooms-modal");return}
+ if(currentMicSlot!==null){try{await deleteDoc(doc(db,"rooms",currentRoomId,"micSlots",String(currentMicSlot)))}catch{}currentMicSlot=null}
+ currentRoomId=id;currentRoomName=displayName||name;
+ localStorage.setItem("chat_active_room_v2",currentRoomId);localStorage.setItem("chat_active_room_name_v2",currentRoomName);
+ closeModal("rooms-modal");
+ if(unsubMessages)unsubMessages();if(unsubMics)unsubMics();if(unsubRoomSettings)unsubRoomSettings();if(unsubPresence)unsubPresence();
+ listenMessages();listenMics();listenRoomSettings();listenPresence();await createPresence();
+ $("chat-area").scrollTop=0;toast("دخلت "+currentRoomName);
+}
 function listenRooms(){
  onSnapshot(collection(db,"rooms"),snap=>{
    const c=$("rooms-container");c.innerHTML="";
-   snap.forEach(d=>{const r=d.data();c.insertAdjacentHTML("beforeend",`<div class="room-item" onclick="selectRoom('${safe(r.name||d.id)}')"><span>🚪 ${safe(r.name||d.id)}</span><small>${safe(r.description||"")}</small></div>`)});
-   if(!snap.size)c.innerHTML="<div style='padding:15px'>لا توجد غرف إضافية.</div>";
+   const rooms=[{id:"main",name:"الغرفة الرئيسية",description:"الغرفة الأولى"}];
+   snap.forEach(d=>{const r=d.data();if(d.id!=="main")rooms.push({id:d.id,name:r.name||d.id,description:r.description||""})});
+   rooms.forEach(r=>{
+     const active=r.id===currentRoomId?" style='border-right:3px solid #10b981'":"";
+     const del=owner()&&r.id!=="main"?`<button class="icon-btn" style="color:#ef4444" onclick="event.stopPropagation();deleteRoom('${safe(r.id)}')"><i class="fa-solid fa-trash"></i></button>`:"";
+     c.insertAdjacentHTML("beforeend",`<div class="room-item"${active} onclick="selectRoom('${safe(r.name)}','${safe(r.id)}','${safe(r.name)}')"><span>🚪 ${safe(r.name)}<small class="room-owner-note">${safe(r.description)}</small></span>${del}</div>`);
+   });
+   $("owner-room-create-box").classList.toggle("hidden",!owner());
  });
 }
 
+function micCollection(){return collection(db,"rooms",currentRoomId,"micSlots")}
+function micDoc(slot){return doc(db,"rooms",currentRoomId,"micSlots",String(slot))}
 function listenMics(){
  if(unsubMics)unsubMics();
- unsubMics=onSnapshot(collection(db,"micSlots"),snap=>{
-   for(let i=0;i<5;i++){ $("mic-slot-"+i).classList.remove("occupied","muted");$("mic-slot-"+i).style.backgroundImage="";$("mic-name-"+i).textContent="فارغ"}
+ unsubMics=onSnapshot(micCollection(),snap=>{
+   for(let i=0;i<5;i++){ $("mic-slot-"+i).classList.remove("occupied","muted");$("mic-slot-"+i).style.backgroundImage="";$("mic-name-"+i).textContent="فارغ" }
    snap.forEach(d=>{const m=d.data(),i=Number(d.id);if(i<0||i>4)return;
      const el=$("mic-slot-"+i);el.classList.add("occupied");if(m.muted)el.classList.add("muted");
      el.style.backgroundImage=`url("${m.avatar||avatarFor(m.name)}")`;$("mic-name-"+i).textContent=m.name||"عضو";
    });
  });
 }
-async function findFreeMic(){for(let i=0;i<5;i++){const s=await getDoc(doc(db,"micSlots",String(i)));if(!s.exists())return i}return -1}
-window.requestMicrophone=async()=>{const i=await findFreeMic();if(i<0)return alert("جميع المايكات مشغولة");currentMicSlot=i;$("mic-request-text").textContent=`هل تريد الصعود إلى المايك رقم ${i+1}؟`;openModal("mic-request-modal")}
+async function findFreeMic(){for(let i=0;i<5;i++){const s=await getDoc(micDoc(i));if(!s.exists())return i}return -1}
+window.requestMicrophone=async()=>{const i=await findFreeMic();if(i<0)return alert("جميع المايكات مشغولة");currentMicSlot=i;$("mic-request-text").textContent=`هل تريد الصعود إلى المايك رقم ${i+1} في ${currentRoomName}؟`;openModal("mic-request-modal")}
 window.micClick=async i=>{
- const s=await getDoc(doc(db,"micSlots",String(i)));
+ const s=await getDoc(micDoc(i));
  if(!s.exists())return requestMicrophone();
  const m=s.data();
- if(m.uid===currentUser.uid){currentMicSlot=i;$("my-mute-label").textContent=m.muted?"فتح كتم المايك":"كتم المايك";openModal("mic-control-modal")}
- else openProfileByName(slug(m.name));
+ if(m.uid===currentUser.uid){
+   currentMicSlot=i;$("owner-drop-mic-item").style.display="none";$("my-mute-label").textContent=m.muted?"فتح كتم المايك":"كتم المايك";openModal("mic-control-modal");
+ }else if(owner()){
+   currentMicSlot=i;selectedMicOwnerSlot=i;$("owner-drop-mic-item").style.display="block";$("my-mute-label").textContent=`عضو: ${m.name}`;openModal("mic-control-modal");
+ }else openProfileByName(slug(m.name));
 }
 window.confirmMicRequest=async()=>{
  if(currentMicSlot===null)return;closeModal("mic-request-modal");
- await setDoc(doc(db,"micSlots",String(currentMicSlot)),{uid:currentUser.uid,name:currentUser.name,avatar:currentUser.avatar||avatarFor(currentUser.name),muted:false,joinedAt:serverTimestamp()});
+ await setDoc(micDoc(currentMicSlot),{uid:currentUser.uid,name:currentUser.name,avatar:currentUser.avatar||avatarFor(currentUser.name),muted:false,joinedAt:serverTimestamp(),roomId:currentRoomId});
  try{await navigator.mediaDevices.getUserMedia({audio:true});toast("تم الصعود للمايك. تم طلب إذن الميكروفون من الجهاز")}catch(e){toast("صعدت للمايك، لكن إذن الميكروفون غير ممنوح")}
 }
 window.toggleMyMute=async()=>{
- if(currentMicSlot===null)return;const r=doc(db,"micSlots",String(currentMicSlot)),s=await getDoc(r);if(!s.exists())return;
- const m=s.data();await setDoc(r,{muted:!m.muted},{merge:true});$("my-mute-label").textContent=!m.muted?"فتح كتم المايك":"كتم المايك";
+ if(currentMicSlot===null)return;const r=micDoc(currentMicSlot),s=await getDoc(r);if(!s.exists())return;
+ const m=s.data();if(m.uid!==currentUser.uid)return;
+ await setDoc(r,{muted:!m.muted},{merge:true});$("my-mute-label").textContent=!m.muted?"فتح كتم المايك":"كتم المايك";
 }
-window.leaveMic=async()=>{if(currentMicSlot!==null){await deleteDoc(doc(db,"micSlots",String(currentMicSlot)));currentMicSlot=null}closeModal("mic-control-modal");toast("تم النزول من المايك")}
+window.leaveMic=async()=>{if(currentMicSlot!==null){const s=await getDoc(micDoc(currentMicSlot));if(s.exists()&&s.data().uid===currentUser.uid)await deleteDoc(micDoc(currentMicSlot));currentMicSlot=null}closeModal("mic-control-modal");toast("تم النزول من المايك")}
+window.ownerDropCurrentMic=async()=>{
+ if(!owner()||selectedMicOwnerSlot===null)return;
+ const r=micDoc(selectedMicOwnerSlot),s=await getDoc(r);if(!s.exists())return closeModal("mic-control-modal");
+ const name=s.data().name||"العضو";await deleteDoc(r);selectedMicOwnerSlot=null;currentMicSlot=null;closeModal("mic-control-modal");await addSystem(`🎙️ قام صاحب الموقع بإنزال ${name} من المايك`);toast("تم إنزال العضو من المايك");
+}
 window.toggleMicsVisibility=()=>{
   const hidden=$("mics-frame").classList.toggle("hidden-mics");
   $("toggle-arrow-icon").className=hidden?"fa-solid fa-chevron-down":"fa-solid fa-chevron-up";
@@ -789,9 +1011,104 @@ window.toggleMicsVisibility=()=>{
 window.openYoutubePrompt=async()=>{
  const url=prompt("ألصق رابط YouTube للأغنية:");
  if(!url||currentMicSlot===null)return;
- await setDoc(doc(db,"micSlots",String(currentMicSlot)),{musicUrl:url},{merge:true});closeModal("mic-control-modal");toast("تم حفظ رابط الأغنية على المايك للجميع");
+ await setDoc(micDoc(currentMicSlot),{musicUrl:url},{merge:true});closeModal("mic-control-modal");toast("تم حفظ رابط الأغنية على المايك للجميع");
 }
-window.stopMyMusic=async()=>{if(currentMicSlot!==null)await setDoc(doc(db,"micSlots",String(currentMicSlot)),{musicUrl:""},{merge:true});closeModal("mic-control-modal")}
+window.stopMyMusic=async()=>{if(currentMicSlot!==null)await setDoc(micDoc(currentMicSlot),{musicUrl:""},{merge:true});closeModal("mic-control-modal")}
+
+function updateVisitorKey(){
+ const key=$("visitor-key-tab");if(!key)return;
+ key.classList.toggle("hidden",!currentUser?.isVisitor);
+}
+window.openVisitorMemberEntry=()=>{
+ if(!currentUser?.isVisitor)return;
+ $("reg-name").value=currentUser.name||"";
+ $("reg-age").value=currentUser.age||"22";
+ $("reg-gender").value=currentUser.gender||"ذكر";
+ $("reg-country").value=currentUser.country||"اليمن";
+ openModal("register-modal");
+}
+window.getYoutubeId=function(url){
+ try{
+   const u=new URL(url);
+   if(u.hostname.includes("youtu.be"))return u.pathname.slice(1).split("/")[0];
+   if(u.searchParams.get("v"))return u.searchParams.get("v");
+   const m=u.pathname.match(/\/embed\/([^/]+)/);return m?m[1]:null;
+ }catch{return null}
+}
+
+let drawCtx=null,drawing=false,drawMode="pen",drawColor="#000000";
+function setupDrawing(){
+ const c=$("drawing-canvas");if(!c)return;
+ const ratio=Math.max(1,window.devicePixelRatio||1),rect=c.getBoundingClientRect();
+ c.width=Math.round(rect.width*ratio);c.height=Math.round(rect.height*ratio);
+ drawCtx=c.getContext("2d");drawCtx.scale(ratio,ratio);drawCtx.lineCap="round";drawCtx.lineJoin="round";
+ drawCtx.fillStyle="#fff";drawCtx.fillRect(0,0,rect.width,rect.height);
+ drawCtx.strokeStyle=drawColor;drawCtx.lineWidth=5;
+ const pos=e=>{const r=c.getBoundingClientRect();const p=e.touches?e.touches[0]:e;return {x:p.clientX-r.left,y:p.clientY-r.top}};
+ const down=e=>{e.preventDefault();drawing=true;const p=pos(e);drawCtx.beginPath();drawCtx.moveTo(p.x,p.y)};
+ const move=e=>{if(!drawing)return;e.preventDefault();const p=pos(e);drawCtx.strokeStyle=drawMode==="eraser"?"#fff":drawColor;drawCtx.lineWidth=Number($("draw-size").value)||5;drawCtx.lineTo(p.x,p.y);drawCtx.stroke()};
+ const up=()=>{drawing=false;drawCtx.closePath()};
+ c.onpointerdown=down;c.onpointermove=move;c.onpointerup=up;c.onpointerleave=up;
+}
+window.openDrawingFromPlus=()=>{closeModal("plus-menu-modal");openModal("drawing-modal");setTimeout(setupDrawing,80)}
+window.setDrawTool=t=>{drawMode=t;toast(t==="eraser"?"الممحاة مفعلة":"القلم مفعل")}
+window.setDrawColor=c=>{drawColor=c;drawMode="pen"}
+window.clearDrawing=()=>{if(!drawCtx)return;const c=$("drawing-canvas");drawCtx.save();drawCtx.setTransform(1,0,0,1,0,0);drawCtx.fillStyle="#fff";drawCtx.fillRect(0,0,c.width,c.height);drawCtx.restore();const ratio=Math.max(1,window.devicePixelRatio||1);drawCtx.setTransform(ratio,0,0,ratio,0,0);drawCtx.lineCap="round";drawCtx.lineJoin="round"}
+window.sendDrawingToPublic=async()=>{
+ if(!drawCtx||!currentUser)return;
+ const c=$("drawing-canvas");
+ c.toBlob(async blob=>{
+   try{
+     const file=new File([blob],"drawing.png",{type:"image/png"});
+     const url=await uploadToStorage(file,"drawings");
+     await addDoc(collection(db,"roomMessages"),{roomId:currentRoomId,sender:currentUser.name,text:"🎨 رسم من "+currentUser.name,imageUrl:url,time:nowTime(),createdAt:serverTimestamp()});
+     closeModal("drawing-modal");toast("تم إرسال الرسم للعام");
+   }catch(e){console.error(e);alert("تعذر إرسال الرسم. تحقق من Firebase Storage")}
+ },"image/png");
+}
+
+const wheelRewards=[
+ {label:"100 نقطة",points:100},{label:"500 ذهب",gold:500},{label:"🎁 هدية",gift:1},{label:"مستوى +1",level:1},
+ {label:"50 نقطة",points:50},{label:"1000 ذهب",gold:1000},{label:"🎁 هديتان",gift:2},{label:"مستوى +2",level:2}
+];
+function drawWheel(angle=0){
+ const c=$("wheel-canvas");if(!c)return;const ctx=c.getContext("2d"),cx=280,cy=280,r=250,n=wheelRewards.length;
+ ctx.clearRect(0,0,560,560);
+ for(let i=0;i<n;i++){
+   const a0=angle+i*2*Math.PI/n,a1=angle+(i+1)*2*Math.PI/n;
+   ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,a0,a1);ctx.closePath();
+   ctx.fillStyle=`hsl(${i*45},70%,${55-(i%2)*8}%)`;ctx.fill();ctx.strokeStyle="#fff";ctx.lineWidth=3;ctx.stroke();
+   ctx.save();ctx.translate(cx,cy);ctx.rotate((a0+a1)/2);ctx.textAlign="right";ctx.fillStyle="#fff";ctx.font="bold 22px Tahoma";ctx.fillText(wheelRewards[i].label,-40,8);ctx.restore();
+ }
+ ctx.beginPath();ctx.arc(cx,cy,35,0,Math.PI*2);ctx.fillStyle="#111827";ctx.fill();ctx.fillStyle="#f0c34b";ctx.font="bold 20px Tahoma";ctx.textAlign="center";ctx.fillText("دور",cx,7+cy);
+}
+window.openWheelFromPlus=()=>{closeModal("plus-menu-modal");openModal("wheel-modal");drawWheel(0);$("wheel-result").textContent="اضغط لتدوير العجلة"}
+let wheelBusy=false;
+window.spinWheel=async()=>{
+ if(wheelBusy)return;wheelBusy=true;
+ const idx=Math.floor(Math.random()*wheelRewards.length),n=wheelRewards.length;
+ const target=-(idx*2*Math.PI/n+Math.PI/n)+Math.PI/2;
+ const start=performance.now(),duration=3600,startAngle=0,endAngle=target+Math.PI*2*6;
+ const animate=t=>{
+   const p=Math.min(1,(t-start)/duration),ease=1-Math.pow(1-p,3),a=startAngle+(endAngle-startAngle)*ease;
+   drawWheel(a);if(p<1)requestAnimationFrame(animate);else finishWheel(idx);
+ };
+ requestAnimationFrame(animate);
+}
+async function finishWheel(idx){
+ const reward=wheelRewards[idx];$("wheel-result").textContent="🎉 "+reward.label;
+ const fresh=await getUserByName(currentUser.name);const u={...(fresh||currentUser)};
+ u.points=(Number(u.points)||0)+(reward.points||0);u.gold=(Number(u.gold)||0)+(reward.gold||0);
+ u.gifts=(Number(u.gifts)||0)+(reward.gift||0);u.level=(Number(u.level)||1)+(reward.level||0);
+ await saveUser(u);currentUser={...currentUser,...u};localStorage.setItem(sessionKey,JSON.stringify(currentUser));await createPresence();
+ await addSystem(`🎡 ${currentUser.name} حصل من عجلة الحظ على ${reward.label}`);
+ wheelBusy=false;
+}
+window.openDiceFromPlus=()=>{closeModal("plus-menu-modal");openModal("dice-modal");rollDice()}
+window.rollDice=async()=>{
+ const n=Math.floor(Math.random()*6)+1,faces=["⚀","⚁","⚂","⚃","⚄","⚅"];
+ $("dice-result").textContent=faces[n-1];await addSystem(`🎲 ${currentUser.name} رمى حجر النرد وظهرت ${n}`);
+}
 
 window.sendInteraction=async type=>{if(!selectedUser)return;await addSystem(`${type==="like"?"❤️":"🎁"} ${currentUser.name} تفاعل مع ${selectedUser.name}`);toast("تم إرسال التفاعل")}
 window.toggleSimpleMode=()=>document.body.classList.toggle("simple-mode");
