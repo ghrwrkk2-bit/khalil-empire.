@@ -12,7 +12,9 @@ button,input,select{font:inherit}
 button{cursor:pointer}
 .hidden{display:none!important}
 #login-modal,.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(7px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:12px}
-#login-modal{background:rgba(15,23,42,.96);overflow:auto;display:none}
+#login-modal{background:rgba(15,23,42,.96);overflow-y:auto;overflow-x:hidden;display:none;align-items:flex-start;justify-content:center;padding:12px 10px 24px}
+#login-modal .login-box{max-height:calc(100vh - 24px);overflow-y:auto;overflow-x:hidden}
+.login-seo-info{scroll-margin-top:8px}
 .login-box,.modal-card{width:100%;max-width:440px;background:#1e293b;border:1px solid #334155;border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,.55);overflow:hidden}
 .login-header-banner{padding:22px 15px;text-align:center;background:linear-gradient(135deg,#1e1b4b,#312e81);border-bottom:2px solid #ec4899}
 .chat-logo-title{font-size:1.55rem;font-weight:bold;color:#ec4899}
@@ -144,7 +146,7 @@ body>.input-bar{position:fixed!important}
 .frame-neon{border:1px solid #22d3ee;background:rgba(34,211,238,.08);box-shadow:0 0 7px rgba(34,211,238,.55)}
 .frame-royal{border:1px solid #a855f7;background:rgba(168,85,247,.1);box-shadow:0 0 7px rgba(168,85,247,.45)}
 .online-item .name-line{display:flex;align-items:center;gap:4px}
-.owner-rank-icon{color:#ffd700!important;filter:drop-shadow(0 0 2px #fff3a3) drop-shadow(0 0 6px #ffd700);animation:ownerTrophyShine 1.6s ease-in-out infinite}
+.owner-rank-icon{color:#ffd700!important;filter:drop-shadow(0 0 2px #fff3a3) drop-shadow(0 0 6px #ffd700) drop-shadow(0 0 12px rgba(255,215,0,.9));animation:ownerTrophyShine 1.25s ease-in-out infinite;transform-origin:center}
 @keyframes ownerTrophyShine{0%,100%{filter:drop-shadow(0 0 1px #fff) drop-shadow(0 0 3px #ffd700);transform:scale(1)}50%{filter:drop-shadow(0 0 4px #fff) drop-shadow(0 0 12px #ffd700);transform:scale(1.12)}}
 .owner-rank-text{color:#ffd700!important;text-shadow:0 0 4px #ffd700,0 0 9px rgba(255,215,0,.65);font-weight:900}
 .owner-mic-action{display:none}
@@ -474,10 +476,10 @@ body.owner-view .owner-mic-action{display:block}
     <div class="login-body">
       <div class="chat-settings-note">هذه الإعدادات خاصة بالروم الحالي، وتظهر مباشرة لجميع الموجودين فيه.</div>
       <button class="btn-submit" style="background:#dc2626" onclick="clearAllRoomMessages()">🧹 تنظيف رسائل الروم</button>
-      <div class="input-group" style="margin-top:10px"><label>🌌 خلفية الروم</label><input id="chat-room-bg-input" type="file" accept="image/*" onchange="uploadRoomBackground(event)"></div>
+      <div class="input-group" style="margin-top:10px"><label>🌌 خلفية الروم</label><input id="chat-room-bg-input" type="file" accept="image/*" onchange="chooseRoomBackground(event)"><button class="btn-submit" onclick="saveRoomBackground()">💾 حفظ خلفية الروم</button></div>
       <button class="btn-submit" style="background:#475569" onclick="removeRoomBackground()">إزالة خلفية الروم</button>
       <div class="input-group" style="margin-top:10px"><label>🎙️ عدد المايكات</label><select id="mics-count-select" class="edit-select" onchange="updateMicsCount()"><option value="5">5</option><option value="4">4</option><option value="3">3</option><option value="2">2</option><option value="1">1</option><option value="0">0</option></select></div>
-      <div class="input-group"><label>🖼️ أيقونة الروم</label><input id="chat-room-icon-input" type="file" accept="image/*" onchange="uploadRoomIcon(event)"></div>
+      <div class="input-group"><label>🖼️ أيقونة الروم</label><input id="chat-room-icon-input" type="file" accept="image/*" onchange="chooseRoomIcon(event)"><button class="btn-submit" onclick="saveRoomIcon()">💾 حفظ أيقونة الروم</button></div>
       <button class="btn-submit" style="background:#475569" onclick="removeRoomIcon()">إزالة أيقونة الروم</button>
     </div>
   </div>
@@ -552,6 +554,8 @@ let replyTo=null, currentMicSlot=null, unsubMessages=null, unsubUsers=null, unsu
 let privatePairId="";
 let presenceTimer=null;
 let micHeartbeatTimer=null;
+let pendingRoomBackgroundFile=null,pendingRoomIconFile=null;
+let contestNoAnswerTimer=null;
 let presenceCache=new Map();
 let forceChatBottom=true;
 let sendInProgress=false;
@@ -641,23 +645,31 @@ async function saveUser(u){
 }
 
 async function login(){
- const name=$("username").value.trim(), email=$("email").value.trim().toLowerCase();
+ const name=$("username").value.trim(), email=$("email").value.trim().toLowerCase(), pass=$("password")?.value.trim()||$("login-pass")?.value.trim()||"";
  const member=!$("tab-visitor").classList.contains("active");
  if(!name)return alert("اكتب الاسم");
  const isOwner=OWNER_EMAILS.includes(email);
  const existing=await getUserByName(name);
- const uid=isOwner?"owner":(existing?.uid||((member?"member_":"guest_")+encodeURIComponent(name).slice(0,80)));
- currentUser=existing||{
-   uid,name,email,isOwner,isVisitor:!member&&!isOwner,rankId:isOwner?1:(member?11:20),
-   avatar:avatarFor(name),cover:"",profileBackground:"",age:"22",gender:"غير محدد",country:"اليمن",
-   info:"أهلاً وسهلاً بكم في شات حسوني",nameFrame:isOwner?"frame-gold":"frame-none",
-   isMuted:false,isBanned:false
- };
- currentUser.name=name;
- currentUser.email=email;
- currentUser.isOwner=isOwner||currentUser.isOwner;
- currentUser.isVisitor=!member&&!currentUser.isOwner;
- if(currentUser.isOwner){currentUser.uid="owner";currentUser.rankId=1}
+ if(member){
+   if(!email||!pass)return alert("اكتب الاسم والبريد وكلمة المرور");
+   if(!existing)return alert("لا يوجد حساب مسجل بهذا الاسم. اضغط تسجيل لإنشاء الحساب أولاً.");
+   if(existing.email&&String(existing.email).toLowerCase()!==email)return alert("البريد الإلكتروني لا يطابق الحساب");
+   const expected=existing.passwordHash||"";
+   if(expected && expected!==btoa(unescape(encodeURIComponent(pass))))return alert("كلمة المرور غير صحيحة");
+   currentUser={...existing};
+   currentUser.email=email;
+   if(isOwner||currentUser.isOwner){currentUser.isOwner=true;currentUser.isVisitor=false;currentUser.rankId=1;currentUser.uid=currentUser.uid||"owner"}
+   else currentUser.isVisitor=false;
+ }else{
+   const uid=isOwner?"owner":(existing?.uid||("guest_"+encodeURIComponent(name).slice(0,80)));
+   currentUser=existing?{...existing}: {
+     uid,name,email,isOwner,isVisitor:!isOwner,rankId:isOwner?1:20,
+     avatar:avatarFor(name),cover:"",profileBackground:"",age:"22",gender:"غير محدد",country:"اليمن",
+     info:"أهلاً وسهلاً بكم في شات حسوني",nameFrame:isOwner?"frame-gold":"frame-none",isMuted:false,isBanned:false
+   };
+   currentUser.name=name;currentUser.email=email;currentUser.isVisitor=!isOwner;
+   if(isOwner){currentUser.isOwner=true;currentUser.rankId=1;currentUser.uid="owner"}
+ }
  if(currentUser.isBanned)return alert("هذا الحساب محظور");
  await saveUser(currentUser);
  localStorage.setItem(sessionKey,JSON.stringify(currentUser));
@@ -694,13 +706,34 @@ async function startApp(){
  listenUsers();listenPresence();listenMessages();listenMics();listenRoomSettings();listenRooms();listenNotifications();listenContestBot();updateVisitorKey();document.body.classList.toggle("owner-view",!!currentUser.isOwner);document.getElementById("owner-dashboard-option")?.classList.toggle("hidden",!owner());
  await createPresence();
  await announceRoomJoin();
+ if(isContestRoom())await ensureContestBotForRoom();
 }
 
 async function createNotification(toUid,payload){if(!toUid||toUid===currentUser?.uid)return;try{await addDoc(collection(db,"notifications",toUid,"items"),{...payload,createdAt:serverTimestamp(),read:false})}catch(e){console.warn(e)}}
 function listenNotifications(){if(unsubNotifications)unsubNotifications();if(!currentUser?.uid)return;unsubNotifications=onSnapshot(query(collection(db,"notifications",currentUser.uid,"items"),orderBy("createdAt","desc"),limit(30)),snap=>{let unread=0,arr=[];snap.forEach(d=>{const n=d.data();if(!n.read)unread++;arr.push(n)});const b=$("notifyBadge");b.textContent=unread>99?"99+":String(unread);b.classList.toggle("hidden",unread===0);const c=$("notifications-list");if(c)c.innerHTML=arr.length?arr.map(n=>`<div class="notify-item"><span class="notify-dot"></span><div><b>${safe(n.title||"إشعار")}</b><div style="font-size:.7rem;color:#cbd5e1">${safe(n.text||"")}</div></div></div>`).join(""):"<div style='padding:15px;text-align:center;color:#94a3b8'>لا توجد إشعارات.</div>"})}
 window.openNotifications=async()=>{openModal("notifications-modal");if(!currentUser?.uid)return;try{const q=query(collection(db,"notifications",currentUser.uid,"items"),where("read","==",false),limit(30));const snap=await getDocs(q);await Promise.all(snap.docs.map(d=>setDoc(d.ref,{read:true},{merge:true})))}catch{}}
 
-async function announceRoomJoin(){if(!currentUser)return;const key="chat_join_notice_v2_"+currentUser.uid+"_"+currentRoomId;if(sessionStorage.getItem(key))return;sessionStorage.setItem(key,"1");const r=rank(currentUser.rankId||20);await addSystem(`👋 انضم ${currentUser.name} — ${r.title}`);try{const rs=await getDoc(doc(db,"roomSettings",currentRoomId));const d=rs.exists()?rs.data():{};const wk="chat_welcome_once_v2_"+currentUser.uid+"_"+currentRoomId;if(d.bots?.welcome&&!localStorage.getItem(wk)){localStorage.setItem(wk,"1");await addSystem(`🤖 بوت الترحيب: أهلاً بك ${currentUser.name} في ${currentRoomName} 🌷`)}}catch{}}
+async function announceRoomJoin(){
+ if(!currentUser)return;
+ try{
+   const rs=await getDoc(doc(db,"roomSettings",currentRoomId));
+   const d=rs.exists()?rs.data():{};
+   const r=rank(currentUser.rankId||20);
+   if(d.showJoinMessages!==false){
+     const joinRef=doc(db,"roomSettings",currentRoomId,"joins",String(currentUser.uid||currentUser.name));
+     const js=await getDoc(joinRef);
+     if(!js.exists()){await setDoc(joinRef,{name:currentUser.name,uid:currentUser.uid,lastWelcomeAt:serverTimestamp()});await addSystem(`👋 انضم ${currentUser.name} — ${r.title}`);}
+   }
+   if(d.bots?.welcome){
+     const wr=doc(db,"roomSettings",currentRoomId,"welcomed",String(currentUser.uid||currentUser.name));
+     const ws=await getDoc(wr);
+     if(!ws.exists()){
+       await setDoc(wr,{name:currentUser.name,uid:currentUser.uid,welcomeAt:serverTimestamp()});
+       await addSystem(`🤖 بوت الترحيب: أهلاً بك ${currentUser.name} في ${currentRoomName} 🌷`);
+     }
+   }
+ }catch(e){console.warn("welcome/join",e)}
+}
 
 function listenUsers(){
  if(unsubUsers)unsubUsers();
@@ -752,7 +785,6 @@ function listenMessages(){
      return ta-tb;
    });
    docs.forEach(({id:dId,m})=>{
-     if(m.quarantined && !owner())return;
      if(m.isSystem){area.insertAdjacentHTML("beforeend",`<div class="system-msg-item">${safe(m.text)}</div>`);return}
      if(dId && m.sender && !m.isSystem && m.text && !m.videoLink && !m.imageUrl && !m.videoUrl && !m.audioUrl && !contestCheckedMessages.has(dId)){
        contestCheckedMessages.add(dId);
@@ -778,7 +810,8 @@ function listenMessages(){
        else if(/^https?:\/\//i.test(url))media=`<div class="video-small-card" onclick="openVideoViewer('${slug(url)}','file')"><span>▶️ فيديو<br><small>اضغط للتكبير</small></span></div>`;
        else media=`<div class="quarantine-card">⚠️ تعذر معاينة هذا الفيديو</div>`;
      }
-     const safeText=m.quarantined?(m.promoLink?"⚠️ منشور احتيالي — تم منع الترويج لرابط شات خارجي":"⚠️ منشور احتيالي — تم إخفاء الرابط الخارجي للحماية"):safe(m.text||"");
+     const safeText=(m.quarantined&&!owner())?(m.promoLink?"⚠️ منشور احتيالي — تم منع الترويج لرابط شات خارجي":"⚠️ منشور احتيالي — تم إخفاء الرابط الخارجي للحماية"):safe(m.text||"");
+     if(m.quarantined&&!owner())media="";
      area.insertAdjacentHTML("beforeend",`
        <div class="msg-item" data-name="${safe(m.sender)}" data-id="${dId}">
         <img class="user-avatar" src="${safe(u.avatar||avatarFor(u.name))}" onclick="openProfileByName('${slug(m.sender)}')">
@@ -1061,7 +1094,7 @@ function listenRoomSettings(){
    const d=snap.exists()?snap.data():{};
    $("mics-count-select").value=String(d.micsCount??5);renderMicCount(Number(d.micsCount??5));
    if(d.bgUrl)$('chat-area').style.backgroundImage=`url("${d.bgUrl}")`;else $('chat-area').style.backgroundImage="";document.body.classList.toggle("room-protected",!!d.protected);
-   if(d.bots?.contest)ensureContestBotForRoom();
+   if(d.bots?.contest || isContestRoom())ensureContestBotForRoom();
  });
 }
 function renderMicCount(n){for(let i=0;i<5;i++)$("mic-wrapper-"+i).style.display=i<n?"flex":"none"}
@@ -1089,7 +1122,7 @@ window.selectRoom=async(name,id="main",displayName=name)=>{
  localStorage.setItem("chat_active_room_v2",currentRoomId);localStorage.setItem("chat_active_room_name_v2",currentRoomName);
  closeModal("rooms-modal");
  if(unsubMessages)unsubMessages();if(unsubMics)unsubMics();if(unsubRoomSettings)unsubRoomSettings();if(unsubPresence)unsubPresence();
- listenMessages();listenMics();listenRoomSettings();listenPresence();listenContestBot();await createPresence();await announceRoomJoin();if(owner()&&isContestRoom())await ensureContestBotForRoom();
+ listenMessages();listenMics();listenRoomSettings();listenPresence();listenContestBot();await createPresence();await announceRoomJoin();if(isContestRoom())await ensureContestBotForRoom();
  requestAnimationFrame(()=>{$("chat-area").scrollTop=$("chat-area").scrollHeight});toast("دخلت "+currentRoomName);
 }
 function renderRoomsFromPresence(){
@@ -1214,18 +1247,18 @@ else if(kind==="development"||kind==="profile"){const ss=await getDoc(doc(db,"si
 else if(kind==="bans"){b.innerHTML=`<div class="admin-section-box"><h4>🚫 المحظورون</h4><div id="bans-list">جارٍ التحميل...</div></div>`;const arr=[...users.values()].filter(u=>u.isBanned);$("bans-list").innerHTML=arr.length?arr.map(u=>`<div class="online-item"><span>${safe(u.name)}</span><small>${safe(u.bannedBy||"غير معروف")}</small></div>`).join(""):"لا يوجد محظورون"}
 else if(kind==="protection"){const rs=await getDoc(doc(db,"roomSettings",currentRoomId));const on=rs.exists()&&rs.data().protected;b.innerHTML=`<div class="admin-section-box"><h4>🛡️ الحماية</h4><p>حالة حماية الغرفة: <b>${on?'مفعلة':'متوقفة'}</b></p><button class="btn-submit" onclick="toggleRoomProtection()">${on?'إلغاء الحماية':'تفعيل الحماية'}</button></div>`}
 else if(kind==="system"){const ss=await getDoc(doc(db,"siteSettings","main"));const d=ss.exists()?ss.data():{};b.innerHTML=`<div class="admin-section-box"><h4>⚙️ النظام الكامل</h4><label style="display:block;padding:6px"><input id="sys-guests" type="checkbox" ${d.allowGuests!==false?'checked':''}> السماح بالزوار</label><label style="display:block;padding:6px"><input id="sys-joins" type="checkbox" ${d.showJoinMessages!==false?'checked':''}> إظهار دخول الأعضاء</label><label style="display:block;padding:6px"><input id="sys-links" type="checkbox" ${d.quarantineChatLinks!==false?'checked':''}> تصنيف روابط الشات الخارجية</label><button class="btn-submit" onclick="saveSystemSettings()">حفظ النظام</button></div>`}
-else if(kind==="room"){b.innerHTML=`<div class="admin-section-box"><button class="btn-submit" style="background:#dc2626" onclick="clearAllRoomMessages()">🧹 تنظيف الرسائل</button><div class="input-group"><label>خلفية الغرفة</label><input type="file" accept="image/*" onchange="uploadRoomBackground(event)"></div><button class="btn-submit" style="background:#475569" onclick="removeRoomBackground()">إزالة الخلفية</button><div class="input-group"><label>عدد المايكات</label><select id="mics-count-select" class="edit-select" onchange="updateMicsCount()"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option><option>0</option></select></div></div>`}
+else if(kind==="room"){b.innerHTML=`<div class="admin-section-box"><button class="btn-submit" style="background:#dc2626" onclick="clearAllRoomMessages()">🧹 تنظيف الرسائل</button><div class="input-group"><label>خلفية الغرفة</label><input id="room-bg-file-input" type="file" accept="image/*" onchange="chooseRoomBackground(event)"><button class="btn-submit" onclick="saveRoomBackground()">💾 حفظ خلفية الروم</button></div><button class="btn-submit" style="background:#475569" onclick="removeRoomBackground()">إزالة الخلفية</button><div class="input-group"><label>عدد المايكات</label><select id="mics-count-select" class="edit-select" onchange="updateMicsCount()"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option><option>0</option></select></div></div>`}
 else if(kind==="mics"){b.innerHTML=`<div class="admin-section-box"><h4>🎙️ المايكات</h4><p>يمكن لصاحب الشات إنزال أي عضو من المايك.</p><button class="btn-submit" onclick="closeModal('owner-chat-settings-modal');toast('اضغط على أي مايك مشغول للتحكم به')">تم</button></div>`}};
 window.deletePublicMessage=async id=>{if(!owner())return;await deleteDoc(doc(db,"roomMessages",id));toast("تم حذف الرسالة")};
 window.deletePrivateAudit=async path=>{if(!owner())return;const parts=path.split('/');if(parts.length<4)return;await deleteDoc(doc(db,"privateMessages",parts[1],"messages",parts[3]));toast("تم حذف رسالة الخاص")};
 const CONTEST_QUESTIONS=[
 {q:"ما عاصمة اليمن؟",a:["صنعاء"],points:10,gold:10},{q:"كم عدد أيام الأسبوع؟",a:["7","سبعة"],points:10,gold:10},{q:"ما الكوكب المعروف بالكوكب الأحمر؟",a:["المريخ"],points:10,gold:10},{q:"كم عدد أشهر السنة؟",a:["12","اثنا عشر","اثني عشر"],points:10,gold:10},{q:"ما أكبر محيط في العالم؟",a:["الهادي","المحيط الهادي"],points:10,gold:10},{q:"كم عدد أضلاع المثلث؟",a:["3","ثلاثة"],points:10,gold:10},{q:"ما الحيوان الذي يسمى سفينة الصحراء؟",a:["الجمل"],points:10,gold:10},{q:"ما ناتج 5 + 7؟",a:["12","اثنا عشر","اثني عشر"],points:10,gold:10},{q:"ما لون السماء غالباً في النهار الصافي؟",a:["أزرق","الازرق","الأزرق"],points:10,gold:10},{q:"ما اللغة الرسمية في اليمن؟",a:["العربية","اللغة العربية"],points:10,gold:10},{q:"ما عكس كلمة كبير؟",a:["صغير"],points:10,gold:10},{q:"كم عدد حروف كلمة شات؟",a:["3","ثلاثة"],points:10,gold:10},{q:"ما أول شهر في السنة الميلادية؟",a:["يناير"],points:10,gold:10},{q:"ما عاصمة فرنسا؟",a:["باريس"],points:10,gold:10},{q:"كم عدد الصلوات المفروضة في اليوم؟",a:["5","خمس","خمسة"],points:10,gold:10},{q:"ما الغاز الذي يحتاجه الإنسان للتنفس؟",a:["الأكسجين","اكسجين"],points:10,gold:10},{q:"ما ناتج 10 × 2؟",a:["20","عشرون"],points:10,gold:10},{q:"ما أكبر قارة في العالم؟",a:["آسيا"],points:10,gold:10},{q:"ما الحيوان المعروف بملك الغابة؟",a:["الأسد"],points:10,gold:10},{q:"كم عدد ألوان قوس قزح؟",a:["7","سبعة"],points:10,gold:10}];
-let unsubContest=null,contestAdvanceTimer=null;const contestCheckedMessages=new Set();
+let unsubContest=null,contestAdvanceTimer=null;const contestCheckedMessages=new Set();const CONTEST_WAIT_MS=15000;
 function normalizeAnswer(v){return String(v||"").toLowerCase().trim().replace(/[ًٌٍَُِّْـ]/g,"").replace(/[أإآ]/g,"ا").replace(/ة/g,"ه").replace(/\s+/g," ")}
 function contestCorrect(text,q){const n=normalizeAnswer(text);return q.a.some(a=>normalizeAnswer(a)===n)}
 function contestStateRef(){return doc(db,"roomSettings",currentRoomId,"contest","state")}
 function isContestRoom(){return /مسابق|مسابقات|سؤال|سوال|أسئلة|اسئلة|الاساله|الأساله|quiz|contest/i.test(String(currentRoomName||"") )}
-async function publishContestQuestion(index){const q=CONTEST_QUESTIONS[index];if(!q)return;contestCheckedMessages.clear();await setDoc(contestStateRef(),{active:true,index,question:q.q,answers:q.a,points:q.points,gold:q.gold,answered:false,askedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true})}
+async function publishContestQuestion(index){const q=CONTEST_QUESTIONS[index];if(!q)return;contestCheckedMessages.clear();await setDoc(contestStateRef(),{active:true,index,question:q.q,answers:q.a,points:q.points,gold:q.gold,answered:false,askedAt:serverTimestamp(),deadlineAt:Date.now()+CONTEST_WAIT_MS,updatedAt:serverTimestamp()},{merge:true})}
 async function startContestBot(){
  if(!owner())return alert("بدء بوت المسابقات متاح لصاحب الموقع فقط");
  if(!isContestRoom())return alert("ادخل أولاً إلى روم الأسئلة أو المسابقات ثم شغّل البوت");
@@ -1239,16 +1272,24 @@ async function startContestBot(){
  }catch(e){console.error(e);alert("تعذر تشغيل البوت. تحقق من صلاحيات Firestore")}
 }
 async function ensureContestBotForRoom(){
- if(!owner()||!isContestRoom())return;
+ if(!isContestRoom())return;
  try{
    const rs=await getDoc(doc(db,"roomSettings",currentRoomId));const d=rs.exists()?rs.data():{};const bd=d.bots||{};
-   if(!bd.contest){await setDoc(doc(db,"roomSettings",currentRoomId),{bots:{...bd,contest:true}},{merge:true});}
-   const st=await getDoc(contestStateRef());
-   if(!st.exists()||!st.data().active){clearTimeout(contestAdvanceTimer);await publishContestQuestion(0);toast("🤖 بوت الأسئلة يعمل الآن تلقائياً في "+currentRoomName)}
+   if(!bd.contest)await setDoc(doc(db,"roomSettings",currentRoomId),{bots:{...bd,contest:true}},{merge:true});
+   const ref=contestStateRef();let started=false;
+   await runTransaction(db,async tx=>{
+     const st=await tx.get(ref);const cur=st.exists()?st.data():{};
+     if(cur.active)return;
+     const q=CONTEST_QUESTIONS[0];
+     tx.set(ref,{active:true,index:0,question:q.q,answers:q.a,points:q.points,gold:q.gold,answered:false,askedAt:serverTimestamp(),deadlineAt:Date.now()+CONTEST_WAIT_MS,updatedAt:serverTimestamp(),startedBy:currentUser.uid},{merge:true});
+     started=true;
+   });
+   if(started&&owner())toast("🤖 بوت الأسئلة يعمل الآن تلقائياً في "+currentRoomName);
  }catch(e){console.warn("ensure contest",e)}
 }
 async function stopContestBot(){if(!owner())return;clearTimeout(contestAdvanceTimer);await setDoc(contestStateRef(),{active:false,answered:true,updatedAt:serverTimestamp()},{merge:true});await setDoc(doc(db,"roomSettings",currentRoomId),{bots:{contest:false}},{merge:true});await addSystem("🤖 تم إيقاف بوت المسابقات");refreshContestAdminStatus()}
-async function advanceContestAfterDelay(nextIndex){clearTimeout(contestAdvanceTimer);contestAdvanceTimer=setTimeout(async()=>{try{const st=await getDoc(contestStateRef());if(!st.exists()||!st.data().active||!owner())return;await publishContestQuestion(nextIndex>=CONTEST_QUESTIONS.length?0:nextIndex)}catch(e){console.warn("contest advance",e)}},2800)}
+async function advanceContestAfterDelay(nextIndex){clearTimeout(contestAdvanceTimer);contestAdvanceTimer=setTimeout(async()=>{try{const st=await getDoc(contestStateRef());if(!st.exists()||!st.data().active)return;const d=st.data();if(!d.answered)return;const n=nextIndex>=CONTEST_QUESTIONS.length?0:nextIndex;await publishContestQuestion(n);}catch(e){console.warn("contest advance",e)}},2800)}
+async function handleContestNoAnswer(){try{const ref=contestStateRef();let result=false;await runTransaction(db,async tx=>{const s=await tx.get(ref);if(!s.exists())return;const d=s.data();const deadline=Number(d.deadlineAt)||0;if(!d.active||d.answered||!deadline||Date.now()<deadline)return;tx.update(ref,{answered:true,answerCorrect:false,answeredBy:"",correctAnswer:(CONTEST_QUESTIONS[Number(d.index)||0]?.a?.[0]||""),noAnswer:true,answeredAt:serverTimestamp()});result=true;});if(result){const s=await getDoc(ref);const d=s.exists()?s.data():{};await addSystem(`❌ لم يجب أحد — فشلتوا. الإجابة الصحيحة هي: ${d.correctAnswer||"غير معروفة"}`);await advanceContestAfterDelay((Number(d.index)||0)+1);}}catch(e){console.warn("contest timeout",e)}}
 async function checkContestAnswer(text,senderName){
  if(!text||!senderName||!currentUser)return;
  const ref=contestStateRef();
@@ -1264,7 +1305,7 @@ async function checkContestAnswer(text,senderName){
      tx.update(ref,{answered:true,answeredBy:senderName,answerCorrect:correct,correctAnswer:q.a[0],answeredAt:serverTimestamp()});
      if(correct)tx.set(userRef,{points:(Number(us.data().points)||0)+q.points,gold:(Number(us.data().gold)||0)+q.gold,contestWins:(Number(us.data().contestWins)||0)+1},{merge:true});
    });
-   if(!result||!owner())return;
+   if(!result)return;
    const ss=await getDoc(ref);if(!ss.exists())return;const st=ss.data();
    if(st.answeredBy!==senderName)return;
    if(result.correct)await addSystem(`🎉 إجابة صحيحة! ${senderName} حصل على ${result.points} نقطة و${result.gold} ذهب.`);
@@ -1273,7 +1314,7 @@ async function checkContestAnswer(text,senderName){
  }catch(e){console.warn("contest answer",e)}
 }
 function refreshContestAdminStatus(){const el=$("contest-status");if(!el)return;getDoc(contestStateRef()).then(s=>{const d=s.exists()?s.data():{};el.textContent=d.active?`🟢 يعمل — السؤال ${(Number(d.index)||0)+1}/20: ${d.question||""}`:"🔴 متوقف"}).catch(()=>{el.textContent="تعذر قراءة حالة البوت"})}
-function listenContestBot(){if(unsubContest)unsubContest();unsubContest=onSnapshot(contestStateRef(),snap=>{const old=$("contest-live-card");if(old)old.remove();if(!snap.exists())return;const d=snap.data();if(d.active){const card=document.createElement("div");card.id="contest-live-card";card.className="contest-card";card.innerHTML=`<div class="contest-question">🏆 سؤال المسابقة ${(Number(d.index)||0)+1}/20: ${safe(d.question||"")}</div><div class="contest-reward">🎁 ${Number(d.points)||10} نقطة + ${Number(d.gold)||10} ذهب لأول إجابة صحيحة</div>`;$("chat-area")?.prepend(card);if(owner()&&isContestRoom()&&!d.answered)refreshContestAdminStatus()}})}
+function listenContestBot(){if(unsubContest)unsubContest();unsubContest=onSnapshot(contestStateRef(),snap=>{clearTimeout(contestNoAnswerTimer);const old=$("contest-live-card");if(old)old.remove();if(!snap.exists())return;const d=snap.data();if(d.active){const card=document.createElement("div");card.id="contest-live-card";card.className="contest-card";card.innerHTML=`<div class="contest-question">🏆 سؤال المسابقة ${(Number(d.index)||0)+1}/20: ${safe(d.question||"")}</div><div class="contest-reward">🎁 ${Number(d.points)||10} نقطة + ${Number(d.gold)||10} ذهب لأول إجابة صحيحة</div>`;$("chat-area")?.prepend(card);if(!d.answered){const left=Math.max(1000,(Number(d.deadlineAt)||Date.now()+CONTEST_WAIT_MS)-Date.now());contestNoAnswerTimer=setTimeout(()=>handleContestNoAnswer(),left);}if(owner()&&isContestRoom()&&!d.answered)refreshContestAdminStatus();}})}
 
 window.saveBots=async()=>{if(!owner())return;const bots={};document.querySelectorAll('[data-bot]').forEach(x=>bots[x.dataset.bot]=x.checked);await setDoc(doc(db,"roomSettings",currentRoomId),{bots},{merge:true});toast("تم حفظ البوتات لهذه الغرفة")};
 window.saveBlockedWordsAdmin=async()=>{const words=$("blocked-words-admin").value.split(/\n|,/).map(x=>x.trim()).filter(Boolean);await setDoc(doc(db,"siteSettings","main"),{blockedWords:words},{merge:true});toast("تم حفظ الكلمات")};
@@ -1291,28 +1332,31 @@ window.openChatSettingsModal=async()=>{
 window.clearAllRoomMessages=async()=>{
  if(!canManageRoomSettings())return;
  if(!confirm(`تنظيف جميع رسائل ${currentRoomName} للجميع؟`))return;
- const snap=await getDocs(collection(db,"roomMessages"));let n=0;
- for(const d of snap.docs){if((d.data().roomId||"main")===currentRoomId){await deleteDoc(d.ref);n++;}}
- forceChatBottom=true;toast(`تم تنظيف ${n} رسالة للجميع`);
+ try{
+   const snap=await getDocs(query(collection(db,"roomMessages"),where("roomId","==",currentRoomId)));
+   const docs=snap.docs;
+   for(let i=0;i<docs.length;i+=450){
+     const batch=writeBatch(db);
+     docs.slice(i,i+450).forEach(d=>batch.delete(d.ref));
+     await batch.commit();
+   }
+   forceChatBottom=true;toast(`🧹 تم تنظيف ${docs.length} رسالة للجميع فوراً`);
+ }catch(e){console.error(e);alert("تعذر تنظيف الروم: "+(e?.message||"خطأ"));}
 };
-window.uploadRoomBackground=async e=>{
- if(!canManageRoomSettings())return;const f=e.target.files?.[0];if(!f)return;
- try{toast("جاري رفع خلفية الروم...");
-   const url=await uploadToStorage(f,"room-backgrounds");
-   await setDoc(doc(db,"roomSettings",currentRoomId),{bgUrl:url,bgUpdatedAt:serverTimestamp(),bgBy:currentUser.uid},{merge:true});
-   toast("تم حفظ خلفية الروم للجميع");
- }catch(err){console.error(err);alert("تعذر رفع الخلفية. تحقق من قواعد Firebase Storage")}
+window.chooseRoomBackground=e=>{pendingRoomBackgroundFile=e.target.files?.[0]||null;if(pendingRoomBackgroundFile)toast("تم اختيار خلفية الروم — اضغط حفظ");};
+window.saveRoomBackground=async()=>{
+ if(!canManageRoomSettings()||!pendingRoomBackgroundFile)return toast("اختر صورة الخلفية أولاً");
+ try{toast("جاري حفظ خلفية الروم...");const dataUrl=await imageFallbackData(pendingRoomBackgroundFile,180000);await setDoc(doc(db,"roomSettings",currentRoomId),{bgUrl:dataUrl,bgUpdatedAt:serverTimestamp(),bgBy:currentUser.uid},{merge:true});$("chat-area").style.backgroundImage=`url("${dataUrl}")`;pendingRoomBackgroundFile=null;toast("✅ تم حفظ خلفية الروم للجميع بشكل دائم");}catch(err){console.error(err);alert("تعذر حفظ الخلفية: "+(err?.message||"خطأ"))}
 };
+window.uploadRoomBackground=window.chooseRoomBackground;
 window.removeRoomBackground=async()=>{if(!canManageRoomSettings())return;await setDoc(doc(db,"roomSettings",currentRoomId),{bgUrl:""},{merge:true});toast("تمت إزالة خلفية الروم للجميع")};
 window.updateMicsCount=async()=>{if(!canManageRoomSettings())return;await setDoc(doc(db,"roomSettings",currentRoomId),{micsCount:Number($("mics-count-select").value)||0},{merge:true});toast("تم تحديث عدد المايكات للجميع")};
-window.uploadRoomIcon=async e=>{
- if(!canManageRoomSettings())return;const f=e.target.files?.[0];if(!f)return;
- try{toast("جاري حفظ أيقونة الروم...");
-   const url=await imageFallbackData(f,120000);
-   await setDoc(doc(db,"rooms",currentRoomId),{name:currentRoomName,image:url,imageUpdatedAt:serverTimestamp(),updatedBy:currentUser.uid},{merge:true});
-   toast("✅ تم حفظ أيقونة الروم للجميع");
- }catch(err){console.error(err);alert("تعذر حفظ أيقونة الروم") }
+window.chooseRoomIcon=e=>{pendingRoomIconFile=e.target.files?.[0]||null;if(pendingRoomIconFile)toast("تم اختيار أيقونة الروم — اضغط حفظ");};
+window.saveRoomIcon=async()=>{
+ if(!canManageRoomSettings()||!pendingRoomIconFile)return toast("اختر أيقونة الروم أولاً");
+ try{toast("جاري حفظ أيقونة الروم...");const url=await imageFallbackData(pendingRoomIconFile,120000);await setDoc(doc(db,"rooms",currentRoomId),{name:currentRoomName,image:url,imageUpdatedAt:serverTimestamp(),updatedBy:currentUser.uid},{merge:true});pendingRoomIconFile=null;renderRoomsFromPresence();toast("✅ تم حفظ أيقونة الروم للجميع بشكل دائم");}catch(err){console.error(err);alert("تعذر حفظ أيقونة الروم: "+(err?.message||"خطأ"))}
 };
+window.uploadRoomIcon=window.chooseRoomIcon;
 window.removeRoomIcon=async()=>{if(!canManageRoomSettings())return;await setDoc(doc(db,"rooms",currentRoomId),{image:""},{merge:true});toast("تمت إزالة أيقونة الروم")};
 window.toggleRoomProtection=async()=>{if(!owner())return;const s=await getDoc(doc(db,"roomSettings",currentRoomId));const on=!(s.exists()&&s.data().protected);await setDoc(doc(db,"roomSettings",currentRoomId),{protected:on},{merge:true});toast(on?"تم تفعيل حماية الروم":"تم إيقاف حماية الروم")};
 
@@ -1368,7 +1412,7 @@ window.openPublicVideoPrompt=async()=>{
  const payload={roomId:currentRoomId,sender:currentUser.name,text:"🎬 فيديو",videoLink:true,videoSource:text,time:nowTime(),createdAt:serverTimestamp()};
  await addDoc(collection(db,"roomMessages"),payload);closeModal("plus-menu-modal");toast("تم إرسال الفيديو كمعاينة صغيرة؛ اضغط عليه للتكبير");
 }
-window.sendPublicFile=async e=>{const f=e.target.files?.[0];if(!f||!currentUser)return;try{const isVideo=f.type.startsWith("video/"),isAudio=f.type.startsWith("audio/");const url=await uploadToStorage(f,isVideo?"public-videos":isAudio?"public-audio":"public-images");const payload={roomId:currentRoomId,sender:currentUser.name,text:isVideo?"🎬 فيديو":isAudio?"🎙️ صوت":"🖼 صورة",time:nowTime(),createdAt:serverTimestamp()};if(isVideo)payload.videoUrl=url;else if(isAudio)payload.audioUrl=url;else payload.imageUrl=url;await addDoc(collection(db,"roomMessages"),payload);e.target.value="";closeModal("plus-menu-modal");toast("تم الإرسال") }catch(err){console.error(err);alert("تعذر رفع الملف")}};
+window.sendPublicFile=async e=>{const f=e.target.files?.[0];if(!f||!currentUser)return;try{const isVideo=f.type.startsWith("video/"),isAudio=f.type.startsWith("audio/");let url="";if(isVideo&&f.size<=750000){try{url=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(f)})}catch{}}if(!url)url=await uploadToStorage(f,isVideo?"public-videos":isAudio?"public-audio":"public-images");const payload={roomId:currentRoomId,sender:currentUser.name,text:isVideo?"🎬 فيديو":isAudio?"🎙️ صوت":"🖼 صورة",time:nowTime(),createdAt:serverTimestamp()};if(isVideo)payload.videoUrl=url;else if(isAudio)payload.audioUrl=url;else payload.imageUrl=url;await addDoc(collection(db,"roomMessages"),payload);e.target.value="";closeModal("plus-menu-modal");toast("✅ تم إرسال الملف للجميع") }catch(err){console.error(err);alert("تعذر إرسال الملف. جرّب صورة أصغر أو فيديو قصير")}};
 
 const wheelRewards=[
  {label:"100 نقطة",points:100},{label:"500 ذهب",gold:500},{label:"🎁 هدية",gift:1},{label:"مستوى +1",level:1},
