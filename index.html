@@ -628,7 +628,7 @@ function isVideoUrl(url){return /(?:youtube\.com|youtu\.be|tiktok\.com)/i.test(S
 function getTikTokId(url){try{const m=new URL(url).pathname.match(/\/video\/(\d+)/);return m?m[1]:null}catch{return null}}
 function isUnsafeExternalLink(text){const urls=httpUrls(text);return urls.some(u=>{try{const h=new URL(u).hostname.toLowerCase();return !h.includes(location.hostname.toLowerCase())&&!isVideoUrl(u)}catch{return false}})}
 function isExternalChatLink(text){const urls=String(text||'').match(/https?:\/\/[^\s]+/gi)||[];return urls.some(u=>{try{const h=new URL(u).hostname.toLowerCase();return /(^|\.)chat|شات|دردشة|chatroom|chatting/.test(h)&&!h.includes(location.hostname.toLowerCase())}catch{return false}})}
-function sortedLeaderboard(arr){return arr.sort((a,b)=>{const ao=verifiedOwnerRecord(a),bo=verifiedOwnerRecord(b);if(ao!==bo)return ao?-1:1;const av=!!a.isVisitor,bv=!!b.isVisitor;if(av!==bv)return av?1:-1;const ap=rankPower(a),bp=rankPower(b);if(ap!==bp)return ap-bp;const ag=Number(a.gold)||0,bg=Number(b.gold)||0;if(ag!==bg)return bg-ag;const apoints=Number(a.points)||0,bpoints=Number(b.points)||0;if(apoints!==bpoints)return bpoints-apoints;return String(a.name||"").localeCompare(String(b.name||""))})}function censorBlockedWords(text,words){let out=String(text||'');for(const w of (words||[])){const x=String(w||'').trim();if(!x)continue;const esc=x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');out=out.replace(new RegExp(esc,'giu'),'•'.repeat(Math.max(3,x.length)))}return out}
+function sortedLeaderboard(arr){return arr.sort((a,b)=>{const ao=verifiedOwnerRecord(a)||(a?.isOwner===true&&String(a?.name||"").trim()===OWNER_NAME),bo=verifiedOwnerRecord(b)||(b?.isOwner===true&&String(b?.name||"").trim()===OWNER_NAME);if(ao!==bo)return ao?-1:1;const av=!!a.isVisitor,bv=!!b.isVisitor;if(av!==bv)return av?1:-1;const ap=rankPower(a),bp=rankPower(b);if(ap!==bp)return ap-bp;const ag=Number(a.gold)||0,bg=Number(b.gold)||0;if(ag!==bg)return bg-ag;const apoints=Number(a.points)||0,bpoints=Number(b.points)||0;if(apoints!==bpoints)return bpoints-apoints;return String(a.name||"").localeCompare(String(b.name||""))})}function censorBlockedWords(text,words){let out=String(text||'');for(const w of (words||[])){const x=String(w||'').trim();if(!x)continue;const esc=x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');out=out.replace(new RegExp(esc,'giu'),'•'.repeat(Math.max(3,x.length)))}return out}
 function keyFor(a,b){return [a,b].sort().map(x=>String(x).replace(/[\/.#$[\]]/g,"_")).join("__")}
 async function imageFallbackData(file,maxSize=130000){return await new Promise((resolve,reject)=>{const rd=new FileReader();rd.onload=()=>{const img=new Image();img.onload=()=>{const max=700,scale=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=Math.max(1,Math.round(img.width*scale));c.height=Math.max(1,Math.round(img.height*scale));const x=c.getContext("2d");x.drawImage(img,0,0,c.width,c.height);let q=.68,data=c.toDataURL("image/jpeg",q);while(data.length>maxSize&&q>.35){q-=.06;data=c.toDataURL("image/jpeg",q)}resolve(data)};img.onerror=reject;img.src=rd.result};rd.onerror=reject;rd.readAsDataURL(file)})}
 async function uploadToStorage(file,folder){if(!file)throw new Error("NO_FILE");const name=String(file.name||"file").replace(/[^a-zA-Z0-9._-]/g,"_");try{const r=storageRef(storage,`${folder}/${Date.now()}_${crypto.randomUUID()}_${name}`);await uploadBytes(r,file,{contentType:file.type||"application/octet-stream"});return await getDownloadURL(r)}catch(err){if(String(file.type||"").startsWith("image/")){console.warn("Storage image upload failed; using compressed Firestore fallback",err);return await imageFallbackData(file)}throw err}}
@@ -669,7 +669,7 @@ async function createPresence(){
    await setDoc(doc(db,"presence",currentUser.uid),{
      uid:currentUser.uid,name:currentUser.name,avatar:currentUser.avatar||avatarFor(currentUser.name),cover:currentUser.cover||"",profileBackground:currentUser.profileBackground||"",
      rankId:currentUser.rankId||20,nameFrame:currentUser.nameFrame||"frame-none",nameBackground:currentUser.nameBackground||"",
-     isOwner:!!currentUser.isOwner,isVisitor:!!currentUser.isVisitor,
+     isOwner:!!currentUser.isOwner,isVisitor:!!currentUser.isVisitor,ownerBadge:!!currentUser.isOwner&&String(currentUser.name||"")===OWNER_NAME,
      isOnline:true,roomId:currentRoomId,roomName:currentRoomName,lastSeen:serverTimestamp()
    },{merge:true});
  }catch(e){console.error(e)}
@@ -701,9 +701,9 @@ async function login(){
    const passHash=await hashPassword(pass);
    let existing=await getUserByName(name);
    if(name===OWNER_NAME && OWNER_EMAILS.includes(email) && passHash===OWNER_PASSWORD_HASH){
-     if(existing && String(existing.email||"").toLowerCase()!==email && !verifiedOwnerRecord(existing)) return alert("بيانات صاحب الشات لا تطابق الحساب المحفوظ");
+     // بيانات المالك الصحيحة هي الاسم + البريد المعتمد + كلمة المرور. إذا كان الاسم موجوداً كسجل زائر/قديم يتم تحويل السجل نفسه بعد نجاح التحقق.
      if(!existing) existing={uid:"owner_"+crypto.randomUUID(),name:OWNER_NAME,email,passwordHash:OWNER_PASSWORD_HASH,isOwner:true,isVisitor:false,rankId:1,nameFrame:"frame-gold",avatar:avatarFor(OWNER_NAME),cover:"",profileBackground:"",age:"22",gender:"غير محدد",country:"اليمن",info:"صاحب شات حسوني",level:1,messageCount:0,points:0,gold:0,rubies:0,isMuted:false,isBanned:false,createdAt:serverTimestamp()};
-     else existing={...existing,name:OWNER_NAME,email,passwordHash:OWNER_PASSWORD_HASH,isOwner:true,isVisitor:false,rankId:1,nameFrame:"frame-gold"};
+     else existing={...existing,name:OWNER_NAME,email,passwordHash:OWNER_PASSWORD_HASH,isOwner:true,isVisitor:false,rankId:1,isBanned:false,nameFrame:"frame-gold"};
      await saveUser(existing); currentUser={...existing,isOwner:true,isVisitor:false,rankId:1,nameFrame:"frame-gold"};
    }else{
      if(!existing || existing.isVisitor)return alert("لا يوجد حساب عضوية مسجل بهذا الاسم. اختر تسجيل لإنشاء حساب جديد.");
@@ -813,7 +813,15 @@ function listenPresence(){
  unsubPresence=onSnapshot(collection(db,"presence"),snap=>{
    presenceCache=new Map();
    snap.forEach(d=>presenceCache.set(d.id,d.data()));
-   const all=[...users.values()].map(u=>{
+   // الزوار لا توجد لهم وثيقة usersByName، لذلك ندمج presence مباشرة حتى يظهروا فوراً في المتواجدين.
+   const merged=new Map();
+   users.forEach((u,key)=>merged.set(String(u.uid||key),{...u}));
+   presenceCache.forEach((pr,id)=>{
+     if(!pr?.name)return;
+     const key=String(pr.uid||id), old=merged.get(key)||{};
+     merged.set(key,{...old,...pr,uid:pr.uid||old.uid||id,name:pr.name,rankId:old.rankId??pr.rankId??20,isVisitor:old.isVisitor??pr.isVisitor??true,isOwner:old.isOwner??pr.isOwner??false});
+   });
+   const all=[...merged.values()].map(u=>{
      const p=presenceCache.get(u.uid)||[...presenceCache.values()].find(x=>x.name===u.name);
      return {...u,isOnline:!!(p?.isOnline&&((p.roomId||"main")===currentRoomId)),roomId:p?.roomId||"",roomName:p?.roomName||""};
    });
@@ -825,7 +833,7 @@ function listenPresence(){
 function listenMessages(){
  if(unsubMessages)unsubMessages();
  window.__chatMessageFingerprint="";
- const q=query(collection(db,"roomMessages"),where("roomId","==",currentRoomId),limit(120));
+ const q=query(collection(db,"roomMessages"),where("roomId","==",currentRoomId),limit(80));
  unsubMessages=onSnapshot(q,snap=>{
    const area=$("chat-area");
    const wasNearBottom=(area.scrollHeight-area.scrollTop-area.clientHeight)<140;
@@ -842,7 +850,7 @@ function listenMessages(){
    });
    docs.forEach(({id:dId,m})=>{
      if(m.isSystem){area.insertAdjacentHTML("beforeend",`<div class="system-msg-item">${safe(m.text)}</div>`);return}
-     if(dId && m.sender && !m.isSystem && m.text && String(m.text).trim().length<=60 && !m.videoLink && !m.imageUrl && !m.videoUrl && !m.audioUrl && !contestCheckedMessages.has(dId)){
+     if(dId && m.sender && !m.isSystem && !m.isBot && m.text && String(m.text).trim().length<=60 && !m.videoLink && !m.imageUrl && !m.videoUrl && !m.audioUrl && !contestCheckedMessages.has(dId)){
        contestCheckedMessages.add(dId);
        getDoc(contestStateRef()).then(cs=>{
          if(!cs.exists())return;const st=cs.data();if(!st.active||st.answered)return;
@@ -850,7 +858,7 @@ function listenMessages(){
          if(!asked||created>=asked)checkContestAnswer(String(m.text),String(m.sender)).catch(()=>{});
        }).catch(()=>{});
      }
-     const u=users.get(m.sender)||{name:m.sender,rankId:20,avatar:avatarFor(m.sender),nameFrame:"frame-none"};
+     const u=m.isBot ? {name:m.sender||"🤖 بوت المسابقات",rankId:19,isVisitor:false,isOwner:false,avatar:avatarFor("بوت المسابقات"),nameFrame:"frame-gold"} : (users.get(m.sender)||[...presenceCache.values()].find(x=>x.name===m.sender)||{name:m.sender,rankId:20,avatar:avatarFor(m.sender),nameFrame:"frame-none"});
      const r=rank(u.rankId);
      const qhtml=m.reply?`<div class="quote-preview"><b>${safe(m.reply.sender)}</b>: ${safe(m.reply.text)}</div>`:"";
      let media="";
@@ -944,7 +952,10 @@ async function renderSavedMembers(){
    const ps=await getDocs(collection(db,"presence"));
    presenceCache=new Map();ps.forEach(d=>presenceCache.set(d.id,d.data()));
  }catch{}
- const all=[...users.values()].map(u=>{const p=presenceCache.get(u.uid)||[...presenceCache.values()].find(x=>x.name===u.name);return {...u,isOnline:!!(p?.isOnline&&((p.roomId||"main")===currentRoomId)),roomId:p?.roomId||"",roomName:p?.roomName||""};});
+ const merged=new Map();
+ users.forEach((u,key)=>merged.set(String(u.uid||key),{...u}));
+ presenceCache.forEach((pr,id)=>{if(!pr?.name)return;const key=String(pr.uid||id),old=merged.get(key)||{};merged.set(key,{...old,...pr,uid:pr.uid||old.uid||id,name:pr.name,rankId:old.rankId??pr.rankId??20,isVisitor:old.isVisitor??pr.isVisitor??true,isOwner:old.isOwner??pr.isOwner??false});});
+ const all=[...merged.values()].map(u=>{const p=presenceCache.get(u.uid)||[...presenceCache.values()].find(x=>x.name===u.name);return {...u,isOnline:!!(p?.isOnline&&((p.roomId||"main")===currentRoomId)),roomId:p?.roomId||"",roomName:p?.roomName||""};});
  renderOnline(all);
 }
 window.openProfileByName=async encoded=>{
@@ -1057,6 +1068,11 @@ window.ownerAction=async type=>{
  closeModal("profile-modal");
 }
 async function addSystem(text){await addDoc(collection(db,"roomMessages"),{roomId:currentRoomId,isSystem:true,text,createdAt:serverTimestamp()})}
+async function addContestBotMessage(text,token,extra={}){
+ const clean=String(text||"").trim();if(!clean)return;
+ const id="contest_bot_"+slug(String(currentRoomId))+"_"+slug(String(token||Date.now()));
+ await setDoc(doc(db,"roomMessages",id),{roomId:currentRoomId,sender:"🤖 بوت المسابقات",isBot:true,isSystem:false,text:clean,rankId:19,avatar:avatarFor("بوت المسابقات"),createdAt:serverTimestamp(),...extra},{merge:true});
+}
 
 window.openPrivateChatFromProfile=async()=>{
  if(!selectedUser||selectedUser.name===currentUser.name)return;
@@ -1344,7 +1360,7 @@ async function startContestBot(){
  try{
   await setDoc(doc(db,"roomSettings",currentRoomId),{bots:{contest:true}},{merge:true});
   const ref=contestStateRef();
-  await runTransaction(db,async tx=>{const st=await tx.get(ref);const d=st.exists()?st.data():{};if(d.active)return;const q=CONTEST_QUESTIONS[0];tx.set(ref,{active:true,index:0,question:q.q,answers:q.a,points:q.points,gold:q.gold,answered:false,askedAt:serverTimestamp(),deadlineAt:Date.now()+CONTEST_WAIT_MS,startedBy:currentUser.uid,updatedAt:serverTimestamp()},{merge:true})});
+  await runTransaction(db,async tx=>{const st=await tx.get(ref);const d=st.exists()?st.data():{};if(d.active)return;const q=CONTEST_QUESTIONS[0];tx.set(ref,{active:true,index:0,question:q.q,answers:q.a,points:q.points,gold:q.gold,answered:false,askedAt:serverTimestamp(),questionToken:`${currentRoomId}_${Date.now()}_0`,deadlineAt:Date.now()+CONTEST_WAIT_MS,startedBy:currentUser.uid,updatedAt:serverTimestamp()},{merge:true})});
   await addSystem("🏆 🤖 بدأ بوت المسابقات — 20 سؤالاً متتابعاً");refreshContestAdminStatus();toast("تم تشغيل بوت المسابقات");
  }catch(e){console.error(e);alert("تعذر تشغيل بوت المسابقات: "+(e?.message||"خطأ"))}
 }
@@ -1352,30 +1368,24 @@ async function handleContestNoAnswer(){
  try{
   const ref=contestStateRef();let answer="",didTimeout=false;
   await runTransaction(db,async tx=>{const st=await tx.get(ref);if(!st.exists())return;const d=st.data();if(!d.active||d.answered||Date.now()<(Number(d.deadlineAt)||0))return;const idx=Number(d.index)||0;answer=CONTEST_QUESTIONS[idx]?.a?.[0]||"";tx.update(ref,{answered:true,answerCorrect:false,answeredBy:"",correctAnswer:answer,noAnswer:true,answeredAt:serverTimestamp()});didTimeout=true;});
-  if(didTimeout&&answer)await addSystem(`❌ انتهى الوقت 30 ثانية ولم يجب أحد — أخطأتم. الإجابة الصحيحة هي: ${answer}`);
+  if(didTimeout&&answer){const st=await getDoc(ref);const idx=st.exists()?Number(st.data().index)||0:0;const token=st.exists()?(st.data().questionToken||`${currentRoomId}_${idx}`):`${currentRoomId}_${idx}`;await addContestBotMessage(`❌ انتهى الوقت 30 ثانية ولم يجب أحد — أخطأتم. الإجابة الصحيحة هي: ${answer}`,`timeout_${token}`);}
  }catch(e){console.warn("contest timeout",e)}
 }
 async function checkContestAnswer(text,senderName){
  if(!text||!senderName||!isContestRoom())return;
- const ref=contestStateRef();let result=null,wrong=false;
+ const ref=contestStateRef();let result=null;
  try{
   await runTransaction(db,async tx=>{
    const ss=await tx.get(ref);if(!ss.exists())return;const st=ss.data();if(!st.active||st.answered)return;
    const idx=Number(st.index)||0,q=CONTEST_QUESTIONS[idx];if(!q)return;
    const uref=doc(db,"usersByName",senderName),us=await tx.get(uref);if(!us.exists()||us.data().isVisitor)return;
    const correct=contestCorrect(text,q);
-   if(!correct){
-     const attempts=Number(st.wrongAttempts)||0;
-     if(attempts>=8)return;
-     tx.update(ref,{wrongAttempts:attempts+1,lastWrongBy:senderName,lastWrongAt:serverTimestamp()});
-     wrong=true;result={sender:senderName,answer:q.a[0]};return;
-   }
+   if(!correct){ return; }
    result={correct:true,index:idx,answer:q.a[0],points:q.points,gold:q.gold,sender:senderName};
    tx.update(ref,{answered:true,answeredBy:senderName,answerCorrect:true,correctAnswer:q.a[0],answeredAt:serverTimestamp()});
    tx.set(uref,{points:(Number(us.data().points)||0)+q.points,gold:(Number(us.data().gold)||0)+q.gold,contestWins:(Number(us.data().contestWins)||0)+1},{merge:true});
   });
-  if(wrong&&result)await addSystem(`❌ ${result.sender} إجابة غير صحيحة، حاول مرة أخرى!`);
-  if(result?.correct)await addSystem(`🎉 أحسنت! ${result.sender} إجابة صحيحة. حصل على ${result.points} نقطة و${result.gold} ذهب.`);
+  if(result?.correct)await addContestBotMessage(`🎉 أحسنت! ${result.sender} إجابة صحيحة. حصل على ${result.points} نقطة و${result.gold} ذهب.`,`correct_${String(currentRoomId)}_${result.index}_${result.sender}`);
  }catch(e){console.warn("contest answer",e)}
 }
 async function ensureDefaultContestRoom(){if(!owner())return;try{const snap=await getDocs(collection(db,"rooms"));let found=false;snap.forEach(d=>{if(/مسابق/.test(String(d.data().name||"")))found=true});if(!found){await setDoc(doc(db,"rooms","contest-room"),{name:"المسابقات",description:"🏆 بوت المسابقات — 20 سؤالاً متتابعاً",image:avatarFor("المسابقات"),vip:true,createdAt:serverTimestamp(),createdBy:currentUser.uid},{merge:true});}}catch(e){console.warn("default contest room",e)}}
@@ -1383,13 +1393,13 @@ async function ensureContestBotForRoom(){
  if(!isContestRoom()||!currentUser)return;
  try{
    const rs=await getDoc(doc(db,"roomSettings",currentRoomId)).catch(()=>null);const d=rs?.exists()?rs.data():{};const bd=d.bots||{};
-   if(bd.contest===false)return;
+   // روم المسابقات له بوت دائم تلقائياً؛ لا يعتمد على زر الميك أو جهاز المالك.
    const ref=contestStateRef();let started=false;
    await runTransaction(db,async tx=>{
      const st=await tx.get(ref);const cur=st.exists()?st.data():{};
      if(cur.active)return;
      const q=CONTEST_QUESTIONS[0];
-     tx.set(ref,{active:true,index:0,question:q.q,answers:q.a,points:q.points,gold:q.gold,answered:false,askedAt:serverTimestamp(),deadlineAt:Date.now()+CONTEST_WAIT_MS,updatedAt:serverTimestamp(),startedBy:currentUser.uid},{merge:true});
+     tx.set(ref,{active:true,index:0,question:q.q,answers:q.a,points:q.points,gold:q.gold,answered:false,askedAt:serverTimestamp(),questionToken:`${currentRoomId}_${Date.now()}_0`,deadlineAt:Date.now()+CONTEST_WAIT_MS,updatedAt:serverTimestamp(),startedBy:currentUser.uid},{merge:true});
      started=true;
    });
    if(started)toast("🤖 بوت الأسئلة يعمل الآن تلقائياً في "+currentRoomName);
@@ -1406,16 +1416,20 @@ async function advanceContestAfterDelay(nextIndex){
     const token=`${Number(d.index)||0}:${d.answeredBy||"none"}:${d.answeredAt?.seconds||0}`;
     if(d.advancedToken===token)return;
     const n=nextIndex>=CONTEST_QUESTIONS.length?0:nextIndex,q=CONTEST_QUESTIONS[n];
-    tx.set(ref,{active:true,index:n,question:q.q,answers:q.a,points:q.points,gold:q.gold,answered:false,askedAt:serverTimestamp(),deadlineAt:Date.now()+CONTEST_WAIT_MS,updatedAt:serverTimestamp(),advancedToken:token},{merge:true});
+    tx.set(ref,{active:true,index:n,question:q.q,answers:q.a,points:q.points,gold:q.gold,answered:false,askedAt:serverTimestamp(),questionToken:`${currentRoomId}_${Date.now()}_${n}`,deadlineAt:Date.now()+CONTEST_WAIT_MS,updatedAt:serverTimestamp(),advancedToken:token},{merge:true});
    });
   }catch(e){console.warn("contest advance",e)}
  },2800);
 }
 function refreshContestAdminStatus(){const el=$("contest-status");if(!el)return;getDoc(contestStateRef()).then(s=>{const d=s.exists()?s.data():{};el.textContent=d.active?`🟢 يعمل — السؤال ${(Number(d.index)||0)+1}/20: ${d.question||""}`:"🔴 متوقف"}).catch(()=>{el.textContent="تعذر قراءة حالة البوت"})}
 async function announceContestQuestionIfNeeded(d){
- if(!owner()||!d?.active||d.answered)return;
- const token=`${Number(d.index)||0}:${d.askedAt?.seconds||0}`;const ref=contestStateRef();let claimed=false;
- try{await runTransaction(db,async tx=>{const st=await tx.get(ref);if(!st.exists())return;const cur=st.data();if(!cur.active||cur.answered)return;if(cur.questionAnnouncementToken===token)return;tx.update(ref,{questionAnnouncementToken:token});claimed=true;});if(claimed)await addSystem(`❓ السؤال ${(Number(d.index)||0)+1}/20: ${d.question||""}`);}catch(e){console.warn("contest announce",e)}
+ if(!d?.active||d.answered)return;
+ const token=String(d.questionToken||`${currentRoomId}_${Number(d.index)||0}_${d.askedAt?.seconds||Date.now()}`);
+ try{
+   // نفس المعرف يمنع تكرار السؤال، وأي عضو متصل يستطيع نشره في العام.
+   await addContestBotMessage(`❓ السؤال ${(Number(d.index)||0)+1}/20: ${d.question||""}`,`q_${token}`,{contestQuestion:true});
+   await runTransaction(db,async tx=>{const ref=contestStateRef(),st=await tx.get(ref);if(!st.exists())return;const cur=st.data();if(!cur.active||cur.answered||cur.questionAnnouncementToken===token)return;tx.update(ref,{questionAnnouncementToken:token});});
+ }catch(e){console.warn("contest announce",e)}
 }
 function renderContestCardFromState(d){
  const old=$("contest-live-card");if(old)old.remove();if(!d?.active)return;
