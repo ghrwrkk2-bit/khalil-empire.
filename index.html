@@ -330,7 +330,7 @@ body.owner-view .owner-mic-action{display:block}
       <select id="owner-rank-select" class="edit-select" style="background:#fff;color:#111"></select>
       <button class="btn-submit" style="background:#d97706" onclick="giveRankToUser()">منح الرتبة وإعلانها</button>
       <div class="resource-row"><input id="owner-gift-points" type="number" min="0" placeholder="نقاط"><input id="owner-gift-gold" type="number" min="0" placeholder="ذهب"><input id="owner-gift-rubies" type="number" min="0" placeholder="روبي"><button onclick="ownerGiftResources()">🎁 إهداء الموارد</button></div>
-      <div style="display:flex;gap:5px;margin-top:6px"><button class="btn-submit" style="background:#2563eb;font-size:.7rem" id="owner-mute-btn" onclick="ownerAction('mute')">كتم</button><button class="btn-submit" style="background:#f97316;font-size:.7rem" id="owner-kick-btn" onclick="ownerAction('kick')">طرد</button><button id="owner-ban-btn" class="btn-submit" style="background:#dc2626;font-size:.7rem" onclick="ownerAction('ban')">حظر</button></div>
+      <div style="display:flex;gap:5px;margin-top:6px"><button class="btn-submit" style="background:#2563eb;font-size:.7rem" onclick="ownerAction('mute')">كتم</button><button class="btn-submit" style="background:#f97316;font-size:.7rem" onclick="ownerAction('kick')">طرد</button><button id="owner-ban-btn" class="btn-submit" style="background:#dc2626;font-size:.7rem" onclick="ownerAction('ban')">حظر</button></div>
     </div>
     <div id="profile-ban-status" class="ban-status hidden">🚫 هذا العضو محظور من المشاركة</div>
     <div class="profile-info-list">
@@ -592,7 +592,7 @@ let currentUser=null, users=new Map(), selectedUser=null, privateTarget=null;
 let currentRoomId=localStorage.getItem("chat_active_room_v2")||"main";
 let currentRoomName=localStorage.getItem("chat_active_room_name_v2")||"الغرفة الرئيسية";
 let unsubRoomSettings=null, unsubPrivateInbox=null, selectedMicOwnerSlot=null;
-let replyTo=null, currentMicSlot=null, unsubMessages=null, unsubUsers=null, unsubPresence=null, unsubMics=null, unsubPrivate=null, unsubRoomCounts=null;
+let replyTo=null, currentMicSlot=null, unsubMessages=null, unsubUsers=null, unsubPresence=null, unsubMics=null, unsubPrivate=null;
 let privatePairId="";
 let presenceTimer=null;
 let micHeartbeatTimer=null;
@@ -603,7 +603,7 @@ let forceChatBottom=true;
 let sendInProgress=false;
 const sessionKey="chat_user_session_v3";
 const legacySessionKey="chat_user_session_v2";
-let unsubNotifications=null;
+let unsubNotifications=null, unsubAccountAction=null;
 window.siteCustomFeature={};window.siteCustomProfileFeature={};window.allowedModeratorRanks=[2,3,4];
 let mediaRecorder=null,recordedVoiceBlob=null,voiceChunks=[],voiceTimer=null;
 
@@ -683,13 +683,43 @@ window.openFeature=(title)=>{
 };
 
 
+function showBanScreen(){
+  if($("ban-screen"))return;
+  localStorage.removeItem(sessionKey);
+  sessionStorage.clear();
+  const review=document.createElement("div");
+  review.id="ban-screen";
+  review.style.cssText="position:fixed;inset:0;z-index:30000;background:#09090b;color:#fff;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center";
+  review.innerHTML=`<div style="max-width:420px;width:100%;background:#1e293b;border:1px solid #7f1d1d;border-radius:18px;padding:24px"><div style="font-size:3rem">🚫</div><h2 style="color:#fecaca">تم حظرك من شات حسوني</h2><p style="margin:12px 0;color:#cbd5e1;line-height:1.8">تم حظرك من قبل إدارة الشات للمراجعة.<br>لا يتم رفع الحظر إلا بعد مراجعة الإدارة ورفع الحظر عن حسابك.</p><div style="font-size:1.1rem;font-weight:bold;margin:12px 0">📱 967780718519</div><a href="https://wa.me/967780718519" target="_blank" rel="noopener" style="display:block;background:#22c55e;color:#fff;padding:12px;border-radius:10px;text-decoration:none;font-weight:bold">💬 واتساب للمراجعة</a><button onclick="location.reload()" style="margin-top:9px;width:100%;padding:11px;border:0;border-radius:9px;background:#475569;color:#fff">العودة للوحة الدخول</button></div>`;
+  document.body.appendChild(review);
+}
+function handleDeletedAccount(){
+  localStorage.removeItem(sessionKey);
+  localStorage.removeItem(legacySessionKey);
+  sessionStorage.clear();
+  try{if(unsubAccountAction)unsubAccountAction();}catch{}
+  $("login-modal").style.display="flex";
+  document.body.classList.remove("owner-view");
+  document.querySelectorAll(".modal-overlay").forEach(x=>x.classList.add("hidden"));
+  toast("🗑️ تم حذف حسابك نهائياً من إدارة الشات. يمكنك الدخول كزائر أو تسجيل حساب آخر.");
+}
+function listenAccountAction(){
+  if(unsubAccountAction)unsubAccountAction();
+  if(!currentUser?.uid)return;
+  unsubAccountAction=onSnapshot(doc(db,"accountActions",String(currentUser.uid)),snap=>{
+    if(!snap.exists())return;
+    const d=snap.data()||{};
+    if(d.deleted===true){handleDeletedAccount();return;}
+    if(d.banned===true){showBanScreen();return;}
+  },err=>console.warn("account action listener",err));
+}
 async function createPresence(){
  if(!currentUser)return;
  try{
    await setDoc(doc(db,"presence",currentUser.uid),{
      uid:currentUser.uid,name:currentUser.name,avatar:currentUser.avatar||avatarFor(currentUser.name),cover:currentUser.cover||"",profileBackground:currentUser.profileBackground||"",
      rankId:currentUser.rankId||20,nameFrame:currentUser.nameFrame||"frame-none",nameBackground:currentUser.nameBackground||"",
-     isOwner:!!currentUser.isOwner,isVisitor:!!currentUser.isVisitor,ownerBadge:!!currentUser.isOwner&&String(currentUser.name||"")===OWNER_NAME,
+     isOwner:!!currentUser.isOwner,isVisitor:!!currentUser.isVisitor,ownerBadge:!!currentUser.isOwner&&String(currentUser.name||"")===OWNER_NAME,isBanned:!!currentUser.isBanned,isMuted:!!currentUser.isMuted,
      isOnline:true,roomId:currentRoomId,roomName:currentRoomName,lastSeen:serverTimestamp()
    },{merge:true});
  }catch(e){console.error(e)}
@@ -701,9 +731,11 @@ async function stopPresence(){
 window.addEventListener("beforeunload",()=>{stopPresence()});
 
 async function getUserByName(name){
+ const cached=users.get(name);
+ if(cached)return cached;
  const snap=await getDoc(doc(db,"usersByName",name));
  if(snap.exists()){const data=snap.data();users.set(name,data);return data;}
- return users.get(name)||null;
+ return null;
 }
 async function saveUser(u){
  await setDoc(doc(db,"usersByName",u.name),u,{merge:true});
@@ -745,10 +777,18 @@ async function login(){
  }else{
    if(site.allowGuests===false)return alert("🚫 دخول الزوار متوقف حاليًا من إدارة الموقع");
    const existing=await getUserByName(name);
-   if(existing)return alert("⚠️ الاسم محجوز مسبقاً. يرجى اختيار اسم آخر للزائر.");
-   currentUser={uid:"guest_"+crypto.randomUUID(),name,email:"",isOwner:false,isVisitor:true,rankId:20,avatar:avatarFor(name),cover:"",profileBackground:"",age:$("visitor-age")?.value||"22",gender:$("visitor-gender")?.value||"غير محدد",country:$("visitor-country")?.value||"اليمن",info:"أهلاً وسهلاً بكم في شات حسوني",nameFrame:"frame-none",level:1,messageCount:0,points:0,gold:0,rubies:0,isMuted:false,isBanned:false};
+   if(existing && !existing.isVisitor)return alert("⚠️ الاسم محجوز مسبقاً لعضو مسجل. يرجى اختيار اسم آخر.");
+   if(existing?.isVisitor){
+     if(existing.isBanned)return alert("🚫 هذا الزائر محظور من إدارة الشات. للمراجعة واتساب 967780718519");
+     currentUser={...existing,isVisitor:true,isOwner:false,rankId:20,age:$("visitor-age")?.value||existing.age||"22",gender:$("visitor-gender")?.value||existing.gender||"غير محدد",country:$("visitor-country")?.value||existing.country||"اليمن",isOnline:false};
+   }else{
+     currentUser={uid:"guest_"+crypto.randomUUID(),name,email:"",isOwner:false,isVisitor:true,rankId:20,avatar:avatarFor(name),cover:"",profileBackground:"",age:$("visitor-age")?.value||"22",gender:$("visitor-gender")?.value||"غير محدد",country:$("visitor-country")?.value||"اليمن",info:"أهلاً وسهلاً بكم في شات حسوني",nameFrame:"frame-none",level:1,messageCount:0,points:0,gold:0,rubies:0,isMuted:false,isBanned:false};
+   }
+   // نحفظ هوية الزائر في usersByName أيضاً حتى يبقى نفس الحساب عند التسجيل أو العودة، ويمكن للإدارة حظره/حذفه بشكل موثوق.
+   await saveUser(currentUser);
+   await setDoc(doc(db,"presence",currentUser.uid),{uid:currentUser.uid,name:currentUser.name,isVisitor:true,isOwner:false,rankId:20,isBanned:!!currentUser.isBanned,isMuted:!!currentUser.isMuted,isOnline:false,roomId:currentRoomId,roomName:currentRoomName,createdAt:serverTimestamp()},{merge:true});
  }
- if(currentUser.isBanned){showBanReviewScreen("ban");return}
+ if(currentUser.isBanned)return alert("🚫 تم حظر هذا الحساب من إدارة الشات");
  if(!currentUser.isVisitor)await saveUser(currentUser);
  localStorage.setItem(sessionKey,JSON.stringify(currentUser));
  $("login-modal").style.display="none"; await startApp();
@@ -760,12 +800,12 @@ window.registerMember=async()=>{
  const name=$("reg-name").value.trim(),email=$("reg-email").value.trim().toLowerCase(),pass=$("reg-pass").value.trim();
  if(!name||!email||!pass)return alert("أكمل البيانات");
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(email))return alert("⚠️ اكتب بريدًا إلكترونيًا صحيحًا مثل name@gmail.com");
- const old=await getUserByName(name),passHash=await hashPassword(pass);
+ const old=(currentUser?.isVisitor&&String(currentUser.name)===String(name)?currentUser:await getUserByName(name)),passHash=await hashPassword(pass);
  const isOwnerRegistration=(name===OWNER_NAME&&OWNER_EMAILS.includes(email)&&passHash===OWNER_PASSWORD_HASH);
  if(old && !old.isVisitor && !isOwnerRegistration)return alert("⚠️ الاسم محجوز مسبقاً، يرجى اختيار اسم آخر");
  const emailCheck=await getDocs(query(collection(db,"usersByName"),where("email","==",email),limit(1))).catch(()=>null);
  if(emailCheck?.size && !(isOwnerRegistration && emailCheck.docs.some(d=>d.data().name===OWNER_NAME)))return alert("⚠️ البريد الإلكتروني مستخدم مسبقاً، استخدم بريداً آخر");
- const u={...(old?.isVisitor?{}:old||{}),uid:old?.uid||crypto.randomUUID(),name,email,passwordHash:isOwnerRegistration?OWNER_PASSWORD_HASH:passHash,isOwner:isOwnerRegistration,isVisitor:false,rankId:isOwnerRegistration?1:19,avatar:old?.avatar||avatarFor(name),cover:old?.cover||"",profileBackground:old?.profileBackground||"",age:$("reg-age").value||old?.age||"22",gender:$("reg-gender").value||old?.gender||"غير محدد",country:$("reg-country").value||old?.country||"اليمن",info:$("reg-info")?.value||old?.info||"عضو في شات حسوني",nameFrame:isOwnerRegistration?"frame-gold":"frame-none",isMuted:false,isBanned:false,level:Number(old?.level)||1,messageCount:Number(old?.messageCount)||0,points:Number(old?.points)||0,gold:Number(old?.gold)||0,rubies:Number(old?.rubies)||0,createdAt:old?.createdAt||serverTimestamp()};
+ const u={...(old||{}),uid:old?.uid||currentUser?.uid||crypto.randomUUID(),name,email,passwordHash:isOwnerRegistration?OWNER_PASSWORD_HASH:passHash,isOwner:isOwnerRegistration,isVisitor:false,rankId:isOwnerRegistration?1:(Number(old?.rankId)>=1&&Number(old?.rankId)<=20?Number(old.rankId):19),avatar:old?.avatar||avatarFor(name),cover:old?.cover||"",profileBackground:old?.profileBackground||"",age:$("reg-age").value||old?.age||"22",gender:$("reg-gender").value||old?.gender||"غير محدد",country:$("reg-country").value||old?.country||"اليمن",info:$("reg-info")?.value||old?.info||"عضو في شات حسوني",nameFrame:isOwnerRegistration?"frame-gold":(old?.nameFrame||"frame-none"),isMuted:!!old?.isMuted,isBanned:!!old?.isBanned,level:Number(old?.level)||1,messageCount:Number(old?.messageCount)||0,points:Number(old?.points)||0,gold:Number(old?.gold)||0,rubies:Number(old?.rubies)||0,createdAt:old?.createdAt||serverTimestamp()};
  await saveUser(u);currentUser=u;localStorage.setItem(sessionKey,JSON.stringify(u));closeModal("register-modal");$("login-modal").style.display="none";await startApp();updateVisitorKey();updateAnnouncementAccess();document.body.classList.toggle("owner-view",owner());toast(isOwnerRegistration?"👑 تم تسجيل صاحب الشات وتفعيل الكأس الذهبي":"تم إنشاء الحساب ومزامنته للجميع");
 }
 
@@ -780,7 +820,8 @@ async function startApp(){
  else {currentUser.isOwner=false;}
  if(currentUser.isBanned){alert("تم حظر حسابك");return logout()}
  localStorage.setItem(sessionKey,JSON.stringify(currentUser));forceChatBottom=true;
- listenUsers();listenPresence();listenRoomCounts();listenMessages();listenMics();listenRoomSettings();listenRooms();listenNotifications();listenContestBot();updateVisitorKey();document.body.classList.toggle("owner-view",!!currentUser.isOwner);document.getElementById("owner-dashboard-option")?.classList.toggle("hidden",!owner());
+ listenAccountAction();
+ listenUsers();listenPresence();listenMessages();listenMics();listenRoomSettings();listenRooms();listenNotifications();listenContestBot();updateVisitorKey();document.body.classList.toggle("owner-view",!!currentUser.isOwner);document.getElementById("owner-dashboard-option")?.classList.toggle("hidden",!owner());
  await createPresence();
  await announceRoomJoin();
  await ensureDefaultContestRoom();
@@ -818,29 +859,6 @@ async function announceRoomJoin(){
  }catch(e){console.warn("welcome/join",e)}
 }
 
-
-function showBanReviewScreen(reason="ban"){
-  try{stopPresence()}catch{}
-  localStorage.removeItem(sessionKey);localStorage.removeItem(legacySessionKey);
-  const old=document.getElementById("ban-review-overlay");old?.remove();
-  const title=reason==="ban"?"🚫 تم حظرك من شات حسوني":reason==="kick"?"👞 تم طردك من هذه الغرفة":"🔇 تم كتمك من المشاركة";
-  const text=reason==="ban"
-    ?"تم حظر حسابك من قبل إدارة الشات. لا يمكن رفع الحظر إلا بعد مراجعة الإدارة ورفع الحظر عن حسابك."
-    :reason==="kick"
-    ?"تم طردك من هذه الغرفة من قبل إدارة الشات. لا يمكنك العودة إليها حتى ترفع الإدارة الطرد."
-    :"تم كتم حسابك من المشاركة. لا يمكن رفع الكتم إلا بعد أن ترفعه إدارة الشات.";
-  const el=document.createElement("div");
-  el.id="ban-review-overlay";
-  el.style.cssText="position:fixed;inset:0;z-index:999999;background:#050505;display:flex;align-items:center;justify-content:center;padding:18px;direction:rtl";
-  el.innerHTML=`<div style="width:min(430px,100%);background:#111827;border:2px solid #d4a017;border-radius:18px;padding:24px;text-align:center;box-shadow:0 0 35px rgba(212,160,23,.22)">
-    <div style="font-size:3rem;margin-bottom:8px">${reason==="ban"?"🚫":reason==="kick"?"👞":"🔇"}</div>
-    <h2 style="color:#fff;margin:0 0 12px">${title}</h2>
-    <p style="color:#cbd5e1;line-height:1.9;margin:0 0 16px">${text}</p>
-    <div style="background:#0b1220;border-radius:12px;padding:13px;color:#f8fafc;font-weight:bold">للمراجعة والتواصل عبر واتساب<br><span style="color:#f0c34b;direction:ltr;display:inline-block;margin-top:5px">967780718519</span></div>
-    <a href="https://wa.me/967780718519" target="_blank" rel="noopener" style="display:block;margin-top:12px;background:#22c55e;color:#fff;text-decoration:none;border-radius:10px;padding:11px;font-weight:bold">💬 فتح واتساب للمراجعة</a>
-  </div>`;
-  document.body.appendChild(el);
-}
 function listenUsers(){
  if(unsubUsers)unsubUsers();
  unsubUsers=onSnapshot(collection(db,"usersByName"),snap=>{
@@ -850,22 +868,13 @@ function listenUsers(){
    });
    if(currentUser){
      const me=users.get(currentUser.name);
-     if(!currentUser.isVisitor && !me){
-       showBanReviewScreen("ban");
-       return;
-     }
      if(me){
        currentUser={...currentUser,...me};
        if(verifiedOwnerRecord(currentUser)){currentUser.isOwner=true;currentUser.rankId=1;currentUser.isVisitor=false}else{currentUser.isOwner=false}
        localStorage.setItem(sessionKey,JSON.stringify(currentUser));
-       if(currentUser.isBanned){showBanReviewScreen("ban");return}
-       if(currentUser.isMuted) $("msg-input")?.setAttribute("placeholder","🔇 أنت مكتوم حتى ترفع الإدارة الكتم");
-       else $("msg-input")?.setAttribute("placeholder","اكتب رسالتك...");
-       if(me.isKicked && me.kickRoomId===currentRoomId){
-         if(currentMicSlot!==null){deleteDoc(micDoc(currentMicSlot)).catch(()=>{});currentMicSlot=null}
-         if(currentRoomId!=="main")selectRoom("الغرفة الرئيسية","main","الغرفة الرئيسية");
-         else showBanReviewScreen("kick");
-       }
+       if(currentUser.isBanned){alert("تم حظر حسابك");logout()}
+       const kt=Number(me.kickToken)||0,last=Number(localStorage.getItem("chat_last_kick_token")||0);
+       if(kt>last){localStorage.setItem("chat_last_kick_token",String(kt));if(me.kickRoomId===currentRoomId){if(currentMicSlot!==null){deleteDoc(micDoc(currentMicSlot)).catch(()=>{});currentMicSlot=null}if(currentRoomId!=="main")selectRoom("الغرفة الرئيسية","main","الغرفة الرئيسية");else toast("تم طردك من الروم الحالي");}}
      }
    }
    if(selectedUser){const fresh=users.get(selectedUser.name);if(fresh){selectedUser={...selectedUser,...fresh};if($("prof-likes"))$("prof-likes").textContent=Number(fresh.likes)||0;$("profile-ban-status")?.classList.toggle("hidden",!fresh.isBanned);if(owner()&&!$("profile-modal").classList.contains("hidden"))$("owner-ban-btn").textContent=fresh.isBanned?"فك الحظر":"حظر";}}
@@ -892,16 +901,19 @@ function listenPresence(){
    });
    const mePresence=presenceCache.get(currentUser?.uid);
    if(currentUser&&mePresence){
+     if(mePresence.deletedAccount){
+       localStorage.removeItem(sessionKey);sessionStorage.clear();alert("🗑️ تم حذف حسابك نهائياً من قبل إدارة الشات. يمكنك الآن الدخول كزائر أو تسجيل حساب آخر.");location.reload();return;
+     }
      currentUser={...currentUser,...mePresence};
      localStorage.setItem(sessionKey,JSON.stringify(currentUser));
-     if(currentUser.isBanned){showBanReviewScreen("ban");return;}
-     if(currentUser.isMuted)toast("🔇 تم كتمك من صاحب الشات");
-     if(currentUser.isKicked && currentUser.kickRoomId===currentRoomId){
-       if(currentRoomId!=="main")selectRoom("الغرفة الرئيسية","main","الغرفة الرئيسية");
-       else showBanReviewScreen("kick");
-     }
+     if(currentUser.isBanned){showBanScreen();return;}
+     if(currentUser.isMuted)toast("🔇 تم كتمك من إدارة الشات");
+     const kt=Number(currentUser.kickToken)||0,last=Number(localStorage.getItem("chat_last_kick_token")||0);
+     if(kt>last){localStorage.setItem("chat_last_kick_token",String(kt));if(currentUser.kickRoomId===currentRoomId){if(currentRoomId!=="main")selectRoom("الغرفة الرئيسية","main","الغرفة الرئيسية");else toast("👞 تم طردك من الروم الحالي");}}
    }
    renderOnline(all);
+   // تحديث أعداد المتواجدين في بطاقات الغرف فور تغيّر الحضور
+   renderRoomsFromPresence();
  });
 }
 
@@ -992,7 +1004,7 @@ window.repeatMessage=async id=>{
 async function recordMessageAndReward(){
  const ref=doc(db,"usersByName",currentUser.name);let milestone=false,fresh=null;
  await runTransaction(db,async tx=>{const snap=await tx.get(ref);const u=snap.exists()?snap.data():currentUser;const count=(Number(u.messageCount)||0)+1;milestone=count%50===0;const next={messageCount:count};if(milestone){next.level=(Number(u.level)||1)+1;next.gold=(Number(u.gold)||0)+5;next.points=(Number(u.points)||0)+5;next.rubies=(Number(u.rubies)||0)+5}tx.set(ref,next,{merge:true});fresh={...u,...next}});
- if(fresh){currentUser={...currentUser,...fresh};localStorage.setItem(sessionKey,JSON.stringify(currentUser));}
+ if(fresh){currentUser={...currentUser,...fresh};localStorage.setItem(sessionKey,JSON.stringify(currentUser));await createPresence();}
  if(milestone){await addSystem(`🎉 ${currentUser.name} أكمل 50 رسالة وحصل على مستوى +1 و5 ذهب و5 نقاط و5 روبي`);toast("مبروك! 50 رسالة: مستوى +1 و5 ذهب و5 نقاط و5 روبي")}
 }
 
@@ -1085,8 +1097,6 @@ function openProfile(u){
  if(canManageUser(u)&&!self){const p=rankPower(currentUser);const opts=RANKS.filter(x=>owner()?true:(p===1?x.id>1:x.id>p));$("owner-rank-select").innerHTML=opts.map(x=>`<option value="${x.id}">${x.id}. ${safe(x.title)}</option>`).join("");$("owner-rank-select").value=u.rankId||20}
   $("owner-ban-btn").textContent=u.isBanned?"فك الحظر":"حظر";
   $("owner-ban-btn").style.background=u.isBanned?"#10b981":"#dc2626";
- const kickBtn=$("owner-kick-btn");if(kickBtn)kickBtn.textContent=u.isKicked?"رفع الطرد":"طرد";
- const muteBtn=$("owner-mute-btn");if(muteBtn)muteBtn.textContent=u.isMuted?"فك الكتم":"كتم";
  openModal("profile-modal");
 }
 window.openProfile=openProfile;
@@ -1120,7 +1130,28 @@ window.saveProfileChanges=async()=>{
  else{selectedUser={...selectedUser,...updated};await setDoc(doc(db,"presence",target.uid),{name:updated.name,avatar:updated.avatar||avatarFor(updated.name),cover:updated.cover||"",profileBackground:updated.profileBackground||"",rankId:updated.rankId||20,nameFrame:updated.nameFrame||"frame-none",nameBackground:updated.nameBackground||"",isOwner:!!updated.isOwner},{merge:true});users.set(updated.name,selectedUser);applyProfileVisuals(selectedUser)}
  closeModal("profile-modal");toast("تم حفظ بيانات الحساب فوراً ومزامنتها للجميع");
 };
-window.deleteAccountAsOwner=async()=>{if(!owner()||!selectedUser||selectedUser.name===currentUser.name)return alert("صاحب الشات يستطيع حذف حساب أي عضو، وليس حسابه من هذا الزر");if(!confirm(`⚠️ حذف حساب ${selectedUser.name} نهائياً؟ لا يمكن التراجع عن ذلك.`))return;try{const name=selectedUser.name,uid=selectedUser.uid;await deleteDoc(doc(db,"usersByName",name));if(uid)await deleteDoc(doc(db,"presence",uid));users.delete(name);presenceCache.delete(uid||name);closeModal("profile-modal");toast(`🗑️ تم حذف حساب ${name} فوراً ومزامنته للجميع`);}catch(e){console.error(e);alert("تعذر حذف الحساب: "+(e?.message||"خطأ"));}};
+window.deleteAccountAsOwner=async()=>{
+ if(!owner()||!selectedUser||selectedUser.name===currentUser.name)return alert("صاحب الشات يستطيع حذف حساب أي عضو أو زائر، وليس حسابه من هذا الزر");
+ if(!confirm(`⚠️ حذف حساب ${selectedUser.name} نهائياً؟ لا يمكن التراجع عن ذلك.`))return;
+ try{
+   const name=selectedUser.name,uid=selectedUser.uid||selectedUser.id||name;
+   // سجل إجراء دائم: لا نعتمد على حذف presence لإيصال أمر الحذف للجهاز الآخر.
+   await setDoc(doc(db,"accountActions",String(uid)),{
+     deleted:true,
+     deletedBy:currentUser.name,
+     deletedAt:serverTimestamp(),
+     reason:"حذف نهائي من إدارة الشات"
+   },{merge:true});
+   await deleteDoc(doc(db,"usersByName",name)).catch(()=>{});
+   if(uid)await setDoc(doc(db,"presence",String(uid)),{
+     uid,name,isOnline:false,deletedAccount:true,deletedAt:serverTimestamp()
+   },{merge:true});
+   users.delete(name);
+   if(uid)presenceCache.delete(String(uid));
+   closeModal("profile-modal");
+   toast(`🗑️ تم حذف حساب ${name} نهائياً. سيتم إخراجه من جهازه فوراً.`);
+ }catch(e){console.error(e);alert("تعذر حذف الحساب: "+(e?.message||"خطأ"));}
+};
 
 function applyProfileVisuals(u){if(!u)return;const img=$("prof-img"),cover=$("prof-cover"),card=$("profile-modal")?.querySelector(".profile-card-modal");if(img)img.src=u.avatar||avatarFor(u.name);if(cover)cover.style.backgroundImage=u.cover?`url("${u.cover}")`:"linear-gradient(135deg,#ec4899,#0f172a)";if(card)card.style.backgroundImage=u.profileBackground?`linear-gradient(rgba(15,23,42,.72),rgba(15,23,42,.92)),url("${u.profileBackground}")`:"";}
 async function uploadProfileImageForTarget(file,type){
@@ -1182,18 +1213,30 @@ window.ownerAction=async type=>{
  if(!selectedUser||!canManageUser(selectedUser))return;
  const name=selectedUser.name, uid=selectedUser.uid||selectedUser.id||name;
  let patch={};
- if(type==="mute")patch={isMuted:!selectedUser.isMuted};
- if(type==="ban"){const next=!selectedUser.isBanned;patch={isBanned:next,bannedBy:next?currentUser.name:""};}
- if(type==="kick"){const next=!selectedUser.isKicked;patch={isKicked:next,kickRoomId:next?currentRoomId:"",kickToken:Date.now()};}
+ if(type==="mute")patch={isMuted:!selectedUser.isMuted,mutedBy:currentUser.name};
+ if(type==="ban"){const next=!selectedUser.isBanned;patch={isBanned:next,bannedBy:next?currentUser.name:"",banReviewNumber:next?"967780718519":"",banReviewUrl:next?"https://wa.me/967780718519":""};}
+ if(type==="kick")patch={kickToken:Date.now(),kickRoomId:currentRoomId};
  if(!Object.keys(patch).length)return;
  try{
-   await setDoc(doc(db,"usersByName",name),patch,{merge:true});
-   if(uid)await setDoc(doc(db,"presence",uid),{uid,name,roomId:currentRoomId,...patch,lastSeen:serverTimestamp()},{merge:true});
+   if(selectedUser.isVisitor){
+     if(uid)await setDoc(doc(db,"usersByName",name),{...selectedUser,...patch,isVisitor:true},{merge:true});
+     if(uid)await setDoc(doc(db,"presence",uid),{uid,name,isVisitor:true,roomId:currentRoomId,...patch,lastSeen:serverTimestamp()},{merge:true});
+   }else{
+     await setDoc(doc(db,"usersByName",name),patch,{merge:true});
+     if(uid)await setDoc(doc(db,"presence",uid),{uid,name,roomId:currentRoomId,...patch,lastSeen:serverTimestamp()},{merge:true});
+   }
+   if(type==="ban" && uid){
+     if(patch.isBanned){
+       await setDoc(doc(db,"accountActions",String(uid)),{banned:true,bannedBy:currentUser.name,bannedAt:serverTimestamp(),reviewNumber:"967780718519",reviewUrl:"https://wa.me/967780718519"},{merge:true});
+     }else{
+       await setDoc(doc(db,"accountActions",String(uid)),{banned:false,bannedBy:"",unbannedAt:serverTimestamp()},{merge:true});
+     }
+   }
    selectedUser={...selectedUser,...patch};users.set(name,selectedUser);
    if(type==="mute")await addSystem(`${patch.isMuted?"🔇 تم كتم":"🔊 تم فك كتم"} ${name}`);
-   if(type==="ban")await addSystem(patch.isBanned?`🚫 تم حظر ${name}`:`✅ تم فك الحظر عن ${name}`);
-   if(type==="kick")await addSystem(patch.isKicked?`👞 تم طرد ${name} من ${currentRoomName}`:`✅ تم رفع الطرد عن ${name} في ${currentRoomName}`);
-   closeModal("profile-modal");toast("تم تطبيق الإجراء ومزامنته مع الجميع فورًا");
+   if(type==="ban")await addSystem(patch.isBanned?`🚫 تم حظر ${name} — للمراجعة واتساب 967780718519`:`✅ تم فك الحظر عن ${name}`);
+   if(type==="kick")await addSystem(`👞 تم طرد ${name} من ${currentRoomName}`);
+   closeModal("profile-modal");toast(type==="ban"&&patch.isBanned?"🚫 تم الحظر. لا يُرفع إلا من الإدارة بعد المراجعة.":"تم تطبيق الإجراء ومزامنته مع الجميع فوراً");
  }catch(e){console.error(e);alert("تعذر تطبيق الإجراء: "+(e?.message||"خطأ"));}
 }
 async function addSystem(text){await addDoc(collection(db,"roomMessages"),{roomId:currentRoomId,isSystem:true,text,createdAt:serverTimestamp()})}
@@ -1317,10 +1360,6 @@ window.deleteRoom=async id=>{
  if(currentRoomId===id)await selectRoom("main","main","الغرفة الرئيسية");
 }
 window.selectRoom=async(name,id="main",displayName=name)=>{
- if(currentUser&&!currentUser.isOwner&&!currentUser.isVisitor){
-   try{const s=await getDoc(doc(db,"usersByName",currentUser.name));if(s.exists()){const u=s.data();if(u.isBanned){showBanReviewScreen("ban");return}if(u.isKicked&&u.kickRoomId===id){showBanReviewScreen("kick");return}}}catch{}
- }
- if(currentUser?.isKicked&&currentUser.kickRoomId===id){showBanReviewScreen("kick");return}
  if(id===currentRoomId){closeModal("rooms-modal");return}
  if(currentMicSlot!==null){try{await deleteDoc(doc(db,"rooms",currentRoomId,"micSlots",String(currentMicSlot)))}catch{}currentMicSlot=null}
  currentRoomId=id;currentRoomName=displayName||name;forceChatBottom=true;
@@ -1332,8 +1371,8 @@ window.selectRoom=async(name,id="main",displayName=name)=>{
 }
 function renderRoomsFromPresence(){
  const c=$("rooms-container");if(!c)return;
- const roomCounts=window.__roomCounts||{};
- presenceCache.forEach(p=>{if(p.isOnline){const id=p.roomId||"main";if(window.__roomCounts==null)roomCounts[id]=(roomCounts[id]||0)+1;}});
+ const roomCounts={};
+ presenceCache.forEach(p=>{if(p.isOnline)roomCounts[p.roomId||"main"]=(roomCounts[p.roomId||"main"]||0)+1});
  if(window._roomsCache)renderRoomCards(window._roomsCache,roomCounts);
 }
 function renderRoomCards(rooms,roomCounts={}){
@@ -1343,16 +1382,6 @@ function renderRoomCards(rooms,roomCounts={}){
    const del=owner()&&r.id!=="main"?`<button style="background:#ef4444;color:#fff" onclick="event.stopPropagation();deleteRoom('${safe(r.id)}')">×</button>`:"";
    const img=r.image||avatarFor(r.name);const vip=r.vip!==false;const count=Number(roomCounts[r.id]||0);
    c.insertAdjacentHTML("beforeend",`<div class="room-card-v11" onclick="selectRoom('${safe(r.name)}','${safe(r.id)}','${safe(r.name)}')"><img class="room-thumb" src="${safe(img)}"><div><div class="room-title"><span class="room-vip">${vip?'VIP 👑':''}</span> ${safe(r.name)}</div><div class="room-desc">${safe(r.description||'أهلاً بكم في الغرفة')}</div><div class="room-meta"><span class="room-count">👤 ${count}</span><span class="room-online-count">${count?'● متواجدون الآن':'○ لا يوجد متواجدون'}</span></div><div class="room-actions">${del}</div></div></div>`);
- });
-}
-
-function listenRoomCounts(){
- if(unsubRoomCounts)unsubRoomCounts();
- unsubRoomCounts=onSnapshot(query(collection(db,"presence"),where("isOnline","==",true)),snap=>{
-   const counts={};
-   snap.forEach(d=>{const p=d.data();if(p.isOnline)counts[p.roomId||"main"]=(counts[p.roomId||"main"]||0)+1});
-   window.__roomCounts=counts;
-   if(window._roomsCache)renderRoomCards(window._roomsCache,counts);
  });
 }
 function listenRooms(){
@@ -1788,7 +1817,7 @@ window.showStoreCategory=cat=>{["ranks","names","frames"].forEach(x=>$("store-ca
 window.buyStoreItem=async(type,id)=>{const u={...(await getUserByName(currentUser.name)||currentUser)};let p;if(type==="rank")p=STORE_RANKS.find(x=>x.id===Number(id));if(type==="name")p=STORE_NAMES.find(x=>x.id===id);if(type==="frame")p=STORE_FRAMES.find(x=>x.id===id);if(!p)return;if(!owner()&&(Number(u.gold)||0)<p.price)return alert(`تحتاج ${p.price.toLocaleString("ar-YE")} ذهب`);if(!owner())u.gold=(Number(u.gold)||0)-p.price;if(type==="rank"){u.rankId=p.id;u.isVisitor=false;}if(type==="name")u.nameBackground=p.id;if(type==="frame")u.nameFrame=p.id;await saveUser(u);currentUser={...currentUser,...u};localStorage.setItem(sessionKey,JSON.stringify(currentUser));await createPresence();toast(`تم شراء ${p.title} ومزامنته للجميع`)};
 
 window.toggleSimpleMode=()=>document.body.classList.toggle("simple-mode");
-window.logout=async()=>{await stopPresence();localStorage.removeItem(sessionKey);localStorage.removeItem(legacySessionKey);sessionStorage.clear();localStorage.setItem("chat_force_login_v1","1");location.reload()}
+window.logout=async()=>{try{if(unsubAccountAction)unsubAccountAction()}catch{};await stopPresence();localStorage.removeItem(sessionKey);localStorage.removeItem(legacySessionKey);sessionStorage.clear();localStorage.setItem("chat_force_login_v1","1");location.reload()}
 
 async function boot(){
  $("login-modal").style.display="none";
@@ -1798,9 +1827,13 @@ async function boot(){
  if(raw){try{currentUser=JSON.parse(raw)}catch{currentUser=null}}
  if(currentUser){
    try{
+     const act=await getDoc(doc(db,"accountActions",String(currentUser.uid))).catch(()=>null);
+     if(act?.exists() && act.data()?.deleted===true){handleDeletedAccount();return;}
+     if(act?.exists() && act.data()?.banned===true){showBanScreen();return;}
+
      const u=await getUserByName(currentUser.name);
      if(u){currentUser={...currentUser,...u};if(verifiedOwnerRecord(currentUser)){currentUser.isOwner=true;currentUser.rankId=1;currentUser.isVisitor=false}else{currentUser.isOwner=false}}
-     if(currentUser.isBanned){showBanReviewScreen("ban");return}
+     if(currentUser.isBanned)return logout();
      await startApp();
      $("login-modal").style.display="none";
    }catch(e){console.error(e);$("login-modal").style.display="none";toast("تم الدخول من الجلسة المحفوظة؛ تعذر تحديث بعض البيانات")}
