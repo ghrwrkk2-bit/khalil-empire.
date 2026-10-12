@@ -392,7 +392,7 @@ body.owner-view .owner-mic-action{display:block}
 </div></div></div>
 
 <div id="options-menu-modal" class="modal-overlay hidden"><div class="modal-card"><span class="close-modal" onclick="closeModal('options-menu-modal')">&times;</span><div class="modal-title">الخيارات</div><div class="menu-list">
-<div class="menu-item" onclick="openChatSettingsModal()"><i class="fa-solid fa-gear"></i>إعدادات الغرفة</div><div id="owner-dashboard-option" class="menu-item hidden" onclick="openOwnerDashboard()"><i class="fa-solid fa-crown"></i>لوحة التحكم — المالك أو المالك المفوّض</div>
+<div class="menu-item" onclick="openChatSettingsModal()"><i class="fa-solid fa-gear"></i>إعدادات الغرفة</div><div id="owner-dashboard-option" class="menu-item hidden" onclick="openOwnerDashboard()"><i class="fa-solid fa-crown"></i>لوحة التحكم — صاحب الشات فقط</div>
 <div class="menu-item" onclick="openModal('side-menu-modal');closeModal('options-menu-modal')"><i class="fa-solid fa-bars"></i>فتح القائمة الكاملة</div>
  <div class="menu-item" onclick="location.reload()"><i class="fa-solid fa-rotate"></i>تحديث البيانات</div>
 </div></div></div>
@@ -535,11 +535,10 @@ body.owner-view .owner-mic-action{display:block}
 <div id="mic-request-modal" class="modal-overlay hidden"><div class="modal-card"><span class="close-modal" onclick="closeModal('mic-request-modal')">&times;</span><div class="modal-title">طلب الصعود للمايك 🎙️</div><div style="padding:18px;text-align:center"><p id="mic-request-text" style="margin-bottom:15px"></p><div style="display:flex;gap:8px"><button class="btn-submit" style="background:#10b981" onclick="confirmMicRequest()">نعم، اصعد</button><button class="btn-submit" style="background:#64748b" onclick="closeModal('mic-request-modal')">إلغاء</button></div></div></div></div>
 
 <div id="mic-control-modal" class="modal-overlay hidden"><div class="modal-card"><span class="close-modal" onclick="closeModal('mic-control-modal')">&times;</span><div class="modal-title">تحكم بالمايك 🎙️</div><div class="menu-list">
-<div id="my-mute-menu-item" class="menu-item" onclick="toggleMyMute()"><i class="fa-solid fa-volume-xmark"></i><span id="my-mute-label">كتم المايك</span></div>
-<div id="mic-music-set-item" class="menu-item" onclick="openYoutubePrompt()"><i class="fa-brands fa-youtube"></i>تشغيل أغنية YouTube</div>
-<div id="mic-music-stop-item" class="menu-item" onclick="stopMyMusic()"><i class="fa-solid fa-stop"></i>إيقاف الأغنية</div>
-<div id="leave-mic-menu-item" class="menu-item" onclick="leaveMic()"><i class="fa-solid fa-arrow-down"></i>النزول من المايك</div>
-<div id="owner-mute-mic-item" class="menu-item owner-mic-action" style="color:#f59e0b" onclick="ownerToggleMicMute()"><i class="fa-solid fa-volume-xmark"></i><span id="owner-mute-mic-label">كتم مايك العضو</span></div>
+<div class="menu-item" onclick="toggleMyMute()"><i class="fa-solid fa-volume-xmark"></i><span id="my-mute-label">كتم المايك</span></div>
+<div class="menu-item" onclick="openYoutubePrompt()"><i class="fa-brands fa-youtube"></i>تشغيل أغنية YouTube</div>
+<div class="menu-item" onclick="stopMyMusic()"><i class="fa-solid fa-stop"></i>إيقاف الأغنية</div>
+<div class="menu-item" onclick="leaveMic()"><i class="fa-solid fa-arrow-down"></i>النزول من المايك</div>
   <div id="owner-drop-mic-item" class="menu-item owner-mic-action" style="color:#ef4444" onclick="ownerDropCurrentMic()"><i class="fa-solid fa-user-minus"></i>إنزال العضو من المايك</div>
 </div></div></div>
 
@@ -615,7 +614,6 @@ function normalizeRankForUser(u){
  const x={...(u||{})};
  if(verifiedOwnerRecord(x)){x.isOwner=true;x.isVisitor=false;x.ownerKey=true;x.rankId=1;return x;}
  x.isOwner=false;
- if(x.isDelegatedOwner===true&&!x.isVisitor){x.rankId=1;x.ownerKey=false;return x;}
  if(Number(x.rankId)===1)x.rankId=19;
  if(x.isVisitor && Number(x.rankId)!==20 && !x.generatedBySystem)x.rankId=20;
  return x;
@@ -626,8 +624,6 @@ function toast(msg){$("toast").textContent=msg;$("toast").style.display="block";
 function avatarFor(name){return "https://ui-avatars.com/api/?name="+encodeURIComponent(name)+"&background=111827&color=ffffff&size=128"}
 function nowTime(){return new Date().toLocaleTimeString("ar",{hour:"2-digit",minute:"2-digit"})}
 function owner(){ return verifiedOwnerRecord(currentUser); }
-function isDelegatedOwner(u){return !!(u?.isDelegatedOwner===true&&!u?.isVisitor&&!verifiedOwnerRecord(u));}
-function canOpenOwnerDashboard(){return owner()||isDelegatedOwner(currentUser);}
 function verifiedOwnerRecord(u){
  const email=String(u?.email||"").trim().toLowerCase();
  return !!(u?.isOwner===true && u?.isVisitor!==true && u?.passwordHash===OWNER_PASSWORD_HASH && OWNER_EMAILS.includes(email) && (u?.ownerKey===true || String(u?.name||"").trim()===OWNER_NAME));
@@ -644,9 +640,9 @@ async function passwordMatches(stored,pass){
  return p===h || p===legacyPassword(pass);
 }
 function rankPower(u){return Number(u?.rankId||20)}
-function canManageUser(target){if(!currentUser||!target||String(target.uid||target.id||target.name)===String(currentUser.uid))return false;if(owner())return true;const p=rankPower(currentUser);return (p===1&&(isDelegatedOwner(currentUser)||currentUser.rankId===1)&&rankPower(target)>p)||(window.allowedModeratorRanks.includes(p)&&rankPower(target)>p)}
-function canGiveRank(id,target){if(!currentUser||!target)return false;if(owner())return true;const p=rankPower(currentUser),n=Number(id);if(p===1)return isDelegatedOwner(currentUser)&&n>1&&rankPower(target)>p;return window.allowedModeratorRanks.includes(p)&&n>p&&rankPower(target)>p}
-function canManageRoomSettings(){if(owner()||isDelegatedOwner(currentUser))return true;return window.allowedModeratorRanks.includes(rankPower(currentUser))}
+function canManageUser(target){if(!currentUser||!target||target.uid===currentUser.uid)return false;if(owner())return true;const p=rankPower(currentUser);return p===1 || (window.allowedModeratorRanks.includes(p)&&rankPower(target)>p)}
+function canGiveRank(id,target){if(!currentUser||!target)return false;if(owner())return true;const p=rankPower(currentUser);if(p===1)return Number(id)>1&&rankPower(target)>p;return (p===2||p===3||p===4)&&Number(id)>p&&rankPower(target)>p}
+function canManageRoomSettings(){if(owner())return true;const p=rankPower(currentUser);return p===1||p===2||p===3||p===4}
 function httpUrls(text){return String(text||'').match(/https?:\/\/[^\s]+/gi)||[]}
 function isVideoUrl(url){return /(?:youtube\.com|youtu\.be|tiktok\.com)/i.test(String(url||''))}
 function getTikTokId(url){try{const m=new URL(url).pathname.match(/\/video\/(\d+)/);return m?m[1]:null}catch{return null}}
@@ -663,7 +659,7 @@ window.switchTab=t=>{
  $("tab-member").classList.toggle("active",t==="member");
  $("member-fields").classList.toggle("hidden",t!=="member");
 }
-window.openModal=id=>{ $(id).classList.remove("hidden"); if(id==="rooms-modal"&&currentUser)$("owner-room-create-box").classList.toggle("hidden",!canOpenOwnerDashboard()); };
+window.openModal=id=>{ $(id).classList.remove("hidden"); if(id==="rooms-modal"&&currentUser)$("owner-room-create-box").classList.toggle("hidden",!owner()); };
 window.closeModal=id=>$(id).classList.add("hidden");
 
 async function showAdminTopPoster(){
@@ -712,15 +708,9 @@ function showBanScreen(){
   document.body.appendChild(review);
 }
 function handleDeletedAccount(){
- const deletedUid=currentUser?.uid;
   localStorage.removeItem(sessionKey);
   localStorage.removeItem(legacySessionKey);
   sessionStorage.clear();
- if(deletedUid)try{setDoc(doc(db,"presence",String(deletedUid)),{isOnline:false,deletedAccount:true,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{})}catch{}
- [unsubAccountAction,unsubUsers,unsubPresence,unsubMessages,unsubMics,unsubRoomSettings,unsubPrivate,unsubPrivateInbox,unsubNotifications,unsubContest].forEach(unsub=>{try{unsub?.()}catch{}});
- if(currentMicSlot!==null)try{deleteDoc(micDoc(currentMicSlot)).catch(()=>{})}catch{}
- currentMicSlot=null;currentUser=null;selectedUser=null;privateTarget=null;
- stopVoiceForMic().catch(()=>{});
   try{if(unsubAccountAction)unsubAccountAction();}catch{}
   $("login-modal").style.display="flex";
   document.body.classList.remove("owner-view");
@@ -743,7 +733,7 @@ async function createPresence(){
    await setDoc(doc(db,"presence",currentUser.uid),{
      uid:currentUser.uid,name:currentUser.name,avatar:currentUser.avatar||avatarFor(currentUser.name),cover:currentUser.cover||"",profileBackground:currentUser.profileBackground||"",
      rankId:currentUser.rankId||20,nameFrame:currentUser.nameFrame||"frame-none",nameBackground:currentUser.nameBackground||"",
-     isOwner:!!currentUser.isOwner,isDelegatedOwner:isDelegatedOwner(currentUser),isVisitor:!!currentUser.isVisitor,ownerBadge:!!currentUser.isOwner&&String(currentUser.name||"")===OWNER_NAME,isBanned:!!currentUser.isBanned,isMuted:!!currentUser.isMuted,
+     isOwner:!!currentUser.isOwner,isVisitor:!!currentUser.isVisitor,ownerBadge:!!currentUser.isOwner&&String(currentUser.name||"")===OWNER_NAME,isBanned:!!currentUser.isBanned,isMuted:!!currentUser.isMuted,
      isOnline:true,roomId:currentRoomId,roomName:currentRoomName,lastSeen:serverTimestamp()
    },{merge:true});
  }catch(e){console.error(e)}
@@ -767,7 +757,7 @@ async function saveUser(u){
  users.set(u.name,{...(users.get(u.name)||{}),...u});
  if(u.uid){
    const pr=presenceCache.get(u.uid);
-   if(pr?.isOnline) await setDoc(doc(db,"presence",u.uid),{uid:u.uid,name:u.name,avatar:u.avatar||avatarFor(u.name),cover:u.cover||"",profileBackground:u.profileBackground||"",rankId:u.rankId||20,nameFrame:u.nameFrame||"frame-none",nameBackground:u.nameBackground||"",isOwner:!!u.isOwner,isDelegatedOwner:isDelegatedOwner(u),isVisitor:!!u.isVisitor,isBanned:!!u.isBanned,isMuted:!!u.isMuted,isOnline:true,roomId:pr.roomId||currentRoomId,roomName:pr.roomName||currentRoomName,updatedAt:serverTimestamp()},{merge:true});
+   if(pr?.isOnline) await setDoc(doc(db,"presence",u.uid),{uid:u.uid,name:u.name,avatar:u.avatar||avatarFor(u.name),cover:u.cover||"",profileBackground:u.profileBackground||"",rankId:u.rankId||20,nameFrame:u.nameFrame||"frame-none",nameBackground:u.nameBackground||"",isOwner:!!u.isOwner,isVisitor:!!u.isVisitor,isBanned:!!u.isBanned,isMuted:!!u.isMuted,isOnline:true,roomId:pr.roomId||currentRoomId,roomName:pr.roomName||currentRoomName,updatedAt:serverTimestamp()},{merge:true});
  }
 }
 
@@ -836,7 +826,7 @@ window.registerMember=async()=>{
 
 async function startApp(){
  if(!currentUser)return;
- try{const ss=await getDoc(doc(db,"siteSettings","main"));if(ss.exists()){const d=ss.data();window.allowedModeratorRanks=Array.isArray(d.allowedModeratorRanks)?[...new Set(d.allowedModeratorRanks.map(Number).filter(n=>n>=2&&n<=19))]:[2,3,4];window.siteChatSettings=d||{};window.siteCustomFeature=d.customFeature||{};window.siteCustomProfileFeature=d.customProfileFeature||{};applyLoginPanelSettings(d);}}catch{}
+ try{const ss=await getDoc(doc(db,"siteSettings","main"));if(ss.exists()){const d=ss.data();window.allowedModeratorRanks=[...new Set([2,3,4,...(Array.isArray(d.allowedModeratorRanks)?d.allowedModeratorRanks:[])])];window.siteChatSettings=d||{};window.siteCustomFeature=d.customFeature||{};window.siteCustomProfileFeature=d.customProfileFeature||{};applyLoginPanelSettings(d);}}catch{}
  let latest=null;
  if(!currentUser.isVisitor) latest=await getUserByName(currentUser.name);
  if(latest){currentUser={...currentUser,...latest};if(currentUser.level==null)currentUser.level=1;if(currentUser.messageCount==null)currentUser.messageCount=0;}
@@ -846,7 +836,7 @@ async function startApp(){
  if(currentUser.isBanned){alert("تم حظر حسابك");return logout()}
  localStorage.setItem(sessionKey,JSON.stringify(currentUser));forceChatBottom=true;
  listenAccountAction();
- listenUsers();listenPresence();listenMessages();listenMics();listenRoomSettings();listenRooms();listenNotifications();listenContestBot();updateVisitorKey();document.body.classList.toggle("owner-view",canOpenOwnerDashboard());document.getElementById("owner-dashboard-option")?.classList.toggle("hidden",!canOpenOwnerDashboard());
+ listenUsers();listenPresence();listenMessages();listenMics();listenRoomSettings();listenRooms();listenNotifications();listenContestBot();updateVisitorKey();document.body.classList.toggle("owner-view",!!currentUser.isOwner);document.getElementById("owner-dashboard-option")?.classList.toggle("hidden",!owner());
  await createPresence();
  await announceRoomJoin();
  await ensureDefaultContestRoom();
@@ -892,57 +882,54 @@ function listenUsers(){
      if(ch.type==="removed") users.delete(name); else users.set(name,d);
    });
    if(currentUser){
-     const me=users.get(currentUser.name)||[...users.values()].find(u=>String(u.uid)===String(currentUser.uid));
+     const me=users.get(currentUser.name);
      if(me){
        currentUser={...currentUser,...me};
-       if(verifiedOwnerRecord(currentUser)){currentUser.isOwner=true;currentUser.rankId=1;currentUser.isVisitor=false}else{currentUser.isOwner=false;if(isDelegatedOwner(currentUser))currentUser.rankId=1}
+       if(verifiedOwnerRecord(currentUser)){currentUser.isOwner=true;currentUser.rankId=1;currentUser.isVisitor=false}else{currentUser.isOwner=false}
        localStorage.setItem(sessionKey,JSON.stringify(currentUser));
        if(currentUser.isBanned){alert("تم حظر حسابك");logout()}
        const kt=Number(me.kickToken)||0,last=Number(localStorage.getItem("chat_last_kick_token")||0);
        if(kt>last){localStorage.setItem("chat_last_kick_token",String(kt));if(me.kickRoomId===currentRoomId){if(currentMicSlot!==null){deleteDoc(micDoc(currentMicSlot)).catch(()=>{});currentMicSlot=null}if(currentRoomId!=="main")selectRoom("الغرفة الرئيسية","main","الغرفة الرئيسية");else toast("تم طردك من الروم الحالي");}}
      }
    }
-   if(selectedUser){const fresh=users.get(selectedUser.name)||[...users.values()].find(u=>String(u.uid)===String(selectedUser.uid));if(fresh){selectedUser={...selectedUser,...fresh};if($("prof-likes"))$("prof-likes").textContent=Number(fresh.likes)||0;$("profile-ban-status")?.classList.toggle("hidden",!fresh.isBanned);if(canManageUser(fresh)&&!$("profile-modal").classList.contains("hidden"))$("owner-ban-btn").textContent=fresh.isBanned?"فك الحظر":"حظر";}}
-   refreshOnlineUsersFromCache();
-   refreshRenderedMessages();
-   document.body.classList.toggle("owner-view",canOpenOwnerDashboard());
-   $("owner-dashboard-option")?.classList.toggle("hidden",!canOpenOwnerDashboard());
+   if(selectedUser){const fresh=users.get(selectedUser.name);if(fresh){selectedUser={...selectedUser,...fresh};if($("prof-likes"))$("prof-likes").textContent=Number(fresh.likes)||0;$("profile-ban-status")?.classList.toggle("hidden",!fresh.isBanned);if(owner()&&!$("profile-modal").classList.contains("hidden"))$("owner-ban-btn").textContent=fresh.isBanned?"فك الحظر":"حظر";}}
    updateVisitorKey();updateAnnouncementAccess();
  });
 }
-function buildOnlineUsersFromCache(){
- const merged=new Map();
- users.forEach((u,key)=>merged.set(String(u.uid||key),{...u}));
- presenceCache.forEach((pr,id)=>{
-   if(!pr?.name)return;
-   const key=String(pr.uid||id),account=merged.get(key)||{};
-   const user={...pr,...account,uid:pr.uid||account.uid||id};
-   user.name=account.name||pr.name;
-   if(user.isVisitor)user.rankId=20;
-   else if(verifiedOwnerRecord(user))user.rankId=1;
-   else if(isDelegatedOwner(user))user.rankId=1;
-   else if(Number(user.rankId)===1)user.rankId=19;
-   return merged.set(key,user);
- });
- return [...merged.values()].map(user=>{
-   const p=presenceCache.get(String(user.uid))||[...presenceCache.values()].find(x=>x?.name===user.name);
-   const normalized=normalizeRankForUser(user);
-   return {...normalized,isOnline:!!(p?.isOnline&&(p.roomId||"main")===currentRoomId),roomId:p?.roomId||"",roomName:p?.roomName||""};
- });
-}
-function refreshOnlineUsersFromCache(){renderOnline(buildOnlineUsersFromCache())}
 function listenPresence(){
  if(unsubPresence)unsubPresence();
  unsubPresence=onSnapshot(query(collection(db,"presence"),where("roomId","==",currentRoomId)),snap=>{
    presenceCache=new Map();
    snap.forEach(d=>presenceCache.set(d.id,d.data()));
-   const all=buildOnlineUsersFromCache();
+   // الزوار لا توجد لهم وثيقة usersByName، لذلك ندمج presence مباشرة حتى يظهروا فوراً في المتواجدين.
+   const merged=new Map();
+   users.forEach((u,key)=>merged.set(String(u.uid||key),{...u}));
+   presenceCache.forEach((pr,id)=>{
+     if(!pr?.name)return;
+     const key=String(pr.uid||id), old=merged.get(key)||{};
+     // حساب العضو المسجل هو المصدر الأساسي للرتبة؛ presence يحدد الحضور فقط.
+     const mergedUser=old.name?{...pr,...old}:{...pr};
+     mergedUser.uid=pr.uid||old.uid||id;
+     mergedUser.name=old.name||pr.name;
+     if(mergedUser.isVisitor) mergedUser.rankId=20;
+     else if(verifiedOwnerRecord(mergedUser)) mergedUser.rankId=1;
+     else if(Number(old.rankId)===1 && !verifiedOwnerRecord(mergedUser)) mergedUser.rankId=19;
+     else mergedUser.rankId=Number(old.rankId||pr.rankId||19);
+     mergedUser.isOwner=verifiedOwnerRecord(mergedUser);
+     merged.set(key,mergedUser);
+   });
+   const presenceByName=new Map();presenceCache.forEach(p=>{if(p?.name)presenceByName.set(String(p.name),p)});
+   const all=[...merged.values()].map(u=>{
+     const p=presenceCache.get(u.uid)||presenceByName.get(String(u.name));
+     const authoritative=normalizeRankForUser(u);
+     return {...authoritative,isOnline:!!(p?.isOnline&&((p.roomId||"main")===currentRoomId)),roomId:p?.roomId||"",roomName:p?.roomName||""};
+   });
    const mePresence=presenceCache.get(currentUser?.uid);
    if(currentUser&&mePresence){
      if(mePresence.deletedAccount){
        localStorage.removeItem(sessionKey);sessionStorage.clear();alert("🗑️ تم حذف حسابك نهائياً من قبل إدارة الشات. يمكنك الآن الدخول كزائر أو تسجيل حساب آخر.");location.reload();return;
      }
-     currentUser={...currentUser,...mePresence,name:currentUser.name,isDelegatedOwner:currentUser.isDelegatedOwner,rankId:currentUser.rankId};
+     currentUser={...currentUser,...mePresence};
      localStorage.setItem(sessionKey,JSON.stringify(currentUser));
      if(currentUser.isBanned){showBanScreen();return;}
      if(currentUser.isMuted)toast("🔇 تم كتمك من إدارة الشات");
@@ -955,20 +942,13 @@ function listenPresence(){
  });
 }
 
-function canonicalDisplayName(name){
- const key=String(name||"");
- const found=[...users.values()].find(x=>x.name===key||Array.isArray(x.previousNames)&&x.previousNames.includes(key))
-   ||[...presenceCache.values()].find(x=>x.name===key||Array.isArray(x.previousNames)&&x.previousNames.includes(key));
- return found?.name||key;
-}
 function renderMessageHtml(dId,m){
-     if(m.isSystem)return `<div class="system-msg-item" data-id="${safe(dId)}">${safe(m.text)}</div>`;
-     const resolvedUser=users.get(m.sender)||[...users.values()].find(x=>Array.isArray(x.previousNames)&&x.previousNames.includes(m.sender))||[...presenceCache.values()].find(x=>x.name===m.sender)||[...presenceCache.values()].find(x=>Array.isArray(x.previousNames)&&x.previousNames.includes(m.sender));
-     const displayName=resolvedUser?.name||m.sender;
-     const rawU=m.isBot ? {name:m.sender||"🤖 بوت المسابقات",rankId:19,isVisitor:false,isOwner:false,avatar:avatarFor("بوت المسابقات"),nameFrame:"frame-gold"} : (resolvedUser||{name:displayName,rankId:20,avatar:avatarFor(displayName),nameFrame:"frame-none"});
+
+     if(m.isSystem){area.insertAdjacentHTML("beforeend",`<div class="system-msg-item">${safe(m.text)}</div>`);return}
+     const rawU=m.isBot ? {name:m.sender||"🤖 بوت المسابقات",rankId:19,isVisitor:false,isOwner:false,avatar:avatarFor("بوت المسابقات"),nameFrame:"frame-gold"} : (users.get(m.sender)||[...presenceCache.values()].find(x=>x.name===m.sender)||{name:m.sender,rankId:20,avatar:avatarFor(m.sender),nameFrame:"frame-none"});
      const u=normalizeRankForUser(rawU);
      const r=rank(u.rankId);
-     const qhtml=m.reply?`<div class="quote-preview"><b>${safe(canonicalDisplayName(m.reply.sender))}</b>: ${safe(m.reply.text)}</div>`:"";
+     const qhtml=m.reply?`<div class="quote-preview"><b>${safe(m.reply.sender)}</b>: ${safe(m.reply.text)}</div>`:"";
      let media="";
      if(m.imageUrl)media=`<div class="media-card"><img class="msg-drawing-thumb" src="${safe(m.imageUrl)}" alt="صورة" onclick="openImageViewer('${slug(m.imageUrl)}')"></div>`;
      if(m.videoUrl)media=`<div class="video-small-card" onclick="openVideoViewer('${slug(m.videoUrl)}','file')"><video class="video-thumb-preview" src="${safe(m.videoUrl)}" muted playsinline preload="metadata"></video><span class="video-thumb-overlay">▶️</span></div>`;
@@ -984,17 +964,8 @@ function renderMessageHtml(dId,m){
      }
      const safeText=(m.quarantined&&!owner())?(m.promoLink?"⚠️ منشور احتيالي — تم منع الترويج لرابط شات خارجي":"⚠️ منشور احتيالي — تم إخفاء الرابط الخارجي للحماية"):safe(m.text||"");
      if(m.quarantined&&!owner())media="";
-     return `<div class="msg-item" data-name="${safe(displayName)}" data-id="${dId}" data-ts="${m.createdAt?.toMillis?m.createdAt.toMillis():0}"><img class="user-avatar" src="${safe(u.avatar||avatarFor(displayName))}" onclick="openProfileByName('${slug(displayName)}')"><div class="msg-content"><div class="user-header" ondblclick="quoteMessage('${dId}')"><i class="${r.icon} rank-badge-icon ${r.id===1?"owner-rank-icon":("rank-shine-"+r.id)}" style="color:${r.color}" title="${safe(r.title)}"></i><span class="name-frame ${u.nameFrame||"frame-none"} ${r.id===1?"owner-rank-text":""} ${u.nameBackground?`animated-name ${safe(u.nameBackground)}`:""}">✿ ${safe(displayName)} ✿</span><span class="msg-time">${safe(m.time||"")}</span></div>${qhtml}<div class="msg-text-plain">${safeText}</div>${media}</div></div>`;
+     return `<div class="msg-item" data-name="${safe(m.sender)}" data-id="${dId}" data-ts="${m.createdAt?.toMillis?m.createdAt.toMillis():0}"><img class="user-avatar" src="${safe(u.avatar||avatarFor(u.name))}" onclick="openProfileByName('${slug(m.sender)}')"><div class="msg-content"><div class="user-header" ondblclick="quoteMessage('${dId}')"><i class="${r.icon} rank-badge-icon ${r.id===1?"owner-rank-icon":("rank-shine-"+r.id)}" style="color:${r.color}" title="${safe(r.title)}"></i><span class="name-frame ${u.nameFrame||"frame-none"} ${r.id===1?"owner-rank-text":""} ${u.nameBackground?`animated-name ${safe(u.nameBackground)}`:""}">✿ ${safe(m.sender)} ✿</span><span class="msg-time">${safe(m.time||"")}</span></div>${qhtml}<div class="msg-text-plain">${safeText}</div>${media}</div></div>`;
    
-}
-function refreshRenderedMessages(){
- const area=$("chat-area"),cache=window.__chatDocs;
- if(!area||!(cache instanceof Map))return;
- area.querySelectorAll(".msg-item:not(.optimistic-message)[data-id]").forEach(el=>{
-   const id=el.dataset.id,m=cache.get(id);if(!m)return;
-   const template=document.createElement("template");template.innerHTML=renderMessageHtml(id,m).trim();
-   const next=template.content.firstElementChild;if(next)el.replaceWith(next);
- });
 }
 
 function listenMessages(){
@@ -1039,8 +1010,8 @@ function listenMessages(){
 
 window.quoteMessage=async id=>{
  const s=await getDoc(doc(db,"roomMessages",id));if(!s.exists())return;
- const m=s.data(),sender=canonicalDisplayName(m.sender);replyTo={sender,text:m.text,id};
- $("reply-box").style.display="block";$("reply-box").innerHTML=`اقتباس من <b>${safe(sender)}</b>: ${safe(m.text)} <span style="float:left;cursor:pointer" onclick="cancelQuote()">×</span>`;
+ const m=s.data();replyTo={sender:m.sender,text:m.text,id};
+ $("reply-box").style.display="block";$("reply-box").innerHTML=`اقتباس من <b>${safe(m.sender)}</b>: ${safe(m.text)} <span style="float:left;cursor:pointer" onclick="cancelQuote()">×</span>`;
  $("msg-input").focus();
 }
 window.cancelQuote=()=>{replyTo=null;$("reply-box").style.display="none";$("reply-box").innerHTML="";closeModal("plus-menu-modal")};
@@ -1114,7 +1085,11 @@ async function renderSavedMembers(){
    const ps=await getDocs(collection(db,"presence"));
    presenceCache=new Map();ps.forEach(d=>presenceCache.set(d.id,d.data()));
  }catch{}
- refreshOnlineUsersFromCache();
+ const merged=new Map();
+ users.forEach((u,key)=>merged.set(String(u.uid||key),{...u}));
+ presenceCache.forEach((pr,id)=>{if(!pr?.name)return;const key=String(pr.uid||id),old=merged.get(key)||{};const mergedUser=old.name?{...pr,...old}:{...pr};mergedUser.uid=pr.uid||old.uid||id;mergedUser.name=old.name||pr.name;mergedUser.isOwner=verifiedOwnerRecord(mergedUser);mergedUser.rankId=mergedUser.isVisitor?20:(mergedUser.isOwner?1:(Number(old.rankId)===1?19:Number(old.rankId||pr.rankId||19)));merged.set(key,mergedUser);});
+ const all=[...merged.values()].map(u=>{const p=presenceCache.get(u.uid)||[...presenceCache.values()].find(x=>x.name===u.name);return {...normalizeRankForUser(u),isOnline:!!(p?.isOnline&&((p.roomId||"main")===currentRoomId)),roomId:p?.roomId||"",roomName:p?.roomName||""};});
+ renderOnline(all);
 }
 window.openProfileByName=async encoded=>{
  const name=decodeURIComponent(encoded);
@@ -1173,15 +1148,14 @@ window.saveProfileChanges=async()=>{
  if(self&&owner()&&!OWNER_EMAILS.includes(newEmail))return alert("للحفاظ على صلاحيات صاحب الشات استخدم بريد المالك المعتمد");
  if(newEmail!==String(target.email||"").toLowerCase()){const em=await getDocs(query(collection(db,"usersByName"),where("email","==",newEmail),limit(1))).catch(()=>null);if(em?.size&&em.docs.some(d=>d.data().name!==old))return alert("هذا البريد مستخدم مسبقاً");}
  if(nameInput!==old&&await getUserByName(nameInput))return alert("الاسم الجديد مستخدم أو محجوز");
- const updated={...target,profileUpdatedAt:Date.now(),name:nameInput,previousNames:nameInput!==old?[...new Set([...(Array.isArray(target.previousNames)?target.previousNames:[]),old])].slice(-20):(target.previousNames||[]),nameFrame:$("edit-frame-select").value,nameBackground:target.nameBackground||"",profileBackground:target.profileBackground||"",avatar:target.avatar||avatarFor(nameInput),cover:target.cover||"",age:$("edit-age-input").value||"غير محدد",gender:$("edit-gender-input").value||"غير محدد",country:$("edit-country-input").value||"غير محدد",info:$("edit-info-input").value||"",email:newEmail};
+ const updated={...target,profileUpdatedAt:Date.now(),name:nameInput,nameFrame:$("edit-frame-select").value,nameBackground:target.nameBackground||"",profileBackground:target.profileBackground||"",avatar:target.avatar||avatarFor(nameInput),cover:target.cover||"",age:$("edit-age-input").value||"غير محدد",gender:$("edit-gender-input").value||"غير محدد",country:$("edit-country-input").value||"غير محدد",info:$("edit-info-input").value||"",email:newEmail};
  if(newPass)updated.passwordHash=await hashPassword(newPass);
  if(self&&owner()){updated.isOwner=true;updated.ownerKey=true;updated.isVisitor=false;updated.rankId=1;updated.passwordHash=OWNER_PASSWORD_HASH;updated.email=newEmail;}
  else if(nameInput===OWNER_NAME&&OWNER_EMAILS.includes(newEmail)&&updated.passwordHash===OWNER_PASSWORD_HASH){updated.isOwner=true;updated.rankId=1;updated.isVisitor=false;}
- else if(!verifiedOwnerRecord(updated)&&!isDelegatedOwner(updated)){updated.isOwner=false;if(updated.rankId===1)updated.rankId=19;}
+ else if(!verifiedOwnerRecord(updated)){updated.isOwner=false;if(updated.rankId===1)updated.rankId=19;}
  if(nameInput!==old){await saveUser(updated);await deleteDoc(doc(db,"usersByName",old));users.delete(old);users.set(nameInput,updated)}else await saveUser(updated);
  if(self){currentUser={...currentUser,...updated};localStorage.setItem(sessionKey,JSON.stringify(currentUser));await createPresence();applyProfileVisuals(currentUser);$("owner-delete-account-btn")?.classList.add("hidden");}
- else{selectedUser={...selectedUser,...updated};await setDoc(doc(db,"presence",target.uid),{name:updated.name,avatar:updated.avatar||avatarFor(updated.name),cover:updated.cover||"",profileBackground:updated.profileBackground||"",rankId:updated.rankId||20,nameFrame:updated.nameFrame||"frame-none",nameBackground:updated.nameBackground||"",isOwner:!!updated.isOwner,isDelegatedOwner:isDelegatedOwner(updated)},{merge:true});users.set(updated.name,selectedUser);applyProfileVisuals(selectedUser)}
- document.body.classList.toggle("owner-view",canOpenOwnerDashboard());$("owner-dashboard-option")?.classList.toggle("hidden",!canOpenOwnerDashboard());refreshOnlineUsersFromCache();refreshRenderedMessages();
+ else{selectedUser={...selectedUser,...updated};await setDoc(doc(db,"presence",target.uid),{name:updated.name,avatar:updated.avatar||avatarFor(updated.name),cover:updated.cover||"",profileBackground:updated.profileBackground||"",rankId:updated.rankId||20,nameFrame:updated.nameFrame||"frame-none",nameBackground:updated.nameBackground||"",isOwner:!!updated.isOwner},{merge:true});users.set(updated.name,selectedUser);applyProfileVisuals(selectedUser)}
  closeModal("profile-modal");toast("تم حفظ بيانات الحساب فوراً ومزامنتها للجميع");
 };
 window.deleteAccountAsOwner=async()=>{
@@ -1246,12 +1220,12 @@ async function resolveAdminTarget(target){
 
 window.giveRankToUser=async()=>{
  if(!selectedUser||!canManageUser(selectedUser))return;
- const id=Number($("owner-rank-select").value)||19,r=rank(id);
+ const id=Math.max(2,Number($("owner-rank-select").value)||19),r=rank(id);
  if(!canGiveRank(id,selectedUser))return alert("لا يمكنك إهداء هذه الرتبة لأنها ليست أدنى من رتبتك");
  try{
    const target=await resolveAdminTarget(selectedUser),targetName=target.name;
    if(!targetName)return;
-   let updated={...target,rankId:id,isVisitor:false,isOwner:false,isDelegatedOwner:id===1,ownerKey:false,rankGiftedBy:currentUser.name,rankGiftedAt:serverTimestamp()};
+   let updated={...target,rankId:id,isVisitor:false,isOwner:false,ownerKey:false,rankGiftedBy:currentUser.name,rankGiftedAt:serverTimestamp()};
    updated=normalizeRankForUser(updated);
    let generatedCredentials=null;
    if(target.isVisitor){
@@ -1262,13 +1236,13 @@ window.giveRankToUser=async()=>{
      updated={...updated,email:generatedEmail,passwordHash:await hashPassword(generatedPassword),generatedBySystem:true,generatedAt:serverTimestamp(),level:Number(target.level)||1,messageCount:Number(target.messageCount)||0};
    }
    await setDoc(doc(db,"usersByName",targetName),updated,{merge:true});
-   await setDoc(doc(db,"presence",String(target.uid)),{uid:String(target.uid),name:targetName,avatar:updated.avatar||avatarFor(targetName),rankId:id,isVisitor:false,isOwner:false,isDelegatedOwner:id===1,ownerKey:false,email:updated.email||"",roomId:target.roomId||currentRoomId,isOnline:target.isOnline!==false,lastSeen:serverTimestamp()},{merge:true});
+   await setDoc(doc(db,"presence",String(target.uid)),{uid:String(target.uid),name:targetName,avatar:updated.avatar||avatarFor(targetName),rankId:id,isVisitor:false,isOwner:false,ownerKey:false,email:updated.email||"",roomId:target.roomId||currentRoomId,isOnline:target.isOnline!==false,lastSeen:serverTimestamp()},{merge:true});
    selectedUser={...target,...updated};users.set(targetName,selectedUser);
    if(currentUser.name===targetName){currentUser={...currentUser,...updated};localStorage.setItem(sessionKey,JSON.stringify(currentUser));updateVisitorKey();}
    await addDoc(collection(db,"roomMessages"),{roomId:currentRoomId,isSystem:true,text:`🎉 تم منح ${targetName} رتبة ${r.title} من قبل ${currentUser.name}.`,createdAt:serverTimestamp()});
    closeModal("profile-modal");updateAnnouncementAccess();
    if(generatedCredentials)toast(`✅ أصبح ${targetName} عضوًا مسجلًا — البريد: ${generatedCredentials.email} — كلمة المرور: ${generatedCredentials.password}`);
-   else toast(id===1?`👑 تم منح ${targetName} رتبة مالك مفوّض — التاج الذهبي وصلاحيات الإدارة مفعّلة`:`✅ تم تثبيت رتبة ${r.title} لـ ${targetName} للجميع`);
+   else toast(`✅ تم تثبيت رتبة ${r.title} لـ ${targetName} للجميع`);
  }catch(e){console.error(e);alert("تعذر حفظ الرتبة: "+(e?.message||"خطأ غير معروف"));}
 }
 
@@ -1287,10 +1261,6 @@ window.ownerAction=async type=>{
    }else{
      await setDoc(doc(db,"usersByName",name),patch,{merge:true});
      if(uid)await setDoc(doc(db,"presence",uid),{uid,name,roomId:currentRoomId,...patch,lastSeen:serverTimestamp()},{merge:true});
-   }
-   if(type==="mute"&&uid){
-     const activeMics=await getDocs(query(micCollection(),where("uid","==",String(uid)))).catch(()=>null);
-     if(activeMics)await Promise.all(activeMics.docs.map(d=>setDoc(d.ref,{muted:!!patch.isMuted,moderatorMuted:!!patch.isMuted},{merge:true})));
    }
    if(type==="ban" && uid){
      if(patch.isBanned){
@@ -1342,7 +1312,6 @@ function listenPrivate(){
  });
 }
 window.sendPrivateMessage=async()=>{
- if(currentUser?.isMuted)return alert("أنت مكتوم من الإدارة ولا يمكنك إرسال الرسائل");
  const text=$("private-msg-input").value.trim();if(!text||!privateTarget)return;
  const now=serverTimestamp();
  await addDoc(collection(db,"privateMessages",privatePairId,"messages"),{sender:currentUser.name,receiver:privateTarget.name,text,time:nowTime(),createdAt:now});
@@ -1354,7 +1323,6 @@ window.sendPrivateMessage=async()=>{
  $("private-msg-input").value="";
 }
 window.sendPrivateFile=async e=>{
- if(currentUser?.isMuted){e.target.value="";return alert("أنت مكتوم من الإدارة ولا يمكنك إرسال الملفات");}
  const f=e.target.files?.[0];if(!f||!privateTarget)return;
  try{
    const isVideo=f.type.startsWith("video/");
@@ -1413,7 +1381,7 @@ function listenRoomSettings(){
 function renderMicCount(n){for(let i=0;i<5;i++)$("mic-wrapper-"+i).style.display=i<n?"flex":"none"}
 
 window.createRoomPrompt=async()=>{
- if(!canOpenOwnerDashboard())return alert("إنشاء الغرف للمالك أو المالك المفوّض فقط");
+ if(!owner())return alert("إنشاء الغرف لصاحب الموقع فقط");
  const name=prompt("اسم الروم الجديد:");
  if(!name?.trim())return;
  const clean=name.trim();const id=slug(clean).replace(/%/g,"_").slice(0,80);
@@ -1423,7 +1391,7 @@ window.createRoomPrompt=async()=>{
  toast("تم إنشاء الروم للجميع");
 }
 window.deleteRoom=async id=>{
- if(!canOpenOwnerDashboard()||id==="main")return;
+ if(!owner()||id==="main")return;
  if(!confirm("حذف هذا الروم نهائياً للجميع؟"))return;
  await deleteDoc(doc(db,"rooms",id));
  if(currentRoomId===id)await selectRoom("main","main","الغرفة الرئيسية");
@@ -1448,7 +1416,7 @@ function renderRoomCards(rooms,roomCounts={}){
  const c=$("rooms-container");if(!c)return;c.innerHTML="";
  const mainRoom=rooms.find(r=>r.id==="main")||rooms[0];const contestRooms=rooms.filter(r=>r.id!=="main"&&/مسابق/.test(String(r.name||"")));const yemenRooms=rooms.filter(r=>r.id!=="main"&&/اليمن/.test(String(r.name||""))&&!/مسابق/.test(String(r.name||"")));const others=rooms.filter(r=>r.id!=="main"&&!contestRooms.includes(r)&&!yemenRooms.includes(r));const ordered=[...(mainRoom?[mainRoom]:[]),...yemenRooms,...others,...contestRooms];
  ordered.forEach(r=>{
-   const del=canOpenOwnerDashboard()&&r.id!=="main"?`<button style="background:#ef4444;color:#fff" onclick="event.stopPropagation();deleteRoom('${safe(r.id)}')">×</button>`:"";
+   const del=owner()&&r.id!=="main"?`<button style="background:#ef4444;color:#fff" onclick="event.stopPropagation();deleteRoom('${safe(r.id)}')">×</button>`:"";
    const img=r.image||avatarFor(r.name);const vip=r.vip!==false;const count=Number(roomCounts[r.id]||0);
    c.insertAdjacentHTML("beforeend",`<div class="room-card-v11" onclick="selectRoom('${safe(r.name)}','${safe(r.id)}','${safe(r.name)}')"><img class="room-thumb" src="${safe(img)}"><div><div class="room-title"><span class="room-vip">${vip?'VIP 👑':''}</span> ${safe(r.name)}</div><div class="room-desc">${safe(r.description||'أهلاً بكم في الغرفة')}</div><div class="room-meta"><span class="room-count">👤 ${count}</span><span class="room-online-count">${count?'● متواجدون الآن':'○ لا يوجد متواجدون'}</span></div><div class="room-actions">${del}</div></div></div>`);
  });
@@ -1459,7 +1427,7 @@ function listenRooms(){
    snap.forEach(d=>{const r=d.data();if(d.id==="main")rooms[0]={id:"main",name:r.name||"الغرفة الرئيسية",description:r.description||"الغرفة الأولى",image:r.image||avatarFor("الغرفة الرئيسية"),vip:r.vip!==false};else rooms.push({id:d.id,name:r.name||d.id,description:r.description||"",image:r.image||avatarFor(r.name||d.id),vip:r.vip!==false})});
    window._roomsCache=rooms;
    renderRoomsFromPresence();
-   $("owner-room-create-box").classList.toggle("hidden",!canOpenOwnerDashboard());
+   $("owner-room-create-box").classList.toggle("hidden",!owner());
  });
 }
 
@@ -1470,8 +1438,6 @@ let voiceSignalUnsubs=new Map();
 let voiceCandidateUnsubs=new Map();
 let voicePendingCandidates=new Map();
 let voiceActiveMicData=new Map();
-let voicePeerSenders=new Map();
-let voicePeerSessions=new Map();
 function voicePairKey(a,b){return [String(a),String(b)].sort().join("__");}
 function voiceSignalRef(pair){return doc(db,"rooms",currentRoomId,"voiceSignals",pair);}
 function voiceCandidatesCol(pair){return collection(db,"rooms",currentRoomId,"voiceSignals",pair,"candidates");}
@@ -1480,32 +1446,25 @@ function ensureVoiceAudio(uid){let el=$(voiceAudioId(uid));if(!el){el=document.c
 async function startVoiceForMic(){
  if(!navigator.mediaDevices?.getUserMedia||!window.RTCPeerConnection)throw new Error("WEBRTC_UNSUPPORTED");
  if(!voiceLocalStream)voiceLocalStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
- const localTrack=voiceLocalStream.getAudioTracks()[0];
- if(localTrack)localTrack.enabled=!currentUser?.isMuted;
- await Promise.all([...voicePeerSenders.values()].map(sender=>sender.replaceTrack(localTrack).catch(()=>{})));
  await syncVoicePeers();
 }
 async function stopVoiceForMic(){
  try{voiceSignalUnsubs.forEach(f=>f&&f());voiceCandidateUnsubs.forEach(f=>f&&f());}catch{}
  voiceSignalUnsubs.clear();voiceCandidateUnsubs.clear();voicePendingCandidates.clear();
- voicePeers.forEach(pc=>{try{pc.close()}catch{}});voicePeers.clear();voicePeerSenders.clear();voicePeerSessions.clear();
+ voicePeers.forEach(pc=>{try{pc.close()}catch{}});voicePeers.clear();
  document.querySelectorAll('audio[id^="voice-audio-"]').forEach(a=>{try{a.pause();a.srcObject=null}catch{};a.remove()});
  if(voiceLocalStream){voiceLocalStream.getTracks().forEach(t=>t.stop());voiceLocalStream=null;}
 }
-async function closeVoicePair(pair){const pc=voicePeers.get(pair);if(pc){try{pc.close()}catch{}}voicePeers.delete(pair);voicePeerSenders.delete(pair);voicePeerSessions.delete(pair);if(voiceSignalUnsubs.get(pair)){try{voiceSignalUnsubs.get(pair)()}catch{}voiceSignalUnsubs.delete(pair)}if(voiceCandidateUnsubs.get(pair)){try{voiceCandidateUnsubs.get(pair)()}catch{}voiceCandidateUnsubs.delete(pair)}voicePendingCandidates.delete(pair);}
+async function closeVoicePair(pair){const pc=voicePeers.get(pair);if(pc){try{pc.close()}catch{}}voicePeers.delete(pair);if(voiceSignalUnsubs.get(pair)){try{voiceSignalUnsubs.get(pair)()}catch{}voiceSignalUnsubs.delete(pair)}if(voiceCandidateUnsubs.get(pair)){try{voiceCandidateUnsubs.get(pair)()}catch{}voiceCandidateUnsubs.delete(pair)}voicePendingCandidates.delete(pair);}
 async function setupVoicePair(remote){
  if(!currentUser?.uid||!remote?.uid||remote.uid===currentUser.uid)return;
  const pair=voicePairKey(currentUser.uid,remote.uid);
  const existing=voicePeers.get(pair);
- const sessionKey=`${currentUser.voiceSession||""}|${remote.voiceSession||""}`;
- if(existing&&voicePeerSessions.get(pair)===sessionKey)return;
- if(existing)await closeVoicePair(pair);
+ if(existing)return;
  const pc=new RTCPeerConnection({iceServers:[{urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]}]});
- voicePeers.set(pair,pc);voicePeerSessions.set(pair,sessionKey);voicePendingCandidates.set(pair,[]);
- const audioTransceiver=pc.addTransceiver("audio",{direction:"sendrecv"});
- voicePeerSenders.set(pair,audioTransceiver.sender);
- if(voiceLocalStream){const localTrack=voiceLocalStream.getAudioTracks()[0];if(localTrack){localTrack.enabled=!currentUser.isMuted;await audioTransceiver.sender.replaceTrack(localTrack)}}
- pc.ontrack=e=>{const a=ensureVoiceAudio(remote.uid);a.srcObject=e.streams?.[0]||(e.track?new MediaStream([e.track]):null);a.volume=voiceActiveMicData.get(String(remote.uid))?.muted?0:1;a.play().catch(()=>{});};
+ voicePeers.set(pair,pc);voicePendingCandidates.set(pair,[]);
+ if(voiceLocalStream)voiceLocalStream.getTracks().forEach(t=>pc.addTrack(t,voiceLocalStream));
+ pc.ontrack=e=>{const a=ensureVoiceAudio(remote.uid);a.srcObject=e.streams[0];a.volume=voiceActiveMicData.get(String(remote.uid))?.muted?0:1;a.play().catch(()=>{});};
  pc.onconnectionstatechange=()=>{if(["failed","closed","disconnected"].includes(pc.connectionState)&&voicePeers.get(pair)===pc){setTimeout(()=>{if(voicePeers.get(pair)===pc){closeVoicePair(pair);syncVoicePeers().catch(()=>{})}},1200)}};
  pc.onicecandidate=async e=>{if(!e.candidate)return;try{await addDoc(voiceCandidatesCol(pair),{from:currentUser.uid,session:currentUser.voiceSession||"",candidate:e.candidate.toJSON(),createdAt:serverTimestamp()})}catch{}};
  const signal=voiceSignalRef(pair);
@@ -1554,7 +1513,7 @@ function listenMics(){
    snap.forEach(d=>{const m=d.data(),i=Number(d.id);if(i<0||i>4)return;if(m.musicUrl&&!activeMusic)activeMusic=m;
      const el=$("mic-slot-"+i);el.classList.add("occupied");if(m.muted)el.classList.add("muted");
      el.style.backgroundImage=`url("${m.avatar||avatarFor(m.name)}")`;$("mic-name-"+i).textContent=m.name||"عضو";
-     if(String(m.uid)===String(currentUser?.uid)&&voiceLocalStream)voiceLocalStream.getAudioTracks().forEach(t=>t.enabled=!m.muted&&!currentUser?.isMuted);
+     if(String(m.uid)===String(currentUser?.uid)&&voiceLocalStream)voiceLocalStream.getAudioTracks().forEach(t=>t.enabled=!m.muted);
      const ra=$(voiceAudioId(String(m.uid||"")));if(ra)ra.volume=m.muted?0:1;
    });
    renderMusicSync(activeMusic);
@@ -1562,60 +1521,39 @@ function listenMics(){
  });
 }
 async function findFreeMic(){for(let i=0;i<5;i++){const s=await getDoc(micDoc(i));if(!s.exists())return i}return -1}
-window.requestMicrophone=async()=>{if(currentUser?.isMuted)return alert("أنت مكتوم من الإدارة ولا يمكنك الصعود للمايك");const i=await findFreeMic();if(i<0)return alert("جميع المايكات مشغولة");currentMicSlot=i;$("mic-request-text").textContent=`هل تريد الصعود إلى المايك رقم ${i+1} في ${currentRoomName}؟`;openModal("mic-request-modal")}
+window.requestMicrophone=async()=>{const i=await findFreeMic();if(i<0)return alert("جميع المايكات مشغولة");currentMicSlot=i;$("mic-request-text").textContent=`هل تريد الصعود إلى المايك رقم ${i+1} في ${currentRoomName}؟`;openModal("mic-request-modal")}
 window.micClick=async i=>{
  const s=await getDoc(micDoc(i));
  if(!s.exists())return requestMicrophone();
  const m=s.data();
  if(m.uid===currentUser.uid){
-   currentMicSlot=i;$("my-mute-menu-item").style.display="flex";$("leave-mic-menu-item").style.display="flex";$("mic-music-set-item").style.display="flex";$("mic-music-stop-item").style.display="flex";$("owner-drop-mic-item").style.display="none";$("owner-mute-mic-item").style.display="none";$("my-mute-label").textContent=m.muted?"فتح كتم المايك":"كتم المايك";openModal("mic-control-modal");
- }else if(canOpenOwnerDashboard()){
-   currentMicSlot=i;selectedMicOwnerSlot=i;
-   const target=[...users.values()].find(u=>String(u.uid)===String(m.uid))||{uid:m.uid,name:m.name,rankId:Number(m.rankId)||19,isVisitor:!!m.isVisitor};
-   const mayManage=owner()||canManageUser(target);
-   $("my-mute-menu-item").style.display="none";$("leave-mic-menu-item").style.display="none";
-   $("mic-music-set-item").style.display=mayManage?"flex":"none";$("mic-music-stop-item").style.display=mayManage?"flex":"none";
-   $("owner-drop-mic-item").style.display=mayManage?"block":"none";$("owner-mute-mic-item").style.display=mayManage?"block":"none";
-   $("owner-mute-mic-label").textContent=m.muted?"فك كتم مايك العضو":"كتم مايك العضو";
-   $("my-mute-label").textContent=`عضو: ${m.name}`;openModal("mic-control-modal");
+   currentMicSlot=i;$("owner-drop-mic-item").style.display="none";$("my-mute-label").textContent=m.muted?"فتح كتم المايك":"كتم المايك";openModal("mic-control-modal");
+ }else if(owner()){
+   currentMicSlot=i;selectedMicOwnerSlot=i;$("owner-drop-mic-item").style.display="block";$("my-mute-label").textContent=`عضو: ${m.name}`;openModal("mic-control-modal");
  }else openProfileByName(slug(m.name));
 }
 window.confirmMicRequest=async()=>{
- if(currentUser?.isMuted)return alert("أنت مكتوم من الإدارة ولا يمكنك الصعود للمايك");
  if(currentMicSlot===null)return;const slot=currentMicSlot;closeModal("mic-request-modal");
  try{
    await startVoiceForMic();
    const voiceSession=crypto.randomUUID();
    currentUser.voiceSession=voiceSession;localStorage.setItem(sessionKey,JSON.stringify(currentUser));
-   await setDoc(micDoc(slot),{uid:currentUser.uid,name:currentUser.name,avatar:currentUser.avatar||avatarFor(currentUser.name),rankId:currentUser.rankId||20,isVisitor:!!currentUser.isVisitor,muted:false,joinedAt:serverTimestamp(),roomId:currentRoomId,voiceSession},{merge:true});
+   await setDoc(micDoc(slot),{uid:currentUser.uid,name:currentUser.name,avatar:currentUser.avatar||avatarFor(currentUser.name),muted:false,joinedAt:serverTimestamp(),roomId:currentRoomId,voiceSession},{merge:true});
    toast("🎙️ صعدت للمايك — صوتك يصل للأعضاء عبر WebRTC");
  }catch(e){console.error(e);toast("تعذر تشغيل الميكروفون. اسمح بالوصول للميكروفون ثم أعد المحاولة");currentMicSlot=null}
 }
 window.toggleMyMute=async()=>{
  if(currentMicSlot===null)return;const r=micDoc(currentMicSlot),s=await getDoc(r);if(!s.exists())return;
  const m=s.data();if(m.uid!==currentUser.uid)return;
- if(currentUser.isMuted&&m.muted)return alert("لا يمكنك فك كتم المايك أثناء كتمك من الإدارة");
  const next=!m.muted;await setDoc(r,{muted:next},{merge:true});
- if(voiceLocalStream)voiceLocalStream.getAudioTracks().forEach(t=>t.enabled=!next&&!currentUser.isMuted);
+ if(voiceLocalStream)voiceLocalStream.getAudioTracks().forEach(t=>t.enabled=!next);
  $("my-mute-label").textContent=next?"فتح كتم المايك":"كتم المايك";
 }
 window.leaveMic=async()=>{if(currentMicSlot!==null){const s=await getDoc(micDoc(currentMicSlot));if(s.exists()&&s.data().uid===currentUser.uid)await deleteDoc(micDoc(currentMicSlot));currentMicSlot=null}await stopVoiceForMic();closeModal("mic-control-modal");toast("تم النزول من المايك")}
-window.ownerToggleMicMute=async()=>{
- if(!canOpenOwnerDashboard()||selectedMicOwnerSlot===null)return;
- const ref=micDoc(selectedMicOwnerSlot),snap=await getDoc(ref);if(!snap.exists())return closeModal("mic-control-modal");
- const m=snap.data(),target=[...users.values()].find(u=>String(u.uid)===String(m.uid))||{uid:m.uid,name:m.name,rankId:Number(m.rankId)||19,isVisitor:!!m.isVisitor};
- if(!owner()&&!canManageUser(target))return alert("لا يمكنك كتم عضو رتبته مساوية أو أعلى من رتبتك");
- const muted=!m.muted;await setDoc(ref,{muted,moderatorMuted:muted},{merge:true});
- $("owner-mute-mic-label").textContent=muted?"فك كتم مايك العضو":"كتم مايك العضو";
- toast(muted?`🔇 تم كتم مايك ${m.name}`:`🔊 تم فك كتم مايك ${m.name}`);
-};
 window.ownerDropCurrentMic=async()=>{
- if(!canOpenOwnerDashboard()||selectedMicOwnerSlot===null)return;
+ if(!owner()||selectedMicOwnerSlot===null)return;
  const r=micDoc(selectedMicOwnerSlot),s=await getDoc(r);if(!s.exists())return closeModal("mic-control-modal");
- const micData=s.data(),name=micData.name||"العضو",droppedUid=micData.uid;
- const target=[...users.values()].find(u=>String(u.uid)===String(droppedUid))||{uid:droppedUid,name,rankId:Number(micData.rankId)||19,isVisitor:!!micData.isVisitor};
- if(!owner()&&!canManageUser(target))return alert("لا يمكنك إنزال عضو رتبته مساوية أو أعلى من رتبتك");
- await deleteDoc(r);selectedMicOwnerSlot=null;if(String(droppedUid)===String(currentUser.uid)){currentMicSlot=null;await stopVoiceForMic()}closeModal("mic-control-modal");await addSystem(`🎙️ قام ${currentUser.name} بإنزال ${name} من المايك`);toast("تم إنزال العضو من المايك");
+ const name=s.data().name||"العضو";const droppedUid=s.data().uid;await deleteDoc(r);selectedMicOwnerSlot=null;if(String(droppedUid)===String(currentUser.uid)){currentMicSlot=null;await stopVoiceForMic()}closeModal("mic-control-modal");await addSystem(`🎙️ قام صاحب الموقع بإنزال ${name} من المايك`);toast("تم إنزال العضو من المايك");
 }
 window.toggleMicsVisibility=()=>{
   const hidden=$("mics-frame").classList.toggle("hidden-mics");
@@ -1654,25 +1592,14 @@ window.getYoutubeId=function(url){
 
 
 window.openChatSettingsModal=async()=>{
- if(!canManageRoomSettings())return alert("إعدادات الدردشة متاحة للمالك والرتب الإدارية المسموح لها فقط");
+ if(!canManageRoomSettings())return alert("إعدادات الدردشة متاحة لصاحب الشات والرتب الإدارية المسموحة فقط");
  $("chat-settings-room-name").textContent=currentRoomName;
  const rs=await getDoc(doc(db,"roomSettings",currentRoomId)).catch(()=>null);const d=rs?.exists()?rs.data():{};
  if($("mics-count-select"))$("mics-count-select").value=String(d.micsCount??5);
  openModal("chat-settings-modal");
 };
-function ownerDashboardHomeHtml(){
- const items=[
-  ["security","🔐","الأمن السري"],["public","💬","العام"],["bots","🤖","البوتات"],
-  ["encryption","🔒","التشفير"],["permissions","🛡️","الأذونات"],["development","🧩","التطوير"],
-  ["profile","👤","البروفيل"],["bans","🚫","المحظورين"],["protection","🛡️","الحماية"],
-  ["system","⚙️","النظام الكامل"],["monitor","🕵️","المراقب"],["loginpanel","🚪","لوحة تسجيل الدخول"],
-  ["chatsettings","⚙️","إعدادات الدردشة"]
- ];
- const visible=owner()?items:items.filter(([id])=>id!=="monitor"&&id!=="loginpanel");
- return `<div class="admin-panel-grid">${visible.map(([id,icon,label],i)=>id==="chatsettings"?`<button onclick="openChatSettingsModal();closeModal('owner-chat-settings-modal')">${icon} ${i+1} ${label}</button>`:`<button onclick="openOwnerSection('${id}')">${icon} ${i+1} ${label}</button>`).join("")}</div>`;
-}
-window.openOwnerDashboard=()=>{if(!canOpenOwnerDashboard())return alert("لوحة التحكم للمالك أو المالك المفوّض فقط");openModal("owner-chat-settings-modal");openOwnerSection("home")};
-window.openOwnerSection=async kind=>{if(!canOpenOwnerDashboard())return;if((kind==="monitor"||kind==="loginpanel")&&!owner())return alert("هذا القسم متاح للمالك الأصلي فقط");const b=$("owner-dashboard-body");if(kind==="home"){b.innerHTML=ownerDashboardHomeHtml();return}
+window.openOwnerDashboard=()=>{if(!owner())return alert("لوحة التحكم لصاحب الشات فقط");openModal("owner-chat-settings-modal");openOwnerSection("home")};
+window.openOwnerSection=async kind=>{if(!owner())return;const b=$("owner-dashboard-body");if(kind==="home"){b.innerHTML=`<div class="admin-panel-grid"><button onclick="openOwnerSection('security')">🔐 الأمن السري</button><button onclick="openOwnerSection('public')">💬 العام</button><button onclick="openOwnerSection('bots')">🤖 البوتات</button><button onclick="openOwnerSection('encryption')">🔒 التشفير</button><button onclick="openOwnerSection('permissions')">🛡️ الأذونات</button><button onclick="openOwnerSection('development')">🧩 التطوير</button><button onclick="openOwnerSection('profile')">👤 البروفيل</button><button onclick="openOwnerSection('bans')">🚫 المحظورين</button><button onclick="openOwnerSection('protection')">🛡️ الحماية</button><button onclick="openOwnerSection('system')">⚙️ النظام الكامل</button><button onclick="openOwnerSection('monitor')">🕵️ 11 المراقب</button><button onclick="openOwnerSection('loginpanel')">🚪 12 لوحة تسجيل الدخول</button><button onclick="openChatSettingsModal();closeModal('owner-chat-settings-modal')">⚙️ 13 إعدادات الدردشة</button></div>`;return}
 if(kind==="security"){b.innerHTML=`<div class="admin-section-box"><h4>🔐 الأمن السري</h4><p style="font-size:.7rem;color:#aaa">لوحة الأمن تفتح فوراً ولا تنتظر قراءة مجموعة رسائل الخاص.</p><div class="bot-status">🛡️ الحماية فعالة: روابط الشات الخارجية تُمنع من الترويج، والفيديوهات المسموحة تظهر كمعاينة صغيرة.</div><div class="admin-panel-grid"><button onclick="openOwnerSection('protection')">🛡️ الحماية</button><button onclick="openOwnerSection('system')">⚙️ النظام</button></div></div>`}
 else if(kind==="public"){b.innerHTML=`<div class="admin-section-box"><h4>💬 العام</h4><button class="btn-submit" style="background:#dc2626" onclick="clearAllRoomMessages()">🧹 تنظيف رسائل الروم</button><div id="public-audit-list" style="margin-top:8px">جارٍ التحميل...</div></div>`;try{const snap=await getDocs(query(collection(db,"roomMessages"),orderBy("createdAt","desc"),limit(200)));$("public-audit-list").innerHTML=snap.docs.filter(d=>(d.data().roomId||"main")===(currentRoomId)).map(d=>{const x=d.data();return `<div class="online-item"><span><b>${safe(x.sender||"")}</b>: ${safe(x.text||"")}</span><button onclick="deletePublicMessage('${d.id}')">حذف</button></div>`}).join("")||"لا توجد رسائل"}catch(e){$("public-audit-list").textContent="تعذر التحميل"}}
 else if(kind==="monitor"){b.innerHTML=`<div class="admin-section-box"><h4>🕵️ 11 المراقب</h4><p style="font-size:.68rem;color:#aaa">يعرض رسائل الخاص المحفوظة: اسم المرسل، اسم المستلم، النص، والصور والفيديوهات.</p><div id="private-monitor-list" class="online-list">جارٍ التحميل...</div><button class="btn-submit" onclick="loadPrivateMonitor()">🔄 تحديث جميع رسائل الخاص</button></div>`;await loadPrivateMonitor()}
@@ -1685,90 +1612,43 @@ else if(kind==="bots"){
 }
 else if(kind==="loginpanel"){const ss=await getDoc(doc(db,"siteSettings","main"));const d=ss.exists()?ss.data():{};b.innerHTML=`<div class="admin-section-box"><h4>🚪 12 لوحة تسجيل الدخول</h4><label style="display:block;padding:6px"><input id="login-guests" type="checkbox" ${d.allowGuests!==false?'checked':''}> دخول الزوار</label><label style="display:block;padding:6px"><input id="login-members" type="checkbox" ${d.allowMembers!==false?'checked':''}> دخول الأعضاء</label><label style="display:block;padding:6px"><input id="login-register" type="checkbox" ${d.allowRegister!==false?'checked':''}> التسجيل الجديد</label><label style="display:block;padding:6px"><input id="login-age" type="checkbox" ${d.requireGuestAge!==false?'checked':''}> عمر الزائر</label><label style="display:block;padding:6px"><input id="login-gender" type="checkbox" ${d.requireGuestGender!==false?'checked':''}> جنس الزائر</label><label style="display:block;padding:6px"><input id="login-country" type="checkbox" ${d.requireGuestCountry!==false?'checked':''}> بلد الزائر</label><div class="input-group"><label>🖼️ صورة خلفية/واجهة الدخول</label><input id="login-panel-bg-file" type="file" accept="image/*"></div><div class="input-group"><label>🇾🇪 أيقونة فوق لوحة الدخول</label><input id="login-panel-icon-file" type="file" accept="image/*"></div><button class="btn-submit" onclick="saveLoginPanelSettings()">💾 حفظ لوحة تسجيل الدخول</button></div>`;}
 else if(kind==="encryption"){const ss=await getDoc(doc(db,"siteSettings","main"));const words=ss.exists()?ss.data().blockedWords||[]:[];b.innerHTML=`<div class="admin-section-box"><h4>🔒 التشفير</h4><textarea id="blocked-words-admin" class="form-control" rows="6">${safe(words.join("\n"))}</textarea><button class="btn-submit" onclick="saveBlockedWordsAdmin()">حفظ الكلمات</button></div>`}
-else if(kind==="permissions"){const ss=await getDoc(doc(db,"siteSettings","main"));const allowed=ss.exists()?ss.data().allowedModeratorRanks||[2,3,4]:[2,3,4];b.innerHTML=`<div class="admin-section-box"><h4>🛡️ الأذونات</h4><p style="font-size:.7rem;color:#aaa">حدد الرتب التي تستطيع إهداء رتب أدنى، الحظر، الطرد، الكتم، التنظيف وخلفية الغرفة.</p><div>${RANKS.slice(1,10).map(r=>`<label style="display:block;padding:5px"><input class="perm-rank" type="checkbox" value="${r.id}" ${allowed.includes(r.id)?'checked':''}> ${r.id}. ${safe(r.title)}</label>`).join("")}</div><button class="btn-submit" onclick="saveModeratorPermissions()">حفظ الأذونات</button></div>`}
+else if(kind==="permissions"){const ss=await getDoc(doc(db,"siteSettings","main"));const allowed=ss.exists()?ss.data().allowedModeratorRanks||[2,3]:[2,3];b.innerHTML=`<div class="admin-section-box"><h4>🛡️ الأذونات</h4><p style="font-size:.7rem;color:#aaa">حدد الرتب التي تستطيع إهداء رتب أدنى، الحظر، الطرد، الكتم، التنظيف وخلفية الغرفة.</p><div>${RANKS.slice(1,10).map(r=>`<label style="display:block;padding:5px"><input class="perm-rank" type="checkbox" value="${r.id}" ${allowed.includes(r.id)?'checked':''}> ${r.id}. ${safe(r.title)}</label>`).join("")}</div><button class="btn-submit" onclick="saveModeratorPermissions()">حفظ الأذونات</button></div>`}
 else if(kind==="development"||kind==="profile"){const ss=await getDoc(doc(db,"siteSettings","main"));const d=ss.exists()?ss.data():{};const key=kind==="development"?"customFeature":"customProfileFeature";const x=d[key]||{};b.innerHTML=`<div class="admin-section-box"><h4>${kind==="development"?'🧩 التطوير':'👤 البروفيل'}</h4><input id="custom-feature-name" class="edit-input" value="${safe(x.name||"")}" placeholder="اسم الميزة"><input id="custom-feature-color" type="color" value="${safe(x.color||"#ec4899")}" style="width:100%;height:38px;margin:7px 0"><select id="custom-feature-style" class="edit-select"><option value="pill" ${x.style==='pill'?'selected':''}>شارة صغيرة</option><option value="box" ${x.style==='box'?'selected':''}>مربع</option></select><button class="btn-submit" onclick="saveCustomFeature('${key}')">حفظ وظهور للجميع</button></div>`}
 else if(kind==="bans"){b.innerHTML=`<div class="admin-section-box"><h4>🚫 المحظورون</h4><div id="bans-list">جارٍ التحميل...</div></div>`;const arr=[...users.values()].filter(u=>u.isBanned);$("bans-list").innerHTML=arr.length?arr.map(u=>`<div class="online-item"><span>${safe(u.name)}</span><small>${safe(u.bannedBy||"غير معروف")}</small></div>`).join(""):"لا يوجد محظورون"}
 else if(kind==="protection"){const rs=await getDoc(doc(db,"roomSettings",currentRoomId));const on=rs.exists()&&rs.data().protected;b.innerHTML=`<div class="admin-section-box"><h4>🛡️ الحماية</h4><p>حالة حماية الغرفة: <b>${on?'مفعلة':'متوقفة'}</b></p><button class="btn-submit" onclick="toggleRoomProtection()">${on?'إلغاء الحماية':'تفعيل الحماية'}</button></div>`}
 else if(kind==="system"){const ss=await getDoc(doc(db,"siteSettings","main"));const d=ss.exists()?ss.data():{};b.innerHTML=`<div class="admin-section-box"><h4>⚙️ النظام الكامل</h4><label style="display:block;padding:6px"><input id="sys-guests" type="checkbox" ${d.allowGuests!==false?'checked':''}> السماح بالزوار</label><label style="display:block;padding:6px"><input id="sys-joins" type="checkbox" ${d.showJoinMessages!==false?'checked':''}> إظهار دخول الأعضاء</label><label style="display:block;padding:6px"><input id="sys-links" type="checkbox" ${d.quarantineChatLinks!==false?'checked':''}> تصنيف روابط الشات الخارجية</label><button class="btn-submit" onclick="saveSystemSettings()">حفظ النظام</button></div>`}
 else if(kind==="room"){b.innerHTML=`<div class="admin-section-box"><button class="btn-submit" style="background:#dc2626" onclick="clearAllRoomMessages()">🧹 تنظيف الرسائل</button><div class="input-group"><label>خلفية الغرفة</label><input id="room-bg-file-input" type="file" accept="image/*" onchange="chooseRoomBackground(event)"><button class="btn-submit" onclick="saveRoomBackground()">💾 حفظ خلفية الروم</button></div><button class="btn-submit" style="background:#475569" onclick="removeRoomBackground()">إزالة الخلفية</button><div class="input-group"><label>عدد المايكات</label><select id="mics-count-select" class="edit-select" onchange="updateMicsCount()"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option><option>0</option></select></div></div>`}
 else if(kind==="mics"){b.innerHTML=`<div class="admin-section-box"><h4>🎙️ المايكات</h4><p>يمكن لصاحب الشات إنزال أي عضو من المايك.</p><button class="btn-submit" onclick="closeModal('owner-chat-settings-modal');toast('اضغط على أي مايك مشغول للتحكم به')">تم</button></div>`}};
-window.saveBots=async()=>{
- if(!canOpenOwnerDashboard())return;
- try{
-   const bots={};document.querySelectorAll("#bot-checks [data-bot]").forEach(el=>bots[el.dataset.bot]=!!el.checked);
-   await setDoc(doc(db,"roomSettings",currentRoomId),{bots,botsUpdatedAt:serverTimestamp(),botsUpdatedBy:currentUser.uid},{merge:true});
-   if(isContestRoom()){if(bots.contest)await ensureContestBotForRoom();else await stopContestBot();}
-   toast("✅ تم حفظ إعدادات البوتات");
- }catch(e){console.error(e);alert("تعذر حفظ البوتات: "+(e?.message||"خطأ"))}
-};
-window.saveModeratorPermissions=async()=>{
- if(!canOpenOwnerDashboard())return;
- const allowed=[...document.querySelectorAll(".perm-rank:checked")].map(el=>Number(el.value)).filter(n=>Number.isInteger(n)&&n>=2&&n<=19);
- try{
-   await setDoc(doc(db,"siteSettings","main"),{allowedModeratorRanks:[...new Set(allowed)],permissionsUpdatedAt:serverTimestamp()},{merge:true});
-   window.allowedModeratorRanks=[...new Set(allowed)];window.siteChatSettings={...(window.siteChatSettings||{}),allowedModeratorRanks:window.allowedModeratorRanks};
-   toast("✅ تم حفظ صلاحيات الرتب");
- }catch(e){console.error(e);alert("تعذر حفظ الصلاحيات: "+(e?.message||"خطأ"))}
-};
-window.saveBlockedWordsAdmin=async()=>{
- if(!canOpenOwnerDashboard())return;
- const blockedWords=[...new Set(($("blocked-words-admin").value||"").split(/[\n,،]+/).map(x=>x.trim()).filter(Boolean))];
- try{
-   await setDoc(doc(db,"siteSettings","main"),{blockedWords,wordsUpdatedAt:serverTimestamp()},{merge:true});
-   window.siteChatSettings={...(window.siteChatSettings||{}),blockedWords};
-   toast("✅ تم حفظ الكلمات المحظورة");
- }catch(e){console.error(e);alert("تعذر حفظ الكلمات: "+(e?.message||"خطأ"))}
-};
-window.saveSystemSettings=async()=>{
- if(!canOpenOwnerDashboard())return;
- const patch={allowGuests:$("sys-guests").checked,showJoinMessages:$("sys-joins").checked,quarantineChatLinks:$("sys-links").checked,systemUpdatedAt:serverTimestamp()};
- try{
-   await setDoc(doc(db,"siteSettings","main"),patch,{merge:true});
-   window.siteChatSettings={...(window.siteChatSettings||{}),...patch};
-   toast("✅ تم حفظ إعدادات النظام");
- }catch(e){console.error(e);alert("تعذر حفظ إعدادات النظام: "+(e?.message||"خطأ"))}
-};
-window.saveCustomFeature=async key=>{
- if(!canOpenOwnerDashboard()||!["customFeature","customProfileFeature"].includes(key))return;
- const value={name:$("custom-feature-name").value.trim(),color:$("custom-feature-color").value||"#ec4899",style:$("custom-feature-style").value||"pill",updatedAt:serverTimestamp()};
- try{
-   await setDoc(doc(db,"siteSettings","main"),{[key]:value},{merge:true});
-   if(key==="customFeature")window.siteCustomFeature=value;else window.siteCustomProfileFeature=value;
-   toast("✅ تم حفظ الميزة وظهورها للجميع");
- }catch(e){console.error(e);alert("تعذر حفظ الميزة: "+(e?.message||"خطأ"))}
-};
 window.saveLoginPanelSettings=async()=>{if(!owner())return;try{const patch={allowGuests:$("login-guests").checked,allowMembers:$("login-members").checked,allowRegister:$("login-register").checked,requireGuestAge:$("login-age").checked,requireGuestGender:$("login-gender").checked,requireGuestCountry:$("login-country").checked,updatedAt:serverTimestamp()};const bg=$("login-panel-bg-file")?.files?.[0],icon=$("login-panel-icon-file")?.files?.[0];if(bg)patch.loginBackground=await imageFallbackData(bg,140000);if(icon)patch.loginIcon=await imageFallbackData(icon,90000);await setDoc(doc(db,"siteSettings","main"),patch,{merge:true});applyLoginPanelSettings(patch);toast("💾 تم حفظ لوحة تسجيل الدخول وظهورها للجدد")}catch(e){console.error(e);alert("تعذر حفظ لوحة تسجيل الدخول")}};
 function applyLoginPanelSettings(d){if(!d)return;const modal=$("login-modal"),box=modal?.querySelector(".login-box");if(box&&d.loginBackground)box.style.backgroundImage=`linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.75)),url("${d.loginBackground}")`;const header=modal?.querySelector(".login-header-banner");if(header&&d.loginIcon){let im=header.querySelector(".login-custom-icon");if(!im){im=document.createElement("img");im.className="login-custom-icon";im.style.cssText="width:70px;height:70px;object-fit:contain;display:block;margin:2px auto 8px;border-radius:14px;border:2px solid #d4a017;background:#080808;box-shadow:0 0 12px rgba(212,160,23,.25)";const anchor=header.querySelector(".login-brand-icon");anchor?anchor.replaceWith(im):header.appendChild(im)}im.src=d.loginIcon}}
-window.deletePublicMessage=async id=>{if(!canOpenOwnerDashboard())return;await deleteDoc(doc(db,"roomMessages",id));toast("تم حذف الرسالة")};
+window.deletePublicMessage=async id=>{if(!owner())return;await deleteDoc(doc(db,"roomMessages",id));toast("تم حذف الرسالة")};
 window.deletePrivateAudit=async path=>{if(!owner())return;const parts=path.split('/');if(parts.length<4)return;await deleteDoc(doc(db,"privateMessages",parts[1],"messages",parts[3]));toast("تم حذف رسالة الخاص")};
 let unsubPrivateMonitor=null,unsubPrivateMonitorAll=null;
 let privateMonitorAudit=new Map(),privateMonitorAll=new Map();
-let privateMonitorErrors=[];
 function renderPrivateMonitorRows(){
  const c=$("private-monitor-list");if(!c)return;
  const merged=new Map([...privateMonitorAll,...privateMonitorAudit]);
  const arr=[...merged.values()].sort((a,b)=>{
    const ta=a.createdAt?.toMillis?a.createdAt.toMillis():0,tb=b.createdAt?.toMillis?b.createdAt.toMillis():0;return tb-ta;
  });
- const warning=privateMonitorErrors.length?`<div class="bot-status" style="color:#fecaca">تعذر قراءة بعض سجلات الخاص؛ افحص صلاحيات قراءة Firestore للمراقب. قد تكون النتائج المعروضة جزئية.</div>`:"";
- c.innerHTML=warning+(arr.length?arr.slice(0,500).map(x=>{const media=x.imageUrl?`<img src="${safe(x.imageUrl)}" style="max-width:120px;max-height:80px;border-radius:8px">`:x.videoUrl?`<video src="${safe(x.videoUrl)}" controls playsinline style="max-width:160px;max-height:90px"></video>`:"";return `<div class="online-item" style="display:block"><div><b>المرسل:</b> ${safe(x.sender||"")} ← <b>المستلم:</b> ${safe(x.receiver||"")}</div><div>${safe(x.text||"")}</div>${media}<small>${safe(x.time||"")}</small></div>`}).join(""):(privateMonitorErrors.length?"تعذر تحميل الرسائل. تأكد من صلاحيات Firestore وقواعد collectionGroup.":"لا توجد رسائل خاصة مسجلة بعد. أي رسالة جديدة ستظهر هنا فوراً."));
+ c.innerHTML=arr.length?arr.slice(0,500).map(x=>{const media=x.imageUrl?`<img src="${safe(x.imageUrl)}" style="max-width:120px;max-height:80px;border-radius:8px">`:x.videoUrl?`<video src="${safe(x.videoUrl)}" controls playsinline style="max-width:160px;max-height:90px"></video>`:"";return `<div class="online-item" style="display:block"><div><b>المرسل:</b> ${safe(x.sender||"")} ← <b>المستلم:</b> ${safe(x.receiver||"")}</div><div>${safe(x.text||"")}</div>${media}<small>${safe(x.time||"")}</small></div>`}).join(""):"لا توجد رسائل خاصة مسجلة بعد. أي رسالة جديدة ستظهر هنا فوراً.";
 }
 async function loadPrivateMonitor(){
  if(!owner())return;
  const c=$("private-monitor-list");if(!c)return;
- c.textContent="جارٍ تحميل سجلات الرسائل الخاصة...";
+ c.textContent="🟢 المراقب يعمل مباشرة — الرسائل الجديدة ستظهر فوراً";
  if(unsubPrivateMonitor)unsubPrivateMonitor();
  if(unsubPrivateMonitorAll)unsubPrivateMonitorAll();
- privateMonitorAudit=new Map();privateMonitorAll=new Map();privateMonitorErrors=[];
+ privateMonitorAudit=new Map();privateMonitorAll=new Map();
  try{
-   unsubPrivateMonitor=onSnapshot(query(collection(db,"privateAudit"),orderBy("createdAt","desc"),limit(500)),snap=>{
-     privateMonitorErrors=privateMonitorErrors.filter(x=>x!=="audit");privateMonitorAudit=new Map();snap.forEach(d=>{const x=d.data()||{};const key=d.id||`${x.sender}|${x.receiver}|${x.time}|${x.text}`;privateMonitorAudit.set(key,x)});renderPrivateMonitorRows();
-   },e=>{console.warn("private audit monitor",e);privateMonitorErrors=[...new Set([...privateMonitorErrors,"audit"])];renderPrivateMonitorRows()});
+   unsubPrivateMonitor=onSnapshot(query(collection(db,"privateAudit"),limit(500)),snap=>{
+     privateMonitorAudit=new Map();snap.forEach(d=>{const x=d.data()||{};const key=d.id||`${x.sender}|${x.receiver}|${x.time}|${x.text}`;privateMonitorAudit.set(key,x)});renderPrivateMonitorRows();
+   },e=>console.warn("private audit monitor",e));
  }catch(e){console.warn(e)}
  try{
-   unsubPrivateMonitorAll=onSnapshot(query(collectionGroup(db,"messages"),orderBy("createdAt","desc"),limit(500)),snap=>{
-     privateMonitorErrors=privateMonitorErrors.filter(x=>x!=="all");privateMonitorAll=new Map();snap.forEach(d=>{if(!String(d.ref.path).startsWith("privateMessages/"))return;const x=d.data()||{};const key=d.id||`${x.sender}|${x.receiver}|${x.time}|${x.text}`;privateMonitorAll.set(key,x)});renderPrivateMonitorRows();
-   },e=>{console.warn("private collection-group monitor",e);privateMonitorErrors=[...new Set([...privateMonitorErrors,"all"])];renderPrivateMonitorRows()});
+   unsubPrivateMonitorAll=onSnapshot(query(collectionGroup(db,"messages"),limit(500)),snap=>{
+     privateMonitorAll=new Map();snap.forEach(d=>{if(!String(d.ref.path).startsWith("privateMessages/"))return;const x=d.data()||{};const key=d.id||`${x.sender}|${x.receiver}|${x.time}|${x.text}`;privateMonitorAll.set(key,x)});renderPrivateMonitorRows();
+   },e=>console.warn("private collection-group monitor",e));
  }catch(e){console.warn(e)}
 }
 
@@ -1784,7 +1664,7 @@ function isContestRoom(){return /مسابق|المسابقة|سؤال|سوال|�
 function contestNormalize(v){return String(v||"").toLowerCase().replace(/[إأآا]/g,"ا").replace(/[ى]/g,"ي").replace(/[ة]/g,"ه").replace(/[ًٌٍَُِّْـ]/g,"").replace(/[^\p{L}\p{N}]+/gu,"").trim()}
 function contestCorrect(text,q){const x=contestNormalize(text);return (q?.a||[]).some(a=>contestNormalize(a)===x || (x.length>=3&&contestNormalize(a).includes(x)&&x.length>=Math.min(5,contestNormalize(a).length)))}
 async function startContestBot(){
- if(!canOpenOwnerDashboard())return alert("بدء بوت المسابقات متاح للمالك أو المالك المفوّض");
+ if(!owner())return alert("بدء بوت المسابقات متاح لصاحب الشات فقط");
  if(!isContestRoom())return alert("ادخل روم المسابقات أولاً");
  try{
   await setDoc(doc(db,"roomSettings",currentRoomId),{bots:{contest:true}},{merge:true});
@@ -1827,7 +1707,7 @@ async function ensureContestBotForRoom(){
  if(!isContestRoom()||!currentUser)return;
  try{
    const rs=await getDoc(doc(db,"roomSettings",currentRoomId)).catch(()=>null);const d=rs?.exists()?rs.data():{};const bd=d.bots||{};
-   if(bd.contest===false)return;
+   // روم المسابقات له بوت دائم تلقائياً؛ لا يعتمد على زر الميك أو جهاز المالك.
    const ref=contestStateRef();let started=false;
    await runTransaction(db,async tx=>{
      const st=await tx.get(ref);const cur=st.exists()?st.data():{};
@@ -1839,7 +1719,7 @@ async function ensureContestBotForRoom(){
    if(started)toast("🤖 بوت الأسئلة يعمل الآن تلقائياً في "+currentRoomName);
  }catch(e){console.warn("ensure contest",e)}
 }
-async function stopContestBot(){if(!canOpenOwnerDashboard())return;clearTimeout(contestAdvanceTimer);await setDoc(contestStateRef(),{active:false,answered:true,updatedAt:serverTimestamp()},{merge:true});const sr=doc(db,"roomSettings",currentRoomId),ss=await getDoc(sr).catch(()=>null),bots={...(ss?.exists()?ss.data().bots||{}:{}),contest:false};await setDoc(sr,{bots},{merge:true});await addSystem("🤖 تم إيقاف بوت المسابقات");refreshContestAdminStatus()}
+async function stopContestBot(){if(!owner())return;clearTimeout(contestAdvanceTimer);await setDoc(contestStateRef(),{active:false,answered:true,updatedAt:serverTimestamp()},{merge:true});await setDoc(doc(db,"roomSettings",currentRoomId),{bots:{contest:false}},{merge:true});await addSystem("🤖 تم إيقاف بوت المسابقات");refreshContestAdminStatus()}
 async function advanceContestAfterDelay(nextIndex){
  clearTimeout(contestAdvanceTimer);
  contestAdvanceTimer=setTimeout(async()=>{
@@ -1888,7 +1768,7 @@ function listenContestBot(){
    renderContestCardFromState(d);
    if(d.answered){const at=d.answeredAt?.toMillis?d.answeredAt.toMillis():Date.now();contestAdvanceTimer=setTimeout(()=>advanceContestAfterDelay((Number(d.index)||0)+1),Math.max(300,2800-(Date.now()-at)));}
    else{const left=Math.max(1000,(Number(d.deadlineAt)||Date.now()+CONTEST_WAIT_MS)-Date.now());contestNoAnswerTimer=setTimeout(()=>handleContestNoAnswer(),left);announceContestQuestionIfNeeded(d);}
-   if(canOpenOwnerDashboard()&&isContestRoom())refreshContestAdminStatus();
+   if(owner()&&isContestRoom())refreshContestAdminStatus();
  });
  if(isContestRoom())setTimeout(()=>ensureContestBotForRoom(),300);
 }
@@ -1922,7 +1802,7 @@ window.saveRoomIcon=async()=>{
 };
 window.uploadRoomIcon=window.chooseRoomIcon;
 window.removeRoomIcon=async()=>{if(!canManageRoomSettings())return;await setDoc(doc(db,"rooms",currentRoomId),{image:""},{merge:true});toast("تمت إزالة أيقونة الروم")};
-window.toggleRoomProtection=async()=>{if(!canOpenOwnerDashboard())return;const s=await getDoc(doc(db,"roomSettings",currentRoomId));const on=!(s.exists()&&s.data().protected);await setDoc(doc(db,"roomSettings",currentRoomId),{protected:on},{merge:true});toast(on?"تم تفعيل حماية الروم":"تم إيقاف حماية الروم")};
+window.toggleRoomProtection=async()=>{if(!owner())return;const s=await getDoc(doc(db,"roomSettings",currentRoomId));const on=!(s.exists()&&s.data().protected);await setDoc(doc(db,"roomSettings",currentRoomId),{protected:on},{merge:true});toast(on?"تم تفعيل حماية الروم":"تم إيقاف حماية الروم")};
 
 let drawCtx=null,drawing=false,drawMode="pen",drawColor="#000000";
 function setupDrawing(){
@@ -1945,7 +1825,6 @@ window.setDrawColor=c=>{drawColor=c;drawMode="pen"}
 window.clearDrawing=()=>{if(!drawCtx)return;const c=$("drawing-canvas");drawCtx.save();drawCtx.setTransform(1,0,0,1,0,0);drawCtx.fillStyle="#fff";drawCtx.fillRect(0,0,c.width,c.height);drawCtx.restore();const ratio=Math.max(1,window.devicePixelRatio||1);drawCtx.setTransform(ratio,0,0,ratio,0,0);drawCtx.lineCap="round";drawCtx.lineJoin="round"}
 window.sendDrawingToPublic=async()=>{
  if(!drawCtx||!currentUser)return;
- if(currentUser.isMuted)return alert("أنت مكتوم من الإدارة ولا يمكنك إرسال رسم");
  const c=$("drawing-canvas");
  c.toBlob(async blob=>{
    try{
@@ -1958,12 +1837,12 @@ window.sendDrawingToPublic=async()=>{
  },"image/png");
 }
 
-window.openVoiceRecorder=()=>{if(!currentUser)return;if(currentUser.isMuted)return alert("أنت مكتوم من الإدارة ولا يمكنك إرسال تسجيل صوتي");recordedVoiceBlob=null;voiceChunks=[];$("voice-preview").style.display="none";$("voice-send-btn").style.display="none";$("voice-inline-send")?.style&&($("voice-inline-send").style.display="none");$("voice-recorder-status").textContent="اضغط بدء التسجيل";$("voice-level-bar").style.width="0";openModal("voice-recorder-modal")};
+window.openVoiceRecorder=()=>{if(!currentUser)return;recordedVoiceBlob=null;voiceChunks=[];$("voice-preview").style.display="none";$("voice-send-btn").style.display="none";$("voice-inline-send")?.style&&($("voice-inline-send").style.display="none");$("voice-recorder-status").textContent="اضغط بدء التسجيل";$("voice-level-bar").style.width="0";openModal("voice-recorder-modal")};
 window.cancelVoiceRecording=()=>{try{if(mediaRecorder&&mediaRecorder.state!=="inactive")mediaRecorder.stop()}catch{};mediaRecorder=null;recordedVoiceBlob=null;voiceChunks=[];clearInterval(voiceTimer);$("voice-inline-send")?.style&&($("voice-inline-send").style.display="none");closeModal("voice-recorder-modal");toast("تم إلغاء التسجيل")};
 window.closeVoiceRecorder=()=>{window.cancelVoiceRecording()};
-window.startVoiceRecording=async()=>{if(currentUser?.isMuted)return alert("أنت مكتوم من الإدارة ولا يمكنك تسجيل صوت");try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});const type=MediaRecorder.isTypeSupported("audio/webm;codecs=opus")?"audio/webm;codecs=opus":"audio/webm";mediaRecorder=new MediaRecorder(stream,{mimeType:type});voiceChunks=[];mediaRecorder.ondataavailable=e=>{if(e.data.size)voiceChunks.push(e.data)};mediaRecorder.onstop=()=>{stream.getTracks().forEach(t=>t.stop());recordedVoiceBlob=new Blob(voiceChunks,{type});const url=URL.createObjectURL(recordedVoiceBlob);$("voice-preview").src=url;$("voice-preview").style.display="block";$("voice-send-btn").style.display="block";$("voice-inline-send")?.style&&($("voice-inline-send").style.display="block");$("voice-recorder-status").textContent="يمكنك الاستماع قبل الإرسال";$("voice-level-bar").style.width="100%"};mediaRecorder.start();$("voice-recorder-status").textContent="🔴 جارٍ التسجيل";clearInterval(voiceTimer);voiceTimer=setInterval(()=>{$("voice-recorder-status").textContent="🔴 تسجيل صوتي "+Math.floor((Date.now()-(voiceStartedAt||Date.now()))/1000)+" ث"},500);voiceStartedAt=Date.now()}catch(e){alert("اسمح للمتصفح بالوصول إلى الميكروفون ثم أعد المحاولة")}};
+window.startVoiceRecording=async()=>{try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});const type=MediaRecorder.isTypeSupported("audio/webm;codecs=opus")?"audio/webm;codecs=opus":"audio/webm";mediaRecorder=new MediaRecorder(stream,{mimeType:type});voiceChunks=[];mediaRecorder.ondataavailable=e=>{if(e.data.size)voiceChunks.push(e.data)};mediaRecorder.onstop=()=>{stream.getTracks().forEach(t=>t.stop());recordedVoiceBlob=new Blob(voiceChunks,{type});const url=URL.createObjectURL(recordedVoiceBlob);$("voice-preview").src=url;$("voice-preview").style.display="block";$("voice-send-btn").style.display="block";$("voice-inline-send")?.style&&($("voice-inline-send").style.display="block");$("voice-recorder-status").textContent="يمكنك الاستماع قبل الإرسال";$("voice-level-bar").style.width="100%"};mediaRecorder.start();$("voice-recorder-status").textContent="🔴 جارٍ التسجيل";clearInterval(voiceTimer);voiceTimer=setInterval(()=>{$("voice-recorder-status").textContent="🔴 تسجيل صوتي "+Math.floor((Date.now()-(voiceStartedAt||Date.now()))/1000)+" ث"},500);voiceStartedAt=Date.now()}catch(e){alert("اسمح للمتصفح بالوصول إلى الميكروفون ثم أعد المحاولة")}};
 window.stopVoiceRecording=()=>{if(mediaRecorder&&mediaRecorder.state!=="inactive")mediaRecorder.stop();clearInterval(voiceTimer)};
-window.sendRecordedVoice=async()=>{if(currentUser?.isMuted)return alert("أنت مكتوم من الإدارة ولا يمكنك إرسال تسجيل صوتي");if(!recordedVoiceBlob||!currentUser)return;try{const file=new File([recordedVoiceBlob],"voice.webm",{type:recordedVoiceBlob.type||"audio/webm"});const url=await uploadToStorage(file,"voice-messages");await addDoc(collection(db,"roomMessages"),{roomId:currentRoomId,sender:currentUser.name,text:"🎙️ رسالة صوتية",audioUrl:url,time:nowTime(),createdAt:serverTimestamp(),mediaType:"voice"});closeVoiceRecorder();toast("تم إرسال الرسالة الصوتية") }catch(e){console.error(e);alert("تعذر إرسال الصوت؛ تحقق من Firebase Storage")}};
+window.sendRecordedVoice=async()=>{if(!recordedVoiceBlob||!currentUser)return;try{const file=new File([recordedVoiceBlob],"voice.webm",{type:recordedVoiceBlob.type||"audio/webm"});const url=await uploadToStorage(file,"voice-messages");await addDoc(collection(db,"roomMessages"),{roomId:currentRoomId,sender:currentUser.name,text:"🎙️ رسالة صوتية",audioUrl:url,time:nowTime(),createdAt:serverTimestamp(),mediaType:"voice"});closeVoiceRecorder();toast("تم إرسال الرسالة الصوتية") }catch(e){console.error(e);alert("تعذر إرسال الصوت؛ تحقق من Firebase Storage")}};
 window.openVideoViewer=(encoded,type="file")=>{
  const url=decodeURIComponent(encoded);const box=$("video-viewer-content");if(!box)return;
  let html="";
@@ -1973,13 +1852,12 @@ window.openVideoViewer=(encoded,type="file")=>{
  box.innerHTML=html;openModal("video-viewer-modal");
 };
 window.openPublicVideoPrompt=async()=>{
- if(currentUser?.isMuted)return alert("أنت مكتوم من الإدارة ولا يمكنك إرسال فيديو");
  const url=prompt("ألصق رابط الفيديو العام (YouTube / TikTok):");if(!url||!currentUser)return;
  const text=url.trim();if(!isVideoUrl(text))return alert("أرسل رابط YouTube أو TikTok فقط");
  const payload={roomId:currentRoomId,sender:currentUser.name,text:"🎬 فيديو",videoLink:true,videoSource:text,time:nowTime(),createdAt:serverTimestamp()};
  await addDoc(collection(db,"roomMessages"),payload);closeModal("plus-menu-modal");toast("تم إرسال الفيديو كمعاينة صغيرة؛ اضغط عليه للتكبير");
 }
-window.sendPublicFile=async e=>{if(currentUser?.isMuted){e.target.value="";return alert("أنت مكتوم من الإدارة ولا يمكنك إرسال الملفات")}const f=e.target.files?.[0];if(!f||!currentUser)return;try{const isVideo=f.type.startsWith("video/"),isAudio=f.type.startsWith("audio/");let url="";if(isVideo&&f.size<=750000){try{url=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(f)})}catch{}}if(!url)url=await uploadToStorage(f,isVideo?"public-videos":isAudio?"public-audio":"public-images");const payload={roomId:currentRoomId,sender:currentUser.name,text:isVideo?"🎬 فيديو":isAudio?"🎙️ صوت":"🖼 صورة",time:nowTime(),createdAt:serverTimestamp()};if(isVideo)payload.videoUrl=url;else if(isAudio)payload.audioUrl=url;else payload.imageUrl=url;await addDoc(collection(db,"roomMessages"),payload);e.target.value="";closeModal("plus-menu-modal");toast("✅ تم إرسال الملف للجميع") }catch(err){console.error(err);alert("تعذر إرسال الملف. جرّب صورة أصغر أو فيديو قصير")}};
+window.sendPublicFile=async e=>{const f=e.target.files?.[0];if(!f||!currentUser)return;try{const isVideo=f.type.startsWith("video/"),isAudio=f.type.startsWith("audio/");let url="";if(isVideo&&f.size<=750000){try{url=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(f)})}catch{}}if(!url)url=await uploadToStorage(f,isVideo?"public-videos":isAudio?"public-audio":"public-images");const payload={roomId:currentRoomId,sender:currentUser.name,text:isVideo?"🎬 فيديو":isAudio?"🎙️ صوت":"🖼 صورة",time:nowTime(),createdAt:serverTimestamp()};if(isVideo)payload.videoUrl=url;else if(isAudio)payload.audioUrl=url;else payload.imageUrl=url;await addDoc(collection(db,"roomMessages"),payload);e.target.value="";closeModal("plus-menu-modal");toast("✅ تم إرسال الملف للجميع") }catch(err){console.error(err);alert("تعذر إرسال الملف. جرّب صورة أصغر أو فيديو قصير")}};
 
 const wheelRewards=[
  {label:"100 نقطة",points:100},{label:"500 ذهب",gold:500},{label:"🎁 هدية",gift:1},{label:"مستوى +1",level:1},
