@@ -130,6 +130,7 @@ button{cursor:pointer}
   border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,.7);position:relative;
   max-height:88vh!important;overflow-y:auto!important;overflow-x:hidden!important;
   -webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;
+  background-size:cover;background-position:center;
 }
 .login-header-banner{padding:18px 12px;text-align:center;background:linear-gradient(135deg,#0a1931,#12284e);border-bottom:2px solid #d4a017}
 .chat-logo-title{font-size:1.45rem;font-weight:bold;color:#ffd54a;text-shadow:0 0 8px rgba(255,213,74,.4)}
@@ -218,11 +219,13 @@ button{cursor:pointer}
 <div id="toast"></div>
 <div id="room-bg-canvas"></div>
 
-<!-- شاشة تسجيل الدخول -->
+<!-- شاشة تسجيل الدخول المكتملة مع علم اليمن والشعار وخلفية الإدارة -->
 <div id="login-modal">
   <div class="login-box">
     <div class="login-header-banner">
-      <div id="login-custom-icon-wrap" style="font-size:2.2rem;margin-bottom:3px">🇾🇪</div>
+      <div id="login-custom-icon-wrap" style="font-size:2.3rem;margin-bottom:4px">
+        <span style="font-size:2.4rem;display:inline-block;filter:drop-shadow(0 0 4px #000)">🇾🇪</span>
+      </div>
       <div class="chat-logo-title"><i class="fa-solid fa-comments"></i> شات حسوني</div>
       <div class="chat-subtitle">أهلاً وسهلاً بكم في شات حسوني .. شات ليالي زمان وأحلى شات عربي</div>
     </div>
@@ -467,9 +470,9 @@ button{cursor:pointer}
     </div>
     <div id="owner-gift-rank-box" class="owner-box hidden" style="margin:10px;padding:10px;border-radius:10px;background:#1a1303;border:1px solid #d4a017">
       <b style="font-size:.8rem;color:#ffd54a">لوحة إدارة العضو</b>
-      <label style="font-size:.7rem;color:#cbd5e1;display:block;margin-top:5px">الرتبة المسموح بإهدائها:</label>
+      <label style="font-size:.7rem;color:#cbd5e1;display:block;margin-top:5px">الرتبة المسموح بإهدائها أو سحبها:</label>
       <select id="owner-rank-select" class="edit-select"></select>
-      <button class="btn-submit" style="background:#d97706" onclick="giveRankToUser()">منح الرتبة وإعلانها</button>
+      <button class="btn-submit" style="background:#d97706" onclick="giveRankToUser()">تطبيق الرتبة وإعلانها</button>
       <div style="display:flex;gap:4px;margin-top:6px">
         <input id="owner-gift-gold" type="number" placeholder="ذهب" style="width:33%;padding:5px;background:#071224;border:1px solid #d4a017;color:#fff;border-radius:6px;font-size:.75rem">
         <input id="owner-gift-points" type="number" placeholder="نقاط" style="width:33%;padding:5px;background:#071224;border:1px solid #d4a017;color:#fff;border-radius:6px;font-size:.75rem">
@@ -592,7 +595,6 @@ import {
   getStorage, ref as storageRef, uploadBytes, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js";
 
-/* إعدادات Firebase الخاصة بشات حسوني */
 const firebaseConfig = {
   apiKey: "AIzaSyAFjspoGwJJeowjEZrcmJCO99iiTcBR5Is",
   authDomain: "hassouni-chat-51234.firebaseapp.com",
@@ -606,12 +608,12 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-/* بيانات صاحب الشات الرسمي الأساسي */
+/* بيانات صاحب الشات الأساسي الرسمي (حسوني) */
 const PRIMARY_OWNER_EMAILS = ["ghrwrkk2@gmamil.com", "ghrwrkk2@gmail.com"];
 const PRIMARY_OWNER_NAME = "حسوني";
 const PRIMARY_DEFAULT_PASS = "780718519";
 
-/* قائمة الـ 25 رتبة كاملة */
+/* الرتب الـ 25 كاملة */
 const RANKS = [
   { id: 1,  title: "صاحب الموقع",   icon: "fa-solid fa-trophy",                 color: "#ffd700" },
   { id: 2,  title: "برنس",          icon: "fa-solid fa-trophy",                 color: "#ffffff" },
@@ -700,6 +702,7 @@ function normalizeRankForUser(u) {
 
   if (Number(x.rankId) === 1 || x.isOwner === true) {
     x.isOwner = true;
+    x.isPrimaryOwner = false;
     x.isVisitor = false;
     x.rankId = 1;
     return x;
@@ -745,12 +748,42 @@ function rankPower(u) {
   return Number(u?.rankId || 20);
 }
 
+/* الترتيب الهرمي الدقيق */
+function getRankPriority(u) {
+  if (isPrimaryOwner(u)) return 0; // صاحب الموقع الرسمي رقم 1
+  if (Number(u.rankId) === 1) return 1; // صاحب الموقع المفوّض رقم 2
+  if (Number(u.rankId) === 2) return 2; // برنس رقم 3
+  if (Number(u.rankId) === 3) return 3; // كنج رقم 4
+  if (u.isVisitor || Number(u.rankId) === 20) return 999; // الزوار في الأخير دائماً
+  if (Number(u.rankId) === 19) return 90; // مسجل عادي
+  return Number(u.rankId) || 50;
+}
+
+function sortedLeaderboard(arr) {
+  // تصفية التكرار حسب الاسم
+  const seen = new Set();
+  const unique = [];
+  for (const u of arr) {
+    const key = String(u.name || "").trim();
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(u);
+    }
+  }
+
+  return unique.sort((a, b) => {
+    const pa = getRankPriority(a), pb = getRankPriority(b);
+    if (pa !== pb) return pa - pb;
+    return String(a.name || "").localeCompare(String(b.name || ""));
+  });
+}
+
 function canManageUser(target) {
   if (!currentUser || !target || target.uid === currentUser.uid) return false;
-  if (isPrimaryOwner(target)) return false; // صاحب الشات الأصلي لا يمسه أحد إطلاقاً
-  if (isPrimaryOwner(currentUser)) return true;
+  if (isPrimaryOwner(target)) return false; // صاحب الشات الرسمي محمي 100%
+  if (isPrimaryOwner(currentUser)) return true; // صاحب الشات الرسمي يتحكم بالجميع حتى المالك المفوض!
   if (isAnyOwner(currentUser)) {
-    return rankPower(target) >= 2; // المالك المفوض يدير من برنس وماتحت
+    return rankPower(target) >= 2; // المالك المفوض يتحكم ببرنس وماتحت
   }
   const p = rankPower(currentUser);
   return [2, 3, 4].includes(p) && rankPower(target) > p;
@@ -759,7 +792,7 @@ function canManageUser(target) {
 function canGiveRank(id, target) {
   if (!currentUser || !target) return false;
   if (isPrimaryOwner(target)) return false;
-  if (isPrimaryOwner(currentUser)) return true;
+  if (isPrimaryOwner(currentUser)) return true; // صاحب الشات الرسمي يعطي ويسحب أي رتبة
   if (isAnyOwner(currentUser)) {
     return Number(id) >= 2;
   }
@@ -779,21 +812,6 @@ async function hashPassword(pass) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-function sortedLeaderboard(arr) {
-  return [...arr].sort((a, b) => {
-    const aPri = isPrimaryOwner(a);
-    const bPri = isPrimaryOwner(b);
-    if (aPri !== bPri) return aPri ? -1 : 1;
-    const aOwn = isAnyOwner(a);
-    const bOwn = isAnyOwner(b);
-    if (aOwn !== bOwn) return aOwn ? -1 : 1;
-    const ap = rankPower(a), bp = rankPower(b);
-    if (ap !== bp) return ap - bp;
-    return String(a.name || "").localeCompare(String(b.name || ""));
-  });
-}
-
-/* ضاغط سريع جداً للصور والرسومات لإنهاء أي تأخير (Lag) */
 async function fastCompressImage(fileOrCanvas, maxDim = 600, quality = 0.65) {
   return await new Promise((resolve, reject) => {
     if (fileOrCanvas instanceof HTMLCanvasElement) {
@@ -891,8 +909,7 @@ function handleDeletedAccount() {
   localStorage.removeItem(legacySessionKey);
   sessionStorage.clear();
   try { if (unsubAccountAction) unsubAccountAction(); } catch {}
-  $("login-modal").style.display = "flex";
-  alert("🗑️ تم حذف حسابك نهائياً من قبل إدارة الموقع.");
+  alert("🗑️ تم حذف حسابك من قبل الإدارة. يمكنك الآن الدخول كزائر أو إنشاء حساب جديد.");
   location.reload();
 }
 
@@ -902,7 +919,11 @@ function listenAccountAction() {
   unsubAccountAction = onSnapshot(doc(db, "accountActions", String(currentUser.uid)), snap => {
     if (!snap.exists()) return;
     const d = snap.data() || {};
-    if (d.deleted === true) { handleDeletedAccount(); return; }
+    if (d.deleted === true) {
+      deleteDoc(doc(db, "accountActions", String(currentUser.uid))).catch(() => {});
+      handleDeletedAccount();
+      return;
+    }
     if (d.banned === true) { showBanScreen(); return; }
     if (d.banned === false && $("ban-screen")) { $("ban-screen").remove(); location.reload(); }
   }, err => console.warn(err));
@@ -920,7 +941,7 @@ async function getUserByName(name) {
   return null;
 }
 
-/* حفظ بيانات المستخدم دون فقدان الـ UID أو تصفير أي بيانات */
+/* حفظ المستخدم بدون تكرار أو مسح للبيانات */
 async function saveUser(u) {
   u = normalizeRankForUser(u);
   if (!u.uid) {
@@ -973,7 +994,7 @@ async function stopPresence() {
 window.addEventListener("beforeunload", () => { stopPresence(); });
 window.addEventListener("pagehide", () => { stopPresence(); });
 
-/* حل مشكلة الحساب الجديد واسترجاع كافة البيانات السابقة */
+/* تسجيل الدخول مع الحفاظ على الحساب دون أي فقدان أو تكرار */
 async function login() {
   const name = $("username").value.trim();
   const email = $("email").value.trim().toLowerCase();
@@ -987,13 +1008,11 @@ async function login() {
     const passHash = await hashPassword(pass);
     let existing = await getUserByName(name);
 
-    // فحص صاحب الموقع الرسمي (حسوني) بالبريد وكلمة المرور الأصلية أو المعدلة
     const isOwnerLogin = (name === PRIMARY_OWNER_NAME && PRIMARY_OWNER_EMAILS.includes(email));
     if (isOwnerLogin) {
       const ownerPassMatch = (existing?.passwordHash ? (passHash === existing.passwordHash) : false) || (pass === PRIMARY_DEFAULT_PASS);
       if (!ownerPassMatch) return alert("كلمة المرور غير صحيحة لحساب صاحب الموقع");
 
-      // الاحتفاظ بكامل البيانات القديمة
       currentUser = normalizeRankForUser({
         ...(existing || {}),
         uid: "owner_hassouni",
@@ -1018,18 +1037,16 @@ async function login() {
       });
       await saveUser(currentUser);
     } else {
-      if (!existing || existing.isVisitor) return alert("لا يوجد حساب مسجل بهذا الاسم. سجل عضوية جديدة أولاً.");
-      if (String(existing.email || "").toLowerCase() !== email) return alert("البريد الإلكتروني لا يطابق هذا الحساب المسجل");
+      if (!existing || existing.isVisitor) return alert("لا يوجد حساب مسجل بهذا الاسم. يرجى إنشاء حساب VIP أولاً.");
+      if (String(existing.email || "").toLowerCase() !== email) return alert("البريد الإلكتروني لا يطابق هذا الحساب");
       if (existing.passwordHash !== passHash) return alert("كلمة المرور غير صحيحة");
 
-      // استرجاع الحساب القديم كما هو دون أي تغيير في الـ UID أو البيانات
       currentUser = normalizeRankForUser({
         ...existing,
         isVisitor: false
       });
     }
   } else {
-    // دخول الزوار
     const existing = await getUserByName(name);
     if (existing && !existing.isVisitor && String(existing.name).trim() !== PRIMARY_OWNER_NAME) {
       return alert("⚠️ الاسم محجوز لعضو مسجل. ادخل من تبويب (دخول الأعضاء) أو اختر اسماً آخر.");
@@ -1330,13 +1347,16 @@ function listenPresence() {
   });
 }
 
+/* عرض المتواجدين بدون تكرار صاحب الموقع أو أي عضو */
 function renderOnline(arr) {
   const c = $("online-users-container");
   if (!c) return;
   c.innerHTML = "";
-  const roomUsers = arr.filter(u => u.roomId === currentRoomId || !u.roomId);
 
-  sortedLeaderboard(roomUsers).forEach(raw => {
+  const roomUsers = arr.filter(u => u.roomId === currentRoomId || !u.roomId);
+  const sorted = sortedLeaderboard(roomUsers);
+
+  sorted.forEach(raw => {
     const merged = users.get(raw.name) || raw;
     const u = normalizeRankForUser(merged);
     const r = rank(u.rankId);
@@ -1358,7 +1378,7 @@ function renderOnline(arr) {
     </div>`);
   });
 
-  if (!roomUsers.length) c.innerHTML = "<div style='padding:15px;text-align:center;color:#94a3b8'>لا يوجد متواجدون في هذا الروم حالياً.</div>";
+  if (!sorted.length) c.innerHTML = "<div style='padding:15px;text-align:center;color:#94a3b8'>لا يوجد متواجدون في هذا الروم حالياً.</div>";
 }
 
 window.openOnlineList = () => {
@@ -1391,7 +1411,7 @@ function openProfile(u) {
   $("prof-name").className = "name-frame " + (selectedUser.nameFrame || "frame-none") + (selectedUser.isPrimaryOwner ? " owner-rank-text" : "");
   $("prof-rank-display").innerHTML = `<i class="${r.icon} ${selectedUser.isPrimaryOwner ? 'owner-rank-icon' : ''}" style="color:${r.color}"></i> <span class="${selectedUser.isPrimaryOwner ? 'owner-rank-text' : ''}">${safe(r.title)}</span>`;
   $("prof-img").src = selectedUser.avatar || avatarFor(selectedUser.name);
-  $("prof-cover").style.backgroundImage = selectedUser.cover ? `url("${selectedUser.cover}")` : "linear-gradient(135deg,#0a192f,#ec4899)";
+  $("prof-cover").style.backgroundImage = selectedUser.cover ? `url("${selectedUser.cover}")` : "linear-gradient(135deg,#0d1d36,#ec4899)";
 
   const cardModal = $("profile-modal").querySelector(".profile-card-modal");
   if (cardModal) {
@@ -1418,7 +1438,7 @@ function openProfile(u) {
 
     let opts = [];
     if (isPrimaryOwner(currentUser)) {
-      opts = RANKS;
+      opts = RANKS; // صاحب الموقع الأصلي يقدر يعطي أو يسحب أي رتبة بما فيها تنزيل المالك المفوض
     } else if (isAnyOwner(currentUser)) {
       opts = RANKS.filter(x => x.id >= 2);
     } else {
@@ -1436,7 +1456,7 @@ function openProfile(u) {
 }
 window.openProfile = openProfile;
 
-/* حفظ وتعديل بيانات البروفايل وتغيير كلمة المرور بسلاسة */
+/* حفظ وتعديل بيانات أي عضو فورياً لتظهر للجميع في نفس اللحظة */
 window.saveProfileChanges = async () => {
   if (!currentUser) return;
   const self = !selectedUser || selectedUser.name === currentUser.name;
@@ -1454,7 +1474,7 @@ window.saveProfileChanges = async () => {
     return alert("الاسم الجديد مستخدم مسبقاً، اختر اسماً آخر");
   }
 
-  toast("جارٍ حفظ البيانات...");
+  toast("جارٍ حفظ وتطبيق التعديلات...");
   const updated = {
     ...target,
     name: nameInput,
@@ -1467,7 +1487,6 @@ window.saveProfileChanges = async () => {
     profileUpdatedAt: Date.now()
   };
 
-  // تشفير وتحديث كلمة المرور الجديدة إن وجدت ليعمل الدخول بها مستقبلاً
   if (newPass) {
     updated.passwordHash = await hashPassword(newPass);
   }
@@ -1488,12 +1507,14 @@ window.saveProfileChanges = async () => {
   } else {
     selectedUser = normalizeRankForUser({ ...selectedUser, ...updated });
     users.set(updated.name, selectedUser);
+    await saveUser(selectedUser);
   }
 
   closeModal("profile-modal");
-  toast("✅ تم حفظ وتحديث البيانات بنجاح");
+  toast("✅ تم تعديل البيانات فوراً للجميع بنجاح");
 };
 
+/* حذف حساب العضو فوراً والسماح له بالدخول كزائر أو التسجيل من جديد */
 window.deleteAccountAsOwner = async () => {
   if (!isPrimaryOwner(currentUser) || !selectedUser || selectedUser.name === currentUser.name) return;
   if (!confirm(`⚠️ هل تريد حذف حساب ${selectedUser.name} نهائياً وطرده فوراً؟`)) return;
@@ -1502,11 +1523,11 @@ window.deleteAccountAsOwner = async () => {
     const name = selectedUser.name;
     await setDoc(doc(db, "accountActions", uid), { deleted: true, deletedBy: currentUser.name, deletedAt: serverTimestamp() }, { merge: true });
     await deleteDoc(doc(db, "usersByName", name)).catch(() => {});
-    await setDoc(doc(db, "presence", uid), { isOnline: false, deletedAccount: true }, { merge: true });
+    await deleteDoc(doc(db, "presence", uid)).catch(() => {});
     users.delete(name);
     presenceCache.delete(uid);
     closeModal("profile-modal");
-    toast(`🗑️ تم حذف حساب ${name} نهائياً وطرده من الشات.`);
+    toast(`🗑️ تم حذف حساب ${name} نهائياً، ويمكنه الدخول كزائر أو إنشاء حساب جديد.`);
   } catch (e) {
     alert("تعذر حذف الحساب: " + e.message);
   }
@@ -1560,18 +1581,19 @@ window.uploadProfileBackground = async e => {
   e.target.value = "";
 };
 
+/* تنزيل أو ترقية الرتبة */
 window.giveRankToUser = async () => {
   if (!selectedUser || !canManageUser(selectedUser)) return;
   const id = Number($("owner-rank-select").value) || 19;
   const r = rank(id);
-  if (!canGiveRank(id, selectedUser)) return alert("لا تملك الصلاحية لإهداء هذه الرتبة");
+  if (!canGiveRank(id, selectedUser)) return alert("لا تملك الصلاحية لتغيير هذه الرتبة");
 
   try {
     const isNowOwnerRank = (id === 1);
     const updated = {
       ...selectedUser, rankId: id,
       isOwner: isNowOwnerRank,
-      isPrimaryOwner: false,
+      isPrimaryOwner: false, // لا أحد يصبح صاحب الموقع الرسمي سوى حسوني
       isVisitor: false,
       rankGiftedBy: currentUser.name, rankGiftedAt: serverTimestamp()
     };
@@ -1583,11 +1605,11 @@ window.giveRankToUser = async () => {
     users.set(selectedUser.name, updated);
     await addDoc(collection(db, "roomMessages"), {
       roomId: currentRoomId, isSystem: true,
-      text: `🎉 تم منح ${selectedUser.name} رتبة [${r.title}] بواسطة ${currentUser.name}.`,
+      text: `🎉 تم تعيين رتبة [${r.title}] لـ ${selectedUser.name} بواسطة ${currentUser.name}.`,
       createdAt: serverTimestamp()
     });
     closeModal("profile-modal");
-    toast(`✅ تم منح رتبة ${r.title} لـ ${selectedUser.name}`);
+    toast(`✅ تم تطبيق رتبة ${r.title} لـ ${selectedUser.name}`);
   } catch (e) {
     alert("تعذر حفظ الرتبة: " + e.message);
   }
@@ -2316,6 +2338,7 @@ window.selectRoom = async (name, id = "main") => {
   else {
     $("contest-live-card")?.remove();
     clearInterval(contestTimer);
+    contestActive = false;
   }
 
   createPresence();
@@ -2404,6 +2427,7 @@ window.clearAllRoomMessages = async () => {
   }
 };
 
+/* بوت المسابقات الحقيقي التلقائي 24/7 مع طرح السؤال في الشات أولاً والانتظار 30 ثانية */
 function isContestRoom() {
   return /مسابق/i.test(String(currentRoomName || "")) || /مسابق/i.test(String(currentRoomId || ""));
 }
@@ -2434,36 +2458,29 @@ const CONTEST_QUESTIONS = [
 let contestIndex = 0;
 let contestTimer = null;
 let contestQuestionAnswered = false;
+let contestActive = false;
 
 function listenContestBot() {
-  if (!isContestRoom()) {
-    $("contest-live-card")?.remove();
-    clearInterval(contestTimer);
-    return;
-  }
-  nextContestQuestion();
+  if (!isContestRoom() || contestActive) return;
+  contestActive = true;
+  postNewContestQuestion();
 }
 
-function nextContestQuestion() {
+async function postNewContestQuestion() {
+  if (!isContestRoom()) return;
   clearInterval(contestTimer);
   contestQuestionAnswered = false;
-  showContestQuestion();
 
-  contestTimer = setInterval(async () => {
-    if (!contestQuestionAnswered && isContestRoom()) {
-      const q = CONTEST_QUESTIONS[contestIndex % CONTEST_QUESTIONS.length];
-      await addDoc(collection(db, "roomMessages"), {
-        roomId: currentRoomId, isSystem: true,
-        text: `⏳ انتهى الوقت! فشلتم في معرفة الإجابة 😢. الإجابة الصحيحة كانت: [${q.a[0]}]. ننتقل للسؤال التالي!`,
-        createdAt: serverTimestamp()
-      });
-      contestIndex = (contestIndex + 1) % CONTEST_QUESTIONS.length;
-      showContestQuestion();
-    }
-  }, 30000);
-}
+  const q = CONTEST_QUESTIONS[contestIndex % CONTEST_QUESTIONS.length];
 
-function showContestQuestion() {
+  // طرح السؤال مباشرة في الشات العام أولاً
+  await addDoc(collection(db, "roomMessages"), {
+    roomId: currentRoomId, isSystem: true,
+    text: `🏆 [سؤال المسابقة ${(contestIndex % CONTEST_QUESTIONS.length) + 1}/20]: ${q.q} \n(أجب في الشات واربح 20 روبي و 20 ذهب و 20 نقطة! المهلة 30 ثانية)`,
+    createdAt: serverTimestamp()
+  });
+
+  // تحديث البطاقة العلوية
   let card = $("contest-live-card");
   if (!card) {
     card = document.createElement("div");
@@ -2471,21 +2488,38 @@ function showContestQuestion() {
     card.className = "contest-card";
     $("chat-area")?.prepend(card);
   }
-  const q = CONTEST_QUESTIONS[contestIndex % CONTEST_QUESTIONS.length];
   card.innerHTML = `🏆 <b>سؤال المسابقة (${(contestIndex % CONTEST_QUESTIONS.length) + 1}/20):</b> ${safe(q.q)} <small style="display:block;margin-top:3px;color:#cbd5e1">أجب في الشات واربح 20 روبي و 20 ذهب و 20 نقطة! (المهلة 30 ثانية)</small>`;
+
+  // بدء عداد الـ 30 ثانية
+  contestTimer = setInterval(async () => {
+    if (!contestQuestionAnswered && isContestRoom()) {
+      clearInterval(contestTimer);
+      // إعلان الفشل والحل بعد انتهاء الـ 30 ثانية
+      await addDoc(collection(db, "roomMessages"), {
+        roomId: currentRoomId, isSystem: true,
+        text: `⏳ انتهى الوقت وفشلتم في الإجابة! الإجابة الصحيحة هي: [${q.a[0]}]. ننتقل للسؤال التالي...`,
+        createdAt: serverTimestamp()
+      });
+
+      contestIndex = (contestIndex + 1) % CONTEST_QUESTIONS.length;
+      setTimeout(postNewContestQuestion, 3000);
+    }
+  }, 30000);
 }
 
 async function checkContestAnswer(text, sender) {
   if (!isContestRoom() || contestQuestionAnswered) return;
   const q = CONTEST_QUESTIONS[contestIndex % CONTEST_QUESTIONS.length];
   const clean = text.trim().toLowerCase();
+
   if (q.a.some(ans => clean.includes(ans.toLowerCase()))) {
     contestQuestionAnswered = true;
     clearInterval(contestTimer);
 
+    // إعلان الفائز فوراً ومنحه الجوائز
     await addDoc(collection(db, "roomMessages"), {
       roomId: currentRoomId, isSystem: true,
-      text: `🎉 إجابة صحيحة من البطل [${sender}]! الإجابة هي: ${q.a[0]}. تم منحك 20 روبي و 20 ذهب و 20 نقطة!`,
+      text: `🎉 إجابة صحيحة من البطل [${sender}]! الإجابة هي: [${q.a[0]}]. تم منحك 20 روبي و 20 ذهب و 20 نقطة!`,
       createdAt: serverTimestamp()
     });
 
@@ -2493,17 +2527,17 @@ async function checkContestAnswer(text, sender) {
       currentUser.points = (Number(currentUser.points) || 0) + 20;
       currentUser.gold = (Number(currentUser.gold) || 0) + 20;
       currentUser.rubies = (Number(currentUser.rubies) || 0) + 20;
-      saveUser(currentUser);
+      await saveUser(currentUser);
       createPresence();
     }
 
-    setTimeout(() => {
-      contestIndex = (contestIndex + 1) % CONTEST_QUESTIONS.length;
-      nextContestQuestion();
-    }, 4000);
+    // الانتقال للسؤال التالي
+    contestIndex = (contestIndex + 1) % CONTEST_QUESTIONS.length;
+    setTimeout(postNewContestQuestion, 3500);
   }
 }
 
+/* لوحة تحكم صاحب الشات: 13 خيار للمالك الأصلي، 10 للمفوض */
 window.openOwnerDashboard = () => {
   if (!isAnyOwner(currentUser)) return alert("لوحة التحكم لصاحب الشات فقط");
   $("owner-modal-title-text").textContent = isPrimaryOwner(currentUser) ? "👑 لوحة تحكم صاحب الشات (13 خيار)" : "👑 لوحة تحكم المالك المفوض (10 خيارات)";
@@ -2625,14 +2659,59 @@ window.openOwnerSection = async kind => {
       });
     });
   } else if (kind === "loginpanel" && pri) {
+    // الخيار 13 المكتمل مع رفع خلفية لوحة الدخول والأيقونة من ملفات الجهاز
     b.innerHTML = `<div style="padding:10px">
       <h4>🚪 13 تخصيص لوحة تسجيل الدخول</h4>
       <label style="display:block;margin:6px 0"><input id="cfg-guests" type="checkbox" checked> السماح بدخول الزوار</label>
       <label style="display:block;margin:6px 0"><input id="cfg-members" type="checkbox" checked> السماح بدخول الأعضاء</label>
-      <button class="btn-submit" onclick="toast('تم حفظ لوحة الدخول');openOwnerSection('home')">حفظ الإعدادات</button>
+      <div style="margin:10px 0;border-top:1px dashed #1e3557;padding-top:8px">
+        <label style="font-size:.75rem;color:#ffd54a;display:block;margin-bottom:4px">🖼 رفع خلفية شاشة الدخول من الجهاز:</label>
+        <input type="file" id="login-bg-file" accept="image/*" class="edit-input" style="padding:5px">
+      </div>
+      <div style="margin:10px 0">
+        <label style="font-size:.75rem;color:#ffd54a;display:block;margin-bottom:4px">🇾🇪 رفع أيقونة/شعار الشاشة من الجهاز:</label>
+        <input type="file" id="login-icon-file" accept="image/*" class="edit-input" style="padding:5px">
+      </div>
+      <button class="btn-submit" onclick="saveLoginPanelCustomSettings()">💾 حفظ وتطبيق لوحة الدخول للجميع</button>
+      <button class="btn-submit" style="background:#475569;margin-top:6px" onclick="openOwnerSection('home')">رجوع</button>
     </div>`;
   }
 };
+
+window.saveLoginPanelCustomSettings = async () => {
+  toast("جارٍ حفظ إعدادات لوحة الدخول...");
+  const patch = {
+    allowGuests: $("cfg-guests").checked,
+    allowMembers: $("cfg-members").checked
+  };
+
+  const bgFile = $("login-bg-file").files?.[0];
+  const iconFile = $("login-icon-file").files?.[0];
+
+  if (bgFile) {
+    patch.loginBg = await fastCompressImage(bgFile, 800, 0.7);
+  }
+  if (iconFile) {
+    patch.loginIcon = await fastCompressImage(iconFile, 200, 0.8);
+  }
+
+  await setDoc(doc(db, "siteSettings", "main"), patch, { merge: true });
+  applyLoginSettingsLocally(patch);
+  toast("✅ تم حفظ وتطبيق لوحة تسجيل الدخول بنجاح للجميع");
+  openOwnerSection("home");
+};
+
+function applyLoginSettingsLocally(d) {
+  if (!d) return;
+  const box = document.querySelector("#login-modal .login-box");
+  if (box && d.loginBg) {
+    box.style.backgroundImage = `linear-gradient(rgba(0,0,0,.65),rgba(0,0,0,.85)),url("${d.loginBg}")`;
+  }
+  const iconWrap = $("login-custom-icon-wrap");
+  if (iconWrap && d.loginIcon) {
+    iconWrap.innerHTML = `<img src="${d.loginIcon}" style="width:65px;height:65px;object-fit:contain;border-radius:12px;border:2px solid #d4a017">`;
+  }
+}
 
 window.unbanUser = async (name, uid) => {
   await setDoc(doc(db, "usersByName", name), { isBanned: false }, { merge: true });
@@ -2785,7 +2864,7 @@ async function finishWheel(idx) {
   if (rew.p) currentUser.points = (Number(currentUser.points) || 0) + rew.p;
   if (rew.g) currentUser.gold = (Number(currentUser.gold) || 0) + rew.g;
   if (rew.l) currentUser.level = (Number(currentUser.level) || 1) + rew.l;
-  saveUser(currentUser);
+  await saveUser(currentUser);
   createPresence();
   await addSystem(`🎡 ${currentUser.name} قام بتدوير عجلة الحظ وحصل على ${rew.label}`);
 }
@@ -3028,11 +3107,19 @@ window.logout = async () => {
 /* فحص الجلسة عند فتح التطبيق */
 async function boot() {
   $("login-modal").style.display = "none";
+
+  // استدعاء وتطبيق إعدادات شاشة الدخول المخصصة من الفايربيس (خلفية + أيقونة)
+  try {
+    const s = await getDoc(doc(db, "siteSettings", "main"));
+    if (s.exists()) {
+      applyLoginSettingsLocally(s.data());
+    }
+  } catch {}
+
   const raw = localStorage.getItem(sessionKey) || localStorage.getItem(legacySessionKey);
   if (raw) {
     try {
       const cached = JSON.parse(raw);
-      // التحقق من قاعدة البيانات لجلب آخر التحديثات لنفس الحساب
       const fresh = await getUserByName(cached.name);
       currentUser = normalizeRankForUser(fresh || cached);
       startApp();
