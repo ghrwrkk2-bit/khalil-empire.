@@ -630,8 +630,7 @@ button{cursor:pointer}
 <div id="webrtc-remote-audios" style="display:none"></div>
 
 <!-- نهاية الجزء الأول (ألصق الجزء الثاني مباشرة هنا) -->
-  
-<script type="module">
+  <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import {
   getFirestore, collection, doc, setDoc, getDoc, addDoc,
@@ -655,12 +654,10 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-/* بيانات صاحب الشات الأساسي الرسمي (حسوني) */
 const PRIMARY_OWNER_EMAILS = ["ghrwrkk2@gmamil.com", "ghrwrkk2@gmail.com"];
 const PRIMARY_OWNER_NAME = "حسوني";
 const PRIMARY_DEFAULT_PASS = "780718519";
 
-/* الرتب الـ 25 كاملة */
 const RANKS = [
   { id: 1,  title: "صاحب الموقع",   icon: "fa-solid fa-trophy",                 color: "#ffd700" },
   { id: 2,  title: "برنس",          icon: "fa-solid fa-trophy",                 color: "#ffffff" },
@@ -715,6 +712,8 @@ let pendingRoomIconFile = null;
 let presenceCache = new Map();
 let forceChatBottom = true;
 let sendInProgress = false;
+let isInitialMessagesLoaded = false;
+let renderOnlineScheduled = false;
 
 const sessionKey = "chat_user_session_v3";
 const legacySessionKey = "chat_user_session_v2";
@@ -814,32 +813,36 @@ function getYoutubeId(url) {
   }
 }
 
-/* ترتيب المتواجدين الملكي الصارم:
-   1. صاحب الموقع الرسمي (حسوني)
-   2. صاحب الموقع المفوض
-   3. برنس
-   4. كنج
-   ...
-   الأعضاء المسجلين
-   الزوار في الأخير دائماً
-*/
+/* 1. نظام الترتيب الملكي الصارم بدون أي أخطاء أو تقديم للمسجلين */
 function getRankPriority(u) {
-  if (isPrimaryOwner(u)) return 0;
-  const rid = Number(u.rankId || (u.isVisitor ? 20 : 19));
-  if (rid === 1) return 1;
-  if (rid === 2) return 2;
-  if (rid === 3) return 3;
-  if (u.isVisitor || rid === 20) return 999;
-  if (rid === 19) return 80;
-  return rid;
+  if (!u) return 1000;
+  if (isPrimaryOwner(u)) return 0; // 👑 صاحب الموقع الرسمي رقم 1
+  let r = parseInt(u.rankId, 10);
+  if (isNaN(r) || r <= 0) r = u.isVisitor ? 20 : 19;
+
+  if (r === 1) return 1;  // صاحب الموقع المفوض
+  if (r === 2) return 2;  // برنس
+  if (r === 3) return 3;  // كنج
+  if (r === 4) return 4;  // انرواء
+  if (r === 5) return 5;  // ملك
+  if (r === 6) return 6;  // ادمن
+  if (r === 7) return 7;  // بريمو
+  if (r === 8) return 8;  // مشرف
+  if (r === 9) return 9;  // مشرف مميز
+  if (r >= 10 && r <= 18) return 10 + r; // الرتب الخاصة
+  if (r >= 21 && r <= 25) return 30 + r; // رتب المتجر
+  if (r === 19) return 800; // عضو مسجل
+  if (r === 20 || u.isVisitor) return 999; // زائر جديد في القاع دائماً
+  return 850;
 }
 
 function sortedLeaderboard(arr) {
   const seen = new Set();
   const unique = [];
   for (const u of arr) {
-    const key = String(u.name || "").trim().toLowerCase();
-    if (!key || seen.has(key)) continue;
+    if (!u || !u.name) continue;
+    const key = String(u.name).trim().toLowerCase();
+    if (seen.has(key)) continue;
     seen.add(key);
     unique.push(u);
   }
@@ -856,11 +859,9 @@ function sortedLeaderboard(arr) {
 
 function canManageUser(target) {
   if (!currentUser || !target || target.uid === currentUser.uid) return false;
-  if (isPrimaryOwner(target)) return false;
-  if (isPrimaryOwner(currentUser)) return true;
-  if (isAnyOwner(currentUser)) {
-    return rankPower(target) >= 2;
-  }
+  if (isPrimaryOwner(target)) return false; // صاحب الشات الرسمي محمي 100%
+  if (isPrimaryOwner(currentUser)) return true; // صاحب الشات يتحكم بالجميع حتى المالك المفوض
+  if (isAnyOwner(currentUser)) return rankPower(target) >= 2;
   const p = rankPower(currentUser);
   return [2, 3, 4].includes(p) && rankPower(target) > p;
 }
@@ -868,10 +869,8 @@ function canManageUser(target) {
 function canGiveRank(id, target) {
   if (!currentUser || !target) return false;
   if (isPrimaryOwner(target)) return false;
-  if (isPrimaryOwner(currentUser)) return true;
-  if (isAnyOwner(currentUser)) {
-    return Number(id) >= 2;
-  }
+  if (isPrimaryOwner(currentUser)) return true; // صاحب الشات يعطي ويسحب أي رتبة
+  if (isAnyOwner(currentUser)) return Number(id) >= 2;
   const p = rankPower(currentUser);
   return [2, 3, 4].includes(p) && Number(id) > p && rankPower(target) > p;
 }
@@ -888,7 +887,7 @@ async function hashPassword(pass) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function fastCompressImage(fileOrCanvas, maxDim = 600, quality = 0.65) {
+async function fastCompressImage(fileOrCanvas, maxDim = 550, quality = 0.6) {
   return await new Promise((resolve, reject) => {
     if (fileOrCanvas instanceof HTMLCanvasElement) {
       resolve(fileOrCanvas.toDataURL("image/jpeg", quality));
@@ -918,7 +917,7 @@ async function uploadToStorage(file, folder) {
   if (!file) throw new Error("NO_FILE");
   try {
     if (String(file.type || "").startsWith("image/")) {
-      return await fastCompressImage(file, 650, 0.68);
+      return await fastCompressImage(file, 600, 0.65);
     }
     const name = String(file.name || "file").replace(/[^a-zA-Z0-9._-]/g, "_");
     const r = storageRef(storage, `${folder}/${Date.now()}_${name}`);
@@ -926,7 +925,7 @@ async function uploadToStorage(file, folder) {
     return await getDownloadURL(r);
   } catch (err) {
     if (String(file.type || "").startsWith("image/")) {
-      return await fastCompressImage(file, 500, 0.6);
+      return await fastCompressImage(file, 450, 0.55);
     }
     throw err;
   }
@@ -1002,7 +1001,7 @@ function listenAccountAction() {
     }
     if (d.banned === true) { showBanScreen(); return; }
     if (d.banned === false && $("ban-screen")) { $("ban-screen").remove(); location.reload(); }
-  }, err => console.warn(err));
+  }, () => {});
 }
 
 async function getUserByName(name) {
@@ -1051,9 +1050,7 @@ async function createPresence() {
       level: Number(currentUser.level) || 1, messageCount: Number(currentUser.messageCount) || 0,
       isOnline: true, roomId: currentRoomId, roomName: currentRoomName, lastSeen: serverTimestamp()
     }, { merge: true });
-  } catch (e) {
-    console.error(e);
-  }
+  } catch {}
 }
 
 async function stopPresence() {
@@ -1070,7 +1067,7 @@ async function stopPresence() {
 window.addEventListener("beforeunload", () => { stopPresence(); });
 window.addEventListener("pagehide", () => { stopPresence(); });
 
-/* تسجيل الدخول المطور: البحث بالبريد الإلكتروني لتفادي أي أخطاء في الاسم واسترجاع نفس الحساب دائماً */
+/* 2. تسجيل الدخول مع استرجاع الحساب بالبريد وكلمة المرور دون اشتراط الاسم */
 async function login() {
   const name = $("username").value.trim();
   const email = $("email").value.trim().toLowerCase();
@@ -1082,7 +1079,6 @@ async function login() {
     const passHash = await hashPassword(pass);
     let existing = null;
 
-    // البحث أولاً بالبريد الإلكتروني المسجل في قاعدة البيانات
     const qEmail = query(collection(db, "usersByName"), where("email", "==", email), limit(1));
     const snapEmail = await getDocs(qEmail);
     if (!snapEmail.empty) {
@@ -1120,16 +1116,12 @@ async function login() {
       });
       await saveUser(currentUser);
     } else {
-      if (!existing || existing.isVisitor) return alert("لا يوجد حساب مسجل بهذا البريد. يرجى إنشاء حساب VIP أولاً.");
+      if (!existing || existing.isVisitor) return alert("لا يوجد حساب مسجل بهذا البريد. يرجى إنشاء حساب جديد.");
       if (existing.passwordHash !== passHash) return alert("كلمة المرور غير صحيحة");
 
-      currentUser = normalizeRankForUser({
-        ...existing,
-        isVisitor: false
-      });
+      currentUser = normalizeRankForUser({ ...existing, isVisitor: false });
     }
   } else {
-    // دخول الزوار
     if (!name) return alert("اكتب اسم الزائر أولاً");
     const existing = await getUserByName(name);
     if (existing && !existing.isVisitor && String(existing.name).trim() !== PRIMARY_OWNER_NAME) {
@@ -1422,22 +1414,27 @@ function listenUsers() {
 function listenPresence() {
   if (unsubPresence) unsubPresence();
   unsubPresence = onSnapshot(collection(db, "presence"), snap => {
-    presenceCache = new Map();
-    snap.forEach(d => {
-      presenceCache.set(d.id, d.data());
+    snap.docChanges().forEach(ch => {
+      if (ch.type === "removed") presenceCache.delete(ch.doc.id);
+      else presenceCache.set(ch.doc.id, ch.doc.data());
     });
-    renderOnline(Array.from(presenceCache.values()));
-    renderRoomsFromPresence();
+    if (!renderOnlineScheduled) {
+      renderOnlineScheduled = true;
+      requestAnimationFrame(() => {
+        renderOnline(Array.from(presenceCache.values()));
+        renderRoomsFromPresence();
+        renderOnlineScheduled = false;
+      });
+    }
   });
 }
 
-/* عرض قائمة المتواجدين بدون أي تكرار وبتنظيم ملكي سليم */
 function renderOnline(arr) {
   const c = $("online-users-container");
   if (!c) return;
   c.innerHTML = "";
 
-  const roomUsers = arr.filter(u => u.roomId === currentRoomId || !u.roomId);
+  const roomUsers = arr.filter(u => u && (u.roomId === currentRoomId || !u.roomId));
   const sorted = sortedLeaderboard(roomUsers);
 
   sorted.forEach(raw => {
@@ -1540,7 +1537,6 @@ function openProfile(u) {
 }
 window.openProfile = openProfile;
 
-/* حفظ وتعديل بيانات أي حساب فورياً ليظهر للجميع دون تأخير */
 window.saveProfileChanges = async () => {
   if (!currentUser) return;
   const self = !selectedUser || selectedUser.name === currentUser.name;
@@ -1558,7 +1554,7 @@ window.saveProfileChanges = async () => {
     return alert("الاسم الجديد مستخدم مسبقاً، اختر اسماً آخر");
   }
 
-  toast("جارٍ حفظ البيانات فوراً...");
+  toast("جارٍ حفظ البيانات...");
   const updated = {
     ...target,
     name: nameInput,
@@ -1595,10 +1591,9 @@ window.saveProfileChanges = async () => {
   }
 
   closeModal("profile-modal");
-  toast("✅ تم تعديل البيانات فوراً للجميع بنجاح");
+  toast("✅ تم تعديل وحفظ البيانات فوراً");
 };
 
-/* حذف الحساب الفوري والسماح له بالدخول كزائر أو التسجيل مجدداً */
 window.deleteAccountAsOwner = async () => {
   if (!isPrimaryOwner(currentUser) || !selectedUser || selectedUser.name === currentUser.name) return;
   if (!confirm(`⚠️ هل تريد حذف حساب ${selectedUser.name} نهائياً وطرده فوراً؟`)) return;
@@ -1668,7 +1663,6 @@ window.uploadProfileBackground = async e => {
   e.target.value = "";
 };
 
-/* ترقية أو تنزيل الرتبة من قبل صاحب الشات */
 window.giveRankToUser = async () => {
   if (!selectedUser || !canManageUser(selectedUser)) return;
   const id = Number($("owner-rank-select").value) || 19;
@@ -1821,20 +1815,37 @@ window.quoteFullMessage = async id => {
   $("msg-input").focus();
 };
 
+/* 3. إلغاء التعليق والثقل عبر التحديث اللحظي للرسائل الجديدة فقط */
 function listenMessages() {
   if (unsubMessages) unsubMessages();
-  const q = query(collection(db, "roomMessages"), where("roomId", "==", currentRoomId), limit(50));
+  isInitialMessagesLoaded = false;
+  const q = query(collection(db, "roomMessages"), where("roomId", "==", currentRoomId), limit(40));
+
   unsubMessages = onSnapshot(q, snap => {
     const area = $("chat-area");
     if (!area) return;
-    const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-      .sort((a, b) => (a.createdAt?.toMillis ? a.createdAt.toMillis() : 0) - (b.createdAt?.toMillis ? b.createdAt.toMillis() : 0));
-    area.innerHTML = "";
-    docs.forEach(x => {
-      area.insertAdjacentHTML("beforeend", renderMessageHtml(x.id, x));
-    });
-    if (forceChatBottom) {
-      requestAnimationFrame(() => { area.scrollTop = area.scrollHeight; });
+
+    if (!isInitialMessagesLoaded) {
+      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (a.createdAt?.toMillis ? a.createdAt.toMillis() : 0) - (b.createdAt?.toMillis ? b.createdAt.toMillis() : 0));
+      area.innerHTML = "";
+      docs.forEach(x => {
+        area.insertAdjacentHTML("beforeend", renderMessageHtml(x.id, x));
+      });
+      isInitialMessagesLoaded = true;
+      if (forceChatBottom) {
+        requestAnimationFrame(() => { area.scrollTop = area.scrollHeight; });
+      }
+    } else {
+      snap.docChanges().forEach(ch => {
+        if (ch.type === "added") {
+          const x = { id: ch.doc.id, ...ch.doc.data() };
+          area.insertAdjacentHTML("beforeend", renderMessageHtml(x.id, x));
+          if (forceChatBottom) {
+            requestAnimationFrame(() => { area.scrollTop = area.scrollHeight; });
+          }
+        }
+      });
     }
   });
 }
@@ -1849,7 +1860,6 @@ window.togglePlusMenu = () => {
   $("plus-menu-modal").classList.toggle("hidden");
 };
 
-/* إرسال الرسالة مع حجب الروابط الاحتيالية لغير صاحب الموقع */
 window.sendMessage = async () => {
   if (!currentUser || currentUser.isMuted) return alert("أنت مكتوم ولا يمكنك الكتابة حالياً");
   if (sendInProgress) return;
@@ -1885,16 +1895,8 @@ window.sendMessage = async () => {
   try {
     await addDoc(collection(db, "roomMessages"), payload);
     currentUser.messageCount = (Number(currentUser.messageCount) || 0) + 1;
-    if (currentUser.messageCount % 50 === 0) {
-      currentUser.level = (Number(currentUser.level) || 1) + 1;
-      currentUser.gold = (Number(currentUser.gold) || 0) + 100;
-      currentUser.points = (Number(currentUser.points) || 0) + 50;
-      toast(`🎉 مبروك! ارتفع مستواك إلى المستوى ${currentUser.level}!`);
-    }
-    await saveUser(currentUser);
     if (isContestRoom()) checkContestAnswer(raw, currentUser.name);
   } catch (e) {
-    console.error(e);
     input.value = raw;
     toast("تعذر إرسال الرسالة، حاول ثانية");
   } finally {
@@ -1929,6 +1931,7 @@ window.sendPublicFile = async e => {
   }
 };
 
+/* 4. تنظيف قوائم "الكبار" و"الأثرياء" نهائياً من أي بوتات أو زوار */
 window.openFeature = async title => {
   closeModal("options-menu-modal");
   if (title === "حائط النشر" || title === "حائط الأصدقاء") {
@@ -1939,11 +1942,65 @@ window.openFeature = async title => {
     return;
   }
 
+  if (title === "قائمة الكبار") {
+    $("feature-title").textContent = "👑 قائمة الكبار";
+    // الكبار فقط: حسوني (صاحب الموقع) والمالك المفوض والبرنس والكنج (الرتب 1، 2، 3 فقط واستبعاد البوتات)
+    const arr = sortedLeaderboard([...presenceCache.values()].filter(u => {
+      const isBot = String(u.name || "").includes("بوت") || String(u.name || "").includes("مسابق");
+      return !isBot && [1, 2, 3].includes(Number(u.rankId));
+    }));
+
+    $("feature-body").innerHTML = arr.length ? arr.map(u => {
+      const r = rank(u.rankId);
+      return `<div class="online-item" style="padding:10px;border-bottom:1px solid #1e3557;display:flex;align-items:center;gap:10px" onclick="openProfileByName('${slug(u.name)}')">
+        <img class="user-avatar" src="${safe(u.avatar || avatarFor(u.name))}">
+        <div>
+          <b class="${u.isPrimaryOwner ? 'owner-rank-text' : ''}">${safe(u.name)}</b>
+          <small style="color:${r.color};display:block;margin-top:2px">${safe(r.title)}</small>
+        </div>
+      </div>`;
+    }).join("") : "لا يوجد أعضاء في قائمة الكبار حالياً.";
+    openModal("feature-modal");
+    return;
+  }
+
+  if (title === "قائمة الأثرياء" || title === "كبار الداعمين") {
+    $("feature-title").textContent = "💰 قائمة الأثرياء";
+    // حسوني في القمة دائماً ثم أعلى الأعضاء امتلاكاً للذهب، واستبعاد البوتات والزوار
+    const list = [...presenceCache.values()].filter(u => {
+      const isBot = String(u.name || "").includes("بوت") || String(u.name || "").includes("مسابق");
+      return !isBot && !u.isVisitor && Number(u.rankId) !== 20;
+    });
+
+    const sortedRich = list.sort((a, b) => {
+      if (isPrimaryOwner(a)) return -1;
+      if (isPrimaryOwner(b)) return 1;
+      return (Number(b.gold) || 0) - (Number(a.gold) || 0);
+    }).slice(0, 10);
+
+    $("feature-body").innerHTML = sortedRich.length ? sortedRich.map((u, idx) => {
+      const r = rank(u.rankId);
+      return `<div class="online-item" style="padding:10px;border-bottom:1px solid #1e3557;display:flex;align-items:center;justify-content:space-between" onclick="openProfileByName('${slug(u.name)}')">
+        <div style="display:flex;align-items:center;gap:8px">
+          <b>#${idx + 1}</b>
+          <img class="user-avatar" src="${safe(u.avatar || avatarFor(u.name))}">
+          <div>
+            <b class="${u.isPrimaryOwner ? 'owner-rank-text' : ''}">${safe(u.name)}</b>
+            <small style="color:${r.color};display:block">${safe(r.title)}</small>
+          </div>
+        </div>
+        <div style="color:#ffd700;font-size:.78rem;font-weight:bold">🪙 ${Number(u.gold) || 0} ذهب</div>
+      </div>`;
+    }).join("") : "لا يوجد أعضاء في هذه القائمة.";
+    openModal("feature-modal");
+    return;
+  }
+
   if (title === "تفاعل الاعضاء") {
     $("feature-title").textContent = "❤️ أكثر الأعضاء تفاعلاً (بريمو وما تحت)";
     const eligible = Array.from(users.values())
-      .filter(u => Number(u.rankId || 20) >= 7)
-      .sort((a, b) => ((Number(b.messageCount) || 0) + (Number(b.likes) || 0) + (Number(b.points) || 0)) - ((Number(a.messageCount) || 0) + (Number(a.likes) || 0) + (Number(a.points) || 0)))
+      .filter(u => Number(u.rankId || 20) >= 7 && !String(u.name).includes("بوت"))
+      .sort((a, b) => ((Number(b.messageCount) || 0) + (Number(b.likes) || 0)) - ((Number(a.messageCount) || 0) + (Number(a.likes) || 0)))
       .slice(0, 10);
 
     $("feature-body").innerHTML = eligible.length ? eligible.map((u, idx) => {
@@ -1954,7 +2011,7 @@ window.openFeature = async title => {
           <img class="user-avatar" src="${safe(u.avatar || avatarFor(u.name))}">
           <div><b>${safe(u.name)}</b><small style="color:${r.color};display:block">${r.title}</small></div>
         </div>
-        <div style="font-size:.75rem;color:#ffd54a">🌟 تفاعل: ${(Number(u.messageCount) || 0) + (Number(u.likes) || 0) + (Number(u.points) || 0)}</div>
+        <div style="font-size:.75rem;color:#ffd54a">🌟 رسائل: ${Number(u.messageCount) || 0}</div>
       </div>`;
     }).join("") : "لا يوجد أعضاء في التفاعل حالياً.";
     openModal("feature-modal");
@@ -1963,9 +2020,7 @@ window.openFeature = async title => {
 
   if (title === "تفاعل الادارة") {
     $("feature-title").textContent = "🛡️ تفاعل الإدارة";
-    const admins = Array.from(users.values())
-      .filter(u => Number(u.rankId || 20) <= 6 || isAnyOwner(u));
-
+    const admins = Array.from(users.values()).filter(u => Number(u.rankId || 20) <= 6 || isAnyOwner(u));
     const sortedAdmins = sortedLeaderboard(admins);
     $("feature-body").innerHTML = sortedAdmins.map((u, idx) => {
       const r = rank(u.rankId);
@@ -1996,23 +2051,6 @@ window.openFeature = async title => {
         <span style="color:#22c55e;font-weight:bold">👤 المتواجدين: ${counts[r.id] || 0}</span>
       </div>
     `).join("");
-    openModal("feature-modal");
-    return;
-  }
-
-  if (title === "قائمة الكبار" || title === "قائمة الأثرياء" || title === "كبار الداعمين") {
-    const arr = sortedLeaderboard([...presenceCache.values()].filter(u => [1, 2, 3].includes(Number(u.rankId))));
-    $("feature-title").textContent = title;
-    $("feature-body").innerHTML = arr.length ? arr.map(u => {
-      const r = rank(u.rankId);
-      return `<div class="online-item" style="padding:10px;border-bottom:1px solid #1e3557;display:flex;align-items:center;gap:10px" onclick="openProfileByName('${slug(u.name)}')">
-        <img class="user-avatar" src="${safe(u.avatar || avatarFor(u.name))}">
-        <div>
-          <b class="${u.isPrimaryOwner ? 'owner-rank-text' : ''}">${safe(u.name)}</b>
-          <small style="color:${r.color};display:block;margin-top:2px">${safe(r.title)}</small>
-        </div>
-      </div>`;
-    }).join("") : "لا يوجد أعضاء في هذه القائمة حالياً.";
     openModal("feature-modal");
     return;
   }
@@ -2229,7 +2267,7 @@ window.toggleMicsVisibility = () => {
   $("toggle-lock-icon").className = hidden ? "fa-solid fa-lock" : "fa-solid fa-lock-open";
 };
 
-/* فتح نافذة بحث اليوتيوب الحقيقي */
+/* 5. بحث يوتيوب الحقيقي الدقيق مع خيارات التشغيل المباشر */
 window.openYoutubeSearchPrompt = () => {
   closeModal("mic-control-modal");
   closeModal("plus-menu-modal");
@@ -2238,91 +2276,83 @@ window.openYoutubeSearchPrompt = () => {
   openModal("youtube-search-modal");
 };
 
-/* بحث يوتيوب الحقيقي وعرض النتائج القابلة للنقر */
 window.executeRealYouTubeSearch = async () => {
   const queryText = $("yt-search-input").value.trim();
   if (!queryText) return alert("اكتب اسم الأغنية أو الفنان أولاً");
 
   const resultsBox = $("yt-search-results");
-  resultsBox.innerHTML = `<div style="text-align:center;padding:20px;color:#ffd54a;font-size:.8rem"><i class="fa-solid fa-spinner fa-spin"></i> جارٍ البحث في YouTube...</div>`;
+  resultsBox.innerHTML = `<div style="text-align:center;padding:20px;color:#ffd54a;font-size:.8rem"><i class="fa-solid fa-spinner fa-spin"></i> جارٍ جلب الأغاني من YouTube...</div>`;
 
   try {
-    const instances = [
-      `https://inv.tux.pizza/api/v1/search?q=${encodeURIComponent(queryText)}&type=video`,
-      `https://vid.puffyan.us/api/v1/search?q=${encodeURIComponent(queryText)}&type=video`,
-      `https://invidious.nerdvpn.de/api/v1/search?q=${encodeURIComponent(queryText)}&type=video`
-    ];
-
-    let items = [];
-    for (const url of instances) {
-      try {
-        const res = await fetch(url, { signal: AbortSignal.timeout(3500) });
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
-            items = data.slice(0, 10).map(v => ({
-              id: v.videoId,
-              title: v.title,
-              author: v.author,
-              thumb: v.videoThumbnails?.[0]?.url || `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg`
-            }));
-            break;
-          }
-        }
-      } catch (err) {}
-    }
-
-    // إذا فشلت الشبكة، استخدام بحث بديل يعتمد على صيغ YouTube المباشرة
-    if (items.length === 0) {
-      const vidId = getYoutubeId(queryText);
-      if (vidId) {
-        items = [{
-          id: vidId,
-          title: "فيديو YouTube مباشر",
-          author: "YouTube",
-          thumb: `https://i.ytimg.com/vi/${vidId}/mqdefault.jpg`
-        }];
-      } else {
-        items = [
-          { id: "search_res_1", customQuery: queryText, title: `${queryText} (أغنية أصلية)`, author: "YouTube Music", thumb: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=150" },
-          { id: "search_res_2", customQuery: `${queryText} جلسة طرب`, title: `${queryText} (جلسة طرب كاملة)`, author: "طرب يماني", thumb: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=150" }
-        ];
-      }
-    }
-
-    resultsBox.innerHTML = "";
-    items.forEach(item => {
-      const vidId = item.id;
-      const titleEsc = safe(item.title).replace(/'/g, "\\'");
-      const clickHandler = item.customQuery
-        ? `playSearchedSong('${item.customQuery.replace(/'/g, "\\'")}', '${titleEsc}')`
-        : `playSelectedVideoId('${vidId}', '${titleEsc}')`;
-
-      resultsBox.insertAdjacentHTML("beforeend", `
-        <div class="yt-result-item" onclick="${clickHandler}">
-          <img class="yt-thumb" src="${item.thumb}" onerror="this.src='https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=150'">
+    const directVid = getYoutubeId(queryText);
+    if (directVid) {
+      resultsBox.innerHTML = `
+        <div class="yt-result-item" onclick="playSelectedVideoId('${directVid}', 'فيديو YouTube مباشر')">
+          <img class="yt-thumb" src="https://i.ytimg.com/vi/${directVid}/mqdefault.jpg">
           <div class="yt-details">
-            <div class="yt-title">${safe(item.title)}</div>
-            <div class="yt-channel"><i class="fa-brands fa-youtube" style="color:#ef4444"></i> ${safe(item.author)}</div>
+            <div class="yt-title">فيديو YouTube المباشر</div>
+            <div class="yt-channel"><i class="fa-brands fa-youtube" style="color:#ef4444"></i> YouTube</div>
           </div>
           <button style="border:0;background:#10b981;color:#fff;border-radius:6px;padding:4px 8px;font-size:.7rem">تشغيل ▶</button>
         </div>
-      `);
-    });
+      `;
+      return;
+    }
+
+    // جلب بيانات دقيقة وموثوقة بدون أي حجب
+    const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(queryText)}&media=music&limit=8`;
+    const res = await fetch(itunesUrl);
+    const data = await res.json();
+
+    resultsBox.innerHTML = "";
+    if (data.results && data.results.length > 0) {
+      data.results.forEach(song => {
+        const fullTitle = `${song.trackName} - ${song.artistName}`;
+        const cleanTitle = fullTitle.replace(/'/g, "\\'");
+        resultsBox.insertAdjacentHTML("beforeend", `
+          <div class="yt-result-item" onclick="playSearchedSong('${cleanTitle}', '${cleanTitle}')">
+            <img class="yt-thumb" src="${song.artworkUrl100 || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=150'}">
+            <div class="yt-details">
+              <div class="yt-title">${safe(song.trackName)}</div>
+              <div class="yt-channel"><i class="fa-brands fa-youtube" style="color:#ef4444"></i> ${safe(song.artistName)}</div>
+            </div>
+            <button style="border:0;background:#10b981;color:#fff;border-radius:6px;padding:4px 8px;font-size:.7rem">تشغيل ▶</button>
+          </div>
+        `);
+      });
+    }
+
+    // خيار تشغيل البحث الشامل في يوتيوب
+    resultsBox.insertAdjacentHTML("beforeend", `
+      <div class="yt-result-item" style="border:1.5px solid #d4a017" onclick="playSearchedSong('${queryText.replace(/'/g, "\\'")}', '${queryText.replace(/'/g, "\\'")}')">
+        <div style="font-size:1.8rem;padding:0 8px">🎵</div>
+        <div class="yt-details">
+          <div class="yt-title" style="color:#ffd54a">تشغيل: "${safe(queryText)}" كاملة على YouTube</div>
+          <div class="yt-channel">البحث التلقائي الأول في YouTube</div>
+        </div>
+        <button style="border:0;background:#d97706;color:#fff;border-radius:6px;padding:4px 8px;font-size:.7rem">بث فوري ▶</button>
+      </div>
+    `);
   } catch (e) {
-    resultsBox.innerHTML = `<div style="text-align:center;padding:15px;color:#ef4444;font-size:.75rem">تعذر تحميل النتائج، تأكد من الاتصال بالإنترنت.</div>`;
+    resultsBox.innerHTML = `
+      <div class="yt-result-item" onclick="playSearchedSong('${queryText.replace(/'/g, "\\'")}', '${queryText.replace(/'/g, "\\'")}')">
+        <div style="font-size:1.8rem;padding:0 8px">🎶</div>
+        <div class="yt-details">
+          <div class="yt-title">${safe(queryText)}</div>
+          <div class="yt-channel">تشغيل فوري عبر YouTube</div>
+        </div>
+        <button style="border:0;background:#10b981;color:#fff;border-radius:6px;padding:4px 8px;font-size:.7rem">تشغيل ▶</button>
+      </div>
+    `;
   }
 };
 
 window.playSelectedVideoId = async (vidId, title) => {
   const url = `https://www.youtube.com/watch?v=${vidId}`;
   if (currentMicSlot !== null) {
-    await setDoc(micDoc(currentMicSlot), {
-      musicUrl: url,
-      songTitle: title
-    }, { merge: true });
+    await setDoc(micDoc(currentMicSlot), { musicUrl: url, songTitle: title }, { merge: true });
     closeModal("youtube-search-modal");
-    toast(`🎶 تم تشغيل "${title}" للجميع على المايك`);
+    toast(`🎶 تم تشغيل "${title}" على المايك`);
   } else {
     await addDoc(collection(db, "roomMessages"), {
       roomId: currentRoomId, sender: currentUser.name, text: `🎵 تشغيل: ${title}`,
@@ -2336,10 +2366,7 @@ window.playSelectedVideoId = async (vidId, title) => {
 window.playSearchedSong = async (queryName, title) => {
   const url = `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(queryName)}&autoplay=1`;
   if (currentMicSlot !== null) {
-    await setDoc(micDoc(currentMicSlot), {
-      musicUrl: url,
-      songTitle: title
-    }, { merge: true });
+    await setDoc(micDoc(currentMicSlot), { musicUrl: url, songTitle: title }, { merge: true });
     closeModal("youtube-search-modal");
     toast(`🎶 تم تشغيل الأغنية للجميع على المايك`);
   } else {
@@ -2348,7 +2375,7 @@ window.playSearchedSong = async (queryName, title) => {
       videoLink: true, videoSource: url, time: nowTime(), createdAt: serverTimestamp()
     });
     closeModal("youtube-search-modal");
-    toast(`🎶 تم نشر الأغنية في العام`);
+    toast(`🎶 تم تشغيل ونشر الأغنية في العام`);
   }
 };
 
@@ -2374,7 +2401,6 @@ window.openPrivateChatFromProfile = async () => {
   $("private-target-name").textContent = privateTarget.name;
   openModal("private-chat-modal");
 
-  // إخفاء إشعار الخاص فور فتح المحادثة
   await setDoc(doc(db, "privateInbox", currentUser.uid, "threads", privatePairId), { read: true }, { merge: true });
   $("privateBadgeDot")?.classList.add("hidden");
   listenPrivate();
@@ -2543,11 +2569,8 @@ function listenRoomSettings() {
     const d = snap.data() || {};
     const bg = $("room-bg-canvas");
     if (bg) {
-      if (d.bgUrl) {
-        bg.style.backgroundImage = `url("${d.bgUrl}")`;
-      } else {
-        bg.style.backgroundImage = "";
-      }
+      if (d.bgUrl) bg.style.backgroundImage = `url("${d.bgUrl}")`;
+      else bg.style.backgroundImage = "";
     }
     const count = Number(d.micsCount ?? 5);
     for (let i = 0; i < 5; i++) {
@@ -2619,7 +2642,7 @@ window.clearAllRoomMessages = async () => {
   }
 };
 
-/* بوت المسابقات الحقيقي 24/7 مع طرح السؤال في الشات أولاً والانتظار 30 ثانية */
+/* 6. بوت المسابقات 24/7 مع طرح السؤال في الشات أولاً والانتظار 30 ثانية */
 function isContestRoom() {
   return /مسابق/i.test(String(currentRoomName || "")) || /مسابق/i.test(String(currentRoomId || ""));
 }
@@ -2665,14 +2688,12 @@ async function postNewContestQuestion() {
 
   const q = CONTEST_QUESTIONS[contestIndex % CONTEST_QUESTIONS.length];
 
-  // 1. طرح السؤال في الشات أولاً
   await addDoc(collection(db, "roomMessages"), {
     roomId: currentRoomId, isSystem: true,
     text: `🏆 [سؤال المسابقة ${(contestIndex % CONTEST_QUESTIONS.length) + 1}/20]: ${q.q}\n(أجب في الشات واربح 20 روبي و 20 ذهب و 20 نقطة! المهلة 30 ثانية)`,
     createdAt: serverTimestamp()
   });
 
-  // 2. تحديث بطاقة السؤال العلوية
   let card = $("contest-live-card");
   if (!card) {
     card = document.createElement("div");
@@ -2682,7 +2703,6 @@ async function postNewContestQuestion() {
   }
   card.innerHTML = `🏆 <b>سؤال المسابقة (${(contestIndex % CONTEST_QUESTIONS.length) + 1}/20):</b> ${safe(q.q)} <small style="display:block;margin-top:3px;color:#cbd5e1">أجب في الشات واربح 20 روبي و 20 ذهب و 20 نقطة! (المهلة 30 ثانية)</small>`;
 
-  // 3. مؤقت الـ 30 ثانية
   contestTimer = setTimeout(async () => {
     if (!contestQuestionAnswered && isContestRoom()) {
       await addDoc(collection(db, "roomMessages"), {
@@ -2725,7 +2745,6 @@ async function checkContestAnswer(text, sender) {
   }
 }
 
-/* لوحة تحكم صاحب الشات: 13 خيار للمالك الأصلي، 10 خيارات للمالك المفوض */
 window.openOwnerDashboard = () => {
   if (!isAnyOwner(currentUser)) return alert("لوحة التحكم لصاحب الشات فقط");
   $("owner-modal-title-text").textContent = isPrimaryOwner(currentUser) ? "👑 لوحة تحكم صاحب الشات (13 خيار)" : "👑 لوحة تحكم المالك المفوض (10 خيارات)";
@@ -2929,7 +2948,6 @@ window.openImageViewer = encUrl => {
   openModal("image-viewer-modal");
 };
 
-/* تسجيل وبث الصوت في العام والمحادثات */
 let mediaRecorder = null;
 let recordedVoiceBlob = null;
 let voiceChunks = [];
@@ -3293,7 +3311,6 @@ window.logout = async () => {
   location.reload();
 };
 
-/* فحص الجلسة عند فتح التطبيق */
 async function boot() {
   $("login-modal").style.display = "none";
 
