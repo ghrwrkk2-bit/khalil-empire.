@@ -85,6 +85,7 @@ button{cursor:pointer}
   overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;
   overscroll-behavior:contain!important;padding:9px!important;z-index:10;
   background:transparent!important;display:flex;flex-direction:column;gap:7px;
+  transform:translateZ(0);will-change:scroll-position;
 }
 .msg-item{
   display:flex;gap:8px;align-items:flex-start;background:rgba(10,25,47,.75);
@@ -579,7 +580,7 @@ button{cursor:pointer}
 
 <div id="webrtc-remote-audios" style="display:none"></div>
 
-<!-- هنا ينتهي الجزء الأول، وسيبدأ السكربت البرمجي الكامل في الجزء الثاني -->
+<!-- نهاية الجزء الأول (ألصق الجزء الثاني مباشرة هنا) -->
   <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import {
@@ -591,6 +592,7 @@ import {
   getStorage, ref as storageRef, uploadBytes, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js";
 
+/* إعدادات Firebase الخاصة بشات حسوني */
 const firebaseConfig = {
   apiKey: "AIzaSyAFjspoGwJJeowjEZrcmJCO99iiTcBR5Is",
   authDomain: "hassouni-chat-51234.firebaseapp.com",
@@ -604,12 +606,12 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-/* بيانات صاحب الشات الأساسي الرسمي (حسوني) */
-const PRIMARY_OWNER_EMAILS = ["ghrwrkk2@gmail.com", "ghrwrkk2@gmamil.com"];
+/* بيانات صاحب الشات الرسمي الأساسي */
+const PRIMARY_OWNER_EMAILS = ["ghrwrkk2@gmamil.com", "ghrwrkk2@gmail.com"];
 const PRIMARY_OWNER_NAME = "حسوني";
-const PRIMARY_OWNER_HASH = "2e68de7b4233ff1adaa573d5952d02e58853569f611dbed0c1634b60806a9dff";
+const PRIMARY_DEFAULT_PASS = "780718519";
 
-/* الرتب الـ 25 كاملة */
+/* قائمة الـ 25 رتبة كاملة */
 const RANKS = [
   { id: 1,  title: "صاحب الموقع",   icon: "fa-solid fa-trophy",                 color: "#ffd700" },
   { id: 2,  title: "برنس",          icon: "fa-solid fa-trophy",                 color: "#ffffff" },
@@ -671,12 +673,12 @@ const legacySessionKey = "chat_user_session_v2";
 const $ = id => document.getElementById(id);
 const rank = id => RANKS.find(r => r.id === Number(id)) || RANKS[19];
 
-/* فحص المالك الأساسي وحمايته */
+/* فحص المالك الأساسي وحمايته المطلقة */
 function isPrimaryOwner(u = currentUser) {
   if (!u) return false;
   const name = String(u.name || "").trim();
   const email = String(u.email || "").trim().toLowerCase();
-  return name === PRIMARY_OWNER_NAME && (PRIMARY_OWNER_EMAILS.includes(email) || u.uid === "owner_hassouni" || u.isPrimaryOwner === true);
+  return (name === PRIMARY_OWNER_NAME && (PRIMARY_OWNER_EMAILS.includes(email) || u.uid === "owner_hassouni")) || u.isPrimaryOwner === true;
 }
 
 function isAnyOwner(u = currentUser) {
@@ -745,10 +747,10 @@ function rankPower(u) {
 
 function canManageUser(target) {
   if (!currentUser || !target || target.uid === currentUser.uid) return false;
-  if (isPrimaryOwner(target)) return false;
+  if (isPrimaryOwner(target)) return false; // صاحب الشات الأصلي لا يمسه أحد إطلاقاً
   if (isPrimaryOwner(currentUser)) return true;
   if (isAnyOwner(currentUser)) {
-    return rankPower(target) >= 2;
+    return rankPower(target) >= 2; // المالك المفوض يدير من برنس وماتحت
   }
   const p = rankPower(currentUser);
   return [2, 3, 4].includes(p) && rankPower(target) > p;
@@ -791,6 +793,7 @@ function sortedLeaderboard(arr) {
   });
 }
 
+/* ضاغط سريع جداً للصور والرسومات لإنهاء أي تأخير (Lag) */
 async function fastCompressImage(fileOrCanvas, maxDim = 600, quality = 0.65) {
   return await new Promise((resolve, reject) => {
     if (fileOrCanvas instanceof HTMLCanvasElement) {
@@ -824,7 +827,7 @@ async function uploadToStorage(file, folder) {
       return await fastCompressImage(file, 650, 0.68);
     }
     const name = String(file.name || "file").replace(/[^a-zA-Z0-9._-]/g, "_");
-    const r = storageRef(storage, `${folder}/${Date.now()}_${crypto.randomUUID()}_${name}`);
+    const r = storageRef(storage, `${folder}/${Date.now()}_${name}`);
     await uploadBytes(r, file, { contentType: file.type || "application/octet-stream" });
     return await getDownloadURL(r);
   } catch (err) {
@@ -876,7 +879,7 @@ function showBanScreen() {
     <div style="font-size:3.5rem;margin-bottom:10px">🚫</div>
     <h2 style="color:#fecaca;margin-bottom:12px">لا يمكنك الدخول</h2>
     <h3 style="color:#f87171;font-size:1.1rem;margin-bottom:15px">تم حظرك من قبل إدارة الموقع</h3>
-    <p style="color:#cbd5e1;font-size:.85rem;line-height:1.8;margin-bottom:20px">لا يمكن فك الحظر أو دخول الشات إلا بعد مراجعة إدارة الموقع الرسمية والتأكد من بيانات الحساب.</p>
+    <p style="color:#cbd5e1;font-size:.85rem;line-height:1.8;margin-bottom:20px">لا يمكن فك الحظر إلا بعد مراجعة إدارة الموقع الرسمية والتأكد من بيانات الحساب.</p>
     <div style="font-size:1.2rem;font-weight:bold;margin:15px 0;color:#22c55e">📱 967780718519</div>
     <a href="https://wa.me/967780718519" target="_blank" rel="noopener" style="display:block;background:#22c55e;color:#fff;padding:12px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:.95rem">💬 واتساب للمراجعة</a>
   </div>`;
@@ -917,21 +920,25 @@ async function getUserByName(name) {
   return null;
 }
 
+/* حفظ بيانات المستخدم دون فقدان الـ UID أو تصفير أي بيانات */
 async function saveUser(u) {
   u = normalizeRankForUser(u);
+  if (!u.uid) {
+    u.uid = (u.name === PRIMARY_OWNER_NAME) ? "owner_hassouni" : ("u_" + slug(u.name).replace(/%/g, ''));
+  }
   await setDoc(doc(db, "usersByName", u.name), u, { merge: true });
   users.set(u.name, { ...(users.get(u.name) || {}), ...u });
-  if (u.uid) {
-    await setDoc(doc(db, "presence", u.uid), {
-      uid: u.uid, name: u.name, avatar: u.avatar || avatarFor(u.name),
-      cover: u.cover || "", profileBackground: u.profileBackground || "",
-      rankId: u.rankId || 20, nameFrame: u.nameFrame || "frame-none",
-      nameBackground: u.nameBackground || "", isOwner: !!u.isOwner, isPrimaryOwner: !!u.isPrimaryOwner,
-      isVisitor: !!u.isVisitor, isBanned: !!u.isBanned, isMuted: !!u.isMuted,
-      points: Number(u.points) || 0, gold: Number(u.gold) || 0, rubies: Number(u.rubies) || 0,
-      isOnline: true, roomId: currentRoomId, roomName: currentRoomName, updatedAt: serverTimestamp()
-    }, { merge: true });
-  }
+
+  await setDoc(doc(db, "presence", u.uid), {
+    uid: u.uid, name: u.name, avatar: u.avatar || avatarFor(u.name),
+    cover: u.cover || "", profileBackground: u.profileBackground || "",
+    rankId: u.rankId || 20, nameFrame: u.nameFrame || "frame-none",
+    nameBackground: u.nameBackground || "", isOwner: !!u.isOwner, isPrimaryOwner: !!u.isPrimaryOwner,
+    isVisitor: !!u.isVisitor, isBanned: !!u.isBanned, isMuted: !!u.isMuted,
+    points: Number(u.points) || 0, gold: Number(u.gold) || 0, rubies: Number(u.rubies) || 0,
+    level: Number(u.level) || 1, messageCount: Number(u.messageCount) || 0,
+    isOnline: true, roomId: currentRoomId, roomName: currentRoomName, updatedAt: serverTimestamp()
+  }, { merge: true });
 }
 
 async function createPresence() {
@@ -944,6 +951,7 @@ async function createPresence() {
       nameBackground: currentUser.nameBackground || "", isOwner: !!currentUser.isOwner, isPrimaryOwner: !!currentUser.isPrimaryOwner,
       isVisitor: !!currentUser.isVisitor, isBanned: !!currentUser.isBanned, isMuted: !!currentUser.isMuted,
       points: Number(currentUser.points) || 0, gold: Number(currentUser.gold) || 0, rubies: Number(currentUser.rubies) || 0,
+      level: Number(currentUser.level) || 1, messageCount: Number(currentUser.messageCount) || 0,
       isOnline: true, roomId: currentRoomId, roomName: currentRoomName, lastSeen: serverTimestamp()
     }, { merge: true });
   } catch (e) {
@@ -965,6 +973,7 @@ async function stopPresence() {
 window.addEventListener("beforeunload", () => { stopPresence(); });
 window.addEventListener("pagehide", () => { stopPresence(); });
 
+/* حل مشكلة الحساب الجديد واسترجاع كافة البيانات السابقة */
 async function login() {
   const name = $("username").value.trim();
   const email = $("email").value.trim().toLowerCase();
@@ -978,36 +987,71 @@ async function login() {
     const passHash = await hashPassword(pass);
     let existing = await getUserByName(name);
 
-    if (name === PRIMARY_OWNER_NAME && PRIMARY_OWNER_EMAILS.includes(email) && passHash === PRIMARY_OWNER_HASH) {
-      currentUser = {
-        ...(existing || {}), uid: existing?.uid || "owner_hassouni",
-        name: PRIMARY_OWNER_NAME, email, passwordHash: PRIMARY_OWNER_HASH,
-        isOwner: true, isPrimaryOwner: true, isVisitor: false, rankId: 1, isBanned: false,
-        nameFrame: "frame-gold", avatar: existing?.avatar || avatarFor(PRIMARY_OWNER_NAME),
-        points: Number(existing?.points) || 99999, gold: Number(existing?.gold) || 99999, rubies: Number(existing?.rubies) || 99999,
+    // فحص صاحب الموقع الرسمي (حسوني) بالبريد وكلمة المرور الأصلية أو المعدلة
+    const isOwnerLogin = (name === PRIMARY_OWNER_NAME && PRIMARY_OWNER_EMAILS.includes(email));
+    if (isOwnerLogin) {
+      const ownerPassMatch = (existing?.passwordHash ? (passHash === existing.passwordHash) : false) || (pass === PRIMARY_DEFAULT_PASS);
+      if (!ownerPassMatch) return alert("كلمة المرور غير صحيحة لحساب صاحب الموقع");
+
+      // الاحتفاظ بكامل البيانات القديمة
+      currentUser = normalizeRankForUser({
+        ...(existing || {}),
+        uid: "owner_hassouni",
+        name: PRIMARY_OWNER_NAME,
+        email: email,
+        passwordHash: passHash,
+        isOwner: true,
+        isPrimaryOwner: true,
+        isVisitor: false,
+        rankId: 1,
+        isBanned: false,
+        nameFrame: existing?.nameFrame || "frame-gold",
+        avatar: existing?.avatar || avatarFor(PRIMARY_OWNER_NAME),
+        cover: existing?.cover || "",
+        profileBackground: existing?.profileBackground || "",
+        points: Number(existing?.points) || 99999,
+        gold: Number(existing?.gold) || 99999,
+        rubies: Number(existing?.rubies) || 99999,
+        level: Number(existing?.level) || 1,
+        messageCount: Number(existing?.messageCount) || 0,
         country: existing?.country || "اليمن"
-      };
-      saveUser(currentUser);
+      });
+      await saveUser(currentUser);
     } else {
-      if (!existing || existing.isVisitor) return alert("لا يوجد حساب مسجل بهذا الاسم.");
-      if (String(existing.email || "").toLowerCase() !== email) return alert("البريد الإلكتروني لا يطابق الحساب");
+      if (!existing || existing.isVisitor) return alert("لا يوجد حساب مسجل بهذا الاسم. سجل عضوية جديدة أولاً.");
+      if (String(existing.email || "").toLowerCase() !== email) return alert("البريد الإلكتروني لا يطابق هذا الحساب المسجل");
       if (existing.passwordHash !== passHash) return alert("كلمة المرور غير صحيحة");
-      currentUser = normalizeRankForUser({ ...existing, isVisitor: false });
+
+      // استرجاع الحساب القديم كما هو دون أي تغيير في الـ UID أو البيانات
+      currentUser = normalizeRankForUser({
+        ...existing,
+        isVisitor: false
+      });
     }
   } else {
+    // دخول الزوار
     const existing = await getUserByName(name);
     if (existing && !existing.isVisitor && String(existing.name).trim() !== PRIMARY_OWNER_NAME) {
-      return alert("⚠️ الاسم محجوز لعضو مسجل. ادخل بعضويتك أو اختر اسماً آخر.");
+      return alert("⚠️ الاسم محجوز لعضو مسجل. ادخل من تبويب (دخول الأعضاء) أو اختر اسماً آخر.");
     }
+
+    const stableGuestUid = existing?.uid || ("guest_" + slug(name).replace(/%/g, ''));
     currentUser = normalizeRankForUser({
-      uid: existing?.uid || "guest_" + crypto.randomUUID(), name, email: "",
-      isOwner: (name === PRIMARY_OWNER_NAME), isPrimaryOwner: (name === PRIMARY_OWNER_NAME),
+      ...(existing || {}),
+      uid: stableGuestUid,
+      name,
+      email: "",
+      isOwner: (name === PRIMARY_OWNER_NAME),
+      isPrimaryOwner: (name === PRIMARY_OWNER_NAME),
       isVisitor: (name !== PRIMARY_OWNER_NAME),
-      rankId: (name === PRIMARY_OWNER_NAME ? 1 : 20), avatar: existing?.avatar || avatarFor(name),
-      points: Number(existing?.points) || 0, gold: Number(existing?.gold) || 0, rubies: Number(existing?.rubies) || 0,
+      rankId: (name === PRIMARY_OWNER_NAME ? 1 : 20),
+      avatar: existing?.avatar || avatarFor(name),
+      points: Number(existing?.points) || 0,
+      gold: Number(existing?.gold) || 0,
+      rubies: Number(existing?.rubies) || 0,
       country: $("visitor-country")?.value || existing?.country || "اليمن"
     });
-    saveUser(currentUser);
+    await saveUser(currentUser);
   }
 
   if (currentUser.isBanned) {
@@ -1030,26 +1074,29 @@ window.registerMember = async () => {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(email)) return alert("⚠️ اكتب بريداً إلكترونياً صحيحاً");
 
   const passHash = await hashPassword(pass);
-  const isOwnerReg = (name === PRIMARY_OWNER_NAME && PRIMARY_OWNER_EMAILS.includes(email) && passHash === PRIMARY_OWNER_HASH);
+  const isOwnerReg = (name === PRIMARY_OWNER_NAME && PRIMARY_OWNER_EMAILS.includes(email) && pass === PRIMARY_DEFAULT_PASS);
   const ex = await getUserByName(name);
 
   if (ex && !ex.isVisitor && !isOwnerReg) return alert("الاسم محجوز مسبقاً، اختر اسماً آخر");
 
+  const stableUid = isOwnerReg ? "owner_hassouni" : (ex?.uid || ("u_" + slug(name).replace(/%/g, '')));
   const u = normalizeRankForUser({
-    ...(ex || {}), uid: ex?.uid || currentUser?.uid || crypto.randomUUID(),
-    name, email, passwordHash: isOwnerReg ? PRIMARY_OWNER_HASH : passHash,
+    ...(ex || {}),
+    uid: stableUid,
+    name, email, passwordHash: passHash,
     isOwner: isOwnerReg, isPrimaryOwner: isOwnerReg, isVisitor: false,
     rankId: isOwnerReg ? 1 : 16,
-    avatar: ex?.avatar || avatarFor(name), nameFrame: isOwnerReg ? "frame-gold" : "frame-none"
+    avatar: ex?.avatar || avatarFor(name),
+    nameFrame: isOwnerReg ? "frame-gold" : (ex?.nameFrame || "frame-none")
   });
 
-  saveUser(u);
+  await saveUser(u);
   currentUser = u;
   localStorage.setItem(sessionKey, JSON.stringify(currentUser));
   closeModal("register-modal");
   $("login-modal").style.display = "none";
   startApp();
-  toast(isOwnerReg ? "👑 تم تفعيل صاحب الشات" : "🎉 تم تسجيل عضويتك بنجاح برتبة عضو ماسي 💎");
+  toast(isOwnerReg ? "👑 تم تفعيل حساب صاحب الشات" : "🎉 تم إنشاء عضويتك بنجاح برتبة عضو ماسي 💎");
 };
 
 window.openVisitorMemberEntry = () => {
@@ -1389,6 +1436,7 @@ function openProfile(u) {
 }
 window.openProfile = openProfile;
 
+/* حفظ وتعديل بيانات البروفايل وتغيير كلمة المرور بسلاسة */
 window.saveProfileChanges = async () => {
   if (!currentUser) return;
   const self = !selectedUser || selectedUser.name === currentUser.name;
@@ -1408,13 +1456,21 @@ window.saveProfileChanges = async () => {
 
   toast("جارٍ حفظ البيانات...");
   const updated = {
-    ...target, name: nameInput, nameFrame: $("edit-frame-select").value,
-    age: $("edit-age-input").value || "22", gender: $("edit-gender-input").value || "ذكر",
-    country: $("edit-country-input").value || "اليمن", info: $("edit-info-input").value || "",
-    email: newEmail, profileUpdatedAt: Date.now()
+    ...target,
+    name: nameInput,
+    nameFrame: $("edit-frame-select").value,
+    age: $("edit-age-input").value || "22",
+    gender: $("edit-gender-input").value || "ذكر",
+    country: $("edit-country-input").value || "اليمن",
+    info: $("edit-info-input").value || "",
+    email: newEmail,
+    profileUpdatedAt: Date.now()
   };
 
-  if (newPass) updated.passwordHash = await hashPassword(newPass);
+  // تشفير وتحديث كلمة المرور الجديدة إن وجدت ليعمل الدخول بها مستقبلاً
+  if (newPass) {
+    updated.passwordHash = await hashPassword(newPass);
+  }
 
   if (nameInput !== oldName) {
     await setDoc(doc(db, "usersByName", nameInput), updated, { merge: true });
@@ -1435,7 +1491,7 @@ window.saveProfileChanges = async () => {
   }
 
   closeModal("profile-modal");
-  toast("✅ تم حفظ وتحديث البيانات بنجاح للجميع");
+  toast("✅ تم حفظ وتحديث البيانات بنجاح");
 };
 
 window.deleteAccountAsOwner = async () => {
@@ -1650,7 +1706,7 @@ window.quoteFullMessage = async id => {
 
 function listenMessages() {
   if (unsubMessages) unsubMessages();
-  const q = query(collection(db, "roomMessages"), where("roomId", "==", currentRoomId), limit(80));
+  const q = query(collection(db, "roomMessages"), where("roomId", "==", currentRoomId), limit(50));
   unsubMessages = onSnapshot(q, snap => {
     const area = $("chat-area");
     if (!area) return;
@@ -1696,6 +1752,14 @@ window.sendMessage = async () => {
 
   try {
     await addDoc(collection(db, "roomMessages"), payload);
+    currentUser.messageCount = (Number(currentUser.messageCount) || 0) + 1;
+    if (currentUser.messageCount % 50 === 0) {
+      currentUser.level = (Number(currentUser.level) || 1) + 1;
+      currentUser.gold = (Number(currentUser.gold) || 0) + 100;
+      currentUser.points = (Number(currentUser.points) || 0) + 50;
+      toast(`🎉 مبروك! ارتفع مستواك إلى المستوى ${currentUser.level}!`);
+    }
+    await saveUser(currentUser);
     if (isContestRoom()) checkContestAnswer(raw, currentUser.name);
   } catch (e) {
     console.error(e);
@@ -1727,7 +1791,7 @@ window.sendPublicFile = async e => {
     await addDoc(collection(db, "roomMessages"), payload);
     e.target.value = "";
     closeModal("plus-menu-modal");
-    toast("✅ تم الإرسال للعام");
+    toast("✅ تم الإرسال للعام بنجاح");
   } catch (err) {
     alert("تعذر إرسال الملف");
   }
@@ -1972,7 +2036,7 @@ function getYoutubeId(url) {
 window.micClick = async i => {
   const s = await getDoc(micDoc(i));
   if (!s.exists()) {
-    if (currentMicSlot !== null) return alert("أنت بالفعل على المايك! انزل منه أولاً.");
+    if (currentMicSlot !== null) return alert("أنت بالفعل على المايك! انزل منه أولاً للصعود إلى مايك آخر.");
     currentMicSlot = i;
     $("mic-request-text").textContent = `هل تريد الصعود للمايك رقم ${i + 1}؟`;
     openModal("mic-request-modal");
@@ -2887,7 +2951,7 @@ window.buyStoreItem = async (type, val, price) => {
     currentUser.nameFrame = val;
   }
 
-  saveUser(currentUser);
+  await saveUser(currentUser);
   createPresence();
   closeModal("store-modal");
   toast("🎉 مبروك! تم تفعيل العنصر بنجاح");
@@ -2961,13 +3025,16 @@ window.logout = async () => {
   location.reload();
 };
 
+/* فحص الجلسة عند فتح التطبيق */
 async function boot() {
   $("login-modal").style.display = "none";
   const raw = localStorage.getItem(sessionKey) || localStorage.getItem(legacySessionKey);
   if (raw) {
     try {
-      currentUser = JSON.parse(raw);
-      currentUser = normalizeRankForUser(currentUser);
+      const cached = JSON.parse(raw);
+      // التحقق من قاعدة البيانات لجلب آخر التحديثات لنفس الحساب
+      const fresh = await getUserByName(cached.name);
+      currentUser = normalizeRankForUser(fresh || cached);
       startApp();
       $("login-modal").style.display = "none";
     } catch {
