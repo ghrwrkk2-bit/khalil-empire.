@@ -8,6 +8,11 @@
 <meta name="keywords" content="شات أصل العرب, دردشة أصل العرب, شات عربي, شات يمني, شات خليجي, شات صوتي">
 <title>شات أصل العرب | ملتقى العرب والنشامى</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- استدعاء أفضل الخطوط العربية الاحترافية من Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Almarai:wght@700;800&family=Amiri:wght@700&family=Aref+Ruqaa:wght@700&family=Cairo:wght@700;900&family=Reem+Kufi:wght@700&family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
+
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:tahoma,arial,sans-serif;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;width:100%;height:100dvh;overflow:hidden!important;background:#050c18;color:#fff}
@@ -44,13 +49,13 @@ button{cursor:pointer}
 .bottom-tab{flex:1;text-align:center;color:#e2e8f0;font-size:.62rem;padding:6px 1px;cursor:pointer}
 .bottom-tab i{display:block;font-size:1.15rem;margin-bottom:2px}
 
-/* تلوين أيقونات الشريط العلوي والسفلي بدقة كما طلبت */
+/* تلوين الأيقونات العلوي والسفلي */
 .col-white i{color:#ffffff!important}
 .col-red i{color:#ef4444!important;filter:drop-shadow(0 0 3px rgba(239,68,68,.6))}
 .col-blue i{color:#38bdf8!important;filter:drop-shadow(0 0 3px rgba(56,189,248,.6))}
 .col-gold i{color:#ffd700!important;filter:drop-shadow(0 0 5px rgba(255,215,0,.8))}
 
-/* قسم المايكات المطور */
+/* قسم المايكات المطور مع حركة الصوت عند التحدث */
 .mics-section-container{
   position:fixed!important;top:55px!important;left:0!important;right:0!important;
   width:100%!important;height:84px!important;z-index:8000!important;
@@ -71,7 +76,17 @@ button{cursor:pointer}
   color:#fff;position:relative;cursor:pointer;background-size:cover;background-position:center;
 }
 .mic-slot.occupied{border-color:#22c55e;background-color:#1e293b}
-.mic-slot.speaking{box-shadow:0 0 12px #22c55e;border-color:#4ade80}
+
+/* نبض وحركة الصوت الحقيقية عند التحدث على المايك */
+@keyframes micWaveAnim{
+  0%{box-shadow:0 0 0 0 rgba(34,197,94,.8)}
+  70%{box-shadow:0 0 0 12px rgba(34,197,94,0)}
+  100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}
+}
+.mic-slot.speaking{
+  animation:micWaveAnim 1.2s infinite ease-in-out!important;
+  border-color:#22c55e!important;
+}
 .mic-slot.muted:after{content:"🔇";position:absolute;top:-6px;right:-6px;font-size:.68rem}
 .mic-user-name{max-width:44px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.6rem;color:#fff;margin-top:2px;font-weight:bold}
 .mic-toggle-controls{
@@ -90,7 +105,7 @@ button{cursor:pointer}
 .music-sync-panel .music-info{flex:1;min-width:0;font-size:.72rem;color:#fde68a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .music-local-toggle{border:1px solid #d4a017;background:rgba(0,0,0,.5);color:#ffd54a;border-radius:50%;width:26px;height:26px;flex:none;font-size:.75rem}
 
-/* ساحة الدردشة */
+/* ساحة المحادثة: تثبيت صارم في الأسفل بدون ارتداد */
 .chat-area{
   position:fixed!important;top:55px!important;left:0!important;right:0!important;
   bottom:112px!important;width:100%!important;height:auto!important;
@@ -111,7 +126,15 @@ button{cursor:pointer}
 .msg-time{margin-right:auto;color:#64748b;font-size:.62rem;font-weight:normal}
 .rank-badge-icon{font-size:.92rem}
 .msg-text-plain{color:#f8fafc;font-size:.88rem;margin-top:2px;word-break:break-word;line-height:1.45}
-.quote-preview{border-right:3px solid #ec4899;background:rgba(15,23,42,.6);padding:4px 8px;border-radius:5px;color:#cbd5e1;font-size:.72rem;margin-top:3px}
+
+/* صندوق الاقتباس المطور الشامل */
+.quote-preview{
+  border-right:3px solid #ec4899;background:rgba(15,23,42,.85);
+  padding:6px 10px;border-radius:7px;color:#cbd5e1;font-size:.72rem;margin-top:4px;
+}
+.quote-header{display:flex;align-items:center;gap:6px;margin-bottom:3px;font-weight:bold}
+.quote-header img{width:18px;height:18px;border-radius:50%}
+
 .system-msg-item{background:rgba(59,47,16,.85);border:1px solid #d4a017;color:#fde68a;border-radius:6px;padding:6px;text-align:center;font-size:.76rem;flex:none}
 
 .contest-winner-msg{
@@ -123,25 +146,12 @@ button{cursor:pointer}
   box-shadow:0 0 10px rgba(34,197,94,.25);
 }
 
-.room-welcome-card{
-  position:fixed;bottom:116px;left:8px;right:8px;z-index:8500;
-  background:rgba(255,255,255,.95);color:#0f172a;border-radius:14px;padding:9px 12px;
-  display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.6);
-  direction:rtl;
-}
-.room-welcome-card img{width:46px;height:46px;border-radius:50%;border:2px solid #d4a017;object-fit:cover;flex:none}
-.room-welcome-details{flex:1;min-width:0}
-.room-welcome-details h4{font-size:.85rem;font-weight:bold;color:#0f172a;margin-bottom:2px}
-.room-welcome-details p{font-size:.7rem;color:#475569;line-height:1.4}
-.room-welcome-close{position:absolute;top:6px;left:8px;font-size:1.1rem;color:#64748b;cursor:pointer;font-weight:bold}
-
 .reply-box{
   position:fixed!important;left:0!important;right:0!important;bottom:112px!important;
-  z-index:8997!important;margin:0!important;max-height:48px!important;overflow:hidden!important;
+  z-index:8997!important;margin:0!important;max-height:55px!important;overflow:hidden!important;
   background:rgba(18,27,24,.95);border-right:3px solid #ec4899;padding:6px 10px;font-size:.72rem;color:#cbd5e1;
 }
 
-/* شريط الكتابة */
 .input-bar{
   position:fixed!important;left:0!important;right:0!important;bottom:53px!important;
   width:100%!important;z-index:8998!important;
@@ -172,74 +182,96 @@ button{cursor:pointer}
   background-size:cover;background-position:center;
 }
 
-/* نوافذ بيضاء ناصعة */
-.white-modal-card{
-  background:#ffffff!important;color:#0f172a!important;border:1.5px solid #cbd5e1!important;
+/* ==============================================================
+   تصميم نافذة المتواجدون مطابق للصورة 1 بالملي (Story List + كروت فخمة)
+   ============================================================== */
+.online-modal-board{
+  background:#091528!important;border:1.5px solid #1e3557!important;border-radius:20px!important;
 }
-.white-modal-card .modal-title{
-  background:#f8fafc!important;color:#0f172a!important;border-bottom:1px solid #e2e8f0!important;
+.online-header-bar{
+  display:flex;align-items:center;justify-content:space-between;padding:10px 14px;
+  border-bottom:1px solid rgba(255,255,255,.1);
 }
-.white-modal-card .online-item{border-bottom:1px solid #f1f5f9!important}
-.white-modal-card .menu-item{border-bottom:1px solid #f1f5f9!important;color:#0f172a!important}
-.white-modal-card .close-modal{background:rgba(0,0,0,.7)!important;color:#fff!important}
+.online-header-tabs{display:flex;gap:16px;align-items:center;font-size:1.15rem;color:#94a3b8}
+.online-header-tabs i.active{color:#38bdf8}
 
-.login-header-banner{padding:18px 12px;text-align:center;background:linear-gradient(135deg,#0a1931,#12284e);border-bottom:2px solid #d4a017}
-.chat-logo-title{font-size:1.45rem;font-weight:bold;color:#ffd54a;text-shadow:0 0 8px rgba(255,213,74,.4)}
-.chat-subtitle{font-size:.8rem;color:#cbd5e1;margin-top:4px}
-.login-tabs{display:flex;background:#061122;padding:4px}
-.tab-btn{flex:1;padding:10px;border:0;background:transparent;color:#94a3b8;font-weight:bold;border-radius:8px}
-.tab-btn.active{background:linear-gradient(135deg,#a51d16,#d4a017);color:#fff}
-.login-body{padding:16px;text-align:right}
-.input-group{margin-bottom:11px}
-.input-group label{display:block;font-size:.78rem;color:#ffd54a;font-weight:bold;margin-bottom:4px}
-.input-group input,.edit-input,.edit-select,textarea.form-control{width:100%;padding:10px;border:1px solid #334a6d;border-radius:8px;background:#071224;color:#fff;outline:none}
-.btn-submit{width:100%;padding:11px;border:0;border-radius:9px;background:linear-gradient(135deg,#a51d16,#d4a017);color:#fff;font-weight:bold;margin-top:6px}
-.btn-guest-direct{width:100%;padding:10px;background:#132644;border:1px solid #d4a017;border-radius:8px;color:#ffd54a;font-weight:bold;margin-top:7px}
-.close-modal{position:absolute;top:8px;left:8px;width:29px;height:29px;border-radius:50%;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:5;font-size:1.2rem;color:#fff;cursor:pointer}
-.modal-title{padding:12px;background:#09172c;border-bottom:1px solid #233858;text-align:center;font-weight:bold;color:#ffd54a}
-.menu-list{padding:8px}
-.menu-item{padding:11px;border-bottom:1px solid rgba(51,74,109,.5);display:flex;gap:10px;align-items:center;font-size:.83rem;font-weight:bold;cursor:pointer}
-.menu-item i{color:#f0c34b;width:20px;text-align:center}
-
-.login-seo-info{margin:14px 4px 4px;padding:12px;border-top:1px solid #334a6d;color:#cbd5e1;font-size:.7rem;line-height:1.7;text-align:right}
-.login-seo-info h3{font-size:.92rem;color:#ffd54a;margin:6px 0}
-.yemen-governorates{font-size:.65rem;line-height:1.7;color:#fde68a;background:#06101e;border:1px solid #4f3a0b;border-radius:8px;padding:8px;margin:6px 0}
-.wa-number{text-align:center;font-weight:bold;color:#22c55e;font-size:.88rem;margin-bottom:8px}
-
-.room-card-v11{
-  display:grid;grid-template-columns:60px 1fr;gap:9px;align-items:center;padding:9px;margin:7px 0;
-  background:linear-gradient(135deg,#0d1e38,#132c52);border:1.5px solid #d4a017;border-radius:12px;
-  direction:rtl;min-height:85px;cursor:pointer;
+/* شريط الستوري Story List */
+.story-list-bar{
+  margin:10px;padding:8px 10px;border-radius:14px;
+  background:linear-gradient(90deg,#6b21a8,#9333ea);
+  text-align:center;font-weight:bold;font-size:.85rem;color:#fff;
 }
-.room-card-v11 .room-thumb{width:56px;height:56px;border-radius:9px;object-fit:cover;border:1px solid #d4a017}
-.room-card-v11 .room-title{font-size:.92rem;font-weight:bold;color:#ffd54a;display:flex;gap:5px;align-items:center;justify-content:space-between}
-.room-card-v11 .room-desc{font-size:.68rem;color:#cbd5e1;margin-top:2px}
-.room-card-v11 .room-meta{display:flex;gap:8px;align-items:center;margin-top:4px;font-size:.65rem;color:#94a3b8}
-.room-count{color:#22c55e;font-weight:bold}
-
-.video-small-card{
-  width:160px;height:95px;border:1px solid #334a6d;border-radius:9px;background:#000;
-  display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;margin-top:5px;
+.story-circles-wrap{
+  display:flex;gap:10px;padding:8px 10px;overflow-x:auto;align-items:center;
 }
-.video-thumb-preview{width:100%;height:100%;object-fit:cover;display:block}
-.video-thumb-overlay{position:absolute!important;inset:0;display:flex!important;align-items:center;justify-content:center;background:rgba(0,0,0,.4);font-size:1.6rem!important;color:#fff!important}
-.msg-drawing-thumb{max-width:130px;max-height:100px;border-radius:8px;object-fit:cover;border:1.5px solid #d4a017;cursor:pointer;display:block;margin-top:4px}
-
-.admin-panel-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:10px}
-.admin-panel-grid button{
-  border:1px solid #233858;background:#071224;color:#ffd54a;border-radius:9px;
-  padding:12px 6px;font-size:.78rem;font-weight:bold;cursor:pointer;
+.story-circle{
+  width:48px;height:48px;border-radius:50%;padding:2px;
+  background:linear-gradient(45deg,#f43f5e,#fbbf24);flex:none;position:relative;cursor:pointer;
+}
+.story-circle img{width:100%;height:100%;border-radius:50%;object-fit:cover;background:#000}
+.story-add-badge{
+  position:absolute;bottom:0;right:0;width:18px;height:18px;background:#10b981;
+  color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;border:2px solid #091528;font-weight:bold;
 }
 
-.feed-box{padding:10px}
-.feed-post{background:#081324;border:1px solid #1e3557;border-radius:12px;padding:10px;margin-bottom:10px}
-.post-header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.post-header img{width:34px;height:34px;border-radius:50%;border:1px solid #d4a017}
-.post-content{font-size:.82rem;color:#f8fafc;margin:6px 0;line-height:1.5;white-space:pre-wrap}
-.post-img{max-width:100%;max-height:240px;border-radius:8px;margin:6px 0;object-fit:contain}
-.post-actions{display:flex;gap:12px;border-top:1px solid #1e3557;padding-top:6px;font-size:.72rem;color:#94a3b8}
-.post-btn{background:transparent;border:0;color:#cbd5e1;cursor:pointer;display:flex;align-items:center;gap:4px}
+/* عداد متصلين الآن الأخضر */
+.online-count-pill{
+  margin:6px 10px 10px;background:#15803d;color:#fff;border-radius:8px;
+  padding:7px;text-align:center;font-weight:bold;font-size:.82rem;
+  box-shadow:0 2px 8px rgba(21,128,61,.4);
+}
 
+/* كروت الأعضاء المتواجدين الملونة الفخمة نفس الصورة 1 */
+.online-user-card-v1{
+  display:flex;align-items:center;justify-content:space-between;padding:10px 12px;
+  border-radius:12px;margin:7px 10px;position:relative;overflow:hidden;
+  box-shadow:0 3px 10px rgba(0,0,0,.35);cursor:pointer;direction:rtl;
+}
+.card-theme-sunset{background:linear-gradient(90deg,#ea580c,#f43f5e,#f472b6);color:#fff}
+.card-theme-mint{background:linear-gradient(90deg,#0f766e,#14b8a6,#a7f3d0);color:#0f172a}
+.card-theme-royal{background:linear-gradient(90deg,#1e1b4b,#4338ca,#38bdf8);color:#fff}
+.card-theme-dark{background:linear-gradient(90deg,#020617,#0f172a,#1e293b);border:1px solid #334155;color:#fff}
+.card-theme-white{background:linear-gradient(90deg,#f8fafc,#ffffff,#e2e8f0);color:#0f172a}
+.card-theme-ruby{background:linear-gradient(90deg,#881337,#e11d48,#f43f5e);color:#fff}
+
+.card-v1-avatar{width:45px;height:45px;border-radius:50%;border:2px solid #fff;object-fit:cover;flex:none}
+.card-v1-info{flex:1;min-width:0;margin-right:10px}
+.card-v1-name{font-size:.88rem;font-weight:bold;display:flex;align-items:center;gap:6px}
+.card-v1-status{font-size:.68rem;opacity:.9;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-v1-crown{font-size:1.1rem;color:#ffd700;flex:none}
+
+/* ==============================================================
+   تصميم نافذة "القائمة" الجانبية مطابق للصورة 2 بالملي (بيضاء مع كرت الروم)
+   ============================================================== */
+.menu-modal-board{
+  background:#ffffff!important;color:#0f172a!important;border:1px solid #cbd5e1!important;
+  max-width:320px!important;border-radius:18px!important;
+}
+.menu-room-header-card{
+  background:#ffffff;border-bottom:1px solid #e2e8f0;padding:12px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.menu-room-header-card img{width:42px;height:42px;border-radius:50%;border:2px solid #d4a017}
+.menu-item-row{
+  display:flex;align-items:center;justify-content:space-between;padding:11px 14px;
+  border-bottom:1px solid #f1f5f9;cursor:pointer;color:#1e293b;font-weight:bold;font-size:.85rem;
+}
+.menu-item-row:hover{background:#f8fafc}
+.menu-item-right{display:flex;align-items:center;gap:12px}
+.menu-item-right i{font-size:1.15rem;width:22px;text-align:center}
+.notif-dot-red{width:9px;height:9px;border-radius:50%;background:#ef4444}
+
+/* الخطوط العربية المخصصة */
+.font-tahoma{font-family:tahoma,sans-serif!important}
+.font-cairo{font-family:'Cairo',sans-serif!important}
+.font-tajawal{font-family:'Tajawal',sans-serif!important}
+.font-ruqaa{font-family:'Aref Ruqaa',serif!important}
+.font-kufi{font-family:'Reem Kufi',sans-serif!important}
+.font-amiri{font-family:'Amiri',serif!important}
+.font-almarai{font-family:'Almarai',sans-serif!important}
+
+/* ألوان وأزرار البروفايل */
 .cover-edit-btn{
   position:absolute;top:10px;right:10px;left:auto;
   background:rgba(18,27,24,.85);color:#ffd54a;
@@ -293,32 +325,12 @@ button{cursor:pointer}
 .bg-name-pink{background:#db2777!important;padding:2px 7px!important;border-radius:6px!important}
 .bg-name-gold{background:#d97706!important;padding:2px 7px!important;border-radius:6px!important}
 
-/* خلفيات الأسماء المتحركة (المتجر) */
-.anim-bg-fire{
-  background:linear-gradient(90deg,#b91c1c,#ea580c,#facc15,#b91c1c)!important;
-  background-size:250% 100%!important;animation:bgMove 2.5s linear infinite!important;
-  padding:2px 8px!important;border-radius:8px!important;box-shadow:0 0 10px rgba(234,88,12,.5);
-}
-.anim-bg-royal{
-  background:linear-gradient(90deg,#4338ca,#7c3aed,#ec4899,#4338ca)!important;
-  background-size:250% 100%!important;animation:bgMove 3s linear infinite!important;
-  padding:2px 8px!important;border-radius:8px!important;box-shadow:0 0 10px rgba(124,58,237,.5);
-}
-.anim-bg-neon{
-  background:linear-gradient(90deg,#0e7490,#06b6d4,#10b981,#0e7490)!important;
-  background-size:250% 100%!important;animation:bgMove 2.5s linear infinite!important;
-  padding:2px 8px!important;border-radius:8px!important;box-shadow:0 0 10px rgba(6,182,212,.5);
-}
-.anim-bg-gold{
-  background:linear-gradient(90deg,#78350f,#d97706,#fef08a,#78350f)!important;
-  background-size:250% 100%!important;animation:bgMove 2.5s linear infinite!important;
-  padding:2px 8px!important;border-radius:8px!important;box-shadow:0 0 10px rgba(217,119,6,.5);
-}
-.anim-bg-ice{
-  background:linear-gradient(90deg,#0369a1,#38bdf8,#e0f2fe,#0369a1)!important;
-  background-size:250% 100%!important;animation:bgMove 2.5s linear infinite!important;
-  padding:2px 8px!important;border-radius:8px!important;box-shadow:0 0 10px rgba(56,189,248,.5);
-}
+/* خلفيات الاسم المتحركة */
+.anim-bg-fire{background:linear-gradient(90deg,#b91c1c,#ea580c,#facc15,#b91c1c)!important;background-size:250% 100%!important;animation:bgMove 2.5s linear infinite!important;padding:2px 8px!important;border-radius:8px!important}
+.anim-bg-royal{background:linear-gradient(90deg,#4338ca,#7c3aed,#ec4899,#4338ca)!important;background-size:250% 100%!important;animation:bgMove 3s linear infinite!important;padding:2px 8px!important;border-radius:8px!important}
+.anim-bg-neon{background:linear-gradient(90deg,#0e7490,#06b6d4,#10b981,#0e7490)!important;background-size:250% 100%!important;animation:bgMove 2.5s linear infinite!important;padding:2px 8px!important;border-radius:8px!important}
+.anim-bg-gold{background:linear-gradient(90deg,#78350f,#d97706,#fef08a,#78350f)!important;background-size:250% 100%!important;animation:bgMove 2.5s linear infinite!important;padding:2px 8px!important;border-radius:8px!important}
+.anim-bg-ice{background:linear-gradient(90deg,#0369a1,#38bdf8,#e0f2fe,#0369a1)!important;background-size:250% 100%!important;animation:bgMove 2.5s linear infinite!important;padding:2px 8px!important;border-radius:8px!important}
 @keyframes bgMove{to{background-position:250% 0}}
 
 #toast{position:fixed;bottom:115px;left:50%;transform:translateX(-50%);background:#09172c;color:#ffd54a;border:1px solid #d4a017;border-radius:12px;padding:9px 16px;font-size:.78rem;z-index:20000;display:none;box-shadow:0 4px 15px rgba(0,0,0,.7)}
@@ -330,19 +342,12 @@ button{cursor:pointer}
 .store-items{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;padding:8px}
 .store-item{background:#071224;border:1px solid #1e3557;border-radius:10px;padding:9px;text-align:center}
 
-.friend-req-card{
-  background:#09172c;border:1.5px solid #d4a017;border-radius:14px;padding:12px;
-  margin-bottom:10px;text-align:center;position:relative;overflow:hidden;
-}
+.friend-req-card{background:#09172c;border:1.5px solid #d4a017;border-radius:14px;padding:12px;margin-bottom:10px;text-align:center;position:relative}
 .friend-req-cover{height:70px;background-size:cover;background-position:center;border-radius:8px;margin-bottom:8px}
 .friend-req-avatar{width:55px;height:55px;border-radius:50%;border:2px solid #ffd54a;margin:-35px auto 6px;display:block;background:#000}
 .btn-action-pair{display:flex;gap:8px;margin-top:10px}
 
-.yt-result-item{
-  display:flex;gap:8px;align-items:center;background:#071224;border:1px solid #1e3557;
-  border-radius:8px;padding:6px;margin-bottom:6px;cursor:pointer;text-align:right;
-}
-.yt-result-item:hover{background:#0f2444;border-color:#d4a017}
+.yt-result-item{display:flex;gap:8px;align-items:center;background:#071224;border:1px solid #1e3557;border-radius:8px;padding:6px;margin-bottom:6px;cursor:pointer;text-align:right}
 .yt-thumb{width:68px;height:48px;border-radius:6px;object-fit:cover;flex:none}
 .yt-details{flex:1;min-width:0}
 .yt-title{font-size:.76rem;color:#f8fafc;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -353,16 +358,6 @@ button{cursor:pointer}
 
 <div id="toast"></div>
 <div id="room-bg-canvas"></div>
-
-<!-- بطاقة ترحيب الروم المنبثقة -->
-<div id="room-welcome-card" class="room-welcome-card">
-  <span class="room-welcome-close" onclick="closeRoomWelcomeCard()">&times;</span>
-  <img id="room-welcome-img" src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=100">
-  <div class="room-welcome-details">
-    <h4 id="room-welcome-title">غرفة أصل العرب</h4>
-    <p id="room-welcome-desc">أهلاً وسهلاً بك في بيتك الثاني! نورت الروم بوجودك، ونتمنى لك قضاء وقت ممتع ومميز مع باقي الأعضاء 🌟💚</p>
-  </div>
-</div>
 
 <!-- شاشة تسجيل الدخول -->
 <div id="login-modal">
@@ -421,7 +416,7 @@ button{cursor:pointer}
   </div>
 </div>
 
-<!-- الشريط العلوي بتلوين الأيقونات المطلوب بالملي -->
+<!-- الشريط العلوي بالأيقونات والألوان المطلوبة -->
 <div class="top-bar-icons" id="main-top-bar">
   <div class="nav-item-top col-white" onclick="openModal('icon-menu-modal')"><i class="fa-solid fa-circle-user"></i>الاعدادات</div>
   <div class="nav-item-top col-red" onclick="openNotifications()"><i class="fa-solid fa-bell"></i><span id="notifyBadge" class="badge hidden">0</span>اشعار</div>
@@ -433,7 +428,7 @@ button{cursor:pointer}
   <div class="nav-item-top col-white" onclick="openModal('options-menu-modal')"><i class="fa-solid fa-bars"></i>القائمة</div>
 </div>
 
-<!-- قسم المايكات المطور مع زر الترس للتحكم السريع -->
+<!-- قسم المايكات المطور مع حركة الصوت عند التحدث وزر الترس السريع -->
 <div class="mics-section-container">
   <div id="mics-frame" class="mics-group-frame">
     <div class="mic-slot-wrapper"><div class="mic-slot" id="mic-slot-3" onclick="micClick(3)"><i class="fa-solid fa-microphone"></i></div><div class="mic-user-name" id="mic-name-3">4</div></div>
@@ -443,12 +438,11 @@ button{cursor:pointer}
   </div>
   <div style="text-align:center;margin-top:3px">
     <div class="mic-toggle-controls" onclick="toggleMicsVisibility()"><i class="fa-solid fa-arrows-up-down"></i></div>
-    <!-- زر الترس تحت المايك يفتح قائمة التحكم السريع -->
     <div class="mic-toggle-controls" style="background:#2563eb;margin-right:4px" onclick="openModal('mic-gear-modal')"><i class="fa-solid fa-gear"></i></div>
   </div>
 </div>
 
-<!-- نافذة زر الترس ⚙️ تحت المايك للتحكم السريع بالموسيقى والمايكات والنقاط وكارت الحظ -->
+<!-- نافذة زر الترس ⚙️ تحت المايك -->
 <div id="mic-gear-modal" class="modal-overlay hidden">
   <div class="modal-card">
     <span class="close-modal" onclick="closeModal('mic-gear-modal')">&times;</span>
@@ -490,7 +484,7 @@ button{cursor:pointer}
 
 <div id="reply-box" class="reply-box" style="display:none"></div>
 
-<!-- شريط الكتابة: زر الإرسال باليمين أسود وبداخله سهم أبيض والميك والإضافة باليسار -->
+<!-- شريط الكتابة -->
 <div class="input-bar" id="main-input-bar">
   <button class="send-btn-main" onclick="sendMessage()"><i class="fa-solid fa-location-arrow"></i></button>
   <div class="input-wrapper">
@@ -501,7 +495,7 @@ button{cursor:pointer}
   <button class="icon-btn" onclick="togglePlusMenu()"><i class="fa-solid fa-plus"></i></button>
 </div>
 
-<!-- الشريط السفلي بتلوين الأيقونات المطلوب بالملي -->
+<!-- الشريط السفلي -->
 <div class="bottom-main-nav" id="main-bottom-bar">
   <div class="bottom-tab col-white" onclick="openOnlineList()"><i class="fa-solid fa-users"></i>المتواجدين</div>
   <div class="bottom-tab col-white" onclick="openFriendRequestsModal()"><i class="fa-solid fa-user-group"></i>الاصدقاء</div>
@@ -519,7 +513,7 @@ button{cursor:pointer}
   </div>
 </div>
 
-<!-- نافذة بحث وتشغيل اليوتيوب الحقيقي بالنتائج المباشرة -->
+<!-- نافذة بحث وتشغيل اليوتيوب الحقيقي -->
 <div id="youtube-search-modal" class="modal-overlay hidden">
   <div class="modal-card" style="max-height:85vh">
     <span class="close-modal" onclick="closeModal('youtube-search-modal')">&times;</span>
@@ -539,7 +533,7 @@ button{cursor:pointer}
   </div>
 </div>
 
-<!-- البروفايل: غلاف كبير (175px) + زر القلم ✏️ بأعلى الغلاف بالجهة اليمنى + أزرار الكاميرا فوق الصور عند التعديل -->
+<!-- البروفايل وتعديل الحساب مع الخطوط العربية وقائمة الألوان الواسعة -->
 <div id="profile-modal" class="modal-overlay hidden">
   <div class="modal-card profile-card-modal">
     <span class="close-modal" onclick="closeModal('profile-modal')">&times;</span>
@@ -593,15 +587,28 @@ button{cursor:pointer}
       <h4 id="profile-edit-title" style="color:#ffd54a;margin-bottom:8px">تعديل بيانات الحساب</h4>
       <div class="input-group"><label>الاسم (12 حرف كحد أقصى)</label><input id="edit-name-input" maxlength="12"></div>
       
-      <!-- خيار لون خط الاسم -->
+      <!-- اختيار الخطوط العربية الاحترافية -->
+      <div class="input-group"><label>نوع الخط العربي للاسم والشات</label>
+        <select id="edit-name-font-select" class="edit-select">
+          <option value="font-tahoma">خط تاهوما الافتراضي</option>
+          <option value="font-cairo">خط كايرو الفخم (Cairo)</option>
+          <option value="font-tajawal">خط تجوال العصري (Tajawal)</option>
+          <option value="font-ruqaa">خط الرقعة الأصيل (Aref Ruqaa)</option>
+          <option value="font-kufi">الخط الكوفي الأنيق (Reem Kufi)</option>
+          <option value="font-amiri">خط النسخ الأميري (Amiri)</option>
+          <option value="font-almarai">خط المراعي النقي (Almarai)</option>
+        </select>
+      </div>
+
+      <!-- قائمة ألوان خط الاسم الواسعة -->
       <div class="input-group"><label>لون خط الاسم</label>
         <select id="edit-name-color-select" class="edit-select">
-          <option value="color-text-white">أبيض (افتراضي)</option>
+          <option value="color-text-white">أبيض ناصع</option>
+          <option value="color-text-gold">ذهبي خالص ملكي</option>
           <option value="color-text-red">أحمر ناري</option>
           <option value="color-text-green">أخضر زمردي</option>
           <option value="color-text-blue">أزرق سماوي</option>
-          <option value="color-text-gold">ذهبي خالص</option>
-          <option value="color-text-purple">بنفسجي ملكي</option>
+          <option value="color-text-purple">بنفسجي ساحر</option>
           <option value="color-text-pink">وردي أنيق</option>
           <option value="color-text-orange">برتقالي جذاب</option>
           <option value="color-text-cyan">سماوي ناصع</option>
@@ -609,7 +616,7 @@ button{cursor:pointer}
         </select>
       </div>
 
-      <!-- خيار لون خلفية الاسم الثابتة المتعددة -->
+      <!-- خلفية الاسم الثابتة -->
       <div class="input-group"><label>لون خلفية الاسم (ثابت)</label>
         <select id="edit-name-static-bg-select" class="edit-select">
           <option value="bg-name-none">بدون خلفية ملونة</option>
@@ -625,7 +632,7 @@ button{cursor:pointer}
         </select>
       </div>
 
-      <!-- خيار خلفية الاسم المتحركة من المتجر -->
+      <!-- خلفية الاسم المتحركة -->
       <div class="input-group"><label>خلفية الاسم المتحركة (من المتجر)</label>
         <select id="edit-name-anim-select" class="edit-select">
           <option value="">بدون خلفية متحركة</option>
@@ -653,43 +660,113 @@ button{cursor:pointer}
   </div>
 </div>
 
-<!-- نافذة المتواجدون باللون الأبيض الناصع -->
+<!-- ==============================================================
+     نافذة "المتواجدون الآن" مطابقة للصورة 1 بالملي (Story List + كروت فخمة)
+     ============================================================== -->
 <div id="online-modal" class="modal-overlay hidden">
-  <div class="modal-card white-modal-card">
-    <span class="close-modal" onclick="closeModal('online-modal')">&times;</span>
-    <div class="modal-title">👥 المتواجدون الآن</div>
-    <div id="online-users-container" class="online-list" style="padding:8px"></div>
+  <div class="modal-card online-modal-board">
+    <div class="online-header-bar">
+      <span class="close-modal" style="position:static" onclick="closeModal('online-modal')">&times;</span>
+      <div class="online-header-tabs">
+        <i class="fa-solid fa-magnifying-glass" title="بحث"></i>
+        <i class="fa-solid fa-user-plus" title="طلبات الصداقة" onclick="openFriendRequestsModal()"></i>
+        <i class="fa-solid fa-user" title="الملف الشخصي" onclick="openOwnProfile()"></i>
+        <i class="fa-solid fa-users active" title="المتواجدين"></i>
+      </div>
+    </div>
+    
+    <!-- شريط الستوري Story List 30 -->
+    <div class="story-list-bar">Story List 30</div>
+    <div class="story-circles-wrap">
+      <div class="story-circle" onclick="openDrawingFromPlus()" title="إضافة ستوري">
+        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100">
+        <span class="story-add-badge">+</span>
+      </div>
+      <div class="story-circle"><img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100"></div>
+      <div class="story-circle"><img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100"></div>
+      <div class="story-circle"><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100"></div>
+    </div>
+
+    <!-- عداد متصلين الآن الأخضر -->
+    <div class="online-count-pill">👥 متصلين الآن <span id="online-users-count-badge">0</span></div>
+
+    <!-- حاوية كروت الأعضاء المتواجدين الملونة -->
+    <div id="online-users-container" style="padding-bottom:12px"></div>
   </div>
 </div>
 
-<!-- نافذة الخيارات (القائمة) باللون الأبيض الناصع -->
+<!-- ==============================================================
+     نافذة "القائمة" الجانبية مطابقة للصورة 2 بالملي
+     ============================================================== -->
 <div id="options-menu-modal" class="modal-overlay hidden">
-  <div class="modal-card white-modal-card">
-    <span class="close-modal" onclick="closeModal('options-menu-modal')">&times;</span>
-    <div class="modal-title">القائمة ☰</div>
-    <div class="menu-list">
-      <div class="menu-item" onclick="openChatSettingsModal();closeModal('options-menu-modal')"><i class="fa-solid fa-gear"></i>إعدادات الروم وتخصيص الألوان</div>
-      <div id="owner-dashboard-option" class="menu-item hidden" onclick="openOwnerDashboard();closeModal('options-menu-modal')"><i class="fa-solid fa-crown"></i>لوحة التحكم — لصاحب الشات</div>
-      <div class="menu-item" onclick="location.reload()"><i class="fa-solid fa-rotate"></i>تحديث البيانات</div>
-      <div class="menu-item" onclick="openModal('rooms-modal');closeModal('options-menu-modal')"><i class="fa-solid fa-door-open"></i>قائمة الرومات</div>
-      <div class="menu-item" onclick="openFeature('حائط الأصدقاء')"><i class="fa-solid fa-user-group"></i>حائط الأصدقاء</div>
-      <div class="menu-item" onclick="openFeature('حائط النشر')"><i class="fa-solid fa-bullhorn"></i>حائط النشر</div>
-      <div class="menu-item" onclick="openFeature('تفاعل الاعضاء')"><i class="fa-solid fa-heart"></i>تفاعل الاعضاء (بريمو وما تحت)</div>
-      <div class="menu-item" onclick="openFeature('تفاعل الادارة')"><i class="fa-solid fa-user-shield"></i>تفاعل الادارة</div>
-      <div class="menu-item" onclick="openFeature('تفاعل الرومات')"><i class="fa-solid fa-door-open"></i>تفاعل الرومات</div>
-      <div class="menu-item" onclick="openFeature('قائمة الكبار')"><i class="fa-solid fa-crown"></i>قائمة الكبار</div>
-      <div class="menu-item" onclick="openFeature('قائمة الأثرياء')"><i class="fa-solid fa-gem"></i>قائمة الأثرياء</div>
-      <div class="menu-item" onclick="openFeature('Black Market')"><i class="fa-solid fa-store"></i>Black Market</div>
-      <div class="menu-item" onclick="openFeature('نجوم الجولات')"><i class="fa-solid fa-star"></i>نجوم الجولات</div>
-      <div class="menu-item" onclick="openFeature('اتوبيس كومبليت')"><i class="fa-solid fa-bus"></i>اتوبيس كومبليت</div>
-      <div class="menu-item" onclick="openFeature('كبار الداعمين')"><i class="fa-solid fa-hand-holding-dollar"></i>كبار الداعمين</div>
-      <div class="menu-item" onclick="openFeature('تحميل التطبيق')"><i class="fa-solid fa-download"></i>تحميل التطبيق</div>
-      <div class="menu-item" onclick="openFeature('ترتيب نقاط المسابقة')"><i class="fa-solid fa-ranking-star"></i>ترتيب نقاط المسابقة</div>
+  <div class="modal-card menu-modal-board">
+    <span class="close-modal" style="position:absolute;top:8px;left:8px;background:#e2e8f0;color:#0f172a" onclick="closeModal('options-menu-modal')">&times;</span>
+    
+    <!-- كرت الغرفة الحالية بأعلى القائمة -->
+    <div class="menu-room-header-card">
+      <div>
+        <small style="color:#64748b;font-size:.7rem;display:block">الغرفة الحالية</small>
+        <strong id="menu-current-room-name" style="color:#0f172a;font-size:.9rem">الغرفة || العامة</strong>
+      </div>
+      <img id="menu-current-room-img" src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=100">
+    </div>
+
+    <div class="menu-list" style="padding:0">
+      <div class="menu-item-row" onclick="openModal('rooms-modal');closeModal('options-menu-modal')">
+        <div class="menu-item-right"><i class="fa-solid fa-house" style="color:#64748b"></i><span>قائمة الرومات</span></div>
+      </div>
+      <div class="menu-item-row" onclick="openFeature('حائط الأصدقاء')">
+        <div class="menu-item-right"><i class="fa-solid fa-rss" style="color:#64748b"></i><span>حائط الأصدقاء</span></div>
+      </div>
+      <div class="menu-item-row" onclick="openFeature('حائط النشر')">
+        <div class="menu-item-right"><i class="fa-solid fa-newspaper" style="color:#64748b"></i><span>حائط النشر</span></div>
+        <span class="notif-dot-red"></span>
+      </div>
+      <div class="menu-item-row" onclick="openFeature('الأخبار')">
+        <div class="menu-item-right"><i class="fa-solid fa-newspaper" style="color:#94a3b8"></i><span>الأخبار</span></div>
+      </div>
+      <div class="menu-item-row" onclick="openFeature('عائلات VIP')">
+        <div class="menu-item-right"><i class="fa-solid fa-users" style="color:#64748b"></i><span>عائلات VIP</span></div>
+      </div>
+      <div class="menu-item-row" onclick="openFeature('قائمة الكبار')">
+        <div class="menu-item-right"><i class="fa-solid fa-gem" style="color:#eab308"></i><span>قائمة الكبار</span></div>
+      </div>
+      <div class="menu-item-row" onclick="openFeature('قائمة الأثرياء')">
+        <div class="menu-item-right"><i class="fa-solid fa-crown" style="color:#a855f7"></i><span>قائمة الاثرياء</span></div>
+      </div>
+      <div class="menu-item-row" onclick="openFeature('Black Market')">
+        <div class="menu-item-right"><i class="fa-solid fa-store" style="color:#a855f7"></i><span>Black Market</span></div>
+      </div>
+      <div class="menu-item-row" onclick="openFeature('نجوم الجولات')">
+        <div class="menu-item-right"><i class="fa-solid fa-star" style="color:#eab308"></i><span>نجوم الجولات</span></div>
+      </div>
+      <div class="menu-item-row" onclick="openFeature('اتوبيس كومبليت')">
+        <div class="menu-item-right"><i class="fa-solid fa-comment-dots" style="color:#38bdf8"></i><span>اتوبيس كومبليت</span></div>
+      </div>
+      <div id="owner-dashboard-option" class="menu-item-row hidden" onclick="openOwnerDashboard();closeModal('options-menu-modal')" style="background:#fffbeb">
+        <div class="menu-item-right"><i class="fa-solid fa-crown" style="color:#d97706"></i><span style="color:#b45309">لوحة تحكم صاحب الشات</span></div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- لوحة تحكم صاحب الشات بجميع أقسامها الـ 13 كاملة مع الـ 25 رتبة بالأذونات -->
+<!-- قائمة الإعدادات (الاعدادات) بالشريط العلوي مع الخيارات الـ 6 كاملة -->
+<div id="icon-menu-modal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <span class="close-modal" onclick="closeModal('icon-menu-modal')">&times;</span>
+    <div class="modal-title">الاعدادات ⚙️</div>
+    <div class="menu-list">
+      <div class="menu-item" onclick="openChatSettingsModal();closeModal('icon-menu-modal')"><i class="fa-solid fa-gear"></i>إعدادات الدردشة</div>
+      <div class="menu-item" onclick="openWallet()"><i class="fa-solid fa-wallet"></i>محفظة</div>
+      <div class="menu-item" onclick="openDailyRewards()"><i class="fa-solid fa-gift"></i>المكافآت اليومية</div>
+      <div class="menu-item" onclick="openLevelInfo()"><i class="fa-solid fa-chart-line"></i>معلومات المستوى</div>
+      <div class="menu-item" onclick="toggleSimpleMode()"><i class="fa-solid fa-leaf"></i>تشغيل الوضع البسيط</div>
+      <div class="menu-item" style="color:#ef4444" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i>خروج</div>
+    </div>
+  </div>
+</div>
+
+<!-- لوحة تحكم صاحب الشات بجميع أقسامها الـ 13 -->
 <div id="owner-chat-settings-modal" class="modal-overlay hidden">
   <div class="modal-card">
     <span class="close-modal" onclick="closeModal('owner-chat-settings-modal')">&times;</span>
@@ -698,7 +775,7 @@ button{cursor:pointer}
   </div>
 </div>
 
-<!-- إعدادات الروم وتخصيص الألوان مع حفظ خلفية الروم وأيقونة الغرفة ولون الشريطين -->
+<!-- إعدادات الروم مع حفظ وتطبيق الخلفية والأيقونة من ملفات الجهاز -->
 <div id="chat-settings-modal" class="modal-overlay hidden">
   <div class="modal-card">
     <span class="close-modal" onclick="closeModal('chat-settings-modal')">&times;</span>
@@ -706,7 +783,7 @@ button{cursor:pointer}
     <div class="login-body">
       <button class="btn-submit" style="background:#dc2626" onclick="clearAllRoomMessages()">🧹 تنظيف رسائل الروم للجميع</button>
       
-      <!-- تخصيص لون الشريط العلوي والسفلي لمالك الروم وصاحب الشات -->
+      <!-- تخصيص لون الشريط العلوي والسفلي للجميع -->
       <div id="owner-bars-color-box" class="hidden" style="margin-top:12px;background:#06101e;border:1px solid #d4a017;padding:10px;border-radius:10px">
         <label style="color:#ffd54a;font-weight:bold;font-size:.78rem;display:block;margin-bottom:6px">🎨 تغيير لون الشريط العلوي والسفلي (للجميع):</label>
         <div style="display:flex;gap:6px">
@@ -716,17 +793,19 @@ button{cursor:pointer}
       </div>
 
       <div class="input-group" style="margin-top:10px">
-        <label>🌌 خلفية الروم</label>
+        <label>🌌 خلفية الروم من الملف</label>
         <input id="chat-room-bg-input" type="file" accept="image/*" onchange="chooseRoomBackground(event)">
         <button class="btn-submit" onclick="saveRoomBackground()">💾 حفظ وتطبيق خلفية الروم للجميع</button>
       </div>
       <button class="btn-submit" style="background:#475569" onclick="removeRoomBackground()">إزالة خلفية الروم</button>
+      
       <div class="input-group" style="margin-top:10px">
         <label>🎙️ عدد المايكات</label>
         <select id="mics-count-select" class="edit-select" onchange="updateMicsCount()"><option value="4">4</option><option value="3">3</option><option value="2">2</option><option value="1">1</option><option value="0">0</option></select>
       </div>
+
       <div class="input-group">
-        <label>🖼️ أيقونة الغرفة</label>
+        <label>🖼️ أيقونة الغرفة من الملف</label>
         <input id="chat-room-icon-input" type="file" accept="image/*" onchange="chooseRoomIcon(event)">
         <button class="btn-submit" onclick="saveRoomIcon()">💾 حفظ أيقونة الغرفة للجميع</button>
       </div>
@@ -734,7 +813,7 @@ button{cursor:pointer}
   </div>
 </div>
 
-<!-- باقي النوافذ -->
+<!-- باقي النوافذ والمودالات -->
 <div id="wallet-modal" class="modal-overlay hidden"><div class="modal-card" style="max-width:400px;text-align:center;padding:16px"><span class="close-modal" onclick="closeModal('wallet-modal')">&times;</span><div class="modal-title">💰 المحفظة ورصيد الحساب</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:15px 0"><div style="background:#071224;border:1px solid #1e3557;padding:12px;border-radius:10px">⭐ النقاط: <b id="wallet-points" style="color:#38bdf8">0</b></div><div style="background:#071224;border:1px solid #1e3557;padding:12px;border-radius:10px">🪙 الذهب: <b id="wallet-gold" style="color:#ffd700">0</b></div><div style="background:#071224;border:1px solid #1e3557;padding:12px;border-radius:10px">💎 الروبي: <b id="wallet-rubies" style="color:#ef4444">0</b></div><div style="background:#071224;border:1px solid #1e3557;padding:12px;border-radius:10px">🎁 الهدايا: <b id="wallet-gifts" style="color:#ec4899">0</b></div></div><div style="font-size:.78rem;color:#cbd5e1">المستوى: <b id="wallet-level">1</b> | الرسائل: <b id="wallet-msg-count">0</b></div></div></div>
 <div id="rooms-modal" class="modal-overlay hidden"><div class="modal-card"><span class="close-modal" onclick="closeModal('rooms-modal')">&times;</span><div class="modal-title">الغرف</div><div id="owner-room-create-box" class="login-body hidden" style="padding:8px"><button class="btn-submit" style="background:#10b981" onclick="createRoomPrompt()">➕ إنشاء روم جديد — لصاحب الشات</button></div><div id="rooms-container" class="rooms-list" style="padding:8px"></div></div></div>
 <div id="store-modal" class="modal-overlay hidden"><div class="modal-card"><span class="close-modal" onclick="closeModal('store-modal')">&times;</span><div class="modal-title">🛍️ متجر شات أصل العرب</div><div class="store-cats"><button id="store-cat-ranks" class="store-cat active" onclick="showStoreCategory('ranks')">🏆 رتب</button><button id="store-cat-names" class="store-cat" onclick="showStoreCategory('names')">🔥 خلفية اسم</button><button id="store-cat-frames" class="store-cat" onclick="showStoreCategory('frames')">👑 إطارات</button></div><div id="store-items" class="store-items"></div></div></div>
@@ -789,6 +868,8 @@ button{cursor:pointer}
 </div>
 
 <div id="webrtc-remote-audios" style="display:none"></div>
+
+<!-- نهاية الجزء الأول (انسخ الجزء الثاني وضعه تحته مباشرة) -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import {
@@ -813,7 +894,6 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-/* بادئة العزل التام لشات أصل العرب */
 const P = "asl_";
 
 const RANKS = [
@@ -928,9 +1008,11 @@ function getYoutubeId(url) {
 function isPhantomAccount(u) {
   if (!u || !u.name) return true;
   const n = String(u.name).trim();
-  if (n === "مس" || n === "علي" || n === "undefined" || n === "null" || n === "") return true;
+  if (["مس", "علي", "undefined", "null", ""].includes(n)) return true;
   if (n === "UN" && Number(u.rankId) === 19) return true;
   if (n.includes("بوت المسابق") || n.includes("مسابقة")) return true;
+  if (n.includes("@") && !isPrimaryOwner(u)) return true;
+  if (n.startsWith("ghrwrk") && !isPrimaryOwner(u)) return true;
   return false;
 }
 
@@ -1132,6 +1214,7 @@ async function saveUser(u) {
     cover: u.cover || "", profileBackground: u.profileBackground || "",
     rankId: u.rankId || 20, nameFrame: u.nameFrame || "frame-none",
     nameColor: u.nameColor || "", nameStaticBg: u.nameStaticBg || "", nameBackground: u.nameBackground || "",
+    nameFont: u.nameFont || "",
     isOwner: !!u.isOwner, isPrimaryOwner: !!u.isPrimaryOwner,
     isVisitor: !!u.isVisitor, isBanned: !!u.isBanned, isMuted: !!u.isMuted,
     points: Number(u.points) || 0, gold: Number(u.gold) || 0, rubies: Number(u.rubies) || 0,
@@ -1148,6 +1231,7 @@ async function createPresence() {
       cover: currentUser.cover || "", profileBackground: currentUser.profileBackground || "",
       rankId: currentUser.rankId || 20, nameFrame: currentUser.nameFrame || "frame-none",
       nameColor: currentUser.nameColor || "", nameStaticBg: currentUser.nameStaticBg || "", nameBackground: currentUser.nameBackground || "",
+      nameFont: currentUser.nameFont || "",
       isOwner: !!currentUser.isOwner, isPrimaryOwner: !!currentUser.isPrimaryOwner,
       isVisitor: !!currentUser.isVisitor, isBanned: !!currentUser.isBanned, isMuted: !!currentUser.isMuted,
       points: Number(currentUser.points) || 0, gold: Number(currentUser.gold) || 0, rubies: Number(currentUser.rubies) || 0,
@@ -1171,7 +1255,6 @@ async function stopPresence() {
 window.addEventListener("beforeunload", () => { stopPresence(); });
 window.addEventListener("pagehide", () => { stopPresence(); });
 
-/* الدخول الفوري والتعرف على صاحب الشات والتحقق من الجلسات */
 async function login() {
   const name = $("username").value.trim();
   const email = $("email").value.trim().toLowerCase();
@@ -1222,7 +1305,7 @@ async function login() {
 }
 window.login = login;
 
-/* تسجيل حساب جديد: أول عضو يسجل يصبح صاحب الموقع الرسمي والمالك الدائم تلقائياً للأبد! */
+/* تسجيل حساب جديد: تتويج أول مسجل في الموقع كصاحب الشات الرسمي للأبد */
 window.registerMember = async () => {
   const name = $("reg-name").value.trim();
   const email = $("reg-email").value.trim().toLowerCase();
@@ -1493,6 +1576,7 @@ function listenPresence() {
   });
 }
 
+/* رندرة المتواجدون الآن بنفس تصميم الصورة 1 (كروت عريضة بتدرجات ألوان فخمة) */
 function renderOnline(arr) {
   const c = $("online-users-container");
   if (!c) return;
@@ -1501,7 +1585,11 @@ function renderOnline(arr) {
   const roomUsers = arr.filter(u => u && !isPhantomAccount(u) && (u.roomId === currentRoomId || !u.roomId));
   const sorted = sortedLeaderboard(roomUsers);
 
-  sorted.forEach(raw => {
+  $("online-users-count-badge").textContent = String(sorted.length);
+
+  const cardThemes = ["card-theme-sunset", "card-theme-mint", "card-theme-royal", "card-theme-dark", "card-theme-white", "card-theme-ruby"];
+
+  sorted.forEach((raw, idx) => {
     const merged = users.get(raw.name) || raw;
     const u = normalizeRankForUser(merged);
     const r = rank(u.rankId);
@@ -1509,21 +1597,23 @@ function renderOnline(arr) {
     const nameColor = u.nameColor || "color-text-white";
     const nameStaticBg = u.nameStaticBg || "";
     const nameAnim = u.nameBackground || "";
-    const isOnline = raw.isOnline !== false;
+    const nameFont = u.nameFont || "font-tahoma";
+    const themeClass = cardThemes[idx % cardThemes.length];
 
-    c.insertAdjacentHTML("beforeend", `<div class="online-item" data-name="${safe(u.name)}" style="display:flex;align-items:center;justify-content:space-between;padding:9px;border-bottom:1px solid #f1f5f9;cursor:pointer" onclick="openProfileByName('${slug(u.name)}')">
-      <div style="display:flex;align-items:center;gap:8px">
-        <img class="user-avatar" src="${safe(u.avatar || avatarFor(u.name))}">
-        <div>
-          <div class="name-line">
-            <i class="${r.icon} ${u.isPrimaryOwner ? 'owner-rank-icon' : ''}" style="color:${r.color}"></i>
-            <span class="name-frame ${frame} ${nameStaticBg} ${nameAnim}"><span class="${nameColor} ${u.isPrimaryOwner ? 'owner-rank-text' : ''}" style="font-weight:bold">${safe(u.name)}</span></span>
+    c.insertAdjacentHTML("beforeend", `
+      <div class="online-user-card-v1 ${themeClass}" data-name="${safe(u.name)}" onclick="openProfileByName('${slug(u.name)}')">
+        <div style="display:flex;align-items:center;min-width:0">
+          <img class="card-v1-avatar" src="${safe(u.avatar || avatarFor(u.name))}">
+          <div class="card-v1-info">
+            <div class="card-v1-name">
+              <span class="name-frame ${frame} ${nameStaticBg} ${nameAnim}"><span class="${nameColor} ${nameFont}">${safe(u.name)}</span></span>
+            </div>
+            <div class="card-v1-status">${safe(u.info || r.title)}</div>
           </div>
-          <small style="color:${r.color};font-weight:bold;font-size:.65rem;display:block;margin-top:2px">${safe(r.title)}</small>
         </div>
+        <div class="card-v1-crown"><i class="${r.icon} ${u.isPrimaryOwner ? 'owner-rank-icon' : ''}"></i></div>
       </div>
-      <span style="color:${isOnline ? '#22c55e' : '#94a3b8'};font-size:.65rem;font-weight:bold">${isOnline ? '● متصل' : '○ مغلق'}</span>
-    </div>`);
+    `);
   });
 
   if (!sorted.length) c.innerHTML = "<div style='padding:15px;text-align:center;color:#94a3b8'>لا يوجد متواجدون حالياً.</div>";
@@ -1554,7 +1644,7 @@ function openProfile(u) {
   const r = rank(selectedUser.rankId);
 
   $("prof-name").textContent = selectedUser.name;
-  $("prof-name").className = `name-frame ${selectedUser.nameFrame || 'frame-none'} ${selectedUser.nameStaticBg || ''} ${selectedUser.nameBackground || ''} ${selectedUser.nameColor || 'color-text-white'}`;
+  $("prof-name").className = `name-frame ${selectedUser.nameFrame || 'frame-none'} ${selectedUser.nameStaticBg || ''} ${selectedUser.nameBackground || ''} ${selectedUser.nameColor || 'color-text-white'} ${selectedUser.nameFont || 'font-tahoma'}`;
   $("prof-rank-display").innerHTML = `<i class="${r.icon} ${selectedUser.isPrimaryOwner ? 'owner-rank-icon' : ''}" style="color:${r.color}"></i> <span class="${selectedUser.isPrimaryOwner ? 'owner-rank-text' : ''}">${safe(r.title)}</span>`;
   $("prof-img").src = selectedUser.avatar || avatarFor(selectedUser.name);
   $("prof-cover").style.backgroundImage = selectedUser.cover ? `url("${selectedUser.cover}")` : "linear-gradient(135deg,#0d1d36,#ec4899)";
@@ -1593,6 +1683,7 @@ function openProfile(u) {
   }
 
   $("edit-name-input").value = selectedUser.name;
+  $("edit-name-font-select").value = selectedUser.nameFont || "font-tahoma";
   $("edit-name-color-select").value = selectedUser.nameColor || "color-text-white";
   $("edit-name-static-bg-select").value = selectedUser.nameStaticBg || "bg-name-none";
   $("edit-name-anim-select").value = selectedUser.nameBackground || "";
@@ -1618,7 +1709,6 @@ window.copyMyProfileLink = () => {
   navigator.clipboard.writeText(link).then(() => toast("🔗 تم نسخ رابط البروفايل بنجاح")).catch(() => toast("الرابط: " + link));
 };
 
-/* حصر التعديل على المستخدم المفتوح فقط دون المساس بصاحب الشات */
 function getActiveEditTarget() {
   if (selectedUser && selectedUser.name !== currentUser.name && isPrimaryOwner(currentUser)) {
     return selectedUser;
@@ -1647,6 +1737,7 @@ window.saveProfileChanges = async () => {
   const updated = {
     ...target,
     name: nameInput,
+    nameFont: $("edit-name-font-select").value,
     nameColor: $("edit-name-color-select").value,
     nameStaticBg: $("edit-name-static-bg-select").value,
     nameBackground: $("edit-name-anim-select").value,
@@ -1838,7 +1929,17 @@ function renderMessageHtml(dId, m) {
   const rawU = users.get(m.sender) || [...presenceCache.values()].find(x => x.name === m.sender || x.uid === m.senderUid) || { name: m.sender, rankId: 20, avatar: avatarFor(m.sender) };
   const u = normalizeRankForUser(rawU);
   const r = rank(u.rankId);
-  const qhtml = m.reply ? `<div class="quote-preview"><b>${safe(m.reply.sender)}</b>: ${safe(m.reply.text)}</div>` : "";
+
+  let qhtml = "";
+  if (m.reply) {
+    qhtml = `<div class="quote-preview">
+      <div class="quote-header">
+        <img src="${safe(m.reply.avatar || avatarFor(m.reply.sender))}">
+        <span class="${m.reply.nameColor || ''}">${safe(m.reply.sender)}</span>
+      </div>
+      <div>${safe(m.reply.text)}</div>
+    </div>`;
+  }
 
   let media = "";
   if (m.imageUrl) media = `<div><img class="msg-drawing-thumb" src="${safe(m.imageUrl)}" onclick="openImageViewer('${slug(m.imageUrl)}')"></div>`;
@@ -1856,17 +1957,18 @@ function renderMessageHtml(dId, m) {
   const nameColor = u.nameColor || "color-text-white";
   const nameStaticBg = u.nameStaticBg || "";
   const nameAnim = u.nameBackground || "";
+  const nameFont = u.nameFont || "font-tahoma";
 
   return `<div class="msg-item" data-id="${dId}" data-sender-uid="${m.senderUid || ''}" ondblclick="quoteFullMessage('${dId}')">
     <img class="user-avatar" src="${safe(u.avatar || avatarFor(u.name))}" onclick="openProfileByName('${slug(u.name)}')">
     <div class="msg-content">
       <div class="user-header">
         <i class="${r.icon} rank-badge-icon ${u.isPrimaryOwner ? 'owner-rank-icon' : ''}" style="color:${r.color}"></i>
-        <span class="name-frame ${u.nameFrame || 'frame-none'} ${nameStaticBg} ${nameAnim}"><span class="${nameColor} ${u.isPrimaryOwner ? 'owner-rank-text' : ''}" style="cursor:pointer" onclick="mentionUser('${safe(u.name)}')">${safe(u.name)}</span></span>
+        <span class="name-frame ${u.nameFrame || 'frame-none'} ${nameStaticBg} ${nameAnim}"><span class="${nameColor} ${nameFont} ${u.isPrimaryOwner ? 'owner-rank-text' : ''}" style="cursor:pointer" onclick="mentionUser('${safe(u.name)}')">${safe(u.name)}</span></span>
         <span class="msg-time">${safe(m.time || "")}</span>
       </div>
       ${qhtml}
-      <div class="msg-text-plain">${safe(m.text || "")}</div>
+      <div class="msg-text-plain ${nameFont}">${safe(m.text || "")}</div>
       ${media}
     </div>
   </div>`;
@@ -1878,11 +1980,17 @@ window.mentionUser = name => {
   inp.focus();
 };
 
+/* الاقتباس الكامل مع اسم العضو وصورته ولون خطه ورسالته */
 window.quoteFullMessage = async id => {
   const s = await getDoc(doc(db, `${P}roomMessages`, id));
   if (!s.exists()) return;
   const m = s.data();
-  replyTo = { sender: m.sender, text: m.text, id };
+  const u = users.get(m.sender) || {};
+  replyTo = {
+    sender: m.sender, text: m.text, id,
+    avatar: u.avatar || avatarFor(m.sender),
+    nameColor: u.nameColor || ''
+  };
   $("reply-box").style.display = "block";
   $("reply-box").innerHTML = `اقتباس من <b>${safe(m.sender)}</b>: ${safe(m.text)} <span style="float:left;cursor:pointer" onclick="cancelQuote()">×</span>`;
   $("msg-input").focus();
@@ -1927,6 +2035,7 @@ window.sendMessage = async () => {
   setTimeout(() => { sendInProgress = false; }, 2500);
 
   input.value = "";
+  const currentReply = replyTo ? { ...replyTo } : null;
   cancelQuote();
   closeModal("plus-menu-modal");
 
@@ -1944,7 +2053,7 @@ window.sendMessage = async () => {
     roomId: currentRoomId, sender: currentUser.name, senderUid: currentUser.uid, text: raw,
     videoLink: isVideo, videoSource: videoSrc,
     time: nowTime(), createdAt: serverTimestamp(),
-    reply: replyTo ? { sender: replyTo.sender, text: replyTo.text, id: replyTo.id } : null
+    reply: currentReply
   };
 
   try {
@@ -1984,7 +2093,7 @@ window.sendPublicFile = async e => {
   } catch { alert("تعذر إرسال الملف"); }
 };
 
-/* تطبيق لون الشريط العلوي والسفلي وحفظه للجميع */
+/* تطبيق لون الشريطين العلوي والسفلي وحفظه للجميع */
 window.applyBarsColorForAll = async () => {
   if (!isPrimaryOwner(currentUser)) return;
   const col = $("owner-bars-color-picker").value;
@@ -2248,8 +2357,37 @@ async function getMicAudioStream() {
     localAudioStream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
     });
+    setupAudioAnimation(localAudioStream);
   }
   return localAudioStream;
+}
+
+function setupAudioAnimation(stream) {
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const analyser = audioContext.createAnalyser();
+    const microphone = audioContext.createMediaStreamSource(stream);
+    const javascriptNode = audioContext.createScriptProcessor(2048, 1, 1);
+    analyser.smoothingTimeConstant = 0.8;
+    analyser.fftSize = 1024;
+    microphone.connect(analyser);
+    analyser.connect(javascriptNode);
+    javascriptNode.connect(audioContext.destination);
+    javascriptNode.onaudioprocess = () => {
+      const array = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(array);
+      let values = 0;
+      for (let i = 0; i < array.length; i++) values += array[i];
+      const average = values / array.length;
+      if (currentMicSlot !== null) {
+        const slotEl = $(`mic-slot-${currentMicSlot}`);
+        if (slotEl) {
+          if (average > 18) slotEl.classList.add("speaking");
+          else slotEl.classList.remove("speaking");
+        }
+      }
+    };
+  } catch {}
 }
 
 function stopMicAudioStream() {
@@ -2270,7 +2408,7 @@ function listenMics() {
     for (let i = 0; i < 4; i++) {
       const slot = $("mic-slot-" + i);
       if (slot) {
-        slot.classList.remove("occupied", "muted");
+        slot.classList.remove("occupied", "muted", "speaking");
         slot.style.backgroundImage = "";
       }
       const nameEl = $("mic-name-" + i);
@@ -2691,6 +2829,7 @@ window.selectRoom = async (name, id = "main") => {
   closeModal("rooms-modal");
 
   $("room-welcome-title").textContent = name;
+  $("menu-current-room-name").textContent = name;
   $("room-welcome-card")?.classList.remove("hidden");
 
   listenMessages();
@@ -2732,7 +2871,6 @@ window.openChatSettingsModal = () => {
   openModal("chat-settings-modal");
 };
 
-/* حفظ وتطبيق خلفية الروم وأيقونة الغرفة */
 window.chooseRoomBackground = e => {
   pendingRoomBackgroundFile = e.target.files?.[0] || null;
   if (pendingRoomBackgroundFile) toast("تم اختيار خلفية الروم — اضغط حفظ وتطبيق");
@@ -2773,6 +2911,7 @@ window.saveRoomIcon = async () => {
     const url = await fastCompressImage(pendingRoomIconFile, 250, 0.65);
     await setDoc(doc(db, `${P}rooms`, currentRoomId), { image: url }, { merge: true });
     $("room-welcome-img").src = url;
+    $("menu-current-room-img").src = url;
     pendingRoomIconFile = null;
     toast("✅ تم حفظ أيقونة الغرفة للجميع");
   } catch { alert("تعذر حفظ أيقونة الغرفة"); }
@@ -2791,7 +2930,6 @@ window.clearAllRoomMessages = async () => {
   } catch (e) { alert("تعذر التنظيف: " + e.message); }
 };
 
-/* بوت المسابقات 24/7 */
 function isContestRoom() {
   return /مسابق/i.test(String(currentRoomName || "")) || /مسابق/i.test(String(currentRoomId || ""));
 }
@@ -2897,7 +3035,7 @@ async function checkContestAnswer(text, sender) {
   }
 }
 
-/* لوحة تحكم صاحب الشات بجميع أقسامها الـ 13 كاملة مع تحديد الصلاحيات للـ 25 رتبة */
+/* لوحة تحكم صاحب الشات بجميع أقسامها الـ 13 مع الـ 25 رتبة بالأذونات */
 window.openOwnerDashboard = () => {
   if (!isAnyOwner(currentUser)) return alert("لوحة التحكم لصاحب الشات فقط");
   $("owner-modal-title-text").textContent = isPrimaryOwner(currentUser) ? "👑 لوحة تحكم صاحب الشات (13 خيار)" : "👑 لوحة تحكم المالك المفوض (10 خيارات)";
@@ -2988,7 +3126,6 @@ window.openOwnerSection = async kind => {
       <button class="btn-submit" style="background:#475569;margin-top:5px" onclick="openOwnerSection('home')">رجوع</button>
     </div>`;
   } else if (kind === "permissions") {
-    // عرض الـ 25 رتبة كاملة مع مربعات الاختيار لتحديد صلاحيات كل رتبة كما طلبت
     let ranksCheckboxes = RANKS.map(r => `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid #1e3557">
         <span><i class="${r.icon}" style="color:${r.color};margin-left:4px"></i> ${r.id}. ${r.title}</span>
@@ -3067,7 +3204,6 @@ window.openOwnerSection = async kind => {
       <button class="btn-submit" style="margin-top:8px" onclick="openOwnerSection('home')">رجوع</button>
     </div>`;
   } else if (kind === "monitor" && pri) {
-    // المراقب السري لرسائل الخاص حصراً ولا يظهر رسائل العام
     b.innerHTML = `<div style="padding:10px">
       <h4>🕵️ 12 المراقب اللحظي لرسائل الخاص فقط</h4>
       <div id="private-monitor-list" style="max-height:48vh;overflow-y:auto;margin:8px 0;font-size:.75rem">جارٍ الاتصال...</div>
@@ -3174,7 +3310,6 @@ window.openImageViewer = encUrl => {
   openModal("image-viewer-modal");
 };
 
-/* تسجيل وبث الصوت في العام بنجاح وبدون أي أخطاء */
 let mediaRecorder = null, recordedVoiceBlob = null, voiceChunks = [];
 
 window.openVoiceRecorder = () => {
@@ -3505,7 +3640,7 @@ window.logout = async () => {
   location.reload();
 };
 
-/* فحص الجلسة وتشغيل الشات والتعرف التلقائي على صاحب الموقع */
+/* الإقلاع الفوري والتحقق التلقائي من المالك وتطبيق الألوان */
 async function boot() {
   $("login-modal").style.display = "none";
 
