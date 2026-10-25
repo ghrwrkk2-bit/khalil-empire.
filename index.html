@@ -347,7 +347,14 @@ button{cursor:pointer}
 .yt-details{flex:1;min-width:0}
 .yt-title{font-size:.76rem;color:#f8fafc;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .yt-channel{font-size:.65rem;color:#ffd54a;margin-top:2px}
-</style>
+
+/* تحسينات فورية للتمرير ومؤشر الكلام والخطوط */
+.msg-item.is-local-pending{opacity:.92}
+.chat-area{overflow-anchor:none!important;scroll-behavior:auto!important}
+.mic-slot.speaking{animation:micVoicePulse .55s ease-in-out infinite alternate;border-color:#4ade80!important}
+@keyframes micVoicePulse{from{box-shadow:0 0 0 1px rgba(74,222,128,.35);transform:scale(1)}to{box-shadow:0 0 0 6px rgba(74,222,128,.2),0 0 14px #22c55e;transform:scale(1.05)}}
+.simple-mode .room-welcome-card,.simple-mode .music-sync-panel{display:none!important}
+\n</style>
 </head>
 <body>
 
@@ -659,6 +666,22 @@ button{cursor:pointer}
     <span class="close-modal" onclick="closeModal('online-modal')">&times;</span>
     <div class="modal-title">👥 المتواجدون الآن</div>
     <div id="online-users-container" class="online-list" style="padding:8px"></div>
+  </div>
+</div>
+
+<!-- قائمة الإعدادات المستعادة -->
+<div id="icon-menu-modal" class="modal-overlay hidden">
+  <div class="modal-card white-modal-card">
+    <span class="close-modal" onclick="closeModal('icon-menu-modal')">&times;</span>
+    <div class="modal-title">⚙️ إعدادات الحساب والدردشة</div>
+    <div class="menu-list">
+      <div class="menu-item" onclick="openChatSettingsModal();closeModal('icon-menu-modal')"><i class="fa-solid fa-comments"></i>إعدادات الدردشة</div>
+      <div class="menu-item" onclick="openWallet()"><i class="fa-solid fa-wallet"></i>محفظة</div>
+      <div class="menu-item" onclick="openDailyRewards()"><i class="fa-solid fa-gift"></i>المكافآت اليومية</div>
+      <div class="menu-item" onclick="openLevelInfo()"><i class="fa-solid fa-chart-line"></i>معلومات المستوى</div>
+      <div class="menu-item" onclick="toggleSimpleMode()"><i class="fa-solid fa-mobile-screen"></i>تشغيل الوضع البسيط</div>
+      <div class="menu-item" onclick="logoutAndExit()"><i class="fa-solid fa-right-from-bracket"></i>خروج</div>
+    </div>
   </div>
 </div>
 
@@ -1903,7 +1926,7 @@ function listenMessages() {
     area.innerHTML = "";
     recent.forEach(x => area.insertAdjacentHTML("beforeend", renderMessageHtml(x.id, x)));
     if (forceChatBottom) {
-      area.scrollTop = area.scrollHeight;
+      requestAnimationFrame(() => { area.scrollTop = area.scrollHeight; });
     }
   }, err => console.warn(err));
 }
@@ -1927,6 +1950,10 @@ window.sendMessage = async () => {
   setTimeout(() => { sendInProgress = false; }, 2500);
 
   input.value = "";
+  /* تثبيت العرض عند أسفل الدردشة فور الضغط على الإرسال */
+  forceChatBottom = true;
+  const chatAreaNow = $("chat-area");
+  if (chatAreaNow) requestAnimationFrame(() => { chatAreaNow.scrollTop = chatAreaNow.scrollHeight; });
   cancelQuote();
   closeModal("plus-menu-modal");
 
@@ -3466,6 +3493,18 @@ window.openDailyRewards = () => {
 window.openLevelInfo = () => {
   closeModal("icon-menu-modal");
   alert(`📈 مستواك الحالي: ${Number(currentUser?.level) || 1}\nعدد رسائلك: ${Number(currentUser?.messageCount) || 0}`);
+};
+
+window.logoutAndExit = async () => {
+  try {
+    if (currentUser) {
+      try { await deleteDoc(doc(db, `${P}presence`, currentUser.uid)); } catch (_) {}
+    }
+    localStorage.removeItem(sessionKey);
+    sessionStorage.removeItem(sessionKey);
+  } catch (_) {}
+  currentUser = null;
+  location.reload();
 };
 
 window.toggleSimpleMode = () => {
