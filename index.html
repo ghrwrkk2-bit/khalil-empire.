@@ -2,8 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="google-site-verification" content="ضع_كود_التحقق_هنا">
-<meta name="google-site-verification" content="tsItDGrOeSgCsSnQY_kBEFAhvhH1IQYxgk5Y-wxhC-A" />
+<meta name="google-site-verification" content="tsItDGrOeSgCsSnQY_kBEFAhvhH1IQYxgk5Y-wxhC-A">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="robots" content="index, follow">
 <meta name="description" content="شات أصل العرب - ملتقى العرب والنشامى. دردشة كتابية وصوتية، مايكات حقيقية، مسابقات وجوائز بدون تسجيل مجاناً.">
@@ -536,7 +535,6 @@ button{cursor:pointer}
   <button id="music-local-toggle" class="music-local-toggle" onclick="toggleMusicLocal()" title="إخفاء/إظهار">⬇️</button>
   <img id="music-sync-thumb" class="music-thumb-mini" src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100">
   <div id="music-sync-info" class="music-info"></div>
-  <!-- شريط التحكم بمستوى الصوت الفردي لكل عضو -->
   <div style="display:flex;align-items:center;gap:3px;flex:none">
     <span style="font-size:.7rem">🔊</span>
     <input type="range" id="music-volume-control" class="music-vol-slider" min="0" max="100" value="80" oninput="changeLocalMusicVolume(this.value)" title="تحكم بالصوت لجهازك">
@@ -866,7 +864,6 @@ button{cursor:pointer}
         <img id="private-target-avatar" style="width:32px;height:32px;border-radius:50%;border:1.5px solid #d4a017;object-fit:cover">
         <span id="private-target-name" style="font-weight:bold;color:#ffd700"></span>
       </div>
-      <!-- زر الترس ⚙️ داخل الخاص للتحكم وخلفية الخاص وحذف الرسائل -->
       <button class="icon-btn" style="color:#ffd700;font-size:1.15rem;margin-left:25px" onclick="openPrivateSettingsMenu()" title="خيارات الخاص"><i class="fa-solid fa-gear"></i></button>
     </div>
     <div style="height:65vh;max-height:500px;display:flex;flex-direction:column;position:relative">
@@ -951,7 +948,7 @@ button{cursor:pointer}
 
 <div id="webrtc-remote-audios" style="display:none"></div>
 
-<!-- نهاية الجزء الأول (Part 1 of 2) -->
+<!-- نهاية الجزء الأول (Part 1) -->
 <!-- ============================================== -->
   <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
@@ -1128,14 +1125,11 @@ function sortedLeaderboard(arr) {
   });
 }
 
-/* التحقق من الصلاحيات: صاحب الموقع الرسمي محصن تماماً ويستطيع تنزيل أي شخص */
+/* التحقق من الصلاحيات: صاحب الموقع محصن 100% ويستطيع تنزيل أي رتبة وإدارتها */
 function canManageUser(target) {
   if (!currentUser || !target || target.uid === currentUser.uid) return false;
-  // صاحب الموقع الرسمي محصن 100% ولا يستطيع أحد اتخاذ إجراء ضده
   if (isPrimaryOwner(target)) return false;
-  // صاحب الموقع الرسمي له كامل الصلاحيات لتنزيل الرتب وكتم وطرد وحظر أي عضو
   if (isPrimaryOwner(currentUser)) return true;
-  // أصحاب الشات الآخرين لا يمكنهم إدارة من يساويهم أو يعلوهم
   if (isAnyOwner(currentUser)) return rankPower(target) >= 2;
   const p = rankPower(currentUser);
   return [2, 3, 4].includes(p) && rankPower(target) > p;
