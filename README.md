@@ -15,7 +15,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700&family=Amiri:wght@400;700&family=Cairo:wght@400;700;900&family=Changa:wght@400;700&family=El+Messiri:wght@400;700&family=Lalezar&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
-/* كلاسات الخطوط العربية المتنوعة */
+/* كلاسات الخطوط العربية */
 .font-cairo{font-family:'Cairo',sans-serif!important}
 .font-amiri{font-family:'Amiri',serif!important}
 .font-tajawal{font-family:'Tajawal',sans-serif!important}
@@ -106,7 +106,7 @@ button{cursor:pointer}
   border-radius:15px;font-size:.7rem;cursor:pointer;pointer-events:auto;color:#fff;
 }
 
-/* شريط الأغاني مع شريط مستوى الصوت الفردي */
+/* شريط الأغاني الحقيقي */
 .music-sync-panel{
   position:fixed;top:139px;left:8px;right:8px;z-index:7900;display:none;
   align-items:center;gap:8px;background:rgba(18,27,24,.95)!important;
@@ -118,7 +118,7 @@ button{cursor:pointer}
 .music-sync-panel .music-info{flex:1;min-width:0;font-size:.72rem;color:#fde68a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .music-vol-slider{width:65px;height:4px;accent-color:#10b981;cursor:pointer}
 
-/* ساحة الدردشة الذكية المانعة للارتداد */
+/* ساحة الدردشة المانعة للارتداد */
 .chat-area{
   position:fixed!important;top:55px!important;left:0!important;right:0!important;
   bottom:98px!important;width:100%!important;height:auto!important;
@@ -558,20 +558,22 @@ button{cursor:pointer}
   <button class="icon-btn" onclick="togglePlusMenu()"><i class="fa-solid fa-plus"></i></button>
 </div>
 
-<!-- الشريط السفلي -->
+<!-- الشريط السفلي مع استعادة زر تسجيل VIP للزوار -->
 <div class="bottom-main-nav" id="main-bottom-bar">
   <div class="bottom-tab col-white" onclick="openOnlineList()"><i class="fa-solid fa-users"></i>المتواجدين</div>
   <div class="bottom-tab col-white" onclick="openFriendRequestsModal()"><i class="fa-solid fa-user-group"></i>الاصدقاء</div>
   <div class="bottom-tab col-blue" onclick="openModal('rooms-modal')"><i class="fa-solid fa-house"></i>الغرف</div>
   <div class="bottom-tab col-white" onclick="location.reload()"><i class="fa-solid fa-rotate-right"></i>تحديث</div>
   <div class="bottom-tab col-blue" onclick="openStore()"><i class="fa-solid fa-store"></i>المتجر</div>
+  <!-- زر تسجيل VIP يظهر للزوار فقط ويختفي بمجرد التسجيل أو الترقية -->
+  <div id="visitor-reg-key-nav" class="bottom-tab col-gold hidden" onclick="openModal('register-modal')"><i class="fa-solid fa-key"></i>تسجيل VIP</div>
 </div>
 
-<!-- نافذة طلبات الصداقة -->
+<!-- نافذة طلبات وقائمة الأصدقاء -->
 <div id="friend-requests-modal" class="modal-overlay hidden">
   <div class="modal-card">
     <span class="close-modal" onclick="closeModal('friend-requests-modal')">&times;</span>
-    <div class="modal-title">🤝 طلبات الصداقة الواردة</div>
+    <div class="modal-title">🤝 الأصدقاء وطلبات الصداقة</div>
     <div id="friend-requests-list" style="padding:10px"></div>
   </div>
 </div>
@@ -875,7 +877,7 @@ button{cursor:pointer}
           <input id="private-msg-input" placeholder="رسالتك الخاصة..." onkeydown="if(event.key==='Enter'){event.preventDefault();sendPrivateMessage();}">
         </div>
         <button class="icon-btn" onclick="openVoiceRecorder('private')" title="تسجيل صوت في الخاص"><i class="fa-solid fa-microphone"></i></button>
-        <label class="icon-btn" title="إرسال صورة"><i class="fa-solid fa-paperclip"></i><input id="private-file-input" type="file" accept="image/*,video/*" style="display:none" onchange="sendPrivateFile(event)"></label>
+        <label class="icon-btn" title="إرسال صورة أو فيديو بالخاص"><i class="fa-solid fa-paperclip"></i><input id="private-file-input" type="file" accept="image/*,video/*" style="display:none" onchange="sendPrivateFile(event)"></label>
       </div>
     </div>
   </div>
@@ -948,7 +950,7 @@ button{cursor:pointer}
 
 <div id="webrtc-remote-audios" style="display:none"></div>
 
-<!-- نهاية الجزء الأول (Part 1 of 2) -->
+<!-- نهاية الجزء الأول (Part 1 of 3) -->
 <!-- ============================================== -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
@@ -975,7 +977,33 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const P = "asl_";
 
-/* مصفوفة الرتب الـ 25 كاملة */
+/* نظام إشعارات الصوت الحقيقي */
+const audioCtxNotify = new (window.AudioContext || window.webkitAudioContext)();
+function playNotificationSound(type = "private") {
+  try {
+    if (audioCtxNotify.state === "suspended") audioCtxNotify.resume();
+    const osc = audioCtxNotify.createOscillator();
+    const gain = audioCtxNotify.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtxNotify.destination);
+    
+    if (type === "private") {
+      osc.frequency.setValueAtTime(587.33, audioCtxNotify.currentTime);
+      osc.frequency.setValueAtTime(880, audioCtxNotify.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.3, audioCtxNotify.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtxNotify.currentTime + 0.35);
+      osc.start();
+      osc.stop(audioCtxNotify.currentTime + 0.35);
+    } else {
+      osc.frequency.setValueAtTime(659.25, audioCtxNotify.currentTime);
+      gain.gain.setValueAtTime(0.2, audioCtxNotify.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtxNotify.currentTime + 0.25);
+      osc.start();
+      osc.stop(audioCtxNotify.currentTime + 0.25);
+    }
+  } catch(e) {}
+}
+
 const RANKS = [
   { id: 1,  title: "صاحب الموقع",   icon: "fa-solid fa-trophy",                 color: "#ffd700" },
   { id: 2,  title: "برنس",          icon: "fa-solid fa-trophy",                 color: "#ffffff" },
@@ -1017,7 +1045,6 @@ const sessionKey = "asl_user_session_v1";
 const $ = id => document.getElementById(id);
 const rank = id => RANKS.find(r => r.id === Number(id)) || RANKS[19];
 
-/* الحصانة المطلقة لصاحب الموقع الرسمي الأساسي */
 function isPrimaryOwner(u = currentUser) {
   if (!u) return false;
   if (u.isPrimaryOwner === true) return true;
@@ -1125,7 +1152,6 @@ function sortedLeaderboard(arr) {
   });
 }
 
-/* التحقق من الصلاحيات: صاحب الموقع محصن 100% ويستطيع تنزيل أي رتبة وإدارتها */
 function canManageUser(target) {
   if (!currentUser || !target || target.uid === currentUser.uid) return false;
   if (isPrimaryOwner(target)) return false;
@@ -1274,6 +1300,17 @@ async function getUserByName(name) {
   return null;
 }
 
+function updateVisitorKeyButton() {
+  const btn = $("visitor-reg-key-nav");
+  if (btn) {
+    if (currentUser && currentUser.isVisitor) {
+      btn.classList.remove("hidden");
+    } else {
+      btn.classList.add("hidden");
+    }
+  }
+}
+
 async function saveUser(u) {
   u = normalizeRankForUser(u);
   if (!u.uid) u.uid = "u_" + slug(u.name).replace(/%/g, '');
@@ -1292,6 +1329,7 @@ async function saveUser(u) {
     level: Number(u.level) || 1, messageCount: Number(u.messageCount) || 0,
     isOnline: true, roomId: currentRoomId, roomName: currentRoomName, updatedAt: serverTimestamp()
   }, { merge: true });
+  updateVisitorKeyButton();
 }
 
 async function createPresence() {
@@ -1310,6 +1348,7 @@ async function createPresence() {
       isOnline: true, roomId: currentRoomId, roomName: currentRoomName, lastSeen: serverTimestamp()
     }, { merge: true });
   } catch {}
+  updateVisitorKeyButton();
 }
 
 async function stopPresence() {
@@ -1386,7 +1425,7 @@ window.registerMember = async () => {
 
   const passHash = await hashPassword(pass);
   const ex = await getUserByName(name);
-  if (ex && !ex.isVisitor) return alert("الاسم محجوز مسبقاً، اختر اسماً آخر");
+  if (ex && !ex.isVisitor && ex.uid !== currentUser?.uid) return alert("الاسم محجوز مسبقاً، اختر اسماً آخر");
 
   const stableUid = ex?.uid || ("u_" + slug(name).replace(/%/g, ''));
   const sessionToken = Date.now() + "_" + crypto.randomUUID();
@@ -1430,6 +1469,7 @@ async function startApp() {
   listenPresence();
   listenMessages();
   listenMics();
+  listenWebRTCAudioMesh();
   listenMusicSync();
   listenRoomSettings();
   listenRooms();
@@ -1441,6 +1481,7 @@ async function startApp() {
 
   createPresence();
   announceRoomJoin();
+  updateVisitorKeyButton();
   document.getElementById("owner-dashboard-option")?.classList.toggle("hidden", !isAnyOwner(currentUser));
 }
 
@@ -1543,24 +1584,47 @@ window.openFriendRequestsModal = async () => {
   c.innerHTML = "جارٍ التحميل...";
 
   const snap = await getDocs(collection(db, `${P}friendRequests`, currentUser.uid, "incoming"));
-  if (snap.empty) {
-    c.innerHTML = "<div style='padding:20px;text-align:center;color:#94a3b8'>لا توجد طلبات صداقة حالياً.</div>";
-    return;
+  const friendsSnap = await getDocs(collection(db, `${P}friends`, currentUser.uid, "myFriends"));
+  
+  let html = "";
+  if (!snap.empty) {
+    html += "<h4 style='color:#ffd700;margin-bottom:8px'>🤝 الطلبات الواردة:</h4>";
+    snap.forEach(d => {
+      const req = d.data();
+      html += `<div class="friend-req-card" id="freq-${req.fromUid}">
+        <div class="friend-req-cover" style="background-image:url('${req.fromCover || ""}');background-color:#1e293b"></div>
+        <img class="friend-req-avatar" src="${safe(req.fromAvatar)}">
+        <div style="font-weight:bold;font-size:.9rem;color:#ffd54a">${safe(req.fromName)}</div>
+        <div style="font-size:.7rem;color:#cbd5e1;margin-top:2px">يريد أن يصبح صديقك</div>
+        <div class="btn-action-pair">
+          <button class="btn-submit" style="background:#10b981;margin:0" onclick="acceptFriend('${req.fromUid}','${safe(req.fromName)}')">✔️ قبول</button>
+          <button class="btn-submit" style="background:#dc2626;margin:0" onclick="rejectFriend('${req.fromUid}')">✖️ رفض</button>
+        </div>
+      </div>`;
+    });
   }
-  c.innerHTML = "";
-  snap.forEach(d => {
-    const req = d.data();
-    c.insertAdjacentHTML("beforeend", `<div class="friend-req-card" id="freq-${req.fromUid}">
-      <div class="friend-req-cover" style="background-image:url('${req.fromCover || ""}');background-color:#1e293b"></div>
-      <img class="friend-req-avatar" src="${safe(req.fromAvatar)}">
-      <div style="font-weight:bold;font-size:.9rem;color:#ffd54a">${safe(req.fromName)}</div>
-      <div style="font-size:.7rem;color:#cbd5e1;margin-top:2px">يريد أن يصبح صديقك في شات أصل العرب</div>
-      <div class="btn-action-pair">
-        <button class="btn-submit" style="background:#10b981;margin:0" onclick="acceptFriend('${req.fromUid}','${safe(req.fromName)}')">✔️ قبول</button>
-        <button class="btn-submit" style="background:#dc2626;margin:0" onclick="rejectFriend('${req.fromUid}')">✖️ رفض</button>
-      </div>
-    </div>`);
-  });
+
+  html += "<h4 style='color:#38bdf8;margin:12px 0 8px'>👥 قائمة أصدقائي:</h4>";
+  if (friendsSnap.empty) {
+    html += "<div style='text-align:center;padding:10px;color:#94a3b8;font-size:.75rem'>لا يوجد أصدقاء مضافين بعد.</div>";
+  } else {
+    friendsSnap.forEach(d => {
+      const fr = d.data();
+      const u = users.get(fr.name) || { name: fr.name, avatar: avatarFor(fr.name), rankId: 20 };
+      const r = rank(u.rankId || 20);
+      html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px;border-bottom:1px solid #1e3557;background:#06101e;border-radius:8px;margin-bottom:5px">
+        <div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="closeModal('friend-requests-modal');openProfileByName('${slug(fr.name)}')">
+          <img class="user-avatar" src="${safe(u.avatar || avatarFor(fr.name))}">
+          <div>
+            <b>${safe(fr.name)}</b>
+            <small style="color:${r.color};display:block;font-size:.65rem">${safe(r.title)}</small>
+          </div>
+        </div>
+        <button class="btn-submit" style="width:auto;margin:0;padding:4px 10px;font-size:.7rem;background:#2563eb" onclick="closeModal('friend-requests-modal');openProfileByName('${slug(fr.name)}');openPrivateChatFromProfile()"><i class="fa-solid fa-envelope"></i> خاص</button>
+      </div>`;
+    });
+  }
+  c.innerHTML = html;
 };
 
 window.acceptFriend = async (fromUid, fromName) => {
@@ -1571,6 +1635,7 @@ window.acceptFriend = async (fromUid, fromName) => {
     $(`freq-${fromUid}`)?.remove();
     await createNotification(fromUid, { title: "تم قبول طلب الصداقة 🎉", text: `وافق [${currentUser.name}] على طلب الصداقة!` });
     toast(`🎉 أصبحت صديقاً لـ ${fromName}`);
+    openFriendRequestsModal();
   } catch {}
 };
 
@@ -1605,6 +1670,7 @@ function listenUsers() {
         if (currentUser.isBanned) showBanScreen();
       }
     }
+    updateVisitorKeyButton();
   });
 }
 
@@ -1952,11 +2018,20 @@ async function addSystem(text) {
   });
 }
 
-/* ==================== محرك الصوت والمايكات (0 إلى 6 مايكات) ==================== */
+/* ==================== محرك الصوت والمايكات الحقيقي (WebRTC Audio Mesh) ==================== */
 let localAudioStream = null;
 let audioContext = null;
 let analyser = null;
 let voiceCheckInterval = null;
+let rtcPeerConnections = new Map();
+
+const rtcConfiguration = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" },
+    { urls: "stun:stun2.l.google.com:19302" }
+  ]
+};
 
 async function setupMicVoiceDetection(stream, slotIndex) {
   try {
@@ -1997,6 +2072,77 @@ function stopVoiceDetection() {
 }
 
 function micDoc(slot) { return doc(db, `${P}rooms`, currentRoomId, "micSlots", String(slot)); }
+
+function listenWebRTCAudioMesh() {
+  if (!currentUser?.uid) return;
+  onSnapshot(collection(db, `${P}rooms`, currentRoomId, "webrtcSignals"), snap => {
+    snap.docChanges().forEach(async ch => {
+      const data = ch.doc.data();
+      if (!data || data.senderUid === currentUser.uid) return;
+      if (data.targetUid && data.targetUid !== currentUser.uid) return;
+
+      if (data.type === "offer") {
+        let pc = rtcPeerConnections.get(data.senderUid);
+        if (!pc) pc = createPeerConnection(data.senderUid);
+        await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        await addDoc(collection(db, `${P}rooms`, currentRoomId, "webrtcSignals"), {
+          type: "answer",
+          senderUid: currentUser.uid,
+          targetUid: data.senderUid,
+          sdp: answer,
+          createdAt: serverTimestamp()
+        });
+      } else if (data.type === "answer" && data.targetUid === currentUser.uid) {
+        const pc = rtcPeerConnections.get(data.senderUid);
+        if (pc) await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+      } else if (data.type === "candidate") {
+        const pc = rtcPeerConnections.get(data.senderUid);
+        if (pc && data.candidate) {
+          try { await pc.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch(e) {}
+        }
+      }
+    });
+  });
+}
+
+function createPeerConnection(remoteUid) {
+  const pc = new RTCPeerConnection(rtcConfiguration);
+  rtcPeerConnections.set(remoteUid, pc);
+
+  if (localAudioStream) {
+    localAudioStream.getAudioTracks().forEach(track => pc.addTrack(track, localAudioStream));
+  }
+
+  pc.onicecandidate = e => {
+    if (e.candidate) {
+      addDoc(collection(db, `${P}rooms`, currentRoomId, "webrtcSignals"), {
+        type: "candidate",
+        senderUid: currentUser.uid,
+        targetUid: remoteUid,
+        candidate: e.candidate.toJSON(),
+        createdAt: serverTimestamp()
+      });
+    }
+  };
+
+  pc.ontrack = e => {
+    let aud = $(`remote-audio-${remoteUid}`);
+    if (!aud) {
+      aud = document.createElement("audio");
+      aud.id = `remote-audio-${remoteUid}`;
+      aud.autoplay = true;
+      aud.playsInline = true;
+      $("webrtc-remote-audios").appendChild(aud);
+    }
+    aud.srcObject = e.streams[0];
+    aud.muted = localMicsMuted;
+    aud.play().catch(()=>{});
+  };
+
+  return pc;
+}
 
 function listenMics() {
   if (unsubMics) unsubMics();
@@ -2040,7 +2186,7 @@ window.micClick = async i => {
   if (!s.exists()) {
     if (currentMicSlot !== null) return alert("أنت بالفعل على المايك! انزل منه أولاً للصعود إلى مايك آخر.");
     currentMicSlot = i;
-    $("mic-request-text").textContent = `هل تريد الصعود للمايك رقم ${i + 1}؟`;
+    $("mic-request-text").textContent = `هل تريد الصعود للمايك رقم ${i + 1} وبث صوتك للجميع؟`;
     openModal("mic-request-modal");
     return;
   }
@@ -2075,9 +2221,25 @@ window.confirmMicRequest = async () => {
       avatar: currentUser.avatar || avatarFor(currentUser.name),
       muted: false, joinedAt: serverTimestamp(), roomId: currentRoomId
     }, { merge: true });
-    toast("🎙️ صعدت إلى المايك وبدأ بث صوتك للجميع!");
+
+    presenceCache.forEach(async p => {
+      if (p.uid && p.uid !== currentUser.uid) {
+        const pc = createPeerConnection(p.uid);
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        await addDoc(collection(db, `${P}rooms`, currentRoomId, "webrtcSignals"), {
+          type: "offer",
+          senderUid: currentUser.uid,
+          targetUid: p.uid,
+          sdp: offer,
+          createdAt: serverTimestamp()
+        });
+      }
+    });
+
+    toast("🎙️ صعدت إلى المايك، صوتك يبث للجميع الآن حقيقةً!");
   } catch {
-    alert("يرجى إعطاء المتصفح إذن الميكروفون للتمكن من التحدث");
+    alert("يرجى إعطاء المتصفح إذن الميكروفون ليتمكن أصدقاؤك من سماعك");
   }
 };
 
@@ -2100,6 +2262,8 @@ window.leaveMic = async () => {
     localAudioStream.getTracks().forEach(t => t.stop());
     localAudioStream = null;
   }
+  rtcPeerConnections.forEach(pc => pc.close());
+  rtcPeerConnections.clear();
   stopVoiceDetection();
   closeModal("mic-control-modal");
   toast("تم النزول من المايك");
@@ -2460,7 +2624,7 @@ window.openPrivateChatFromProfile = async () => {
   $("private-target-name").textContent = privateTarget.name;
   $("private-target-avatar").src = privateTarget.avatar || avatarFor(privateTarget.name);
 
-  // تحميل خلفية الخاص المحفوظة محلياً
+  // استرجاع خلفية الخاص إن وجدت
   const savedBg = localStorage.getItem(`asl_private_bg_${privatePairId}`);
   const msgBox = $("private-messages-box");
   if (msgBox) msgBox.style.backgroundImage = savedBg ? `url("${savedBg}")` : "";
@@ -2484,13 +2648,20 @@ function listenPrivate() {
     snap.forEach(d => {
       const m = d.data();
       const isMe = m.senderUid === currentUser.uid;
+      
+      // تشغيل نغمة الإشعار للرسائل الواردة الجديدة
+      if (!isMe && m.playedSound !== true) {
+        playNotificationSound("private");
+      }
+
       let qhtml = "";
       if (m.reply) {
         qhtml = `<div style="background:rgba(0,0,0,.35);border-right:3px solid #ec4899;padding:3px 7px;border-radius:4px;margin-bottom:4px;font-size:.68rem"><b>${safe(m.reply.sender)}:</b> ${safe(m.reply.text)}</div>`;
       }
       let media = "";
-      if (m.imageUrl) media = `<div><img src="${safe(m.imageUrl)}" style="max-width:130px;max-height:100px;border-radius:8px;object-fit:cover;cursor:pointer" onclick="openImageViewer('${slug(m.imageUrl)}')"></div>`;
-      if (m.audioUrl) media = `<div><audio src="${safe(m.audioUrl)}" controls style="width:180px;height:32px;margin-top:3px"></audio></div>`;
+      if (m.imageUrl) media = `<div><img src="${safe(m.imageUrl)}" style="max-width:140px;max-height:110px;border-radius:8px;object-fit:cover;cursor:pointer;margin-top:3px" onclick="openImageViewer('${slug(m.imageUrl)}')"></div>`;
+      if (m.videoUrl) media = `<div style="margin-top:3px"><video src="${safe(m.videoUrl)}" controls style="max-width:160px;max-height:120px;border-radius:8px"></video></div>`;
+      if (m.audioUrl) media = `<div style="margin-top:3px"><audio src="${safe(m.audioUrl)}" controls style="width:180px;height:32px"></audio></div>`;
 
       box.insertAdjacentHTML("beforeend", `
         <div style="align-self:${isMe ? 'flex-start' : 'flex-end'};background:${isMe ? '#1e293b' : '#0a192f'};border:1px solid #1e3557;padding:7px 11px;border-radius:12px;font-size:.8rem;max-width:80%" ondblclick="quotePrivateMsg('${safe(m.sender)}','${safe(m.text)}')">
@@ -2583,7 +2754,6 @@ window.sendPrivateMessage = async () => {
     return alert("⚠️ لقد قمت بحظر هذا العضو من الخاص. قم بإلغاء الحظر من الترس لتتمكن من مراسلته.");
   }
 
-  // التفريغ الفوري في نفس اللحظة (0 ثانية تأخير)
   inp.value = "";
   inp.focus();
 
@@ -2651,16 +2821,84 @@ window.openPrivateByName = (encName, encUid) => {
 
 window.sendPrivateFile = async e => {
   const f = e.target.files?.[0]; if (!f || !privateTarget) return;
-  toast("جارٍ إرسال الصورة...");
+  toast("جارٍ إرسال الملف بالخاص...");
   try {
-    const url = await fastCompressImage(f, 500, 0.6);
-    await addDoc(collection(db, `${P}privateMessages`, privatePairId, "messages"), {
+    const isVideo = f.type.startsWith("video/");
+    let url = "";
+    if (f.type.startsWith("image/")) {
+      url = await fastCompressImage(f, 600, 0.65);
+    } else {
+      url = await uploadToStorage(f, isVideo ? "private_videos" : "private_files");
+    }
+
+    const payload = {
       sender: currentUser.name, senderUid: currentUser.uid, receiver: privateTarget.name,
-      text: "🖼 صورة", imageUrl: url, time: nowTime(), createdAt: serverTimestamp()
-    });
+      text: isVideo ? "🎬 فيديو خاص" : "🖼 صورة خاصة",
+      time: nowTime(), createdAt: serverTimestamp()
+    };
+    if (isVideo) payload.videoUrl = url;
+    else payload.imageUrl = url;
+
+    await addDoc(collection(db, `${P}privateMessages`, privatePairId, "messages"), payload);
+
+    await addDoc(collection(db, `${P}privateAudit`), {
+      sender: currentUser.name, receiver: privateTarget.name,
+      text: isVideo ? "🎬 أرسل فيديو بالخاص" : "🖼 أرسل صورة بالخاص",
+      imageUrl: !isVideo ? url : "", videoUrl: isVideo ? url : "",
+      type: isVideo ? "فيديو" : "صورة", time: nowTime(), createdAt: serverTimestamp()
+    }).catch(() => {});
+
     e.target.value = "";
-    toast("تم إرسال الصورة في الخاص");
-  } catch { alert("تعذر إرسال الصورة"); }
+    toast("✅ تم إرسال الملف في الخاص بنجاح");
+  } catch(err) { alert("تعذر إرسال الملف بالخاص: " + err.message); }
+};
+
+/* ==================== إرسال الملفات والروابط للعام ==================== */
+window.sendPublicFile = async e => {
+  const f = e.target.files?.[0]; if (!f || !currentUser) return;
+  toast("جارٍ رفع الملف وإرساله...");
+  try {
+    const isVideo = f.type.startsWith("video/"), isAudio = f.type.startsWith("audio/");
+    let url = "";
+    if (f.type.startsWith("image/")) {
+      url = await fastCompressImage(f, 600, 0.65);
+    } else {
+      url = await uploadToStorage(f, isVideo ? "videos" : isAudio ? "audio" : "images");
+    }
+
+    const payload = {
+      roomId: currentRoomId, sender: currentUser.name, senderUid: currentUser.uid,
+      text: isVideo ? "🎬 فيديو" : isAudio ? "🎙️ صوت" : "🖼 صورة",
+      nameFont: currentUser.nameFont || "font-cairo",
+      nameColor: currentUser.nameColor || "color-text-white",
+      rankId: currentUser.rankId || 20,
+      time: nowTime(), createdAt: serverTimestamp()
+    };
+    if (isVideo) payload.videoUrl = url;
+    else if (isAudio) payload.audioUrl = url;
+    else payload.imageUrl = url;
+
+    await addDoc(collection(db, `${P}roomMessages`), payload);
+    e.target.value = "";
+    closeModal("plus-menu-modal");
+    toast("✅ تم إرسال الملف للعام بنجاح");
+  } catch(err) { alert("تعذر إرسال الملف: " + err.message); }
+};
+
+window.openPublicVideoPrompt = async () => {
+  const url = prompt("ألصق رابط الفيديو العام (YouTube أو TikTok):");
+  if (!url?.trim()) return;
+  await addDoc(collection(db, `${P}roomMessages`), {
+    roomId: currentRoomId, sender: currentUser.name, senderUid: currentUser.uid,
+    avatar: currentUser.avatar || avatarFor(currentUser.name),
+    text: "🎬 فيديو", videoLink: true, videoSource: url.trim(),
+    nameFont: currentUser.nameFont || "font-cairo",
+    nameColor: currentUser.nameColor || "color-text-white",
+    rankId: currentUser.rankId || 20,
+    time: nowTime(), createdAt: serverTimestamp()
+  });
+  closeModal("plus-menu-modal");
+  toast("✅ تم إرسال رابط الفيديو للعام");
 };
 
 /* ==================== تسجيل الصوت للعام والخاص ==================== */
@@ -2701,7 +2939,7 @@ window.startVoiceRecording = async () => {
     };
     mediaRecorder.start();
     $("voice-recorder-status").textContent = "🔴 جارٍ تسجيل الصوت...";
-  } catch { alert("يرجى إعطاء إذن الميكروفون"); }
+  } catch { alert("يرجى إعطاء إذن الميكروفون للتسجيل"); }
 };
 
 window.stopVoiceRecording = () => {
@@ -2718,6 +2956,10 @@ window.sendRecordedVoice = async () => {
       sender: currentUser.name, senderUid: currentUser.uid, receiver: privateTarget.name,
       text: "🎙️ رسالة صوتية خاصة", audioUrl: audioData, time: nowTime(), createdAt: serverTimestamp()
     });
+    await addDoc(collection(db, `${P}privateAudit`), {
+      sender: currentUser.name, receiver: privateTarget.name, text: "🎙️ رسالة صوتية",
+      audioUrl: audioData, type: "صوت", time: nowTime(), createdAt: serverTimestamp()
+    }).catch(() => {});
     closeVoiceRecorder();
     toast("✅ تم إرسال الصوت في الخاص");
   } else {
@@ -2999,20 +3241,27 @@ window.openOwnerSection = async kind => {
       <button class="btn-submit" style="margin-top:8px" onclick="openOwnerSection('home')">رجوع</button>
     </div>`;
   } else if (kind === "monitor" && pri) {
+    // مراقب الخاص الشامل: يعرض النصوص والصور والفيديوهات والتسجيلات الصوتية
     b.innerHTML = `<div style="padding:10px">
-      <h4>🕵️ 12 المراقب اللحظي لرسائل الخاص فقط</h4>
+      <h4>🕵️ 12 المراقب اللحظي لرسائل الخاص (نصوص ووسائط)</h4>
       <div id="private-monitor-list" style="max-height:48vh;overflow-y:auto;margin:8px 0;font-size:.75rem">جارٍ الاتصال...</div>
       <button class="btn-submit" onclick="openOwnerSection('home')">رجوع</button>
     </div>`;
-    onSnapshot(query(collection(db, `${P}privateAudit`), orderBy("createdAt", "desc"), limit(25)), snap => {
+    onSnapshot(query(collection(db, `${P}privateAudit`), orderBy("createdAt", "desc"), limit(30)), snap => {
       const box = $("private-monitor-list");
       if (!box) return;
       box.innerHTML = snap.empty ? "لا توجد رسائل خاصة مسجلة بعد." : "";
       snap.forEach(d => {
         const x = d.data();
+        let mediaHtml = "";
+        if (x.imageUrl) mediaHtml = `<img src="${safe(x.imageUrl)}" style="max-height:85px;max-width:140px;border-radius:6px;display:block;margin-top:4px;cursor:pointer" onclick="openImageViewer('${slug(x.imageUrl)}')">`;
+        if (x.videoUrl) mediaHtml = `<video src="${safe(x.videoUrl)}" controls style="max-height:90px;max-width:150px;border-radius:6px;display:block;margin-top:4px"></video>`;
+        if (x.audioUrl) mediaHtml = `<audio src="${safe(x.audioUrl)}" controls style="height:28px;width:170px;margin-top:4px"></audio>`;
+
         box.insertAdjacentHTML("beforeend", `<div style="background:#06101e;border:1px solid #1e3557;border-radius:6px;padding:6px;margin-bottom:5px">
           <div style="font-size:.7rem;color:#ffd54a"><b>${safe(x.sender)}</b> ➔ <b>${safe(x.receiver)}</b> [${safe(x.type || 'نص')}] <span style="float:left;color:#94a3b8">${safe(x.time || "")}</span></div>
           <div style="font-size:.78rem;margin-top:2px;color:#fff">${safe(x.text || "")}</div>
+          ${mediaHtml}
         </div>`);
       });
     });
@@ -3432,6 +3681,10 @@ function setLocalBarsColor(col) {
 
 window.toggleLocalMicsAudio = () => {
   localMicsMuted = !localMicsMuted;
+  const container = $("webrtc-remote-audios");
+  if (container) {
+    container.querySelectorAll("audio").forEach(a => a.muted = localMicsMuted);
+  }
   $("local-mics-mute-label").textContent = localMicsMuted ? "تشغيل صوت المايكات (لجهازي)" : "كتم صوت المايكات (لجهازي)";
   toast(localMicsMuted ? "🔇 تم كتم صوت المايكات لجهازك" : "🔊 تم تشغيل صوت المايكات لجهازك");
   closeModal("mic-gear-modal");
@@ -3643,15 +3896,6 @@ window.sendDrawingToPublic = async () => {
     closeModal("drawing-modal");
     toast("✅ تم إرسال الرسم فوراً للعام");
   } catch { alert("تعذر إرسال الرسم"); }
-};
-
-window.openPublicVideoPrompt = () => {
-  const url = prompt("ألصق رابط الفيديو العام (YouTube):"); if (!url?.trim()) return;
-  addDoc(collection(db, `${P}roomMessages`), {
-    roomId: currentRoomId, sender: currentUser.name, senderUid: currentUser.uid,
-    text: "🎬 فيديو", videoLink: true, videoSource: url.trim(), time: nowTime(), createdAt: serverTimestamp()
-  });
-  closeModal("plus-menu-modal");
 };
 
 const STORE_RANKS = [
