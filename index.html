@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="google-site-verification" content="tsItDGrOeSgCsSnQY_kBEFAhvhH1IQYxgk5Y-wxhC-A">
+<meta name="google-site-verification" content="pEm-6j2p_TlFj-cK6q0b0iY7BiadfyG92P6-Flw0BSc">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="robots" content="index, follow">
 <meta name="description" content="شات أصل العرب - ملتقى العرب والنشامى. دردشة كتابية وصوتية، مايكات حقيقية، مسابقات وجوائز بدون تسجيل مجاناً.">
@@ -948,9 +948,9 @@ button{cursor:pointer}
 
 <div id="webrtc-remote-audios" style="display:none"></div>
 
-<!-- نهاية الجزء الأول (Part 1) -->
+<!-- نهاية الجزء الأول (Part 1 of 2) -->
 <!-- ============================================== -->
-  <script type="module">
+<script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import {
   getFirestore, collection, doc, setDoc, getDoc, addDoc,
@@ -2116,7 +2116,7 @@ window.ownerDropCurrentMic = async () => {
 window.toggleMicsVisibility = () => {
   $("mics-frame").classList.toggle("hidden-mics");
 };
-  /* ==================== محرك بحث وتشغيل يوتيوب الصوتي والفيديو الحقيقي ==================== */
+/* ==================== محرك بحث وتشغيل يوتيوب الصوتي والفيديو الحقيقي ==================== */
 function listenMusicSync() {
   if (unsubMusicSync) unsubMusicSync();
   unsubMusicSync = onSnapshot(doc(db, `${P}rooms`, currentRoomId, "musicSync", "active"), snap => {
