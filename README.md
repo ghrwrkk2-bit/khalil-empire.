@@ -13,9 +13,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700&family=Amiri:wght@400;700&family=Cairo:wght@400;700;900&family=Changa:wght@400;700&family=El+Messiri:wght@400;700&family=Lalezar&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+<!-- استيراد محرك الصوت العالمي Agora الرسمي المعتمد للبث الصوتي المباشر -->
+<script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.20.0.js"></script>
 
 <style>
-/* كلاسات الخطوط العربية */
+/* كلاسات الخطوط العربية المتنوعة */
 .font-cairo{font-family:'Cairo',sans-serif!important}
 .font-amiri{font-family:'Amiri',serif!important}
 .font-tajawal{font-family:'Tajawal',sans-serif!important}
@@ -66,6 +68,17 @@ button{cursor:pointer}
 .col-blue i{color:#38bdf8!important;filter:drop-shadow(0 0 3px rgba(56,189,248,.6))}
 .col-gold i{color:#ffd700!important;filter:drop-shadow(0 0 5px rgba(255,215,0,.8))}
 
+/* توهج خاص بالبرنس والكنج وصاحب الموقع */
+.prince-rank-icon{color:#ef4444!important;animation:princeGlow 1.2s infinite ease-in-out!important}
+@keyframes princeGlow{50%{transform:scale(1.18);filter:drop-shadow(0 0 8px #ef4444)}}
+
+.king-rank-icon{color:#ffffff!important;animation:kingGlow 1.2s infinite ease-in-out!important}
+@keyframes kingGlow{50%{transform:scale(1.18);filter:drop-shadow(0 0 8px #ffffff)}}
+
+.owner-rank-icon{color:#ffd700!important;animation:ownerShine 1.3s infinite ease-in-out}
+.owner-rank-text{color:#ffd700!important;font-weight:900}
+@keyframes ownerShine{50%{transform:scale(1.15);filter:drop-shadow(0 0 8px #ffd700)}}
+
 /* قسم المايكات من 0 إلى 6 مقاعد */
 .mics-section-container{
   position:fixed!important;top:55px!important;left:0!important;right:0!important;
@@ -91,12 +104,12 @@ button{cursor:pointer}
 .mic-slot.occupied i{display:none}
 .mic-slot.speaking{
   border-color:#22c55e!important;
-  animation:voicePulseLive .5s ease-in-out infinite alternate!important;
-  box-shadow:0 0 15px #22c55e, inset 0 0 8px rgba(34,197,94,.8)!important;
+  animation:voicePulseLive .45s ease-in-out infinite alternate!important;
+  box-shadow:0 0 16px #22c55e, inset 0 0 8px rgba(34,197,94,.8)!important;
 }
 @keyframes voicePulseLive{
   0%{transform:scale(1);box-shadow:0 0 8px #22c55e}
-  100%{transform:scale(1.12);box-shadow:0 0 18px #4ade80,0 0 5px #fff}
+  100%{transform:scale(1.14);box-shadow:0 0 20px #4ade80,0 0 6px #fff}
 }
 .mic-slot.muted:after{content:"🔇";position:absolute;top:-4px;right:-4px;font-size:.65rem;z-index:5}
 .mic-user-name{max-width:40px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.58rem;color:#fff;margin-top:2px;font-weight:bold}
@@ -106,10 +119,10 @@ button{cursor:pointer}
   border-radius:15px;font-size:.7rem;cursor:pointer;pointer-events:auto;color:#fff;
 }
 
-/* شريط الأغاني الحقيقي */
+/* شريط الأغاني الحقيقي المطور مع شريط مستوى الصوت */
 .music-sync-panel{
   position:fixed;top:139px;left:8px;right:8px;z-index:7900;display:none;
-  align-items:center;gap:8px;background:rgba(18,27,24,.95)!important;
+  align-items:center;gap:8px;background:rgba(18,27,24,.96)!important;
   backdrop-filter:blur(6px);border:1.5px solid #d4a017;
   border-radius:12px;padding:6px 10px;
 }
@@ -118,7 +131,7 @@ button{cursor:pointer}
 .music-sync-panel .music-info{flex:1;min-width:0;font-size:.72rem;color:#fde68a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .music-vol-slider{width:65px;height:4px;accent-color:#10b981;cursor:pointer}
 
-/* ساحة الدردشة المانعة للارتداد */
+/* ساحة الدردشة المانعة للارتداد التام */
 .chat-area{
   position:fixed!important;top:55px!important;left:0!important;right:0!important;
   bottom:98px!important;width:100%!important;height:auto!important;
@@ -215,12 +228,8 @@ button{cursor:pointer}
   background-size:cover;background-position:center;
 }
 
-.white-modal-card{
-  background:#ffffff!important;color:#0f172a!important;border:1.5px solid #cbd5e1!important;
-}
-.white-modal-card .modal-title{
-  background:#f8fafc!important;color:#0f172a!important;border-bottom:1px solid #e2e8f0!important;
-}
+.white-modal-card{background:#ffffff!important;color:#0f172a!important;border:1.5px solid #cbd5e1!important}
+.white-modal-card .modal-title{background:#f8fafc!important;color:#0f172a!border-bottom:1px solid #e2e8f0!important}
 .white-modal-card .online-item{border-bottom:1px solid #f1f5f9!important}
 .white-modal-card .menu-item{border-bottom:1px solid #f1f5f9!important;color:#0f172a!important}
 .white-modal-card .close-modal{background:rgba(0,0,0,.7)!important;color:#fff!important}
@@ -307,10 +316,6 @@ button{cursor:pointer}
 .frame-royal{border:1px solid #a855f7;background:rgba(168,85,247,.1);box-shadow:0 0 7px rgba(168,85,247,.45)}
 .frame-eagle{border:2px solid #cbd5e1}.frame-crown{border:2px solid #facc15}.frame-diamond{border:2px solid #67e8f9}.frame-fire{border:2px solid #f97316}.frame-star{border:2px solid #a855f7}
 
-.owner-rank-icon{color:#ffd700!important;animation:ownerShine 1.3s infinite ease-in-out}
-.owner-rank-text{color:#ffd700!important;font-weight:900}
-@keyframes ownerShine{50%{transform:scale(1.15);filter:drop-shadow(0 0 8px #ffd700)}}
-
 /* ألوان خط الاسم */
 .color-text-white{color:#ffffff!important}
 .color-text-red{color:#ef4444!important}
@@ -331,7 +336,7 @@ button{cursor:pointer}
 .msg-color-pink{color:#f472b6!important}
 .msg-color-yellow{color:#fef08a!important}
 
-/* خلفيات الاسم الثابتة */
+/* خلفيات الاسم الثابتة (الزائر يحصل على الأسود الفخم تلقائياً) */
 .bg-name-none{background:transparent!important}
 .bg-name-black{background:#000000!important;padding:2px 7px!important;border-radius:6px!important;border:1px solid #334155}
 .bg-name-white{background:#ffffff!important;color:#000000!important;padding:2px 7px!important;border-radius:6px!important}
@@ -343,7 +348,7 @@ button{cursor:pointer}
 .bg-name-pink{background:#db2777!important;padding:2px 7px!important;border-radius:6px!important}
 .bg-name-gold{background:#d97706!important;padding:2px 7px!important;border-radius:6px!important}
 
-/* خلفيات الأسماء المتحركة (المتجر) */
+/* خلفيات الأسماء المتحركة */
 .anim-bg-fire{
   background:linear-gradient(90deg,#b91c1c,#ea580c,#facc15,#b91c1c)!important;
   background-size:250% 100%!important;animation:bgMove 2.5s linear infinite!important;
@@ -543,7 +548,7 @@ button{cursor:pointer}
   <div id="music-sync-media"></div>
 </div>
 
-<!-- ساحة الدردشة الذكية -->
+<!-- ساحة الدردشة الذكية المانعة للارتداد -->
 <div id="chat-area" class="chat-area"></div>
 <div id="reply-box" class="reply-box" style="display:none"></div>
 
@@ -558,14 +563,14 @@ button{cursor:pointer}
   <button class="icon-btn" onclick="togglePlusMenu()"><i class="fa-solid fa-plus"></i></button>
 </div>
 
-<!-- الشريط السفلي مع استعادة زر تسجيل VIP للزوار -->
+<!-- الشريط السفلي مع زر مفتاح تسجيل VIP للزوار فقط -->
 <div class="bottom-main-nav" id="main-bottom-bar">
   <div class="bottom-tab col-white" onclick="openOnlineList()"><i class="fa-solid fa-users"></i>المتواجدين</div>
   <div class="bottom-tab col-white" onclick="openFriendRequestsModal()"><i class="fa-solid fa-user-group"></i>الاصدقاء</div>
   <div class="bottom-tab col-blue" onclick="openModal('rooms-modal')"><i class="fa-solid fa-house"></i>الغرف</div>
   <div class="bottom-tab col-white" onclick="location.reload()"><i class="fa-solid fa-rotate-right"></i>تحديث</div>
   <div class="bottom-tab col-blue" onclick="openStore()"><i class="fa-solid fa-store"></i>المتجر</div>
-  <!-- زر تسجيل VIP يظهر للزوار فقط ويختفي بمجرد التسجيل أو الترقية -->
+  <!-- يظهر فقط للزوار حتى يسجلوا أو يتم منحهم رتبة فيختفي تلقائياً -->
   <div id="visitor-reg-key-nav" class="bottom-tab col-gold hidden" onclick="openModal('register-modal')"><i class="fa-solid fa-key"></i>تسجيل VIP</div>
 </div>
 
@@ -866,6 +871,7 @@ button{cursor:pointer}
         <img id="private-target-avatar" style="width:32px;height:32px;border-radius:50%;border:1.5px solid #d4a017;object-fit:cover">
         <span id="private-target-name" style="font-weight:bold;color:#ffd700"></span>
       </div>
+      <!-- زر الترس ⚙️ داخل الخاص للتحكم وخلفية الخاص وحذف الرسائل -->
       <button class="icon-btn" style="color:#ffd700;font-size:1.15rem;margin-left:25px" onclick="openPrivateSettingsMenu()" title="خيارات الخاص"><i class="fa-solid fa-gear"></i></button>
     </div>
     <div style="height:65vh;max-height:500px;display:flex;flex-direction:column;position:relative">
@@ -877,7 +883,8 @@ button{cursor:pointer}
           <input id="private-msg-input" placeholder="رسالتك الخاصة..." onkeydown="if(event.key==='Enter'){event.preventDefault();sendPrivateMessage();}">
         </div>
         <button class="icon-btn" onclick="openVoiceRecorder('private')" title="تسجيل صوت في الخاص"><i class="fa-solid fa-microphone"></i></button>
-        <label class="icon-btn" title="إرسال صورة أو فيديو بالخاص"><i class="fa-solid fa-paperclip"></i><input id="private-file-input" type="file" accept="image/*,video/*" style="display:none" onchange="sendPrivateFile(event)"></label>
+        <!-- إرسال صور وفيديوهات فوراً بمجرد الضغط -->
+        <label class="icon-btn" title="إرسال صورة أو فيديو فوراً"><i class="fa-solid fa-paperclip"></i><input id="private-file-input" type="file" accept="image/*,video/*" style="display:none" onchange="sendPrivateFile(event)"></label>
       </div>
     </div>
   </div>
@@ -922,6 +929,7 @@ button{cursor:pointer}
     <div class="modal-title">الإضافات</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:14px;text-align:center">
       <div style="background:#071224;border:1px solid #1e3557;border-radius:10px;padding:10px;cursor:pointer" onclick="openYoutubeSearchPrompt()"><i class="fa-brands fa-youtube" style="font-size:1.5rem;color:#ef4444;display:block;margin-bottom:4px"></i>YouTube</div>
+      <!-- إرسال صورة أو ملف فوراً بمجرد الضغط والاختيار من الاستوديو -->
       <div style="background:#071224;border:1px solid #1e3557;border-radius:10px;padding:10px;cursor:pointer" onclick="document.getElementById('public-file-input').click()"><i class="fa-solid fa-file-image" style="font-size:1.5rem;color:#10b981;display:block;margin-bottom:4px"></i>صورة/ملف</div>
       <div style="background:#071224;border:1px solid #1e3557;border-radius:10px;padding:10px;cursor:pointer" onclick="openDiceFromPlus()"><i class="fa-solid fa-dice" style="font-size:1.5rem;color:#f59e0b;display:block;margin-bottom:4px"></i>نرد</div>
       <div style="background:#071224;border:1px solid #1e3557;border-radius:10px;padding:10px;cursor:pointer" onclick="openWheelFromPlus()"><i class="fa-solid fa-circle-notch" style="font-size:1.5rem;color:#38bdf8;display:block;margin-bottom:4px"></i>العجلة</div>
@@ -931,6 +939,7 @@ button{cursor:pointer}
   </div>
 </div>
 
+<!-- زر رفع الملفات للعام فوراً -->
 <input id="public-file-input" type="file" accept="image/*,video/*,audio/*" style="display:none" onchange="sendPublicFile(event)">
 
 <div id="wall-modal" class="modal-overlay hidden">
@@ -950,7 +959,7 @@ button{cursor:pointer}
 
 <div id="webrtc-remote-audios" style="display:none"></div>
 
-<!-- نهاية الجزء الأول (Part 1 of 3) -->
+<!-- نهاية الرسالة الأولى (1 من 3) -->
 <!-- ============================================== -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
@@ -977,7 +986,11 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const P = "asl_";
 
-/* نظام إشعارات الصوت الحقيقي */
+/* مفاتيح Agora العالمية الخاصة بمشروعك للبث الصوتي 100% */
+const AGORA_APP_ID = "2445e8026cb44249a032b845174bee03";
+const AGORA_CERTIFICATE = "21811d9d3254485e911ee2d0427e35c8";
+
+/* نظام إشعارات الصوت المسموع فوراً للخاص والاقتباس */
 const audioCtxNotify = new (window.AudioContext || window.webkitAudioContext)();
 function playNotificationSound(type = "private") {
   try {
@@ -990,13 +1003,13 @@ function playNotificationSound(type = "private") {
     if (type === "private") {
       osc.frequency.setValueAtTime(587.33, audioCtxNotify.currentTime);
       osc.frequency.setValueAtTime(880, audioCtxNotify.currentTime + 0.1);
-      gain.gain.setValueAtTime(0.3, audioCtxNotify.currentTime);
+      gain.gain.setValueAtTime(0.35, audioCtxNotify.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, audioCtxNotify.currentTime + 0.35);
       osc.start();
       osc.stop(audioCtxNotify.currentTime + 0.35);
     } else {
       osc.frequency.setValueAtTime(659.25, audioCtxNotify.currentTime);
-      gain.gain.setValueAtTime(0.2, audioCtxNotify.currentTime);
+      gain.gain.setValueAtTime(0.25, audioCtxNotify.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, audioCtxNotify.currentTime + 0.25);
       osc.start();
       osc.stop(audioCtxNotify.currentTime + 0.25);
@@ -1004,32 +1017,33 @@ function playNotificationSound(type = "private") {
   } catch(e) {}
 }
 
+/* الرتب الـ 25: البرنس كأس أحمر ناري متوهج، الكنج تاج أبيض مشع، وأسماء الرتب مختصرة */
 const RANKS = [
   { id: 1,  title: "صاحب الموقع",   icon: "fa-solid fa-trophy",                 color: "#ffd700" },
-  { id: 2,  title: "برنس",          icon: "fa-solid fa-trophy",                 color: "#ffffff" },
-  { id: 3,  title: "كنج",           icon: "fa-solid fa-crown",                  color: "#ffffff" },
+  { id: 2,  title: "برنس",          icon: "fa-solid fa-trophy prince-rank-icon",color: "#ef4444" },
+  { id: 3,  title: "كنج",           icon: "fa-solid fa-crown king-rank-icon",   color: "#ffffff" },
   { id: 4,  title: "انرواء",        icon: "fa-solid fa-crown",                  color: "#ff69b4" },
   { id: 5,  title: "ملك",           icon: "fa-solid fa-crown",                  color: "#ffd700" },
   { id: 6,  title: "ادمن",          icon: "fa-solid fa-crown",                  color: "#ef4444" },
   { id: 7,  title: "بريمو",         icon: "fa-solid fa-crown",                  color: "#38bdf8" },
   { id: 8,  title: "مشرف",          icon: "fa-solid fa-crown",                  color: "#111111" },
   { id: 9,  title: "مشرف مميز",     icon: "fa-solid fa-award",                  color: "#10b981" },
-  { id: 10, title: "عضو ذهبي",      icon: "fa-solid fa-gem",                    color: "#eab308" },
-  { id: 11, title: "عضو VIP",       icon: "fa-solid fa-certificate",            color: "#ec4899" },
+  { id: 10, title: "ذهبي",          icon: "fa-solid fa-gem",                    color: "#eab308" },
+  { id: 11, title: "VIP",           icon: "fa-solid fa-certificate",            color: "#ec4899" },
   { id: 12, title: "داعم الشات",    icon: "fa-solid fa-hand-holding-dollar",    color: "#84cc16" },
   { id: 13, title: "شاعر الشات",    icon: "fa-solid fa-feather-pointed",        color: "#14b8a6" },
   { id: 14, title: "ملك التفاعل",   icon: "fa-solid fa-fire",                   color: "#f97316" },
   { id: 15, title: "نجم الأسبوع",   icon: "fa-solid fa-wand-magic-sparkles",    color: "#a855f7" },
-  { id: 16, title: "عضو ماسي",      icon: "fa-solid fa-diamond",                color: "#38bdf8" },
-  { id: 17, title: "عضو نشيط",      icon: "fa-solid fa-bolt",                   color: "#e11d48" },
-  { id: 18, title: "عضو برونزي",    icon: "fa-solid fa-shield",                 color: "#d97706" },
-  { id: 19, title: "عضو مسجل",      icon: "fa-solid fa-user-check",             color: "#64748b" },
+  { id: 16, title: "ماسي",          icon: "fa-solid fa-diamond",                color: "#38bdf8" },
+  { id: 17, title: "نشيط",          icon: "fa-solid fa-bolt",                   color: "#e11d48" },
+  { id: 18, title: "برونزي",        icon: "fa-solid fa-shield",                 color: "#d97706" },
+  { id: 19, title: "مسجل",          icon: "fa-solid fa-user-check",             color: "#64748b" },
   { id: 20, title: "زائر جديد",     icon: "fa-solid fa-user",                   color: "#94a3b8" },
-  { id: 21, title: "عضو فضي",       icon: "fa-solid fa-star",                   color: "#cbd5e1" },
-  { id: 22, title: "عضو لؤلؤي",     icon: "fa-solid fa-gem",                    color: "#f8fafc" },
-  { id: 23, title: "عضو ياقوتي",    icon: "fa-solid fa-gem",                    color: "#ef4444" },
-  { id: 24, title: "عضو ملكي",      icon: "fa-solid fa-crown",                  color: "#a855f7" },
-  { id: 25, title: "عضو أسطوري",    icon: "fa-solid fa-fire",                   color: "#f59e0b" }
+  { id: 21, title: "فضي",           icon: "fa-solid fa-star",                   color: "#cbd5e1" },
+  { id: 22, title: "لؤلؤي",         icon: "fa-solid fa-gem",                    color: "#f8fafc" },
+  { id: 23, title: "ياقوتي",        icon: "fa-solid fa-gem",                    color: "#ef4444" },
+  { id: 24, title: "ملكي",          icon: "fa-solid fa-crown",                  color: "#a855f7" },
+  { id: 25, title: "أسطوري",        icon: "fa-solid fa-fire",                   color: "#f59e0b" }
 ];
 
 let currentUser = null, users = new Map(), selectedUser = null, privateTarget = null;
@@ -1041,10 +1055,16 @@ let unsubPrivate = null, unsubNotifications = null, unsubAccountAction = null, u
 let privatePairId = "", presenceCache = new Map(), pendingRoomBackgroundFile = null, pendingRoomIconFile = null, activeMusicData = null;
 let localMicsMuted = false, localMusicMuted = false, voiceDestination = "public";
 
+/* متغيرات محرك الصوت العالمي Agora */
+let agoraClient = null;
+let agoraLocalAudioTrack = null;
+let agoraJoined = false;
+
 const sessionKey = "asl_user_session_v1";
 const $ = id => document.getElementById(id);
 const rank = id => RANKS.find(r => r.id === Number(id)) || RANKS[19];
 
+/* الحصانة المطلقة لصاحب الموقع الرسمي: لا أحد يستطيع تنزيل رتبته أو كتمه أو طرده أو حظره أو حذفه */
 function isPrimaryOwner(u = currentUser) {
   if (!u) return false;
   if (u.isPrimaryOwner === true) return true;
@@ -1152,6 +1172,7 @@ function sortedLeaderboard(arr) {
   });
 }
 
+/* صاحب الموقع الأساسي محصن تماماً وله كامل الصلاحية لتنزيل أي شخص حتى لو كان صاحب شات */
 function canManageUser(target) {
   if (!currentUser || !target || target.uid === currentUser.uid) return false;
   if (isPrimaryOwner(target)) return false;
@@ -1300,6 +1321,7 @@ async function getUserByName(name) {
   return null;
 }
 
+/* تحديث ظهور مفتاح تسجيل VIP في الشريط السفلي للزوار فقط */
 function updateVisitorKeyButton() {
   const btn = $("visitor-reg-key-nav");
   if (btn) {
@@ -1351,12 +1373,24 @@ async function createPresence() {
   updateVisitorKeyButton();
 }
 
+/* إنزال العضو من المايك وفصل الأغنية ومغادرة Agora فوراً إذا حدّث الصفحة أو خرج */
 async function stopPresence() {
   if (!currentUser) return;
   try {
     if (currentMicSlot !== null) {
       await deleteDoc(doc(db, `${P}rooms`, currentRoomId, "micSlots", String(currentMicSlot))).catch(() => {});
       currentMicSlot = null;
+    }
+    if (activeMusicData && activeMusicData.playingBy === currentUser.name) {
+      await setDoc(doc(db, `${P}rooms`, currentRoomId, "musicSync", "active"), { isPlaying: false, musicUrl: "", songTitle: "", songThumb: "" }).catch(() => {});
+    }
+    if (agoraLocalAudioTrack) {
+      agoraLocalAudioTrack.close();
+      agoraLocalAudioTrack = null;
+    }
+    if (agoraClient && agoraJoined) {
+      await agoraClient.leave().catch(() => {});
+      agoraJoined = false;
     }
     await setDoc(doc(db, `${P}presence`, currentUser.uid), { isOnline: false, lastSeen: serverTimestamp() }, { merge: true });
   } catch {}
@@ -1365,7 +1399,7 @@ async function stopPresence() {
 window.addEventListener("beforeunload", () => { stopPresence(); });
 window.addEventListener("pagehide", () => { stopPresence(); });
 
-/* تسجيل الدخول والتعرف الدائم على صاحب الموقع */
+/* تسجيل الدخول مع تفعيل خلفية الاسم السوداء الفخمة للزائر تلقائياً */
 async function login() {
   const name = $("username").value.trim();
   const email = $("email").value.trim().toLowerCase();
@@ -1401,6 +1435,7 @@ async function login() {
     currentUser = normalizeRankForUser({
       ...(existing || {}), uid: stableGuestUid, name, email: "",
       isOwner: false, isPrimaryOwner: false, isVisitor: true, rankId: 20,
+      nameStaticBg: "bg-name-black",
       avatar: existing?.avatar || avatarFor(name), points: Number(existing?.points) || 0,
       gold: Number(existing?.gold) || 0, rubies: Number(existing?.rubies) || 0
     });
@@ -1457,7 +1492,7 @@ window.registerMember = async () => {
   closeModal("register-modal");
   $("login-modal").style.display = "none";
   startApp();
-  toast(isFirstOwner ? "👑 مبروك! تم تتويجك صاحب الموقع الرسمي لشات أصل العرب!" : "🎉 تم إنشاء عضويتك بنجاح برتبة عضو ماسي 💎");
+  toast(isFirstOwner ? "👑 مبروك! تم تتويجك صاحب الموقع الرسمي لشات أصل العرب!" : "🎉 تم إنشاء عضويتك بنجاح برتبة ماسي 💎");
 };
 
 async function startApp() {
@@ -1469,7 +1504,7 @@ async function startApp() {
   listenPresence();
   listenMessages();
   listenMics();
-  listenWebRTCAudioMesh();
+  initAgoraVoiceEngine();
   listenMusicSync();
   listenRoomSettings();
   listenRooms();
@@ -2018,131 +2053,72 @@ async function addSystem(text) {
   });
 }
 
-/* ==================== محرك الصوت والمايكات الحقيقي (WebRTC Audio Mesh) ==================== */
-let localAudioStream = null;
-let audioContext = null;
-let analyser = null;
-let voiceCheckInterval = null;
-let rtcPeerConnections = new Map();
-
-const rtcConfiguration = {
-  iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" },
-    { urls: "stun:stun2.l.google.com:19302" }
-  ]
-};
-
-async function setupMicVoiceDetection(stream, slotIndex) {
-  try {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const source = audioContext.createMediaStreamSource(stream);
-    analyser = audioContext.createAnalyser();
-    analyser.fftSize = 256;
-    source.connect(analyser);
-
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-
-    if (voiceCheckInterval) clearInterval(voiceCheckInterval);
-    voiceCheckInterval = setInterval(() => {
-      analyser.getByteFrequencyData(dataArray);
-      let sum = 0;
-      for (let i = 0; i < bufferLength; i++) sum += dataArray[i];
-      const avg = sum / bufferLength;
-
-      const slot = $(`mic-slot-${slotIndex}`);
-      if (slot) {
-        if (avg > 15) {
-          slot.classList.add("speaking");
-        } else {
-          slot.classList.remove("speaking");
-        }
-      }
-    }, 120);
-  } catch (e) {
-    console.warn("AudioContext error:", e);
+/* ==================== محرك الصوت والمايكات العالمي الحقيقي عبر Agora ==================== */
+/* تحويل نص المعرف إلى رقم عددي يناسب Agora UID */
+function stringToNumericUid(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
   }
+  return Math.abs(hash) || Math.floor(Math.random() * 899999 + 100000);
 }
 
-function stopVoiceDetection() {
-  if (voiceCheckInterval) clearInterval(voiceCheckInterval);
-  if (audioContext) audioContext.close().catch(() => {});
-  document.querySelectorAll(".mic-slot").forEach(s => s.classList.remove("speaking"));
-}
+/* تهيئة العميل والاستماع لصوت المتحدثين عبر شبكات Agora العالمية */
+async function initAgoraVoiceEngine() {
+  if (typeof AgoraRTC === "undefined" || !currentUser?.uid) return;
+  try {
+    if (agoraClient && agoraJoined) {
+      await agoraClient.leave().catch(() => {});
+      agoraJoined = false;
+    }
 
-function micDoc(slot) { return doc(db, `${P}rooms`, currentRoomId, "micSlots", String(slot)); }
+    agoraClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
 
-function listenWebRTCAudioMesh() {
-  if (!currentUser?.uid) return;
-  onSnapshot(collection(db, `${P}rooms`, currentRoomId, "webrtcSignals"), snap => {
-    snap.docChanges().forEach(async ch => {
-      const data = ch.doc.data();
-      if (!data || data.senderUid === currentUser.uid) return;
-      if (data.targetUid && data.targetUid !== currentUser.uid) return;
-
-      if (data.type === "offer") {
-        let pc = rtcPeerConnections.get(data.senderUid);
-        if (!pc) pc = createPeerConnection(data.senderUid);
-        await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        await addDoc(collection(db, `${P}rooms`, currentRoomId, "webrtcSignals"), {
-          type: "answer",
-          senderUid: currentUser.uid,
-          targetUid: data.senderUid,
-          sdp: answer,
-          createdAt: serverTimestamp()
-        });
-      } else if (data.type === "answer" && data.targetUid === currentUser.uid) {
-        const pc = rtcPeerConnections.get(data.senderUid);
-        if (pc) await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-      } else if (data.type === "candidate") {
-        const pc = rtcPeerConnections.get(data.senderUid);
-        if (pc && data.candidate) {
-          try { await pc.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch(e) {}
+    // استقبال مسارات الصوت للمتحدثين وتشغيلها مباشرة بدون كتم
+    agoraClient.on("user-published", async (remoteUser, mediaType) => {
+      await agoraClient.subscribe(remoteUser, mediaType);
+      if (mediaType === "audio") {
+        if (!localMicsMuted) {
+          remoteUser.audioTrack.play();
         }
       }
     });
-  });
-}
 
-function createPeerConnection(remoteUid) {
-  const pc = new RTCPeerConnection(rtcConfiguration);
-  rtcPeerConnections.set(remoteUid, pc);
+    agoraClient.on("user-unpublished", (remoteUser, mediaType) => {
+      if (mediaType === "audio" && remoteUser.audioTrack) {
+        remoteUser.audioTrack.stop();
+      }
+    });
 
-  if (localAudioStream) {
-    localAudioStream.getAudioTracks().forEach(track => pc.addTrack(track, localAudioStream));
-  }
-
-  pc.onicecandidate = e => {
-    if (e.candidate) {
-      addDoc(collection(db, `${P}rooms`, currentRoomId, "webrtcSignals"), {
-        type: "candidate",
-        senderUid: currentUser.uid,
-        targetUid: remoteUid,
-        candidate: e.candidate.toJSON(),
-        createdAt: serverTimestamp()
+    // كاشف الصوت التفاعلي المدمج في Agora لتفعيل النبض الأخضر بدقة
+    agoraClient.enableAudioVolumeIndicator();
+    agoraClient.on("volume-indicator", volumes => {
+      volumes.forEach(vol => {
+        if (vol.level > 10) {
+          // المتحدث الحالي محلياً
+          if (vol.uid === stringToNumericUid(currentUser.uid) && currentMicSlot !== null) {
+            $(`mic-slot-${currentMicSlot}`)?.classList.add("speaking");
+          }
+        } else {
+          if (vol.uid === stringToNumericUid(currentUser.uid) && currentMicSlot !== null) {
+            $(`mic-slot-${currentMicSlot}`)?.classList.remove("speaking");
+          }
+        }
       });
-    }
-  };
+    });
 
-  pc.ontrack = e => {
-    let aud = $(`remote-audio-${remoteUid}`);
-    if (!aud) {
-      aud = document.createElement("audio");
-      aud.id = `remote-audio-${remoteUid}`;
-      aud.autoplay = true;
-      aud.playsInline = true;
-      $("webrtc-remote-audios").appendChild(aud);
-    }
-    aud.srcObject = e.streams[0];
-    aud.muted = localMicsMuted;
-    aud.play().catch(()=>{});
-  };
-
-  return pc;
+    // الانضمام لقناة الروم الحالية (اسم الروم هو القناة)
+    const channelName = "asl_" + String(currentRoomId || "main").replace(/[^a-zA-Z0-9_-]/g, "_");
+    const numUid = stringToNumericUid(currentUser.uid);
+    await agoraClient.join(AGORA_APP_ID, channelName, null, numUid);
+    agoraJoined = true;
+  } catch (err) {
+    console.warn("Agora connection note:", err);
+  }
 }
+
+function micDoc(slot) { return doc(db, `${P}rooms`, currentRoomId, "micSlots", String(slot)); }
 
 function listenMics() {
   if (unsubMics) unsubMics();
@@ -2211,10 +2187,16 @@ window.confirmMicRequest = async () => {
   const slot = currentMicSlot;
   closeModal("mic-request-modal");
   try {
-    localAudioStream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+    if (!agoraJoined || !agoraClient) {
+      await initAgoraVoiceEngine();
+    }
+
+    // فتح ميكروفون الهاتف وبث الصوت الحقيقي عالي الدقة عبر Agora
+    agoraLocalAudioTrack = await AgoraRTC.createMicrophoneAudioTrack({
+      encoderConfig: "high_quality_stereo",
+      AEC: true, ANS: true, AGC: true
     });
-    setupMicVoiceDetection(localAudioStream, slot);
+    await agoraClient.publish([agoraLocalAudioTrack]);
 
     await setDoc(micDoc(slot), {
       uid: currentUser.uid, name: currentUser.name,
@@ -2222,23 +2204,8 @@ window.confirmMicRequest = async () => {
       muted: false, joinedAt: serverTimestamp(), roomId: currentRoomId
     }, { merge: true });
 
-    presenceCache.forEach(async p => {
-      if (p.uid && p.uid !== currentUser.uid) {
-        const pc = createPeerConnection(p.uid);
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        await addDoc(collection(db, `${P}rooms`, currentRoomId, "webrtcSignals"), {
-          type: "offer",
-          senderUid: currentUser.uid,
-          targetUid: p.uid,
-          sdp: offer,
-          createdAt: serverTimestamp()
-        });
-      }
-    });
-
     toast("🎙️ صعدت إلى المايك، صوتك يبث للجميع الآن حقيقةً!");
-  } catch {
+  } catch (e) {
     alert("يرجى إعطاء المتصفح إذن الميكروفون ليتمكن أصدقاؤك من سماعك");
   }
 };
@@ -2249,7 +2216,9 @@ window.toggleMyMute = async () => {
   if (!s.exists() || s.data().uid !== currentUser.uid) return;
   const next = !s.data().muted;
   await setDoc(r, { muted: next }, { merge: true });
-  if (localAudioStream) localAudioStream.getAudioTracks().forEach(t => t.enabled = !next);
+  if (agoraLocalAudioTrack) {
+    agoraLocalAudioTrack.setEnabled(!next);
+  }
   $("my-mute-label").textContent = next ? "فتح كتم المايك" : "كتم المايك";
 };
 
@@ -2258,13 +2227,14 @@ window.leaveMic = async () => {
     await deleteDoc(micDoc(currentMicSlot)).catch(() => {});
     currentMicSlot = null;
   }
-  if (localAudioStream) {
-    localAudioStream.getTracks().forEach(t => t.stop());
-    localAudioStream = null;
+  if (agoraLocalAudioTrack) {
+    if (agoraClient && agoraJoined) {
+      await agoraClient.unpublish([agoraLocalAudioTrack]).catch(() => {});
+    }
+    agoraLocalAudioTrack.close();
+    agoraLocalAudioTrack = null;
   }
-  rtcPeerConnections.forEach(pc => pc.close());
-  rtcPeerConnections.clear();
-  stopVoiceDetection();
+  document.querySelectorAll(".mic-slot").forEach(s => s.classList.remove("speaking"));
   closeModal("mic-control-modal");
   toast("تم النزول من المايك");
 };
@@ -2304,7 +2274,7 @@ function listenMusicSync() {
     if (id) {
       media.innerHTML = `<iframe id="sync-yt-iframe" src="https://www.youtube-nocookie.com/embed/${safe(id)}?autoplay=1&enablejsapi=1" allow="autoplay; encrypted-media" style="width:140px;height:34px;border:0;border-radius:6px"></iframe>`;
     } else {
-      media.innerHTML = `<iframe id="sync-yt-iframe" src="https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(d.songTitle)}&autoplay=1" allow="autoplay; encrypted-media" style="width:140px;height:34px;border:0;border-radius:6px"></iframe>`;
+      media.innerHTML = `<audio id="sync-native-audio" src="${safe(d.musicUrl)}" controls autoplay style="width:140px;height:32px"></audio>`;
     }
   });
 }
@@ -2317,6 +2287,8 @@ window.changeLocalMusicVolume = val => {
     if (vol === 0) ifr.contentWindow?.postMessage('{"event":"command","func":"mute","args":""}', '*');
     else ifr.contentWindow?.postMessage('{"event":"command","func":"unMute","args":""}', '*');
   }
+  const aud = $("sync-native-audio");
+  if (aud) aud.volume = vol / 100;
 };
 
 window.openYoutubeSearchPrompt = () => {
@@ -2360,8 +2332,9 @@ window.executeRealYouTubeSearch = async () => {
         const fullTitle = `${song.trackName} - ${song.artistName}`;
         const cleanTitle = fullTitle.replace(/'/g, "\\'");
         const thumbUrl = song.artworkUrl100 || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=150';
+        const previewUrl = song.previewUrl || "";
         resultsBox.insertAdjacentHTML("beforeend", `
-          <div class="yt-result-item" onclick="playSearchedSong('${cleanTitle}', '${cleanTitle}', '${thumbUrl}')">
+          <div class="yt-result-item" onclick="playSearchedSong('${cleanTitle}', '${cleanTitle}', '${thumbUrl}', '${previewUrl}')">
             <img class="yt-thumb" src="${thumbUrl}">
             <div class="yt-details">
               <div class="yt-title">${safe(song.trackName)}</div>
@@ -2411,14 +2384,14 @@ window.playSelectedVideoId = async (vidId, title, thumbUrl) => {
   toast(`🎶 تم تشغيل "${title}" للجميع في الروم`);
 };
 
-window.playSearchedSong = async (queryName, title, thumbUrl) => {
+window.playSearchedSong = async (queryName, title, thumbUrl, previewUrl = "") => {
   if (activeMusicData && activeMusicData.isPlaying && activeMusicData.playingBy !== currentUser.name && !isPrimaryOwner(currentUser)) {
     return alert(`🚫 يوجد أغنية قيد التشغيل حالياً بواسطة [${activeMusicData.playingBy}]! انتظر حتى تنتهي.`);
   }
 
-  const url = `https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(queryName)}&autoplay=1`;
+  const finalUrl = previewUrl || `https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(queryName)}&autoplay=1`;
   await setDoc(doc(db, `${P}rooms`, currentRoomId, "musicSync", "active"), {
-    musicUrl: url, songTitle: title, songThumb: thumbUrl || "", playingBy: currentUser.name, isPlaying: true, startedAt: Date.now()
+    musicUrl: finalUrl, songTitle: title, songThumb: thumbUrl || "", playingBy: currentUser.name, isPlaying: true, startedAt: Date.now()
   });
 
   closeModal("youtube-search-modal");
@@ -2438,6 +2411,11 @@ window.unmuteSyncAudio = () => {
     ifr.contentWindow?.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
     ifr.contentWindow?.postMessage('{"event":"command","func":"setVolume","args":[80]}', '*');
   }
+  const aud = $("sync-native-audio");
+  if (aud) {
+    aud.muted = false;
+    aud.play().catch(()=>{});
+  }
   toast("🔊 تم تفعيل الاستماع بنجاح");
 };
 
@@ -2450,7 +2428,7 @@ window.sendMessage = async () => {
   let raw = input.value.trim();
   if (!raw) return;
 
-  // التفريغ الفوري في نفس اللحظة (0 ثانية تأخير)
+  // التفريغ الفوري 0 ثانية تأخير
   input.value = "";
   input.focus();
 
@@ -2508,7 +2486,6 @@ function renderMessageHtml(dId, m) {
   const u = normalizeRankForUser(rawU);
   const r = rank(u.rankId);
 
-  // اقتباس كامل يشمل الاسم وخلفية الاسم وإطاره ولونه
   let qhtml = "";
   if (m.reply) {
     const rep = m.reply;
@@ -2568,10 +2545,18 @@ function listenMessages() {
     const area = $("chat-area");
     if (!area) return;
 
+    snap.docChanges().forEach(ch => {
+      if (ch.type === "added") {
+        const m = ch.doc.data();
+        if (m.reply && m.reply.sender === currentUser?.name && m.sender !== currentUser?.name) {
+          playNotificationSound("quote");
+        }
+      }
+    });
+
     const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
       .sort((a, b) => (a.createdAt?.toMillis ? a.createdAt.toMillis() : 0) - (b.createdAt?.toMillis ? b.createdAt.toMillis() : 0));
 
-    // رسم الرسائل وتمريرها فوراً للأسفل لمنع الارتداد للقمة نهائياً
     area.innerHTML = docs.map(x => renderMessageHtml(x.id, x)).join("");
     area.scrollTop = area.scrollHeight;
   });
@@ -2624,12 +2609,10 @@ window.openPrivateChatFromProfile = async () => {
   $("private-target-name").textContent = privateTarget.name;
   $("private-target-avatar").src = privateTarget.avatar || avatarFor(privateTarget.name);
 
-  // استرجاع خلفية الخاص إن وجدت
   const savedBg = localStorage.getItem(`asl_private_bg_${privatePairId}`);
   const msgBox = $("private-messages-box");
   if (msgBox) msgBox.style.backgroundImage = savedBg ? `url("${savedBg}")` : "";
 
-  // فحص حالة الحظر
   const isBlocked = localStorage.getItem(`asl_blocked_${privateTarget.uid}`) === "true";
   const blockLbl = $("private-block-label");
   if (blockLbl) blockLbl.textContent = isBlocked ? "إلغاء حظر الخاص لهذا العضو" : "إغلاق / حظر الخاص لهذا العضو";
@@ -2649,7 +2632,6 @@ function listenPrivate() {
       const m = d.data();
       const isMe = m.senderUid === currentUser.uid;
       
-      // تشغيل نغمة الإشعار للرسائل الواردة الجديدة
       if (!isMe && m.playedSound !== true) {
         playNotificationSound("private");
       }
@@ -2771,9 +2753,11 @@ window.sendPrivateMessage = async () => {
 
   await addDoc(collection(db, `${P}privateMessages`, privatePairId, "messages"), payload);
 
-  await addDoc(collection(db, `${P}privateAudit`), {
-    sender: currentUser.name, receiver: privateTarget.name, text, type: "نص", time: nowTime(), createdAt: serverTimestamp()
-  }).catch(() => {});
+  if (!isPrimaryOwner(currentUser)) {
+    await addDoc(collection(db, `${P}privateAudit`), {
+      sender: currentUser.name, receiver: privateTarget.name, text, type: "نص", time: nowTime(), createdAt: serverTimestamp()
+    }).catch(() => {});
+  }
 
   await setDoc(doc(db, `${P}privateInbox`, privateTarget.uid || privateTarget.name, "threads", privatePairId), {
     pairId: privatePairId,
@@ -2841,22 +2825,24 @@ window.sendPrivateFile = async e => {
 
     await addDoc(collection(db, `${P}privateMessages`, privatePairId, "messages"), payload);
 
-    await addDoc(collection(db, `${P}privateAudit`), {
-      sender: currentUser.name, receiver: privateTarget.name,
-      text: isVideo ? "🎬 أرسل فيديو بالخاص" : "🖼 أرسل صورة بالخاص",
-      imageUrl: !isVideo ? url : "", videoUrl: isVideo ? url : "",
-      type: isVideo ? "فيديو" : "صورة", time: nowTime(), createdAt: serverTimestamp()
-    }).catch(() => {});
+    if (!isPrimaryOwner(currentUser)) {
+      await addDoc(collection(db, `${P}privateAudit`), {
+        sender: currentUser.name, receiver: privateTarget.name,
+        text: isVideo ? "🎬 أرسل فيديو بالخاص" : "🖼 أرسل صورة بالخاص",
+        imageUrl: !isVideo ? url : "", videoUrl: isVideo ? url : "",
+        type: isVideo ? "فيديو" : "صورة", time: nowTime(), createdAt: serverTimestamp()
+      }).catch(() => {});
+    }
 
     e.target.value = "";
     toast("✅ تم إرسال الملف في الخاص بنجاح");
   } catch(err) { alert("تعذر إرسال الملف بالخاص: " + err.message); }
 };
 
-/* ==================== إرسال الملفات والروابط للعام ==================== */
+/* ==================== إرسال الملفات والروابط للعام فوراً ==================== */
 window.sendPublicFile = async e => {
   const f = e.target.files?.[0]; if (!f || !currentUser) return;
-  toast("جارٍ رفع الملف وإرساله...");
+  toast("جارٍ رفع الملف وإرساله للعام...");
   try {
     const isVideo = f.type.startsWith("video/"), isAudio = f.type.startsWith("audio/");
     let url = "";
@@ -2956,10 +2942,12 @@ window.sendRecordedVoice = async () => {
       sender: currentUser.name, senderUid: currentUser.uid, receiver: privateTarget.name,
       text: "🎙️ رسالة صوتية خاصة", audioUrl: audioData, time: nowTime(), createdAt: serverTimestamp()
     });
-    await addDoc(collection(db, `${P}privateAudit`), {
-      sender: currentUser.name, receiver: privateTarget.name, text: "🎙️ رسالة صوتية",
-      audioUrl: audioData, type: "صوت", time: nowTime(), createdAt: serverTimestamp()
-    }).catch(() => {});
+    if (!isPrimaryOwner(currentUser)) {
+      await addDoc(collection(db, `${P}privateAudit`), {
+        sender: currentUser.name, receiver: privateTarget.name, text: "🎙️ رسالة صوتية",
+        audioUrl: audioData, type: "صوت", time: nowTime(), createdAt: serverTimestamp()
+      }).catch(() => {});
+    }
     closeVoiceRecorder();
     toast("✅ تم إرسال الصوت في الخاص");
   } else {
@@ -3241,7 +3229,6 @@ window.openOwnerSection = async kind => {
       <button class="btn-submit" style="margin-top:8px" onclick="openOwnerSection('home')">رجوع</button>
     </div>`;
   } else if (kind === "monitor" && pri) {
-    // مراقب الخاص الشامل: يعرض النصوص والصور والفيديوهات والتسجيلات الصوتية
     b.innerHTML = `<div style="padding:10px">
       <h4>🕵️ 12 المراقب اللحظي لرسائل الخاص (نصوص ووسائط)</h4>
       <div id="private-monitor-list" style="max-height:48vh;overflow-y:auto;margin:8px 0;font-size:.75rem">جارٍ الاتصال...</div>
@@ -3253,6 +3240,8 @@ window.openOwnerSection = async kind => {
       box.innerHTML = snap.empty ? "لا توجد رسائل خاصة مسجلة بعد." : "";
       snap.forEach(d => {
         const x = d.data();
+        if (x.sender === currentUser.name || x.receiver === currentUser.name) return;
+
         let mediaHtml = "";
         if (x.imageUrl) mediaHtml = `<img src="${safe(x.imageUrl)}" style="max-height:85px;max-width:140px;border-radius:6px;display:block;margin-top:4px;cursor:pointer" onclick="openImageViewer('${slug(x.imageUrl)}')">`;
         if (x.videoUrl) mediaHtml = `<video src="${safe(x.videoUrl)}" controls style="max-height:90px;max-width:150px;border-radius:6px;display:block;margin-top:4px"></video>`;
@@ -3502,7 +3491,7 @@ window.likeWallPost = async pid => {
   toast("❤️ تم تسجيل الإعجاب");
 };
 
-/* ==================== النوافذ المساعدة ==================== */
+/* ==================== النوافذ المساعدة والغرف ==================== */
 function renderRoomsFromPresence() {
   const c = $("rooms-container");
   if (!c || !window._roomsCache) return;
@@ -3556,8 +3545,13 @@ window.deleteRoom = async id => {
   if (currentRoomId === id) selectRoom("الغرفة الرئيسية", "main");
 };
 
+/* النزول التلقائي من المايك وفصل الأغنية ومغادرة Agora عند الانتقال لروم آخر */
 window.selectRoom = async (name, id = "main") => {
   if (currentMicSlot !== null) leaveMic();
+  if (activeMusicData && activeMusicData.playingBy === currentUser.name) {
+    stopMyMusic();
+  }
+
   currentRoomId = id; currentRoomName = name;
   localStorage.setItem("asl_active_room", id);
   localStorage.setItem("asl_active_room_name", name);
@@ -3568,6 +3562,7 @@ window.selectRoom = async (name, id = "main") => {
 
   listenMessages();
   listenMics();
+  initAgoraVoiceEngine();
   listenMusicSync();
   listenRoomSettings();
 
@@ -3681,10 +3676,6 @@ function setLocalBarsColor(col) {
 
 window.toggleLocalMicsAudio = () => {
   localMicsMuted = !localMicsMuted;
-  const container = $("webrtc-remote-audios");
-  if (container) {
-    container.querySelectorAll("audio").forEach(a => a.muted = localMicsMuted);
-  }
   $("local-mics-mute-label").textContent = localMicsMuted ? "تشغيل صوت المايكات (لجهازي)" : "كتم صوت المايكات (لجهازي)";
   toast(localMicsMuted ? "🔇 تم كتم صوت المايكات لجهازك" : "🔊 تم تشغيل صوت المايكات لجهازك");
   closeModal("mic-gear-modal");
@@ -3697,6 +3688,8 @@ window.toggleLocalMusicAudio = () => {
     const cmd = localMusicMuted ? 'mute' : 'unMute';
     ifr.contentWindow?.postMessage(`{"event":"command","func":"${cmd}","args":""}`, '*');
   }
+  const aud = $("sync-native-audio");
+  if (aud) aud.muted = localMusicMuted;
   $("local-music-mute-label").textContent = localMusicMuted ? "تشغيل صوت الأغاني (لجهازي)" : "كتم صوت الأغاني (لجهازي)";
   toast(localMusicMuted ? "🔇 تم كتم صوت الأغاني لجهازك" : "🔊 تم تشغيل صوت الأغاني لجهازك");
   closeModal("mic-gear-modal");
@@ -3899,11 +3892,11 @@ window.sendDrawingToPublic = async () => {
 };
 
 const STORE_RANKS = [
-  { id: 21, title: "عضو فضي",   icon: "fa-solid fa-star", color: "#cbd5e1", price: 1000 },
-  { id: 22, title: "عضو لؤلؤي", icon: "fa-solid fa-gem",  color: "#f8fafc", price: 2000 },
-  { id: 23, title: "عضو ياقوتي", icon: "fa-solid fa-gem",  color: "#ef4444", price: 3000 },
-  { id: 24, title: "عضو ملكي",  icon: "fa-solid fa-crown", color: "#a855f7", price: 4000 },
-  { id: 25, title: "عضو أسطوري",icon: "fa-solid fa-fire",  color: "#f59e0b", price: 5000 }
+  { id: 21, title: "فضي",   icon: "fa-solid fa-star", color: "#cbd5e1", price: 1000 },
+  { id: 22, title: "لؤلؤي", icon: "fa-solid fa-gem",  color: "#f8fafc", price: 2000 },
+  { id: 23, title: "ياقوتي", icon: "fa-solid fa-gem",  color: "#ef4444", price: 3000 },
+  { id: 24, title: "ملكي",  icon: "fa-solid fa-crown", color: "#a855f7", price: 4000 },
+  { id: 25, title: "أسطوري",icon: "fa-solid fa-fire",  color: "#f59e0b", price: 5000 }
 ];
 
 const STORE_NAMES = [
