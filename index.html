@@ -543,7 +543,7 @@ html,body{background:#07070a!important;color:#fff}
 /* خيارات الرسالة والتفاعل */
 .msg-action-trigger{position:absolute!important;left:2px!important;right:auto!important;top:8px!important;width:25px!important;height:25px!important;border-radius:50%!important;border:1px solid #d8ad52!important;background:linear-gradient(180deg,#39200e,#100906)!important;color:#f5ce72!important;display:flex!important;align-items:center!important;justify-content:center!important;z-index:5!important;box-shadow:0 0 5px rgba(242,190,78,.4)!important;}
 .msg-action-trigger i{font-size:.78rem!important;}
-.message-actions-menu{position:absolute!important;left:28px!important;top:34px!important;z-index:9999!important;min-width:155px!important;padding:5px!important;border:1.5px solid #e8bd5b!important;border-radius:12px!important;background:linear-gradient(145deg,#34200e,#090707)!important;box-shadow:0 5px 18px rgba(0,0,0,.75),0 0 10px rgba(231,181,70,.35)!important;display:flex!important;flex-direction:column!important;gap:3px!important;}
+.message-actions-menu{position:absolute!important;left:28px!important;bottom:calc(100% - 30px)!important;top:auto!important;z-index:9999!important;min-width:155px!important;padding:5px!important;border:1.5px solid #e8bd5b!important;border-radius:12px!important;background:linear-gradient(145deg,#34200e,#090707)!important;box-shadow:0 5px 18px rgba(0,0,0,.75),0 0 10px rgba(231,181,70,.35)!important;display:flex!important;flex-direction:column!important;gap:3px!important;}
 .message-actions-menu[hidden]{display:none!important;}
 .message-actions-menu button{border:0!important;border-radius:7px!important;padding:7px 9px!important;text-align:right!important;color:#ffe3a0!important;background:rgba(255,255,255,.045)!important;font-size:.72rem!important;white-space:nowrap!important;}
 .message-actions-menu button:active{background:rgba(236,190,85,.2)!important;}
@@ -805,6 +805,24 @@ html,body{background:#07070a!important;color:#fff}
 #private-msg-input::placeholder{font-size:.88rem!important;}
 
 </style>
+<style>
+/* تحسينات أصل العرب: وضوح الخلفية، إطار الاسم، والإيموجي */
+#room-bg-canvas{filter:blur(2px);transform:scale(1.025);transform-origin:center;will-change:filter,transform}
+.name-frame{border-radius:7px!important;max-width:52vw!important;padding:2px 7px!important;display:inline-flex!important;align-items:center!important;min-height:25px!important}
+.msg-item{position:relative!important}
+.message-actions-menu{z-index:10050!important;max-width:min(230px,70vw)!important}
+.animated-emoji-panel{max-width:360px!important;width:min(94vw,360px)!important;padding:13px!important}
+.animated-emoji-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;max-height:58vh;overflow:auto}
+.animated-emoji-grid button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:66px;border:1px solid rgba(245,190,60,.5);border-radius:12px;background:rgba(10,20,38,.9);color:#fff;padding:5px 2px}
+.animated-emoji-grid button span{font-size:1.65rem;display:block;animation:emojiFloat 1.6s ease-in-out infinite}
+.animated-emoji-grid button:nth-child(3n) span{animation:emojiWiggle 1.25s ease-in-out infinite}
+.animated-emoji-grid button:nth-child(4n) span{animation:emojiBounce 1.1s ease-in-out infinite}
+.animated-emoji-grid button small{font-size:.62rem;color:#f7d477;line-height:1.3}
+@keyframes emojiFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.12)}}
+@keyframes emojiWiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
+@keyframes emojiBounce{0%,100%{transform:translateY(0)}40%{transform:translateY(-7px)}60%{transform:translateY(0)}}
+@media(max-width:480px){.animated-emoji-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.name-frame{max-width:48vw!important}}
+</style>
 </head>
 <body>
 
@@ -837,7 +855,7 @@ html,body{background:#07070a!important;color:#fff}
       <button id="tab-member" class="tab-btn" onclick="switchTab('member')">دخول الأعضاء</button>
     </div>
     <div class="login-body">
-      <div class="input-group"><label>اسم المستخدم / الزائر (18 حرف كحد أقصى)</label><input id="username" maxlength="18" placeholder="اكتب الاسم هنا"></div>
+      <div class="input-group"><label>اسم المستخدم / الزائر (18 حرف كحد أقصى)</label><input id="username" maxlength="20" placeholder="اكتب الاسم هنا"></div>
       <div id="visitor-fields">
         <div class="input-group"><label>العمر</label><input id="visitor-age" type="number" min="13" max="100" value="22"></div>
         <div class="input-group"><label>الجنس</label><select id="visitor-gender" class="edit-select"><option value="ذكر">ذكر</option><option value="أنثى">أنثى</option></select></div>
@@ -868,7 +886,7 @@ html,body{background:#07070a!important;color:#fff}
     <span class="close-modal" onclick="closeModal('register-modal')">&times;</span>
     <div class="modal-title">تسجيل حساب VIP جديد 🔑</div>
     <div class="login-body">
-      <div class="input-group"><label>الاسم (18 حرف كحد أقصى)</label><input id="reg-name" maxlength="18"></div>
+      <div class="input-group"><label>الاسم (18 حرف كحد أقصى)</label><input id="reg-name" maxlength="20"></div>
       <div class="input-group"><label>البريد الإلكتروني</label><input id="reg-email" type="email"></div>
       <div class="input-group"><label>كلمة المرور</label><input id="reg-pass" type="password"></div>
       <div class="input-group"><label>العمر</label><input id="reg-age" type="number" min="13" max="100" value="22"></div>
@@ -1109,7 +1127,7 @@ html,body{background:#07070a!important;color:#fff}
     <!-- تعديل بيانات الحساب والخطوط (الحد الأقصى 18 حرف) -->
     <div id="self-edit-box" class="login-body hidden">
       <h4 id="profile-edit-title" style="color:#ffd54a;margin-bottom:8px">تعديل بيانات الحساب والخطوط</h4>
-      <div class="input-group"><label>الاسم (18 حرف كحد أقصى)</label><input id="edit-name-input" maxlength="18"></div>
+      <div class="input-group"><label>الاسم (18 حرف كحد أقصى)</label><input id="edit-name-input" maxlength="20"></div>
       
       <div class="input-group"><label>✨ 1. نوع خط الاسم (جميع الخطوط العربية)</label>
         <select id="edit-name-font-select" class="edit-select">
@@ -1443,8 +1461,30 @@ html,body{background:#07070a!important;color:#fff}
   </div>
 </div>
 <div id="emoji-panel" class="modal-overlay hidden" onclick="if(event.target===this)closeModal('emoji-panel')">
-  <div class="modal-card" style="max-width:320px;padding:12px;display:grid;grid-template-columns:repeat(6,1fr);gap:7px;text-align:center">
-    <span style="font-size:1.5rem;cursor:pointer" onclick="insertEmoji('😀')">😀</span><span style="font-size:1.5rem;cursor:pointer" onclick="insertEmoji('😂')">😂</span><span style="font-size:1.5rem;cursor:pointer" onclick="insertEmoji('😍')">😍</span><span style="font-size:1.5rem;cursor:pointer" onclick="insertEmoji('🥰')">🥰</span><span style="font-size:1.5rem;cursor:pointer" onclick="insertEmoji('❤️')">❤️</span><span style="font-size:1.5rem;cursor:pointer" onclick="insertEmoji('🔥')">🔥</span><span style="font-size:1.5rem;cursor:pointer" onclick="insertEmoji('👏')">👏</span><span style="font-size:1.5rem;cursor:pointer" onclick="insertEmoji('🎉')">🎉</span><span style="font-size:1.5rem;cursor:pointer" onclick="insertEmoji('🌹')">🌹</span><span style="font-size:1.5rem;cursor:pointer" onclick="insertEmoji('🤣')">🤣</span><span style="font-size:1.5rem;cursor:pointer" onclick="insertEmoji('👍')">👍</span><span style="font-size:1.5rem;cursor:pointer" onclick="insertEmoji('👑')">👑</span>
+  <div class="modal-card animated-emoji-panel">
+    <div class="modal-title">الإيموجي والعبارات المتحركة</div>
+    <div class="animated-emoji-grid">
+      <button onclick="insertEmoji('أحلى وأسهلن 😍')"><span>😍</span><small>أحلى</small></button>
+      <button onclick="insertEmoji('السلام عليكم 🌹')"><span>👋</span><small>السلام عليكم</small></button>
+      <button onclick="insertEmoji('وعليكم السلام ❤️')"><span>❤️</span><small>وعليكم السلام</small></button>
+      <button onclick="insertEmoji('مساء الخير 🌙')"><span>🌙</span><small>مساء الخير</small></button>
+      <button onclick="insertEmoji('صباح الخير ☀️')"><span>☀️</span><small>صباح الخير</small></button>
+      <button onclick="insertEmoji('بررررب 👋')"><span>🏃</span><small>بررررب</small></button>
+      <button onclick="insertEmoji('هههههههه 😂')"><span>😂</span><small>ضحك</small></button>
+      <button onclick="insertEmoji('مت من الضحك 🤣')"><span>🤣</span><small>قهقهة</small></button>
+      <button onclick="insertEmoji('أبكي 😭')"><span>😭</span><small>بكاء</small></button>
+      <button onclick="insertEmoji('أحبك ❤️')"><span>🥰</span><small>أحبك</small></button>
+      <button onclick="insertEmoji('قبلة 😘')"><span>😘</span><small>قبلة</small></button>
+      <button onclick="insertEmoji('أركض 🏃')"><span>🏃‍♂️</span><small>أركض</small></button>
+      <button onclick="insertEmoji('أشرب قهوة ☕')"><span>☕</span><small>قهوة</small></button>
+      <button onclick="insertEmoji('تصفيق 👏')"><span>👏</span><small>تصفيق</small></button>
+      <button onclick="insertEmoji('واو 😲')"><span>😲</span><small>واو</small></button>
+      <button onclick="insertEmoji('زعلان 😔')"><span>😔</span><small>زعلان</small></button>
+      <button onclick="insertEmoji('غاضب 😡')"><span>😡</span><small>غاضب</small></button>
+      <button onclick="insertEmoji('يا سلام 🎉')"><span>🎉</span><small>احتفال</small></button>
+      <button onclick="insertEmoji('ورد لك 🌹')"><span>🌹</span><small>وردة</small></button>
+      <button onclick="insertEmoji('مع السلامة 👋')"><span>👋</span><small>مع السلامة</small></button>
+    </div>
   </div>
 </div>
 
@@ -1951,6 +1991,19 @@ async function saveUser(u) {
 async function createPresence() {
   if (!currentUser) return;
   try {
+    // تنظيف أي مقعد مايك قديم لنفس الحساب بعد تحديث الصفحة أو إعادة فتح الشات.
+    const ownSlots = await getDocs(query(
+      collection(db, `${P}rooms`, currentRoomId, "micSlots"),
+      where("uid", "==", String(currentUser.uid))
+    ));
+    for (const oldSlot of ownSlots.docs) {
+      await deleteDoc(oldSlot.ref).catch(() => {});
+    }
+    if (currentMicSlot !== null) currentMicSlot = null;
+  } catch (cleanupError) {
+    console.warn("Stale mic cleanup skipped:", cleanupError);
+  }
+  try {
     const gender = currentUser.gender || "ذكر";
     const defBg = getDefaultGenderBg(gender, !!currentUser.isVisitor);
     await setDoc(doc(db, `${P}presence`, currentUser.uid), {
@@ -1974,13 +2027,26 @@ async function createPresence() {
 
 async function stopPresence() {
   if (!currentUser) return;
+  // أوقف الصوت محلياً فوراً عند إغلاق الصفحة/تحديثها حتى لا يبقى المايك مفتوحاً.
+  if (localAudioStream) {
+    localAudioStream.getTracks().forEach(track => { try { track.stop(); } catch(e) {} });
+    localAudioStream = null;
+  }
+  rtcPeerConnections.forEach(pc => { try { pc.close(); } catch(e) {} });
+  rtcPeerConnections.clear();
+  rtcNegotiationSignatures.clear();
+  pendingIceCandidates.clear();
+  stopVoiceDetection();
+  const oldSlot = currentMicSlot;
+  currentMicSlot = null;
   try {
-    if (currentMicSlot !== null) {
-      await deleteDoc(doc(db, `${P}rooms`, currentRoomId, "micSlots", String(currentMicSlot))).catch(() => {});
-      currentMicSlot = null;
+    if (oldSlot !== null) {
+      await deleteDoc(doc(db, `${P}rooms`, currentRoomId, "micSlots", String(oldSlot))).catch(() => {});
     }
     if (activeMusicData && activeMusicData.playingBy === currentUser.name) {
-      await setDoc(doc(db, `${P}rooms`, currentRoomId, "musicSync", "active"), { isPlaying: false, musicUrl: "", songTitle: "", songThumb: "" }).catch(() => {});
+      await setDoc(doc(db, `${P}rooms`, currentRoomId, "musicSync", "active"), {
+        isPlaying: false, musicUrl: "", youtubeId: "", songTitle: "", songThumb: "", durationSeconds: 0, stoppedAt: Date.now()
+      }, { merge: true }).catch(() => {});
     }
     await setDoc(doc(db, `${P}presence`, currentUser.uid), { isOnline: false, lastSeen: serverTimestamp() }, { merge: true });
   } catch {}
@@ -1989,7 +2055,7 @@ async function stopPresence() {
 window.addEventListener("beforeunload", () => { stopPresence(); });
 window.addEventListener("pagehide", () => { stopPresence(); });
 
-/* تسجيل الدخول (الحد الأقصى للاسم 18 حرف) */
+/* تسجيل الدخول (الحد الأقصى للاسم 20 حرف) */
 async function login() {
   const name = $("username").value.trim();
   const email = $("email").value.trim().toLowerCase();
@@ -2889,6 +2955,7 @@ let voiceCheckInterval = null;
 let rtcPeerConnections = new Map();
 let pendingIceCandidates = new Map();
 let activeMicPeerUids = new Set();
+const rtcNegotiationSignatures = new Map();
 window._micJoinPending = false;
 
 function getRtcConfiguration() {
@@ -3033,8 +3100,14 @@ function createPeerConnection(remoteUid) {
   };
 
   pc.onconnectionstatechange = () => {
-    if (pc.connectionState === "failed") {
+    if (pc.connectionState === "connected") {
+      console.info("تم اتصال الصوت مع العضو:", remoteUid);
+    } else if (pc.connectionState === "failed") {
+      console.warn("اتصال الصوت فشل مع العضو:", remoteUid);
+      toast("تعذر إنشاء اتصال صوتي مع أحد الأعضاء. افحص صلاحيات Firestore وبيانات TURN.");
       try { pc.restartIce(); } catch(e) {}
+    } else if (pc.connectionState === "disconnected") {
+      console.warn("اتصال الصوت انقطع مؤقتاً:", remoteUid);
     }
   };
   pc.oniceconnectionstatechange = () => {
@@ -3048,21 +3121,27 @@ function createPeerConnection(remoteUid) {
 async function makeRtcOffer(remoteUid, forceListener = false) {
   remoteUid = String(remoteUid);
   if (!localAudioStream || !currentUser?.uid || remoteUid === String(currentUser.uid)) return;
+  // منع تصادم العروض: الطرف ذو UID الأصغر هو من يبدأ التفاوض.
   if (!forceListener && String(currentUser.uid).localeCompare(remoteUid) >= 0) return;
-
-  const existing = rtcPeerConnections.get(remoteUid);
-  if (existing && ["connected", "connecting", "have-local-offer"].includes(existing.signalingState === "stable" ? existing.connectionState : existing.signalingState)) {
-    const senders = existing.getSenders ? existing.getSenders() : [];
-    if (senders.some(s => s.track && s.track.kind === "audio")) return;
-  }
-
-  let pc = createPeerConnection(remoteUid);
+  const pc = createPeerConnection(remoteUid);
+  // أضف مسارات المايك الحالية حتى لو كان الاتصال قد أُنشئ قبل صعود العضو للمايك.
+  localAudioStream.getAudioTracks().forEach(track => {
+    const exists = pc.getSenders().some(sender => sender.track?.id === track.id);
+    if (!exists) pc.addTrack(track, localAudioStream);
+  });
   if (pc.signalingState !== "stable") return;
+  const micSignature = [...activeMicPeerUids].sort().join("|") + "|" + localAudioStream.getAudioTracks().map(t => t.id).join(",");
+  if (rtcNegotiationSignatures.get(remoteUid) === micSignature) return;
   try {
-    const offer = await pc.createOffer({ offerToReceiveAudio: true });
+    const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
-    await sendRtcSignal(remoteUid, { type: "offer", sdp: { type: offer.type, sdp: offer.sdp } });
-  } catch (e) { console.error("Create offer failed", e); }
+    await sendRtcSignal(remoteUid, { type: "offer", sdp: { type: offer.type, sdp: offer.sdp }, micSignature });
+    rtcNegotiationSignatures.set(remoteUid, micSignature);
+  } catch (e) {
+    rtcNegotiationSignatures.delete(remoteUid);
+    console.error("Create offer failed", e);
+    toast("تعذر إنشاء اتصال الصوت مع أحد الأعضاء؛ تحقق من صلاحيات Firebase واتصال الإنترنت.");
+  }
 }
 
 function syncSpeakerConnections() {
@@ -3077,6 +3156,12 @@ function syncSpeakerConnections() {
     }
   });
   targets.forEach(uid => {
+    const pc = createPeerConnection(uid);
+    localAudioStream.getAudioTracks().forEach(track => {
+      if (!pc.getSenders().some(sender => sender.track?.id === track.id)) {
+        try { pc.addTrack(track, localAudioStream); } catch (e) { console.warn("addTrack failed", e); }
+      }
+    });
     const isAlsoSpeaker = activeMicPeerUids.has(uid);
     makeRtcOffer(uid, !isAlsoSpeaker);
   });
@@ -3092,29 +3177,36 @@ function listenWebRTCAudioMesh() {
       const signalRef = ch.doc.ref;
       const data = ch.doc.data();
       (async () => {
+        let signalProcessed = false;
         try {
-          if (!data || data.roomId !== String(currentRoomId) || !data.senderUid) return;
+          if (!data || data.roomId !== String(currentRoomId) || !data.senderUid) { signalProcessed = true; return; }
           const remoteUid = String(data.senderUid);
           if (remoteUid === String(currentUser.uid)) return;
 
           if (data.type === "offer" && data.sdp) {
-            const pc = createPeerConnection(remoteUid);
-            if (pc.signalingState !== "stable") {
-              try { pc.close(); } catch(e) {}
-              rtcPeerConnections.delete(remoteUid);
+            let targetPc = createPeerConnection(remoteUid);
+            // الطرف ذو UID الأكبر يتعامل بأدب مع العرض الوارد إذا حدث تصادم.
+            if (targetPc.signalingState !== "stable") {
+              if (String(currentUser.uid).localeCompare(remoteUid) > 0) {
+                await targetPc.setLocalDescription({ type: "rollback" });
+              } else {
+                signalProcessed = true;
+                return;
+              }
             }
-            const targetPc = rtcPeerConnections.get(remoteUid) || createPeerConnection(remoteUid);
             await targetPc.setRemoteDescription(new RTCSessionDescription(data.sdp));
             await flushPendingIce(remoteUid, targetPc);
             const answer = await targetPc.createAnswer();
             await targetPc.setLocalDescription(answer);
             await sendRtcSignal(remoteUid, { type: "answer", sdp: { type: answer.type, sdp: answer.sdp } });
+            signalProcessed = true;
           } else if (data.type === "answer" && data.sdp) {
             const pc = rtcPeerConnections.get(remoteUid);
             if (pc && pc.signalingState === "have-local-offer") {
               await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
               await flushPendingIce(remoteUid, pc);
             }
+            signalProcessed = true;
           } else if (data.type === "candidate" && data.candidate) {
             const pc = rtcPeerConnections.get(remoteUid);
             if (pc && pc.remoteDescription) {
@@ -3125,15 +3217,19 @@ function listenWebRTCAudioMesh() {
               list.push(data.candidate);
               pendingIceCandidates.set(remoteUid, list);
             }
+            signalProcessed = true;
+          } else {
+            signalProcessed = true;
           }
         } catch (e) { console.error("RTC signal processing failed", e); }
         finally {
-          deleteDoc(signalRef).catch(()=>{});
+          if (signalProcessed) deleteDoc(signalRef).catch(()=>{});
         }
       })();
     });
   }, err => {
     console.error("RTC signaling listener error", err);
+    toast("تعذر استقبال إشارات المايك من Firebase. راجع قواعد صلاحيات webrtcSignals.");
   });
 }
 
@@ -3169,6 +3265,7 @@ function listenMics() {
       if (!seen.has(uid) && !(localAudioStream && isOnlineInRoom)) {
         try { pc.close(); } catch(e) {}
         rtcPeerConnections.delete(uid);
+        rtcNegotiationSignatures.delete(uid);
         const aud = $(`remote-audio-${uid}`);
         if (aud) aud.remove();
         pendingIceCandidates.delete(uid);
@@ -3278,6 +3375,7 @@ window.leaveMic = async () => {
   }
   rtcPeerConnections.forEach(pc => { try { pc.close(); } catch(e) {} });
   rtcPeerConnections.clear();
+  rtcNegotiationSignatures.clear();
   pendingIceCandidates.clear();
   stopVoiceDetection();
   closeModal("mic-control-modal");
@@ -3311,12 +3409,36 @@ document.addEventListener("pointerdown", () => {
   if (currentUser) window.retryRemoteAudio();
 }, { passive: true });
 /* ==================== بحث YouTube المباشر (أصل العرب) + تشغيل وإرسال للعام ==================== */
+let musicExpiryTimer = null;
+function clearMusicExpiryTimer() {
+  if (musicExpiryTimer) clearTimeout(musicExpiryTimer);
+  musicExpiryTimer = null;
+}
+function scheduleMusicExpiry(d) {
+  clearMusicExpiryTimer();
+  const duration = Number(d?.durationSeconds || 0);
+  const started = Number(d?.startedAt || 0);
+  if (!d?.isPlaying || !duration || !started) return;
+  const remaining = started + duration * 1000 - Date.now();
+  if (remaining <= 0) {
+    setDoc(doc(db, `${P}rooms`, currentRoomId, "musicSync", "active"), {
+      isPlaying: false, stoppedAt: Date.now(), stoppedReason: "duration-ended"
+    }, { merge: true }).catch(e => console.warn("Music auto-stop failed", e));
+    return;
+  }
+  musicExpiryTimer = setTimeout(() => {
+    setDoc(doc(db, `${P}rooms`, currentRoomId, "musicSync", "active"), {
+      isPlaying: false, stoppedAt: Date.now(), stoppedReason: "duration-ended"
+    }, { merge: true }).catch(e => console.warn("Music auto-stop failed", e));
+  }, Math.min(remaining, 2147480000));
+}
 function listenMusicSync() {
   if (unsubMusicSync) unsubMusicSync();
   unsubMusicSync = onSnapshot(doc(db, `${P}rooms`, currentRoomId, "musicSync", "active"), snap => {
     const panel = $("music-sync-panel"), info = $("music-sync-info"), media = $("music-sync-media"), thumb = $("music-sync-thumb");
     if (!panel || !info || !media) return;
     if (!snap.exists() || !snap.data().isPlaying) {
+      clearMusicExpiryTimer();
       activeMusicData = null;
       panel.classList.remove("show");
       media.innerHTML = "";
@@ -3325,6 +3447,7 @@ function listenMusicSync() {
 
     const d = snap.data();
     activeMusicData = d;
+    scheduleMusicExpiry(d);
     panel.classList.add("show");
     info.textContent = `🎵 ${d.playingBy || "عضو"} يشغّل أغنية`;
     if (thumb) thumb.src = d.songThumb || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100";
@@ -3387,6 +3510,11 @@ function renderYoutubeSearchResults(items) {
     const id = item.videoId || item.id?.videoId;
     const title = item.title || item.snippet?.title || "فيديو YouTube";
     const channel = item.author || item.snippet?.channelTitle || "YouTube";
+    let durationSeconds = Number(item.lengthSeconds || item.durationSeconds || 0);
+    if (!durationSeconds && typeof item.contentDetails?.duration === "string") {
+      const dm = item.contentDetails.duration.match(/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/);
+      if (dm) durationSeconds = (Number(dm[1] || 0) * 3600) + (Number(dm[2] || 0) * 60) + Number(dm[3] || 0);
+    }
     const thumbs = item.videoThumbnails || [];
     const thumb = item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || thumbs.find(t => /medium|high|mqdefault/i.test(t.quality || t.url || ""))?.url || thumbs[0]?.url || `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
     const card = document.createElement("div");
@@ -3400,8 +3528,8 @@ function renderYoutubeSearchResults(items) {
     const btn = document.createElement("button");
     btn.type = "button"; btn.textContent = actionLabel;
     btn.style.cssText = "border:0;background:#10b981;color:#fff;border-radius:6px;padding:5px 8px;font-size:.7rem;flex:none";
-    btn.addEventListener("click", () => handleYoutubeResultSelect(id, title, thumb));
-    card.addEventListener("click", e => { if (e.target !== btn) handleYoutubeResultSelect(id, title, thumb); });
+    btn.addEventListener("click", () => handleYoutubeResultSelect(id, title, thumb, durationSeconds));
+    card.addEventListener("click", e => { if (e.target !== btn) handleYoutubeResultSelect(id, title, thumb, durationSeconds); });
     card.append(img, details, btn);
     box.appendChild(card);
   });
@@ -3483,7 +3611,7 @@ window.executeRealYouTubeSearch = async () => {
   resultsBox.innerHTML = `<div style="padding:12px;color:#fca5a5;font-size:.76rem;line-height:1.9;text-align:center">تعذّر جلب النتائج حالياً؛ يمكنك فتح نتائج YouTube مباشرة، ثم نسخ رابط الفيديو ولصقه في خانة البحث هنا.</div><a href="https://www.youtube.com/results?search_query=${encodeURIComponent(queryText)}" target="_blank" rel="noopener" style="display:block;text-align:center;padding:12px;background:#b91c1c;color:white;border-radius:8px;text-decoration:none">فتح نتائج البحث في YouTube</a>`;
 };
 
-window.handleYoutubeResultSelect = async (vidId, title, thumbUrl) => {
+window.handleYoutubeResultSelect = async (vidId, title, thumbUrl, durationSeconds = 0) => {
   if (!/^[A-Za-z0-9_-]{11}$/.test(String(vidId))) return alert("رابط الفيديو غير صالح.");
   if (window._ytSearchMode === "public") {
     if (!currentUser || currentUser.isMuted) return alert("أنت مكتوم ولا يمكنك الإرسال حالياً");
@@ -3518,10 +3646,10 @@ window.handleYoutubeResultSelect = async (vidId, title, thumbUrl) => {
     }
     return;
   }
-  return window.playSelectedVideoId(vidId, title, thumbUrl);
+  return window.playSelectedVideoId(vidId, title, thumbUrl, durationSeconds);
 };
 
-window.playSelectedVideoId = async (vidId, title, thumbUrl) => {
+window.playSelectedVideoId = async (vidId, title, thumbUrl, durationSeconds = 0) => {
   if (!/^[A-Za-z0-9_-]{11}$/.test(String(vidId))) return alert("رابط الفيديو غير صالح.");
   if (activeMusicData?.isPlaying && activeMusicData.playingBy !== currentUser.name && !isPrimaryOwner(currentUser)) {
     return alert(`🚫 يوجد فيديو قيد التشغيل حالياً بواسطة [${activeMusicData.playingBy}]! انتظر حتى ينتهي.`);
@@ -3534,6 +3662,7 @@ window.playSelectedVideoId = async (vidId, title, thumbUrl) => {
       songThumb: thumbUrl || `https://i.ytimg.com/vi/${vidId}/mqdefault.jpg`,
       playingBy: currentUser.name,
       isPlaying: true,
+      durationSeconds: Math.max(0, Math.floor(Number(durationSeconds) || 0)),
       startedAt: Date.now()
     });
     closeModal("youtube-search-modal");
@@ -3553,7 +3682,7 @@ window.playSearchedSong = async (queryName, title, thumbUrl, previewUrl = "") =>
 window.stopMyMusic = async () => {
   try {
     await setDoc(doc(db, `${P}rooms`, currentRoomId, "musicSync", "active"), {
-      isPlaying: false, musicUrl: "", youtubeId: "", songTitle: "", songThumb: "", stoppedAt: Date.now()
+      isPlaying: false, musicUrl: "", youtubeId: "", songTitle: "", songThumb: "", durationSeconds: 0, stoppedAt: Date.now()
     }, { merge: true });
     closeModal("mic-control-modal");
     toast("تم إيقاف الفيديو للجميع");
