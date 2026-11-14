@@ -71,8 +71,8 @@ button{cursor:pointer}
 .prince-rank-icon{color:#ef4444!important;animation:princeGlow 1.2s infinite ease-in-out!important}
 @keyframes princeGlow{50%{transform:scale(1.18);filter:drop-shadow(0 0 8px #ef4444)}}
 
-.king-rank-icon{color:#38bdf8!important;animation:kingGlow 1.2s infinite ease-in-out!important}
-@keyframes kingGlow{50%{transform:scale(1.18);filter:drop-shadow(0 0 9px #38bdf8) drop-shadow(0 0 15px rgba(56,189,248,.8))}}
+.king-rank-icon{color:#ffffff!important;animation:kingGlow 1.2s infinite ease-in-out!important}
+@keyframes kingGlow{50%{transform:scale(1.18);filter:drop-shadow(0 0 9px #ffffff) drop-shadow(0 0 15px rgba(255,255,255,.8))}}
 
 .owner-rank-icon{color:#ffd700!important;animation:ownerShine 1.3s infinite ease-in-out!important}
 .owner-rank-text{color:#ffd700!important;font-weight:900;text-shadow:0 0 5px #ffd700,0 0 11px rgba(255,215,0,.85)}
@@ -125,9 +125,9 @@ button{cursor:pointer}
   backdrop-filter:blur(6px);border:1.5px solid #d4a017;
   border-radius:12px;padding:6px 10px;
 }
-.music-sync-panel.show{display:flex;flex-wrap:wrap;max-height:48vh;overflow-y:auto}
-#music-sync-media{width:100%;flex:0 0 100%;}
-#music-sync-media iframe{display:block;width:100%;height:190px;border:0;border-radius:8px;background:#000}
+.music-sync-panel.show{display:flex;flex-wrap:nowrap;max-height:58px;overflow:hidden}
+#music-sync-media{width:1px;height:1px;flex:0 0 1px;overflow:hidden;position:absolute;left:-10000px;top:-10000px}
+#music-sync-media iframe{display:block;width:1px;height:1px;border:0;opacity:.01;pointer-events:none}
 #music-sync-media audio{width:100%;}
 .music-thumb-mini{width:36px;height:36px;border-radius:6px;object-fit:cover;border:1px solid #d4a017;flex:none}
 .music-sync-panel .music-info{flex:1;min-width:0;font-size:.72rem;color:#fde68a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -473,6 +473,8 @@ html,body{background:#07070a!important;color:#fff}
   width:34px;height:34px;flex:none;border-radius:50%;
 }
 .avatar-wrap .user-avatar{width:29px!important;height:29px!important;position:relative;z-index:2}
+.avatar-wrap[style*="background-image"]{background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important}
+#prof-avatar-wrap{background-size:cover;background-position:center;background-repeat:no-repeat}
 .avatar-wrap[class*="av-frame-"]::after{
   content:"";position:absolute;inset:-6px;pointer-events:none;z-index:3;
   background-size:contain;background-repeat:no-repeat;background-position:center;
@@ -687,6 +689,8 @@ html,body{background:#07070a!important;color:#fff}
   color:#f5c65b!important;
   filter:drop-shadow(0 0 4px rgba(247,200,91,.7));
 }
+.msg-item .msg-content .user-header .message-identity > .rank-badge-icon.prince-rank-icon{color:#ef4444!important;filter:drop-shadow(0 0 5px rgba(239,68,68,.85))!important}
+.msg-item .msg-content .user-header .message-identity > .rank-badge-icon.king-rank-icon{color:#ffffff!important;filter:drop-shadow(0 0 6px rgba(255,255,255,.9))!important}
 .msg-item .msg-content .user-header .message-identity > .name-frame{
   order:2!important;
   display:inline-flex!important;
@@ -952,7 +956,7 @@ html,body{background:#07070a!important;color:#fff}
 <div class="input-bar" id="main-input-bar">
   <button class="send-btn-main" onclick="sendMessage()" aria-label="إرسال الرسالة"><svg class="double-paper-send" viewBox="0 0 48 48" aria-hidden="true"><path d="M8 10 38 5 32 34 23 25 15 34Z" fill="#f7d477" stroke="#9a671b" stroke-width="2" stroke-linejoin="round"/><path d="m8 10 15 15 15-20M23 25l-1 14 10-5" fill="none" stroke="#fff1b2" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="m14 15 20-6" stroke="#fff9dc" stroke-width="1.5" stroke-linecap="round"/></svg></button>
   <div class="input-wrapper">
-    <input id="msg-input" placeholder="اكتب هنا..." onkeydown="if(event.key==='Enter'){event.preventDefault();sendMessage();}">
+    <input id="msg-input" maxlength="600" placeholder="اكتب هنا... (600 حرف كحد أقصى)" onkeydown="if(event.key==='Enter'){event.preventDefault();sendMessage();}">
     <button class="icon-btn" onclick="toggleEmojiPanel()"><i class="fa-regular fa-face-smile"></i></button>
   </div>
   <button class="icon-btn" onclick="openVoiceRecorder('public')" title="تسجيل صوت"><i class="fa-solid fa-microphone"></i></button>
@@ -1045,7 +1049,7 @@ html,body{background:#07070a!important;color:#fff}
     </div>
     <div class="prof-avatar-holder">
       <span id="prof-avatar-wrap" class="avatar-wrap">
-        <img id="prof-img" class="user-avatar" style="border:3px solid #d4a017;background:#000">
+        <img id="prof-img" class="user-avatar" onclick="openImageViewer(encodeURIComponent(this.src))" style="border:3px solid #d4a017;background:#000;cursor:zoom-in">
       </span>
       <label id="avatar-change-btn-overlay" class="avatar-change-overlay hidden"><i class="fa-solid fa-camera"></i><input type="file" accept="image/*" style="display:none" onchange="uploadAvatar(event)"></label>
     </div>
@@ -1377,7 +1381,7 @@ html,body{background:#07070a!important;color:#fff}
       <div class="input-bar" style="position:static!important">
         <button class="send-btn-main" onclick="sendPrivateMessage()"><i class="fa-solid fa-location-arrow"></i></button>
         <div class="input-wrapper">
-          <input id="private-msg-input" placeholder="رسالتك الخاصة..." onkeydown="if(event.key==='Enter'){event.preventDefault();sendPrivateMessage();}">
+          <input id="private-msg-input" maxlength="600" placeholder="رسالتك الخاصة... (600 حرف كحد أقصى)" onkeydown="if(event.key==='Enter'){event.preventDefault();sendPrivateMessage();}">
         </div>
         <button class="icon-btn" onclick="openVoiceRecorder('private')" title="تسجيل صوت في الخاص"><i class="fa-solid fa-microphone"></i></button>
         <label class="icon-btn" title="إرسال صورة أو فيديو فوراً"><i class="fa-solid fa-paperclip"></i><input id="private-file-input" type="file" accept="image/*,video/*" style="display:none" onchange="sendPrivateFile(event)"></label>
@@ -1402,7 +1406,7 @@ html,body{background:#07070a!important;color:#fff}
 
 <div id="private-inbox-modal" class="modal-overlay hidden"><div class="modal-card"><span class="close-modal" onclick="closeModal('private-inbox-modal')">&times;</span><div class="modal-title">المحادثات الخاصة</div><div id="private-inbox" class="online-list" style="padding:8px"></div></div></div>
 <div id="video-viewer-modal" class="modal-overlay hidden"><div style="width:min(96vw,800px);background:#000;border:1px solid #d4a017;border-radius:14px;padding:8px;position:relative"><span class="close-modal" onclick="closeModal('video-viewer-modal')">&times;</span><div id="video-viewer-content" style="padding-top:20px"></div></div></div>
-<div id="image-viewer-modal" class="modal-overlay hidden"><div style="text-align:center;position:relative"><span class="close-modal" onclick="closeModal('image-viewer-modal')">&times;</span><img id="image-viewer-img" style="max-width:92vw;max-height:80vh;border-radius:12px;object-fit:contain;background:#000;border:2px solid #d4a017"></div></div>
+<div id="image-viewer-modal" class="modal-overlay hidden"><div style="text-align:center;position:relative;max-width:96vw"><span class="close-modal" style="position:absolute;top:-42px;right:0;z-index:5;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#111827;color:#fff;border:1px solid #d4a017;font-size:28px" onclick="closeModal('image-viewer-modal')">&times;</span><img id="image-viewer-img" style="max-width:92vw;max-height:80vh;border-radius:12px;object-fit:contain;background:#000;border:2px solid #d4a017"></div></div>
 
 <div id="voice-recorder-modal" class="modal-overlay hidden"><div class="modal-card" style="max-width:340px;text-align:center;padding:16px"><span class="close-modal" onclick="closeVoiceRecorder()">&times;</span><div class="modal-title">تسجيل صوت 🎙️</div><div id="voice-recorder-status" style="margin:12px 0;font-size:.85rem">اضغط بدء التسجيل</div><audio id="voice-preview" style="width:100%;margin:10px 0;display:none" controls></audio><div style="display:flex;gap:6px"><button class="btn-submit" style="background:#10b981;flex:1" onclick="startVoiceRecording()">▶ بدء</button><button class="btn-submit" style="background:#dc2626;flex:1" onclick="stopVoiceRecording()">⏹ توقيف</button><button id="voice-send-btn" class="btn-submit" style="background:#2563eb;flex:1;display:none" onclick="sendRecordedVoice()">📤 إرسال</button></div></div></div>
 <div id="dice-modal" class="modal-overlay hidden"><div class="modal-card"><span class="close-modal" onclick="closeModal('dice-modal')">&times;</span><div class="modal-title">🎲 حجر النرد</div><div id="dice-result" style="font-size:4rem;text-align:center;padding:22px;color:#f0c34b">🎲</div><div style="padding:12px"><button class="btn-submit" onclick="rollDice()">رمي النرد</button></div></div></div>
@@ -1528,7 +1532,7 @@ function playNotificationSound(type = "private") {
 const RANKS = [
   { id: 1,  title: "صاحب الموقع",   icon: "fa-solid fa-trophy owner-rank-icon", color: "#ffd700" },
   { id: 2,  title: "برنس",          icon: "fa-solid fa-trophy prince-rank-icon",color: "#ef4444" },
-  { id: 3,  title: "كنج",           icon: "fa-solid fa-crown king-rank-icon",   color: "#38bdf8" },
+  { id: 3,  title: "كنج",           icon: "fa-solid fa-trophy king-rank-icon",   color: "#ffffff" },
   { id: 4,  title: "انرواء",        icon: "fa-solid fa-crown",                  color: "#ff69b4" },
   { id: 5,  title: "ملك",           icon: "fa-solid fa-crown",                  color: "#ffd700" },
   { id: 6,  title: "ادمن",          icon: "fa-solid fa-crown",                  color: "#ef4444" },
@@ -2454,7 +2458,7 @@ function renderOnline(arr) {
 
     c.insertAdjacentHTML("beforeend", `<div class="online-item" data-name="${safe(u.name)}" style="display:flex;align-items:center;justify-content:space-between;padding:9px 6px;border-bottom:1px solid rgba(229,185,83,.25);cursor:pointer" onclick="openProfileByName('${slug(u.name)}')">
       <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1">
-        <span class="avatar-wrap ${safe(avFrame)}" style="${u.isVisitor ? `background-image:url('${safe(getDefaultGenderBg(u.gender, true))}');background-size:cover;background-position:center` : ''}"><img class="user-avatar" src="${safe(u.avatar || avatarFor(u.name))}"></span>
+        <span class="avatar-wrap ${safe(avFrame)}" style=""><img class="user-avatar" src="${safe(u.isVisitor ? getDefaultGenderBg(u.gender, true) : (u.avatar || avatarFor(u.name)))}"></span>
         <div style="min-width:0;flex:1">
           <div class="name-line" style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
             <i class="${r.icon} ${u.isPrimaryOwner ? 'owner-rank-icon' : ''}" style="color:${r.color}"></i>
@@ -2490,7 +2494,7 @@ window.openDiamondDisplayList = () => {
     const isOwner = isPrimaryOwner(u) || Number(u.rankId) === 1;
     return `<div class="online-item" style="display:flex;align-items:center;justify-content:space-between;padding:10px 8px;border-bottom:1px solid rgba(229,185,83,.3);cursor:pointer" onclick="closeModal('diamond-display-modal');openProfileByName('${slug(u.name)}')">
       <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1">
-        <span class="avatar-wrap ${safe(u.avatarFrame || '')}"><img class="user-avatar" src="${safe(u.avatar || avatarFor(u.name))}"></span>
+        <span class="avatar-wrap ${safe(u.avatarFrame || '')}"><img class="user-avatar" src="${safe(u.isVisitor ? getDefaultGenderBg(u.gender, true) : (u.avatar || avatarFor(u.name)))}"></span>
         <div style="min-width:0;flex:1">
           <div class="name-line" style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
             <i class="${r.icon} ${isOwner ? 'owner-rank-icon' : ''}" style="color:${r.color}"></i>
@@ -2537,16 +2541,16 @@ function openProfile(u) {
   $("prof-name").textContent = selectedUser.name;
   $("prof-name").className = `name-frame ${selectedUser.nameFrame || 'frame-none'} ${selectedUser.nameStaticBg || ''} ${selectedUser.nameBackground || ''} ${selectedUser.nameColor || 'color-text-white'} ${selectedUser.nameFont || 'font-cairo'}`;
   $("prof-rank-display").innerHTML = `<i class="${r.icon} ${selectedUser.isPrimaryOwner ? 'owner-rank-icon' : ''}" style="color:${r.color}"></i> <span class="${selectedUser.isPrimaryOwner ? 'owner-rank-text' : ''}">${safe(r.title)}</span>`;
-  $("prof-img").src = selectedUser.avatar || avatarFor(selectedUser.name);
+  $("prof-img").src = selectedUser.isVisitor ? defaultBg : (selectedUser.avatar || avatarFor(selectedUser.name));
   const avWrap = $("prof-avatar-wrap");
-  if (avWrap) avWrap.className = `avatar-wrap ${selectedUser.avatarFrame || ''}`;
+  if (avWrap) { avWrap.className = `avatar-wrap ${selectedUser.avatarFrame || ''}`; avWrap.style.backgroundImage = selectedUser.isVisitor ? `url("${defaultBg}")` : "none"; avWrap.style.backgroundSize = "cover"; avWrap.style.backgroundPosition = "center"; }
 
-  const coverImg = selectedUser.isVisitor ? defaultBg : (selectedUser.cover || defaultBg);
-  const bgImg = selectedUser.isVisitor ? defaultBg : (selectedUser.profileBackground || defaultBg);
-  $("prof-cover").style.backgroundImage = `url("${coverImg}")`;
+  const coverImg = selectedUser.isVisitor ? "" : (selectedUser.cover || defaultBg);
+  const bgImg = selectedUser.isVisitor ? "" : (selectedUser.profileBackground || defaultBg);
+  $("prof-cover").style.backgroundImage = coverImg ? `url("${coverImg}")` : "linear-gradient(135deg,#0d1d36,#172b42)";
 
   const cardModal = $("profile-modal").querySelector(".profile-card-modal");
-  if (cardModal) cardModal.style.backgroundImage = `linear-gradient(rgba(13,29,54,.68),rgba(13,29,54,.92)),url("${bgImg}")`;
+  if (cardModal) cardModal.style.backgroundImage = bgImg ? `linear-gradient(rgba(13,29,54,.68),rgba(13,29,54,.92)),url("${bgImg}")` : "linear-gradient(135deg,#0d1d36,#081426)";
 
   $("prof-likes").textContent = Number(selectedUser.likes) || 0;
   $("prof-level-display").textContent = `📈 المستوى ${Number(selectedUser.level) || 1} • ${Number(selectedUser.messageCount) || 0} رسالة`;
@@ -3298,8 +3302,9 @@ function listenMusicSync() {
     const d = snap.data();
     activeMusicData = d;
     panel.classList.add("show");
-    info.textContent = `🎵 ${d.playingBy || "عضو"} يشغل: ${d.songTitle || "فيديو"}`;
+    info.textContent = `🎵 ${d.playingBy || "عضو"} يشغّل أغنية`;
     if (thumb) thumb.src = d.songThumb || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100";
+    if (thumb) thumb.style.display = "none";
 
     const id = d.youtubeId || getYoutubeId(d.musicUrl || "");
     const playbackKey = `${id || d.musicUrl || ""}:${d.startedAt || ""}`;
@@ -3307,7 +3312,7 @@ function listenMusicSync() {
     if (id && currentId !== playbackKey) {
       media.dataset.playbackKey = playbackKey;
       media.dataset.videoId = id;
-      media.innerHTML = `<iframe id="sync-yt-iframe" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?autoplay=1&playsinline=1&controls=1&enablejsapi=1&origin=${encodeURIComponent(location.origin)}&rel=0" title="${safe(d.songTitle || "YouTube video")}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+      media.innerHTML = `<iframe id="sync-yt-iframe" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?autoplay=1&playsinline=1&controls=0&enablejsapi=1&origin=${encodeURIComponent(location.origin)}&rel=0" title="مشغل صوت الأغنية" allow="autoplay; encrypted-media" style="position:absolute;width:1px;height:1px;opacity:.01;pointer-events:none;left:-10000px;top:-10000px;border:0" tabindex="-1"></iframe>`;
     } else if (!id && d.musicUrl && currentId !== playbackKey) {
       media.dataset.playbackKey = playbackKey;
       media.dataset.videoId = "audio:" + d.musicUrl;
@@ -3467,7 +3472,7 @@ window.handleYoutubeResultSelect = async (vidId, title, thumbUrl) => {
         senderUid: currentUser.uid,
         avatar: currentUser.avatar || avatarFor(currentUser.name),
         avatarFrame: currentUser.avatarFrame || "",
-        text: cleanTitle,
+        text: "",
         nameFont: currentUser.nameFont || "font-cairo",
         nameColor: currentUser.nameColor || "color-text-white",
         nameStaticBg: currentUser.nameStaticBg || "",
@@ -3544,7 +3549,7 @@ window.unmuteSyncAudio = async () => {
   toast("🔊 تم طلب تشغيل الصوت على هذا الجهاز.");
 };
 
-window.toggleMusicLocal = () => { $("music-sync-media").classList.toggle("hidden"); };
+window.toggleMusicLocal = () => { const media = $("music-sync-media"); if (media) media.classList.toggle("hidden"); const btn = $("music-local-toggle"); if (btn) btn.textContent = media?.classList.contains("hidden") ? "⬆️" : "⬇️"; };
 
 /* ==================== رسائل الشات العام وإطارات الصور المتحركة ==================== */
 window.sendMessage = async () => {
@@ -3552,6 +3557,7 @@ window.sendMessage = async () => {
   const input = $("msg-input");
   let raw = input.value.trim();
   if (!raw) return;
+  if (raw.length > 600) return alert("الحد الأقصى للرسالة هو 600 حرف.");
 
   input.value = "";
   input.focus();
@@ -3662,7 +3668,7 @@ function renderMessageHtml(dId, m) {
   const canDeleteThisMessage = String(m.senderUid || "") === String(currentUser?.uid || "") || isPrimaryOwner(currentUser);
   return `<div class="msg-item ${isContestBotMessage ? 'contest-bot-message' : ''}" data-id="${dId}" data-sender-uid="${m.senderUid || ''}">
     <button class="msg-action-trigger" type="button" aria-label="خيارات الرسالة" onclick="window.toggleMessageActions('${dId}',this)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
-    <span class="avatar-wrap ${safe(avFrame)}" style="${u.isVisitor ? `background-image:url('${safe(getDefaultGenderBg(u.gender, true))}');background-size:cover;background-position:center` : ''}" onclick="openProfileByName('${slug(u.name)}')"><img class="user-avatar" src="${safe(u.avatar || m.avatar || avatarFor(u.name))}"></span>
+    <span class="avatar-wrap ${safe(avFrame)}" style="" onclick="openProfileByName('${slug(u.name)}')"><img class="user-avatar" src="${safe(u.isVisitor ? getDefaultGenderBg(u.gender, true) : (u.avatar || m.avatar || avatarFor(u.name)))}"></span>
     <div class="msg-content">
       ${qhtml}
       <div class="user-header">
@@ -3938,8 +3944,10 @@ window.cancelPrivateQuote = () => {
 window.sendPrivateMessage = async () => {
   if (currentUser?.isVisitor) return alert("🔒 الخاص متاح للأعضاء المسجلين فقط.");
   const inp = $("private-msg-input");
-  const text = inp.value.trim();
+  let text = inp.value.trim();
   if (!text || !privateTarget) return;
+  if (text.length > 600) return alert("الحد الأقصى للرسالة هو 600 حرف.");
+  if (httpUrls(text).length) text = "⚠️ تم حجب الروابط في الرسائل الخاصة.";
 
   if (localStorage.getItem(`asatir_blocked_${privateTarget.uid}`) === "true") {
     return alert("⚠️ لقد قمت بحظر هذا العضو من الخاص. قم بإلغاء الحظر من الترس لتتمكن من مراسلته.");
@@ -4812,7 +4820,7 @@ window.openFeature = async title => {
       return `<div class="online-item" style="padding:10px;border-bottom:1px solid #1e3557;display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="closeModal('feature-modal');openProfileByName('${slug(u.name)}')">
         <div style="display:flex;align-items:center;gap:8px">
           <b style="color:${idx===0?'#ffd700':'#cbd5e1'}">#${idx + 1}</b>
-          <span class="avatar-wrap ${safe(u.avatarFrame || '')}"><img class="user-avatar" src="${safe(u.avatar || avatarFor(u.name))}"></span>
+          <span class="avatar-wrap ${safe(u.avatarFrame || '')}"><img class="user-avatar" src="${safe(u.isVisitor ? getDefaultGenderBg(u.gender, true) : (u.avatar || avatarFor(u.name)))}"></span>
           <div>
             <b class="${isOwner ? 'owner-rank-text' : ''}">${safe(u.name)}</b>
             <small style="color:${r.color};display:block">${safe(r.title)}</small>
@@ -4837,7 +4845,7 @@ window.openFeature = async title => {
       return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px;border-bottom:1px solid #1e3557" onclick="openProfileByName('${slug(u.name)}')">
         <div style="display:flex;align-items:center;gap:8px">
           <b>#${idx + 1}</b>
-          <span class="avatar-wrap ${safe(u.avatarFrame || '')}"><img class="user-avatar" src="${safe(u.avatar || avatarFor(u.name))}"></span>
+          <span class="avatar-wrap ${safe(u.avatarFrame || '')}"><img class="user-avatar" src="${safe(u.isVisitor ? getDefaultGenderBg(u.gender, true) : (u.avatar || avatarFor(u.name)))}"></span>
           <div><b>${safe(u.name)}</b><small style="color:${r.color};display:block">${r.title}</small></div>
         </div>
         <div style="font-size:.75rem;color:#ffd54a">🌟 رسائل: ${Number(u.messageCount) || 0}</div>
@@ -4856,7 +4864,7 @@ window.openFeature = async title => {
       return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px;border-bottom:1px solid #1e3557" onclick="openProfileByName('${slug(u.name)}')">
         <div style="display:flex;align-items:center;gap:8px">
           <b>#${idx + 1}</b>
-          <span class="avatar-wrap ${safe(u.avatarFrame || '')}"><img class="user-avatar" src="${safe(u.avatar || avatarFor(u.name))}"></span>
+          <span class="avatar-wrap ${safe(u.avatarFrame || '')}"><img class="user-avatar" src="${safe(u.isVisitor ? getDefaultGenderBg(u.gender, true) : (u.avatar || avatarFor(u.name)))}"></span>
           <div>
             <b class="${u.isPrimaryOwner ? 'owner-rank-text' : ''}">${safe(u.name)}</b>
             <small style="color:${r.color};display:block">${r.title}</small>
