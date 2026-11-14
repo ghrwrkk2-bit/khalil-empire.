@@ -791,6 +791,19 @@ html,body{background:#07070a!important;color:#fff}
 .profile-status-line{font-size:.72rem;color:#f5d98d;text-align:center;margin:3px 8px 7px;line-height:1.5}
 .profile-music-player{display:block;width:calc(100% - 28px);margin:8px auto 10px;height:34px}
 
+
+
+/* الإصلاح النهائي لتدفق نص الرسالة: النص بجانب الاسم ثم يلتف بعرض مساحة الرسالة */
+.msg-item .msg-content{flex:1 1 0%!important;width:0!important;min-width:0!important;max-width:100%!important;}
+.msg-item .msg-content .user-header{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;width:100%!important;min-width:0!important;gap:5px!important;}
+.msg-item .msg-content .user-header .user-header-main{display:block!important;flex:1 1 auto!important;width:100%!important;min-width:0!important;max-width:100%!important;text-align:right!important;direction:rtl!important;line-height:1.5!important;}
+.msg-item .msg-content .user-header .message-identity{display:inline-flex!important;vertical-align:baseline!important;white-space:nowrap!important;max-width:100%!important;}
+.msg-item .msg-content .user-header .inline-message-text{display:inline!important;flex:0 1 auto!important;width:auto!important;max-width:100%!important;min-width:0!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;word-break:normal!important;vertical-align:baseline!important;text-align:right!important;}
+.msg-item .msg-content .user-header .msg-time{flex:0 0 auto!important;white-space:nowrap!important;margin-inline-start:5px!important;}
+#msg-input::placeholder,#private-msg-input::placeholder{font-size:0!important;}
+#msg-input::placeholder{font-size:.88rem!important;}
+#private-msg-input::placeholder{font-size:.88rem!important;}
+
 </style>
 </head>
 <body>
@@ -956,7 +969,7 @@ html,body{background:#07070a!important;color:#fff}
 <div class="input-bar" id="main-input-bar">
   <button class="send-btn-main" onclick="sendMessage()" aria-label="إرسال الرسالة"><svg class="double-paper-send" viewBox="0 0 48 48" aria-hidden="true"><path d="M8 10 38 5 32 34 23 25 15 34Z" fill="#f7d477" stroke="#9a671b" stroke-width="2" stroke-linejoin="round"/><path d="m8 10 15 15 15-20M23 25l-1 14 10-5" fill="none" stroke="#fff1b2" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="m14 15 20-6" stroke="#fff9dc" stroke-width="1.5" stroke-linecap="round"/></svg></button>
   <div class="input-wrapper">
-    <input id="msg-input" maxlength="600" placeholder="اكتب هنا... (600 حرف كحد أقصى)" onkeydown="if(event.key==='Enter'){event.preventDefault();sendMessage();}">
+    <input id="msg-input" maxlength="600" placeholder="اكتب هنا..." onkeydown="if(event.key==='Enter'){event.preventDefault();sendMessage();}">
     <button class="icon-btn" onclick="toggleEmojiPanel()"><i class="fa-regular fa-face-smile"></i></button>
   </div>
   <button class="icon-btn" onclick="openVoiceRecorder('public')" title="تسجيل صوت"><i class="fa-solid fa-microphone"></i></button>
@@ -1381,7 +1394,7 @@ html,body{background:#07070a!important;color:#fff}
       <div class="input-bar" style="position:static!important">
         <button class="send-btn-main" onclick="sendPrivateMessage()"><i class="fa-solid fa-location-arrow"></i></button>
         <div class="input-wrapper">
-          <input id="private-msg-input" maxlength="600" placeholder="رسالتك الخاصة... (600 حرف كحد أقصى)" onkeydown="if(event.key==='Enter'){event.preventDefault();sendPrivateMessage();}">
+          <input id="private-msg-input" maxlength="600" placeholder="رسالتك الخاصة..." onkeydown="if(event.key==='Enter'){event.preventDefault();sendPrivateMessage();}">
         </div>
         <button class="icon-btn" onclick="openVoiceRecorder('private')" title="تسجيل صوت في الخاص"><i class="fa-solid fa-microphone"></i></button>
         <label class="icon-btn" title="إرسال صورة أو فيديو فوراً"><i class="fa-solid fa-paperclip"></i><input id="private-file-input" type="file" accept="image/*,video/*" style="display:none" onchange="sendPrivateFile(event)"></label>
@@ -2106,8 +2119,8 @@ let directCallStream = null;
 let directCallHandled = new Set();
 function directCallAudioNode(){
   let a=document.getElementById('direct-call-audio');
-  if(!a){a=document.createElement('audio');a.id='direct-call-audio';a.autoplay=true;a.playsInline=true;a.style.display='none';document.body.appendChild(a);}
-  return a;
+  if(!a){a=document.createElement('audio');a.id='direct-call-audio';a.autoplay=true;a.playsInline=true;a.setAttribute('playsinline','');a.style.display='none';document.body.appendChild(a);}
+  a.muted=false;a.volume=1;return a;
 }
 async function startVoiceCallFromProfile(){
   if(currentUser?.isVisitor){return alert('🔒 الاتصال الصوتي متاح للأعضاء المسجلين فقط. سجل حساباً أولاً!');}
@@ -2120,6 +2133,8 @@ async function startVoiceCallFromProfile(){
     directCallStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
     const callRef=doc(collection(db,`${P}voiceCalls`));
     const pc=new RTCPeerConnection(getRtcConfiguration()); directCallPc=pc;
+    pc.onconnectionstatechange=()=>{if(pc.connectionState==='connected')toast('🔊 تم اتصال الصوت بنجاح');else if(pc.connectionState==='failed')toast('تعذر ربط الصوت؛ تحقق من بيانات TURN والشبكة');};
+    pc.oniceconnectionstatechange=()=>{if(pc.iceConnectionState==='failed')console.warn('Direct call ICE failed. Check TURN credentials and Firestore signaling rules.');};
     directCallStream.getTracks().forEach(t=>pc.addTrack(t,directCallStream));
     pc.ontrack=e=>{const a=directCallAudioNode();a.srcObject=e.streams?.[0]||new MediaStream([e.track]);a.play().catch(()=>toast('اضغط الشاشة لتفعيل صوت المكالمة'));};
     pc.onicecandidate=e=>{if(e.candidate)addDoc(collection(db,`${P}voiceCallSignals`),{callId:callRef.id,fromUid:currentUser.uid,toUid:target.uid,candidate:e.candidate.toJSON(),createdAt:serverTimestamp()}).catch(console.error);};
@@ -2143,6 +2158,8 @@ async function acceptDirectCall(callRef,callData){
   try{
     directCallStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
     const pc=new RTCPeerConnection(getRtcConfiguration());directCallPc=pc;
+    pc.onconnectionstatechange=()=>{if(pc.connectionState==='connected')toast('🔊 تم اتصال الصوت بنجاح');else if(pc.connectionState==='failed')toast('تعذر ربط الصوت؛ تحقق من بيانات TURN والشبكة');};
+    pc.oniceconnectionstatechange=()=>{if(pc.iceConnectionState==='failed')console.warn('Direct call ICE failed. Check TURN credentials and Firestore signaling rules.');};
     directCallStream.getTracks().forEach(t=>pc.addTrack(t,directCallStream));
     pc.ontrack=e=>{const a=directCallAudioNode();a.srcObject=e.streams?.[0]||new MediaStream([e.track]);a.play().catch(()=>toast('اضغط الشاشة لتفعيل صوت المكالمة'));};
     pc.onicecandidate=e=>{if(e.candidate)addDoc(collection(db,`${P}voiceCallSignals`),{callId:callRef.id,fromUid:currentUser.uid,toUid:callData.callerUid,candidate:e.candidate.toJSON(),createdAt:serverTimestamp()}).catch(console.error);};
@@ -2875,31 +2892,38 @@ let activeMicPeerUids = new Set();
 window._micJoinPending = false;
 
 function getRtcConfiguration() {
+  // إعدادات STUN/TURN المدمجة لشات أصل العرب — تعمل تلقائياً لكل الأعضاء
+  // ملاحظة أمنية: بيانات TURN المضمنة في ملف HTML يمكن لأي زائر رؤيتها.
   const iceServers = [
-    { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302", "stun:stun.cloudflare.com:3478", "stun:global.stun.twilio.com:3478"] }
-  ];
-  const cfg = window._siteVoiceTurnConfig || (() => {
-    try {
-      const raw = localStorage.getItem("asatir_voice_turn_config");
-      return raw ? JSON.parse(raw) : null;
-    } catch { return null; }
-  })();
-  try {
-    if (cfg && cfg.urls && cfg.username && cfg.credential) {
-      const urls = String(cfg.urls).split(/[,\n]+/).map(x => x.trim()).filter(Boolean);
-      const validUrls = urls.filter(url => /^turns?:[^\s,]+$/i.test(url));
-      if (validUrls.length) {
-        iceServers.push({
-          urls: validUrls,
-          username: String(cfg.username),
-          credential: String(cfg.credential)
-        });
-      }
+    { urls: "stun:stun.relay.metered.ca:80" },
+    {
+      urls: "turn:global.relay.metered.ca:80",
+      username: "d8b1f06f1d8b70f41d74e498",
+      credential: "kT/yp92V5RftAAPW"
+    },
+    {
+      urls: "turn:global.relay.metered.ca:80?transport=tcp",
+      username: "d8b1f06f1d8b70f41d74e498",
+      credential: "kT/yp92V5RftAAPW"
+    },
+    {
+      urls: "turn:global.relay.metered.ca:443",
+      username: "d8b1f06f1d8b70f41d74e498",
+      credential: "kT/yp92V5RftAAPW"
+    },
+    {
+      urls: "turns:global.relay.metered.ca:443?transport=tcp",
+      username: "d8b1f06f1d8b70f41d74e498",
+      credential: "kT/yp92V5RftAAPW"
     }
-  } catch (e) {
-    console.warn("Voice TURN config error:", e);
-  }
-  return { iceServers, iceTransportPolicy: "all", bundlePolicy: "max-bundle", rtcpMuxPolicy: "require" };
+  ];
+  return {
+    iceServers,
+    iceTransportPolicy: "all",
+    bundlePolicy: "max-bundle",
+    rtcpMuxPolicy: "require",
+    iceCandidatePoolSize: 10
+  };
 }
 
 function showVoiceError(e) {
